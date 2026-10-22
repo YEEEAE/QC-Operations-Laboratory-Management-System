@@ -1,44 +1,1194 @@
 ---
-import PageHeader from "../../../../../ui/components/PageHeader.astro";
+import PageHeader from '../../../../../ui/components/PageHeader.astro';
 import AppLayout from '../../../../../ui/layouts/AppLayout.astro';
 import StatusBadge from '../../../../../ui/components/StatusBadge.astro';
 import JourneyContextPanel from '../../../../../ui/components/workflow/JourneyContextPanel.astro';
 import { documentsReadDependencies } from '../../../../../modules/documents/application/dependencies.js';
 import { approvalsReadDependencies } from '../../../../../modules/approvals/application/dependencies.js';
+import { identityAdminReadDependencies } from '../../../../../modules/identity/application/admin-dependencies.js';
 import { stateLabel } from '../../../../../shared/copy/ux-vocabulary.js';
+import {
+  classifyReadFailure,
+  providerUnavailableResponse,
+} from '../../../../../shared/errors/read-failure.js';
+
 const actor = Astro.locals.actor;
 if (!actor) return Astro.redirect(`/login?returnTo=${encodeURIComponent(Astro.url.pathname)}`);
-import { classifyReadFailure, providerUnavailableResponse } from '../../../../../shared/errors/read-failure.js';
-let document: Awaited<ReturnType<ReturnType<typeof documentsReadDependencies>['get']['execute']>> | undefined;
+
+let document: Awaited<
+  ReturnType<ReturnType<typeof documentsReadDependencies>['get']['execute']>
+> | undefined;
 try {
-  document = await documentsReadDependencies().get.execute({ actor, documentId: Astro.params.documentId ?? '' });
+  document = await documentsReadDependencies().get.execute({
+    actor,
+    documentId: Astro.params.documentId ?? '',
+  });
 } catch (error) {
   if (classifyReadFailure(error) === 'UNAVAILABLE') {
-    return providerUnavailableResponse('Document details are temporarily unavailable', Astro.url.pathname + Astro.url.search);
+    return providerUnavailableResponse(
+      'Document details are temporarily unavailable',
+      Astro.url.pathname + Astro.url.search,
+    );
   }
 }
 const version = document?.versions.find((item) => item.id === Astro.params.versionId);
 if (!document || !version) return Astro.redirect('/404');
+
 let approvalEvidence;
 try {
   approvalEvidence = await approvalsReadDependencies().documentEvidence.execute(version.id);
 } catch {
-  return providerUnavailableResponse('Approval evidence is temporarily unavailable', Astro.url.pathname + Astro.url.search);
+  return providerUnavailableResponse(
+    'Approval evidence is temporarily unavailable',
+    Astro.url.pathname + Astro.url.search,
+  );
 }
-const editable = version.state === 'DRAFT' && actor.permissions.some((permission) => permission.code === 'PERM-DOC-EDIT-DRAFT' && permission.active !== false);
-const canSubmit = version.state === 'DRAFT' && actor.permissions.some((permission) => permission.code === 'PERM-DOC-SUBMIT' && permission.active !== false);
-const canReview = version.state === 'IN_REVIEW' && actor.permissions.some((permission) => permission.code === 'PERM-DOC-REVIEW' && permission.active !== false);
-const nextAction = version.state === 'DRAFT' ? editable ? 'Edit draft' : canSubmit ? 'Submit for review' : undefined : version.state === 'IN_REVIEW' ? canReview ? 'Open review workspace' : 'Awaiting reviewer' : version.state === 'APPROVED' ? 'Awaiting an approved activation policy' : version.state === 'EFFECTIVE' ? 'Create a new revision through Change Request when needed' : undefined;
-const nextOwner = version.state === 'DRAFT' ? 'Document author' : version.state === 'IN_REVIEW' ? 'Document reviewer' : version.state === 'APPROVED' ? 'Document owner / effective-date owner' : version.state === 'EFFECTIVE' ? 'Authorized change requester' : undefined;
+
+const editable =
+  version.state === 'DRAFT' &&
+  actor.permissions.some(
+    (permission) => permission.code === 'PERM-DOC-EDIT-DRAFT' && permission.active !== false,
+  );
+const canSubmit =
+  version.state === 'DRAFT' &&
+  actor.permissions.some(
+    (permission) => permission.code === 'PERM-DOC-SUBMIT' && permission.active !== false,
+  );
+const canReview =
+  version.state === 'IN_REVIEW' &&
+  actor.permissions.some(
+    (permission) => permission.code === 'PERM-DOC-REVIEW' && permission.active !== false,
+  );
+const nextAction =
+  version.state === 'DRAFT'
+    ? editable
+      ? 'Edit draft'
+      : canSubmit
+        ? 'Submit for review'
+        : undefined
+    : version.state === 'IN_REVIEW'
+      ? canReview
+        ? 'Open review workspace'
+        : 'Awaiting reviewer'
+      : version.state === 'APPROVED'
+        ? 'Awaiting an approved activation policy'
+        : version.state === 'EFFECTIVE'
+          ? 'Create a new revision through Change Request when needed'
+          : undefined;
+const nextOwner =
+  version.state === 'DRAFT'
+    ? 'Document author'
+    : version.state === 'IN_REVIEW'
+      ? 'Document reviewer'
+      : version.state === 'APPROVED'
+        ? 'Document owner / effective-date owner'
+        : version.state === 'EFFECTIVE'
+          ? 'Authorized change requester'
+          : undefined;
+
+type BadgeStatus =
+  | 'APPROVED'
+  | 'REVIEW'
+  | 'DRAFT'
+  | 'WARNING'
+  | 'VOID'
+  | 'SUPERSEDED'
+  | 'READ_ONLY'
+  | 'INFO';
+const badgeStatus = (state: string): BadgeStatus =>
+  state === 'EFFECTIVE' || state === 'APPROVED'
+    ? 'APPROVED'
+    : state === 'IN_REVIEW'
+      ? 'REVIEW'
+      : state === 'RETURNED'
+        ? 'WARNING'
+        : state === 'SUPERSEDED'
+          ? 'SUPERSEDED'
+          : state === 'VOID'
+            ? 'VOID'
+            : state === 'ARCHIVED'
+              ? 'READ_ONLY'
+              : state === 'DRAFT'
+                ? 'DRAFT'
+                : 'INFO';
+
+// Names are presentation-only and failure-tolerant. The recorded identifiers
+// remain visible beside each name so the audit reference is never lost.
+const referencedAccountIds = [
+  ...new Set(
+    [version.createdBy, version.approvedBy, ...version.files.map((file) => file.linkedBy)].filter(
+      (value): value is string => Boolean(value),
+    ),
+  ),
+];
+let accountNames: ReadonlyMap<string, string> = new Map();
+try {
+  accountNames = await identityAdminReadDependencies().listUsers.resolveDisplayNames({
+    actor,
+    userIds: referencedAccountIds,
+  });
+} catch {
+  // Presentation-only; fall back to a named-account label below.
+}
+const accountLabel = (accountId: string | null | undefined) =>
+  accountId ? (accountNames.get(accountId) ?? 'Named account') : 'Not recorded';
+
+const timestamp = (value?: Date) =>
+  value?.toLocaleString('en-SA', { timeZone: 'Asia/Riyadh' }) ?? 'Not recorded';
+
+const sourceBinding =
+  version.sourceBindingVerified === true
+    ? 'Verified by source'
+    : version.sourceBindingVerified === false
+      ? 'Not verified by source'
+      : 'Not recorded';
+const sourceFingerprint =
+  version.sourceBindingVerified === true
+    ? (version.contentHash ?? 'Not supplied by record source')
+    : 'Unverified historical value';
+const inactiveSourceFiles = version.files.some((file) => file.state !== 'ACTIVE');
+const effectiveVersion = document.versions.find((item) => item.state === 'EFFECTIVE');
+const auditHref = `/audit?subjectType=DOCUMENT_VERSION&subjectId=${encodeURIComponent(version.id)}`;
+
+// A lifecycle state can be stored without its matching timestamp (for example,
+// an imported approved record). Do not render "not approved/not effective"
+// when the state itself says otherwise; show that the timestamp is absent.
+const approvalRecorded =
+  version.approvedAt !== undefined ||
+  version.approvedBy !== undefined ||
+  ['APPROVED', 'EFFECTIVE', 'SUPERSEDED', 'ARCHIVED'].includes(version.state);
+const effectiveRecorded =
+  version.effectiveAt !== undefined ||
+  ['EFFECTIVE', 'SUPERSEDED', 'ARCHIVED'].includes(version.state);
+const supersessionRecorded =
+  version.supersededAt !== undefined || ['SUPERSEDED', 'ARCHIVED'].includes(version.state);
+
+const hasAnyAction = editable || canSubmit || canReview;
+const actionHeading =
+  version.state === 'DRAFT'
+    ? hasAnyAction
+      ? 'Draft actions'
+      : 'No action is offered'
+    : version.state === 'IN_REVIEW'
+      ? canReview
+        ? 'Review this revision'
+        : 'Awaiting reviewer'
+      : version.state === 'APPROVED'
+        ? 'Approved — not effective'
+        : version.state === 'EFFECTIVE'
+          ? 'Effective revision'
+          : 'No action is offered';
+const actionSummary =
+  version.state === 'DRAFT'
+    ? editable && canSubmit
+      ? 'Edit the draft metadata, or submit the draft for review. The server rechecks the source binding and record version when the draft is submitted.'
+      : editable
+        ? 'Edit the draft metadata. Submission is not offered to this account from this view.'
+        : canSubmit
+          ? 'Submit the draft for review. Draft metadata editing is not offered to this account from this view.'
+          : 'This account has no draft action for this record. The server decides eligibility when an action is submitted.'
+    : version.state === 'IN_REVIEW'
+      ? canReview
+        ? 'Open the review workspace to inspect the proposed revision. The server rechecks the review permissions and record version when a review is recorded.'
+        : 'Review requires PERM-DOC-REVIEW. The server decides review eligibility.'
+      : version.state === 'APPROVED'
+        ? 'The policy for making a version effective is not yet approved. Approval recorded on this revision does not make it effective.'
+        : version.state === 'EFFECTIVE'
+          ? 'Approved content cannot be edited. Use a new revision or change request when a controlled change is needed.'
+          : version.state === 'RETURNED'
+            ? 'This revision was returned for correction. No resume action is offered from this view.'
+            : 'This revision is retained as a historical record. No action is offered from this view for its current lifecycle state.';
 ---
-<AppLayout title={`${document.documentNo} · Rev ${version.revision}`} locale="en" direction="ltr"><nav class="crumb"><a href="/documents">Controlled documents</a><span>/</span><a href={`/documents/${document.id}`}>{document.documentNo}</a><span>/</span><span>Rev {version.revision}</span></nav><PageHeader><Fragment slot="heading"><h1>{document.title}</h1></Fragment><p>{document.documentNo} · Revision {version.revision} · Record version {version.version.toString()}</p><Fragment slot="actions"><StatusBadge status={version.state === 'IN_REVIEW' ? 'REVIEW' : version.state === 'EFFECTIVE' ? 'APPROVED' : version.state === 'SUPERSEDED' ? 'SUPERSEDED' : version.state === 'VOID' ? 'VOID' : 'DRAFT'} label={stateLabel(version.state)} /></Fragment></PageHeader><section class="facts"><div><span>Lifecycle state</span><strong>{stateLabel(version.state)}</strong></div><div><span>Server source fingerprint</span><strong>{version.sourceBindingVerified ? version.contentHash ?? 'Not available' : 'Unverified historical value'}</strong></div><div><span>Created by</span><strong>{version.createdBy}</strong></div><div><span>Approved at</span><strong>{version.approvedAt?.toLocaleString('en-SA',{timeZone:'Asia/Riyadh'}) ?? 'Not approved'}</strong></div></section><JourneyContextPanel ownerDomain="Controlled documents" recordReference={`${document.documentNo} · Rev ${version.revision} · version ${version.version.toString()}`} currentState={stateLabel(version.state)} nextAction={nextAction} nextActionHref={version.state === 'DRAFT' && editable ? `/documents/${document.id}/versions/${version.id}/edit` : version.state === 'IN_REVIEW' && canReview ? `/documents/${document.id}/versions/${version.id}/review` : undefined} nextOwner={nextOwner} whyUnavailable={version.state === 'APPROVED' ? 'The policy for making a version effective is not yet approved.' : version.state === 'EFFECTIVE' ? 'Approved content cannot be edited. Use a new revision or change request.' : version.state === 'IN_REVIEW' && !canReview ? 'Review requires PERM-DOC-REVIEW.' : undefined} waitingOn={version.state === 'IN_REVIEW' ? 'Reviewer' : version.state === 'APPROVED' ? 'Effective-date policy or document owner' : undefined} expectedEvent={version.state === 'DRAFT' ? 'Submit for review' : version.state === 'IN_REVIEW' ? 'Review decision' : version.state === 'APPROVED' ? 'Make version effective' : version.state === 'EFFECTIVE' ? 'Controlled change request' : undefined} controlledContext={`${document.documentNo} · revision ${version.revision} · record version ${version.version.toString()}`} evidenceSummary={`Server source fingerprint ${version.sourceBindingVerified ? version.contentHash ?? 'not available' : 'unverified historical value'} · ${version.files.length} linked file(s)`} auditHref={`/audit?subjectType=DOCUMENT_VERSION&subjectId=${encodeURIComponent(version.id)}`} relatedLinks={[{ label: 'Document history', href: `/documents/${document.id}`, detail: 'Identity and version chain' }, { label: 'Document register', href: '/documents', detail: 'Controlled documents' }]} />{(editable || canSubmit || canReview) && <section class="actions">{editable && <a class="button secondary" href={`/documents/${document.id}/versions/${version.id}/edit`}>Edit draft</a>}{canSubmit && <button class="button" data-submit-version={version.id} data-expected-version={version.version.toString()}>Submit for review</button>}{canReview && <a class="button controlled" href={`/documents/${document.id}/versions/${version.id}/review`}>Open review workspace</a>}</section>}<section class="panel"><h2>Attachments</h2>{version.files.length ? <table><caption>Files linked to this version</caption><thead><tr><th scope="col">Source file</th><th scope="col">Role</th><th scope="col">SHA-256</th><th scope="col">Linked at</th></tr></thead><tbody>{version.files.map((file)=><tr><th scope="row">{file.originalFilename}</th><td>{file.fileRole}</td><td><code>{file.sha256}</code></td><td>{file.linkedAt.toLocaleString('en-SA',{timeZone:'Asia/Riyadh'})}</td></tr>)}</tbody></table> : <p class="muted">No registered source file is linked to this version.</p>}</section><section class="panel"><h2>Change summary</h2><p class="muted">{version.changeSummary ?? 'No change summary supplied.'}</p><p class="muted">Approved, effective, superseded, and void versions are read-only historical records.</p></section><section class="panel" aria-label="Approval evidence"><h2>Recorded authorization</h2>{approvalEvidence.length ? <><p class="muted">These entries come from saved workflow decisions or document transition audit events for this revision. A role requirement names the assigned approval step, not the person's historical role.</p><div class="table-wrap"><table><caption>Decision and electronic signature evidence</caption><thead><tr><th scope="col">Decision</th><th scope="col">Actor</th><th scope="col">Assigned role requirement</th><th scope="col">Recorded at</th><th scope="col">Version at decision</th><th scope="col">Evidence</th></tr></thead><tbody>{approvalEvidence.map((evidence) => <tr><td>{evidence.decision}</td><td>{evidence.actorName}<br /><small>{evidence.actorId}</small></td><td>{evidence.assignedRoleRequirement ?? 'Named account assignment'}</td><td>{evidence.decidedAt.toLocaleString('en-SA',{timeZone:'Asia/Riyadh'})}</td><td>{evidence.source === 'WORKFLOW_DECISION' ? evidence.subjectVersion.toString() : 'See document transition audit'}</td><td>{evidence.signatureId ? <>Electronically signed<br /><small>{evidence.signatureMeaning}</small><br /><code>{evidence.signatureId}</code></> : <>{evidence.source === 'WORKFLOW_DECISION' ? 'Decision recorded' : 'Document transition recorded'}<br /><code>{evidence.decisionId}</code></>}</td></tr>)}</tbody></table></div></> : <p class="muted">No approval or authorization event is recorded for this revision.</p>}</section></AppLayout>
+
+<AppLayout title={`${document.documentNo} · Rev ${version.revision}`} locale="en" direction="ltr">
+  <div class="record-detail">
+    <nav class="crumb" aria-label="Breadcrumb">
+      <a href="/documents">Controlled documents</a>
+      <span aria-hidden="true">/</span>
+      <a href={`/documents/${document.id}`}>{document.documentNo}</a>
+      <span aria-hidden="true">/</span>
+      <span aria-current="page">Rev {version.revision}</span>
+    </nav>
+
+    <PageHeader>
+      <Fragment slot="heading">
+        <h1>{document.documentNo} · Revision {version.revision}</h1>
+      </Fragment>
+      <p class="record-meta">
+        <span class="record-title">{document.title}</span>
+        <span><span class="meta-label">Document type</span> {document.documentType}</span>
+        <span>
+          <span class="meta-label">Record version</span>
+          <strong class="numeric">{version.version.toString()}</strong>
+        </span>
+        <span><span class="meta-label">Lifecycle state</span> {stateLabel(version.state)}</span>
+        <span>
+          <span class="meta-label">Document identity version</span>
+          <strong class="numeric">{document.version.toString()}</strong>
+        </span>
+      </p>
+      <Fragment slot="actions">
+        <StatusBadge status={badgeStatus(version.state)} label={stateLabel(version.state)} />
+      </Fragment>
+    </PageHeader>
+
+    {version.state === 'APPROVED' && (
+      <p class="notice" role="note">
+        <strong>Approved, not effective.</strong> Approval records an authorization decision. It
+        does not make this revision effective; effectivity is a separate recorded transition.
+      </p>
+    )}
+
+    <JourneyContextPanel
+      ownerDomain="Controlled documents"
+      recordReference={`${document.documentNo} · Rev ${version.revision} · version ${version.version.toString()}`}
+      currentState={stateLabel(version.state)}
+      nextAction={nextAction}
+      nextActionHref={
+        version.state === 'DRAFT' && editable
+          ? `/documents/${document.id}/versions/${version.id}/edit`
+          : version.state === 'IN_REVIEW' && canReview
+            ? `/documents/${document.id}/versions/${version.id}/review`
+            : undefined
+      }
+      nextOwner={nextOwner}
+      whyUnavailable={
+        version.state === 'APPROVED'
+          ? 'The policy for making a version effective is not yet approved.'
+          : version.state === 'EFFECTIVE'
+            ? 'Approved content cannot be edited. Use a new revision or change request.'
+            : version.state === 'IN_REVIEW' && !canReview
+              ? 'Review requires PERM-DOC-REVIEW.'
+              : undefined
+      }
+      waitingOn={
+        version.state === 'IN_REVIEW'
+          ? 'Reviewer'
+          : version.state === 'APPROVED'
+            ? 'Effective-date policy or document owner'
+            : undefined
+      }
+      expectedEvent={
+        version.state === 'DRAFT'
+          ? 'Submit for review'
+          : version.state === 'IN_REVIEW'
+            ? 'Review decision'
+            : version.state === 'APPROVED'
+              ? 'Make version effective'
+              : version.state === 'EFFECTIVE'
+                ? 'Controlled change request'
+                : undefined
+      }
+      controlledContext={`${document.documentNo} · revision ${version.revision} · record version ${version.version.toString()}`}
+      evidenceSummary={`Server source fingerprint ${version.sourceBindingVerified ? (version.contentHash ?? 'not available') : 'unverified historical value'} · ${version.files.length} linked file(s)`}
+      auditHref={auditHref}
+      relatedLinks={[
+        { label: 'Document history', href: `/documents/${document.id}`, detail: 'Identity and version chain' },
+        { label: 'Document register', href: '/documents', detail: 'Controlled documents' },
+      ]}
+    />
+
+    <div class="detail-layout">
+      <div class="detail-main">
+        <section class="panel" aria-labelledby="facts-heading">
+          <div class="section-heading">
+            <div>
+              <p class="eyebrow">Record facts</p>
+              <h2 id="facts-heading">Revision identity</h2>
+            </div>
+            <span class="section-index" aria-hidden="true">01</span>
+          </div>
+          <dl class="facts-grid">
+            <div><dt>Document number</dt><dd class="identifier">{document.documentNo}</dd></div>
+            <div><dt>Revision</dt><dd>{version.revision}</dd></div>
+            <div class="fact-wide"><dt>Document title</dt><dd>{document.title}</dd></div>
+            <div><dt>Document type</dt><dd>{document.documentType}</dd></div>
+            <div><dt>Lifecycle state</dt><dd>{stateLabel(version.state)}</dd></div>
+            <div>
+              <dt>Record version</dt>
+              <dd class="numeric">{version.version.toString()}</dd>
+            </div>
+            <div>
+              <dt>Document identity version</dt>
+              <dd class="numeric">{document.version.toString()}</dd>
+            </div>
+            <div>
+              <dt>Created by</dt>
+              <dd>
+                {accountLabel(version.createdBy)}
+                <span class="account-id">{version.createdBy}</span>
+              </dd>
+            </div>
+            <div><dt>Created at</dt><dd>{timestamp(version.createdAt)}</dd></div>
+            <div>
+              <dt>Last recorded change</dt>
+              <dd>{version.updatedAt ? timestamp(version.updatedAt) : 'Not recorded'}</dd>
+            </div>
+            <div>
+              <dt>Approved by</dt>
+              <dd>
+                {version.approvedBy ? (
+                  <>
+                    {accountLabel(version.approvedBy)}
+                    <span class="account-id">{version.approvedBy}</span>
+                  </>
+                ) : approvalRecorded ? (
+                  'Approver not recorded'
+                ) : (
+                  'Not approved'
+                )}
+              </dd>
+            </div>
+            <div>
+              <dt>Approved at</dt>
+              <dd>
+                {version.approvedAt
+                  ? timestamp(version.approvedAt)
+                  : approvalRecorded
+                    ? 'Timestamp not recorded'
+                    : 'Not approved'}
+              </dd>
+            </div>
+            <div>
+              <dt>Effective at</dt>
+              <dd>
+                {version.effectiveAt
+                  ? timestamp(version.effectiveAt)
+                  : effectiveRecorded
+                    ? 'Timestamp not recorded'
+                    : 'Not effective'}
+              </dd>
+            </div>
+            <div>
+              <dt>Superseded at</dt>
+              <dd>
+                {version.supersededAt
+                  ? timestamp(version.supersededAt)
+                  : supersessionRecorded
+                    ? 'Timestamp not recorded'
+                    : 'Not superseded'}
+              </dd>
+            </div>
+            {version.voidReason && (
+              <div class="fact-wide">
+                <dt>VOID reason</dt>
+                <dd>{version.voidReason}</dd>
+              </div>
+            )}
+          </dl>
+          <p class="note">
+            Approved does not mean effective. Approval records an authorization decision; only the
+            recorded lifecycle state shows effectivity. This page reports the stored record and does
+            not activate a revision.
+          </p>
+        </section>
+
+        <section class="panel" aria-labelledby="evidence-heading">
+          <div class="section-heading">
+            <div>
+              <p class="eyebrow">Source evidence</p>
+              <h2 id="evidence-heading">Source binding and file manifest</h2>
+            </div>
+            <span class="section-index" aria-hidden="true">02</span>
+          </div>
+
+          <dl class="facts-grid evidence-facts">
+            <div><dt>Source binding</dt><dd>{sourceBinding}</dd></div>
+            <div>
+              <dt>Bound source files</dt>
+              <dd class="numeric">{version.files.length}</dd>
+            </div>
+            <div class="fact-wide">
+              <dt>Server source fingerprint</dt>
+              <dd class="identifier">{sourceFingerprint}</dd>
+            </div>
+          </dl>
+
+          {version.sourceBindingVerified !== true && (
+            <p class="notice">
+              The stored source binding is not verified. The fingerprint and file manifest are shown
+              as recorded; they are not proof of an approved or effective binding.
+            </p>
+          )}
+
+          <div class="evidence-block">
+            <h3>Registered source file manifest</h3>
+            {version.files.length ? (
+              <>
+                <div
+                  class="table-scroll"
+                  role="region"
+                  aria-label={`Source file manifest for revision ${version.revision}`}
+                  tabindex="0"
+                >
+                  <table>
+                    <caption>Source files linked to this version record</caption>
+                    <thead>
+                      <tr>
+                        <th scope="col">Source file</th>
+                        <th scope="col">Role</th>
+                        <th scope="col">Size</th>
+                        <th scope="col">SHA-256</th>
+                        <th scope="col">File state</th>
+                        <th scope="col">Linked</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {version.files.map((file) => (
+                        <tr>
+                          <th scope="row" class="file-name">{file.originalFilename}</th>
+                          <td>{file.fileRole === 'SOURCE' ? 'Source' : file.fileRole}</td>
+                          <td class="numeric">
+                            {file.sizeBytes.toLocaleString('en-US')} bytes
+                          </td>
+                          <td><code class="hash-cell">{file.sha256}</code></td>
+                          <td>{stateLabel(file.state)}</td>
+                          <td>
+                            <span>{timestamp(file.linkedAt)}</span>
+                            <span class="sub">by {accountLabel(file.linkedBy)}</span>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+                {inactiveSourceFiles && (
+                  <p class="notice">
+                    At least one listed source file is not active. The manifest is shown as recorded;
+                    it is not evidence that the current binding is valid.
+                  </p>
+                )}
+              </>
+            ) : (
+              <p class="note">No registered source file is linked to this version.</p>
+            )}
+          </div>
+          <p class="note">
+            The fingerprint and file manifest are stored with this record. This page does not
+            recompute, approve, or activate them.
+          </p>
+        </section>
+
+        <section class="panel" aria-labelledby="summary-heading">
+          <div class="section-heading">
+            <div>
+              <p class="eyebrow">Revision content</p>
+              <h2 id="summary-heading">Change summary</h2>
+            </div>
+            <span class="section-index" aria-hidden="true">03</span>
+          </div>
+          <p class="summary-text">{version.changeSummary ?? 'No change summary supplied.'}</p>
+          <p class="note">
+            Approved, effective, superseded, and void versions are read-only historical records.
+            Only the draft edit workspace can change a draft's revision reference or summary.
+          </p>
+        </section>
+
+        <section class="panel" aria-labelledby="history-heading">
+          <div class="section-heading">
+            <div>
+              <p class="eyebrow">Recorded lifecycle</p>
+              <h2 id="history-heading">Status history</h2>
+            </div>
+            <span class="section-index" aria-hidden="true">04</span>
+          </div>
+          <p class="note">
+            Timestamps below come from this version record. A lifecycle event with no stored
+            timestamp is marked as not recorded, not inferred. The audit trail is a separate record.
+          </p>
+          <ol class="lifecycle">
+            <li>
+              <span class="event">Created</span>
+              <span class="when">{timestamp(version.createdAt)}</span>
+              <span class="who">{accountLabel(version.createdBy)}</span>
+            </li>
+            {version.approvedAt && (
+              <li>
+                <span class="event">Approved</span>
+                <span class="when">{timestamp(version.approvedAt)}</span>
+                <span class="who">
+                  {version.approvedBy ? accountLabel(version.approvedBy) : 'Approver not recorded'}
+                </span>
+              </li>
+            )}
+            {version.effectiveAt && (
+              <li>
+                <span class="event">Effective</span>
+                <span class="when">{timestamp(version.effectiveAt)}</span>
+                <span class="who">Recorded effective transition</span>
+              </li>
+            )}
+            {version.supersededAt && (
+              <li>
+                <span class="event">Superseded</span>
+                <span class="when">{timestamp(version.supersededAt)}</span>
+                <span class="who">Recorded supersession</span>
+              </li>
+            )}
+            {version.archivedAt && (
+              <li>
+                <span class="event">Archived</span>
+                <span class="when">{timestamp(version.archivedAt)}</span>
+                <span class="who">Recorded archive transition</span>
+              </li>
+            )}
+            {version.voidedAt || version.voidReason ? (
+              <li>
+                <span class="event">VOID recorded</span>
+                <span class="when">
+                  {version.voidedAt ? timestamp(version.voidedAt) : 'Timestamp not recorded'}
+                </span>
+                <span class="who">{version.voidReason ?? 'Reason not recorded'}</span>
+              </li>
+            ) : null}
+          </ol>
+          {approvalRecorded && !version.approvedAt && (
+            <p class="note">
+              No approval timestamp is stored on this version. The lifecycle state and any recorded
+              approver are shown without a timestamp.
+            </p>
+          )}
+          {effectiveRecorded && !version.effectiveAt && (
+            <p class="notice">
+              No effective timestamp is recorded. The lifecycle state indicates effectivity, but the
+              record does not contain an effective date.
+            </p>
+          )}
+          {version.state === 'APPROVED' && !version.effectiveAt && (
+            <p class="notice">
+              No effective timestamp is recorded. The approved revision remains not effective.
+            </p>
+          )}
+          {version.state === 'VOID' && !version.voidedAt && !version.voidReason && (
+            <p class="note">
+              The version is VOID, but no void timestamp or reason is stored on this record.
+            </p>
+          )}
+          <a class="text-link" href={auditHref}>View audit history for this revision</a>
+        </section>
+
+        <section class="panel" aria-labelledby="authorization-heading">
+          <div class="section-heading">
+            <div>
+              <p class="eyebrow">Decision evidence</p>
+              <h2 id="authorization-heading">Recorded authorization</h2>
+            </div>
+            <span class="section-index" aria-hidden="true">05</span>
+          </div>
+          {approvalEvidence.length ? (
+            <>
+              <p class="note">
+                These entries come from saved workflow decisions or document transition audit events
+                for this revision. A role requirement names the assigned approval step, not the
+                person's historical role.
+              </p>
+              <div
+                class="table-scroll"
+                role="region"
+                aria-label="Decision and electronic signature evidence"
+                tabindex="0"
+              >
+                <table>
+                  <caption>Decision and electronic signature evidence</caption>
+                  <thead>
+                    <tr>
+                      <th scope="col">Decision</th>
+                      <th scope="col">Actor</th>
+                      <th scope="col">Assigned role requirement</th>
+                      <th scope="col">Recorded at</th>
+                      <th scope="col">Version at decision</th>
+                      <th scope="col">Evidence</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {approvalEvidence.map((evidence) => (
+                      <tr>
+                        <td>{evidence.decision}</td>
+                        <td>
+                          {evidence.actorName}
+                          <span class="account-id">{evidence.actorId}</span>
+                        </td>
+                        <td>{evidence.assignedRoleRequirement ?? 'Named account assignment'}</td>
+                        <td>{timestamp(evidence.decidedAt)}</td>
+                        <td>
+                          {evidence.source === 'WORKFLOW_DECISION'
+                            ? evidence.subjectVersion.toString()
+                            : 'See document transition audit'}
+                        </td>
+                        <td>
+                          {evidence.signatureId ? (
+                            <>
+                              Electronically signed
+                              <span class="sub">{evidence.signatureMeaning}</span>
+                              <code class="hash-cell">{evidence.signatureId}</code>
+                            </>
+                          ) : (
+                            <>
+                              {evidence.source === 'WORKFLOW_DECISION'
+                                ? 'Decision recorded'
+                                : 'Document transition recorded'}
+                              <code class="hash-cell">{evidence.decisionId}</code>
+                            </>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </>
+          ) : (
+            <p class="note">No approval or authorization event is recorded for this revision.</p>
+          )}
+        </section>
+
+        <section class="panel" aria-labelledby="relationships-heading">
+          <div class="section-heading">
+            <div>
+              <p class="eyebrow">Related records</p>
+              <h2 id="relationships-heading">Relationships</h2>
+            </div>
+            <span class="section-index" aria-hidden="true">06</span>
+          </div>
+          <ul class="related">
+            <li>
+              <a href={`/documents/${document.id}`}>Document record</a>
+              <span>{document.documentNo} · {document.title} · identity and version chain</span>
+            </li>
+            {effectiveVersion && effectiveVersion.id !== version.id ? (
+              <li>
+                <a href={`/documents/${document.id}/versions/${effectiveVersion.id}`}>
+                  Effective revision {effectiveVersion.revision}
+                </a>
+                <span>
+                  {stateLabel(effectiveVersion.state)}
+                  {effectiveVersion.effectiveAt
+                    ? ` · effective ${timestamp(effectiveVersion.effectiveAt)}`
+                    : ' · effective date not recorded'}
+                </span>
+              </li>
+            ) : effectiveVersion ? (
+              <li>
+                <span class="related-static">
+                  This revision is the recorded effective revision for the document.
+                </span>
+              </li>
+            ) : (
+              <li>
+                <span class="related-static">
+                  No effective revision is recorded for this document.
+                </span>
+              </li>
+            )}
+            <li>
+              <a href="/documents">Controlled document register</a>
+              <span>All controlled documents in your authorized scope</span>
+            </li>
+          </ul>
+        </section>
+      </div>
+
+      <aside class="action-rail" aria-label="Revision actions">
+        <section class="panel action-panel" aria-labelledby="action-heading">
+          <p class="eyebrow">Current actions</p>
+          <h2 id="action-heading">{actionHeading}</h2>
+          <p>{actionSummary}</p>
+          <div class="actions" role="group" aria-label="Available revision actions">
+            {editable && (
+              <a class="button secondary" href={`/documents/${document.id}/versions/${version.id}/edit`}>
+                Edit draft
+              </a>
+            )}
+            {canSubmit && (
+              <button
+                class="button"
+                data-submit-version={version.id}
+                data-expected-version={version.version.toString()}
+              >
+                Submit for review
+              </button>
+            )}
+            {canReview && (
+              <a
+                class="button controlled"
+                href={`/documents/${document.id}/versions/${version.id}/review`}
+              >
+                Open review workspace
+              </a>
+            )}
+            <p class="action-status" data-result role="status" tabindex="-1"></p>
+          </div>
+          <p class="note">
+            This record view does not upload files, approve, make a revision effective, supersede,
+            archive, or void a version. The controls above submit only the transition offered by the
+            current state; the server rechecks the current state, record version, permissions, and
+            source evidence when an action is submitted.
+          </p>
+        </section>
+      </aside>
+    </div>
+  </div>
+</AppLayout>
+
 <script>
   import { actions } from 'astro:actions';
-  const section=document.querySelector<HTMLElement>('.actions');
-  const status=document.createElement('p');
-  status.setAttribute('data-result','');status.setAttribute('role','status');status.setAttribute('tabindex','-1');
-  section?.appendChild(status);
-  document.querySelector<HTMLButtonElement>('[data-submit-version]')?.addEventListener('click',async(event)=>{const button=event.currentTarget as HTMLButtonElement;if(button.disabled||button.closest('[aria-busy="true"]'))return;button.disabled=true;section?.setAttribute('aria-busy','true');status.textContent='Submitting for review…';try{const result=await actions.documents.submit({versionId:button.dataset.submitVersion!,expectedVersion:BigInt(button.dataset.expectedVersion!)});if(result.data)window.location.reload();else{status.textContent='Submission was not accepted. Refresh the version and check its current state and your permissions before trying again.';status.focus?.();button.disabled=false;}}catch{status.textContent='The service did not confirm the result. Refresh this version and its history before deciding whether to try again.';status.focus?.();button.disabled=false;}finally{section?.removeAttribute('aria-busy');}});
+
+  const section = document.querySelector<HTMLElement>('.actions');
+  const status = section?.querySelector<HTMLElement>('[data-result]') ?? document.createElement('p');
+  if (!status.hasAttribute('data-result')) {
+    status.setAttribute('data-result', '');
+    status.setAttribute('role', 'status');
+    status.setAttribute('tabindex', '-1');
+    section?.appendChild(status);
+  }
+
+  document
+    .querySelector<HTMLButtonElement>('[data-submit-version]')
+    ?.addEventListener('click', async (event) => {
+      const button = event.currentTarget as HTMLButtonElement;
+      if (button.disabled || button.closest('[aria-busy="true"]')) return;
+      button.disabled = true;
+      section?.setAttribute('aria-busy', 'true');
+      status.textContent = 'Submitting for review…';
+      try {
+        const result = await actions.documents.submit({
+          versionId: button.dataset.submitVersion!,
+          expectedVersion: BigInt(button.dataset.expectedVersion!),
+        });
+        if (result.data) {
+          window.location.reload();
+        } else {
+          status.textContent =
+            'Submission was not accepted. Refresh the version and check its current state and your permissions before trying again.';
+          status.focus?.();
+          button.disabled = false;
+        }
+      } catch {
+        status.textContent =
+          'The service did not confirm the result. Refresh this version and its history before deciding whether to try again.';
+        status.focus?.();
+        button.disabled = false;
+      } finally {
+        section?.removeAttribute('aria-busy');
+      }
+    });
 </script>
-<style>.crumb{display:flex;gap:.5rem;margin-bottom:var(--space-5);color:var(--text-muted);font-size:.8rem}.crumb a,a{color:var(--color-accent-primary-hover)}.head{display:flex;justify-content:space-between;gap:var(--space-5);align-items:flex-start;margin-bottom:var(--space-5)}h1{margin:.25rem 0 .4rem}.eyebrow{margin:0;color:var(--text-muted);font-size:.7rem;letter-spacing:.13em;font-weight:700}.head p:not(.eyebrow),.muted{color:var(--text-muted);font-size:.85rem}.facts{display:grid;grid-template-columns:repeat(4,1fr);gap:var(--space-3);margin-bottom:var(--space-5)}.facts>div{display:grid;gap:.35rem;padding:var(--space-4);background:var(--surface-panel);border:1px solid var(--color-border-subtle);border-radius:var(--radius-md)}.facts span{color:var(--text-muted);font-size:.75rem}.facts strong{font-size:.82rem;word-break:break-word}.actions{display:flex;gap:var(--space-3);align-items:center;margin-bottom:var(--space-5)}.button{min-height:var(--control-height);padding:.6rem 1rem;border:1px solid var(--color-accent-primary);border-radius:var(--radius-sm);background:var(--color-accent-primary);color:var(--text-on-accent);text-decoration:none;font:inherit;font-weight:700}.button.secondary{background:var(--surface-raised);border-color:var(--border-default);color:var(--text-primary)}.button.controlled{background:var(--status-review-bg);border-color:var(--status-review)}.panel{padding:var(--space-5);margin-top:var(--space-5);background:var(--surface-panel);border:1px solid var(--color-border-subtle);border-radius:var(--radius-lg)}.panel h2{margin:0;font-size:1rem}.panel p{line-height:1.55}.table-wrap{overflow-x:auto}table{width:100%;border-collapse:collapse;margin-top:var(--space-4)}caption{text-align:start;color:var(--text-muted);font-size:.75rem;padding-bottom:.5rem}th,td{padding:.75rem .4rem;text-align:start;border-top:1px solid var(--color-border-subtle);font-size:.8rem}th{font-weight:700}@media(max-width:650px){.head{display:grid}.facts{grid-template-columns:repeat(2,1fr)}.actions{display:grid;justify-content:stretch}.button{width:max-content}}@media(max-width:420px){.facts{grid-template-columns:1fr}}
+
+<style>
+  .record-detail {
+    --detail-gap: var(--space-5);
+    min-inline-size: 0;
+  }
+  .crumb {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-2);
+    margin-block-end: var(--space-5);
+    color: var(--text-muted);
+    font-size: var(--font-size-xs);
+  }
+  .crumb a {
+    display: inline-flex;
+    align-items: center;
+    min-block-size: 44px;
+    color: var(--color-accent-primary-hover);
+    overflow-wrap: anywhere;
+  }
+  .record-meta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: var(--space-2) var(--space-4);
+    margin: var(--space-3) 0 0;
+    color: var(--text-secondary);
+    font-size: var(--font-size-sm);
+    line-height: var(--line-height-normal);
+  }
+  .record-meta > span {
+    min-inline-size: 0;
+    overflow-wrap: anywhere;
+  }
+  .record-title {
+    flex-basis: 100%;
+    color: var(--text-primary);
+    font-size: var(--font-size-md);
+    font-weight: 600;
+  }
+  .meta-label {
+    color: var(--text-muted);
+    font-weight: 600;
+  }
+  .detail-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(17rem, 20rem);
+    align-items: start;
+    gap: var(--detail-gap);
+  }
+  .detail-main,
+  .action-rail {
+    display: grid;
+    min-inline-size: 0;
+    gap: var(--detail-gap);
+  }
+  .panel {
+    min-inline-size: 0;
+    margin: 0;
+    padding: var(--space-5);
+    border: 1px solid var(--color-border-subtle);
+    border-radius: var(--radius-lg);
+    background: var(--surface-panel);
+  }
+  .section-heading {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: var(--space-4);
+    margin-block-end: var(--space-4);
+  }
+  .section-heading h2 {
+    margin: 0;
+    color: var(--text-primary);
+    font-size: var(--font-size-lg);
+    line-height: var(--line-height-tight);
+    overflow-wrap: anywhere;
+  }
+  .eyebrow {
+    margin: 0 0 var(--space-1);
+    color: var(--text-muted);
+    font-size: var(--font-size-xs);
+    font-weight: 700;
+  }
+  .section-index {
+    color: var(--text-muted);
+    font-size: var(--font-size-xs);
+    font-variant-numeric: tabular-nums;
+  }
+  .facts-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--space-4);
+    margin: 0;
+  }
+  .evidence-facts {
+    margin-block-end: var(--space-4);
+  }
+  .facts-grid > div {
+    min-inline-size: 0;
+    padding-block-start: var(--space-3);
+    border-block-start: 1px solid var(--color-border-subtle);
+  }
+  .fact-wide {
+    grid-column: 1 / -1;
+  }
+  dt {
+    color: var(--text-muted);
+    font-size: var(--font-size-xs);
+    font-weight: 600;
+  }
+  dd {
+    margin: var(--space-1) 0 0;
+    color: var(--text-primary);
+    font-size: var(--font-size-sm);
+    line-height: var(--line-height-relaxed);
+    overflow-wrap: anywhere;
+  }
+  .identifier,
+  .hash-cell {
+    font-family: var(--font-mono);
+    font-size: var(--font-size-xs);
+    font-variant-numeric: tabular-nums;
+    overflow-wrap: anywhere;
+  }
+  .hash-cell {
+    display: block;
+    margin-block-start: var(--space-1);
+  }
+  .numeric {
+    font-variant-numeric: tabular-nums;
+  }
+  .account-id {
+    display: block;
+    color: var(--text-muted);
+    font-family: var(--font-mono);
+    font-size: var(--font-size-xs);
+    overflow-wrap: anywhere;
+  }
+  .note {
+    margin: var(--space-4) 0 0;
+    color: var(--text-muted);
+    font-size: var(--font-size-sm);
+    line-height: var(--line-height-relaxed);
+    overflow-wrap: anywhere;
+  }
+  .notice {
+    margin: 0 0 var(--space-5);
+    padding: var(--space-3) var(--space-4);
+    border-inline-start: 3px solid var(--status-warning);
+    border-radius: var(--radius-sm);
+    background: var(--surface-raised);
+    color: var(--text-primary);
+    font-size: var(--font-size-sm);
+    line-height: var(--line-height-relaxed);
+    overflow-wrap: anywhere;
+  }
+  .lifecycle + .notice,
+  .note + .notice {
+    margin-block-start: var(--space-3);
+  }
+  .evidence-block {
+    min-inline-size: 0;
+  }
+  .evidence-block h3 {
+    margin: 0 0 var(--space-2);
+    color: var(--text-primary);
+    font-size: var(--font-size-sm);
+    font-weight: 700;
+  }
+  .table-scroll {
+    max-inline-size: 100%;
+    overflow-x: auto;
+    overscroll-behavior-inline: contain;
+    border: 1px solid var(--color-border-subtle);
+    border-radius: var(--radius-md);
+  }
+  .table-scroll:focus-visible {
+    outline: 2px solid var(--focus-ring);
+    outline-offset: 2px;
+  }
+  table {
+    inline-size: 100%;
+    min-inline-size: 52rem;
+    border-collapse: collapse;
+  }
+  caption {
+    padding: var(--space-3) var(--space-4);
+    text-align: start;
+    color: var(--text-muted);
+    font-size: var(--font-size-xs);
+  }
+  th,
+  td {
+    padding: var(--space-3);
+    text-align: start;
+    border-block-start: 1px solid var(--color-border-subtle);
+    font-size: var(--font-size-sm);
+    vertical-align: top;
+    overflow-wrap: anywhere;
+  }
+  thead th {
+    background: var(--table-header-background);
+    color: var(--text-primary);
+    font-size: var(--font-size-xs);
+    font-weight: 700;
+  }
+  .file-name {
+    min-inline-size: 12rem;
+    font-weight: 700;
+  }
+  .sub {
+    display: block;
+    margin-block-start: var(--space-1);
+    color: var(--text-muted);
+    font-size: var(--font-size-xs);
+    line-height: var(--line-height-normal);
+  }
+  .summary-text {
+    margin: 0;
+    color: var(--text-primary);
+    font-size: var(--font-size-sm);
+    line-height: var(--line-height-relaxed);
+    overflow-wrap: anywhere;
+  }
+  .lifecycle {
+    display: grid;
+    gap: var(--space-2);
+    margin: var(--space-3) 0 0;
+    padding: 0;
+    list-style: none;
+  }
+  .lifecycle li {
+    display: grid;
+    grid-template-columns: minmax(8rem, 14rem) minmax(0, 1fr);
+    gap: var(--space-1) var(--space-3);
+    padding-block-start: var(--space-3);
+    border-block-start: 1px solid var(--color-border-subtle);
+  }
+  .lifecycle li:first-child {
+    padding-block-start: 0;
+    border-block-start: 0;
+  }
+  .event {
+    color: var(--text-primary);
+    font-size: var(--font-size-sm);
+    font-weight: 700;
+  }
+  .when {
+    color: var(--text-secondary);
+    font-size: var(--font-size-sm);
+    font-variant-numeric: tabular-nums;
+    overflow-wrap: anywhere;
+  }
+  .who {
+    grid-column: 2;
+    color: var(--text-muted);
+    font-size: var(--font-size-xs);
+    line-height: var(--line-height-normal);
+    overflow-wrap: anywhere;
+  }
+  .related {
+    display: grid;
+    gap: var(--space-3);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+  .related li {
+    display: grid;
+    gap: var(--space-1);
+    padding-block-start: var(--space-3);
+    border-block-start: 1px solid var(--color-border-subtle);
+  }
+  .related li:first-child {
+    padding-block-start: 0;
+    border-block-start: 0;
+  }
+  .related a {
+    display: inline-flex;
+    align-items: center;
+    min-block-size: 44px;
+    color: var(--color-accent-primary-hover);
+    font-weight: 600;
+    overflow-wrap: anywhere;
+  }
+  .related span {
+    color: var(--text-muted);
+    font-size: var(--font-size-xs);
+    line-height: var(--line-height-normal);
+    overflow-wrap: anywhere;
+  }
+  .related-static {
+    display: block;
+    padding-block: var(--space-2);
+  }
+  .action-panel {
+    border-inline-start: 3px solid var(--color-accent-primary);
+  }
+  .action-panel h2 {
+    margin: 0;
+    color: var(--text-primary);
+    font-size: var(--font-size-lg);
+    line-height: var(--line-height-tight);
+    overflow-wrap: anywhere;
+  }
+  .action-panel p {
+    margin: var(--space-3) 0 0;
+    color: var(--text-secondary);
+    font-size: var(--font-size-sm);
+    line-height: var(--line-height-relaxed);
+    overflow-wrap: anywhere;
+  }
+  .action-panel p.note {
+    color: var(--text-muted);
+  }
+  .actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-3);
+    margin-block-start: var(--space-4);
+  }
+  .button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-block-size: 44px;
+    padding-inline: var(--space-4);
+    border: 1px solid var(--color-accent-primary);
+    border-radius: var(--radius-sm);
+    background: var(--color-accent-primary);
+    color: var(--text-on-accent);
+    font: inherit;
+    font-weight: 700;
+    text-decoration: none;
+  }
+  .button:hover {
+    border-color: var(--color-accent-primary-hover);
+    background: var(--color-accent-primary-hover);
+  }
+  .button:focus-visible {
+    outline: 2px solid var(--focus-ring);
+    outline-offset: 2px;
+  }
+  .button:disabled {
+    cursor: wait;
+    opacity: 0.72;
+  }
+  .button.secondary {
+    background: var(--surface-raised);
+    border-color: var(--border-default);
+    color: var(--text-primary);
+  }
+  .button.controlled {
+    background: var(--status-review-bg);
+    border-color: var(--status-review);
+    color: var(--text-primary);
+  }
+  .action-status {
+    flex-basis: 100%;
+    margin: 0;
+    color: var(--text-primary);
+    font-size: var(--font-size-sm);
+    line-height: var(--line-height-normal);
+    overflow-wrap: anywhere;
+  }
+  .action-status:empty {
+    display: none;
+  }
+  .text-link {
+    display: inline-flex;
+    align-items: center;
+    min-block-size: 44px;
+    margin-block-start: var(--space-2);
+    color: var(--color-accent-primary-hover);
+    font-weight: 600;
+    overflow-wrap: anywhere;
+  }
+  @media (max-width: 1000px) {
+    .detail-layout {
+      grid-template-columns: minmax(0, 1fr);
+    }
+    .action-rail {
+      order: -1;
+    }
+  }
+  @media (max-width: 760px) {
+    .facts-grid {
+      grid-template-columns: minmax(0, 1fr);
+    }
+    .fact-wide {
+      grid-column: auto;
+    }
+    .panel {
+      padding: var(--space-4);
+    }
+    .lifecycle li {
+      grid-template-columns: minmax(0, 1fr);
+    }
+    .who {
+      grid-column: 1;
+    }
+  }
+  @media (forced-colors: active) {
+    .panel,
+    .table-scroll,
+    .button,
+    .notice {
+      border-color: CanvasText;
+    }
+    .table-scroll:focus-visible,
+    .button:focus-visible {
+      outline-color: Highlight;
+    }
+  }
 </style>

@@ -1,3 +1,13 @@
+- **2026-10-22 — CA-P-DOCUMENTS-DOCUMENTID-VERSIONS-VERSIONID-EDIT / CAPA A draft edit form**
+  - Changed: the draft-edit form now uses one record header (document title/type, lifecycle state, record version) and one column on narrow screens with two columns only for the independent revision/summary fields on wide screens; stable labels/help/errors and a Cancel/Save action row were added. Hidden `expectedVersion`/`expectedContentHash`, native POST, `documents.updateDraft` payload, read guards, source binding/hash display and Sidebar are unchanged. No API/schema/policy/upload/effectivity change.
+  - Evidence: NOT RUN by task instruction (no tests/typecheck/lint/build/browser); source and textual `git diff` review only. CSS/token-based; literal visual-reference match not confirmed.
+  - State: DONE — code edit only; untested.
+  - Key files: `src/pages/documents/[documentId]/versions/[versionId]/edit.astro`.
+- **2026-10-22 — CA-P-DOCUMENTS-DOCUMENTID-VERSIONS-VERSIONID / CAPA A version detail**
+  - Changed: version detail now has one record header (document identity, revision, record/identity version, lifecycle state) followed by read-only facts, source binding + SHA-256/file manifest, change summary, recorded lifecycle timestamps, authorization evidence and revision relationships; the existing edit/submit/review controls moved to a separate action rail with one canonical pending/error status. Submit action payload, expectedVersion, guards, audit/registry links and Sidebar are unchanged. No API/schema/policy change.
+  - Evidence: NOT RUN by task instruction (no tests/typecheck/lint/build/browser); source and textual `git diff` review only.
+  - State: DONE — code edit only; untested.
+  - Key files: `src/pages/documents/[documentId]/versions/[versionId]/index.astro`.
 - **2026-10-22 — CA-P-DOCUMENTS-DOCUMENTID-VERSIONS-NEW / CAPA A new revision form**
   - Changed: the form now uses one column on narrow screens and two columns only for the independent revision/summary fields on wide screens, with a server-derived revision-context panel (identity version, latest/effective revision, revision basis, approved≠effective) and unified field help/errors/actions. Field names, native POST, hidden `expectedDocumentVersion`/predecessor snapshot, source-file selection, guards, `documents.createVersion` and Sidebar are unchanged. No API/schema/policy change.
   - Evidence: NOT RUN by task instruction (no tests/typecheck/lint/build/browser); source and textual `git diff` review only.
