@@ -1,3 +1,8 @@
+- **2026-10-22 — CA-P-DOCUMENTS-DOCUMENTID-VERSIONS-NEW / CAPA A new revision form**
+  - Changed: the form now uses one column on narrow screens and two columns only for the independent revision/summary fields on wide screens, with a server-derived revision-context panel (identity version, latest/effective revision, revision basis, approved≠effective) and unified field help/errors/actions. Field names, native POST, hidden `expectedDocumentVersion`/predecessor snapshot, source-file selection, guards, `documents.createVersion` and Sidebar are unchanged. No API/schema/policy change.
+  - Evidence: NOT RUN by task instruction (no tests/typecheck/lint/build/browser); source and textual `git diff` review only.
+  - State: DONE — code edit only; untested.
+  - Key files: `src/pages/documents/[documentId]/versions/new.astro`.
 - **2026-10-22 — CA-P-DOCUMENTS-DOCUMENTID / CAPA A document detail**
   - Changed: `/documents/[documentId]` now presents a record header (identity, state, identity version, latest/effective revision), then facts, focus-revision evidence (server hash + bound source manifest), controlled version history, relationships and a separate read-only action rail. `APPROVED` is explicitly separated from `EFFECTIVE`; revision eligibility now follows server `revisionCreation` plus the permission required by the current history. Read guards, 404/503 paths, Create-revision route, version links, all existing fields and Sidebar are unchanged. No API/schema/policy/action change.
   - Evidence: NOT RUN by task instruction (no tests/typecheck/lint/build/browser/AT); source and textual `git diff` review only.

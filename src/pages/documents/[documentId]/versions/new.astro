@@ -3,6 +3,7 @@ import PageHeader from "../../../../ui/components/PageHeader.astro";
 import AppLayout from '../../../../ui/layouts/AppLayout.astro';
 import FormErrorSummary from '../../../../ui/components/FormErrorSummary.astro';
 import { formatDate } from '../../../../shared/copy/format.js';
+import { stateLabel } from '../../../../shared/copy/ux-vocabulary.js';
 import { documentsReadDependencies } from '../../../../modules/documents/application/dependencies.js';
 import { actions } from 'astro:actions';
 import type { ReadFailure } from '../../../../shared/errors/read-failure.js';
@@ -33,6 +34,17 @@ if (canCreateForCurrentHistory) {
 }
 const formData = Astro.request.method === 'POST' ? await Astro.request.formData() : null;
 const predecessorSnapshotRequired = creationDecision.allowed && Boolean(creationDecision.predecessor);
+// Presentation-only context for the header and context panel. The guards and
+// the server action still decide eligibility; nothing here enables an action.
+const latestVersion = document.versions[0];
+const effectiveVersion = document.versions.find((version) => version.state === 'EFFECTIVE');
+const revisionBasis = creationDecision.allowed
+  ? creationDecision.predecessor
+    ? `Follows revision ${creationDecision.predecessor.revision} (${stateLabel(creationDecision.predecessor.state)}), the latest recorded revision.`
+    : 'First revision: no predecessor revision is recorded for this document.'
+  : creationDecision.reason === 'REVISION_IN_PROGRESS'
+    ? `Blocked while revision ${creationDecision.blockingVersion.revision} remains ${stateLabel(creationDecision.blockingVersion.state)}.`
+    : `The latest revision ${creationDecision.blockingVersion.revision} is ${stateLabel(creationDecision.blockingVersion.state)}; only an effective revision can be followed.`;
 const values = {
   revision: String(formData?.get('revision') ?? ''),
   changeSummary: String(formData?.get('changeSummary') ?? ''),
@@ -99,39 +111,101 @@ if (formData && canCreate) {
 }
 ---
 <AppLayout title={`New revision · ${document.documentNo}`} locale="en" direction="ltr">
-  <PageHeader><Fragment slot="heading"><h1>New controlled version</h1></Fragment><p>{document.documentNo} · Creating a new draft leaves existing controlled history unchanged.</p><Fragment slot="actions"><a href={`/documents/${document.id}`}>Back to document</a></Fragment></PageHeader>
-  {canCreateForCurrentHistory || (formData && canCreate) ? <form class="form" method="post" data-action="documents.createVersion" data-document-id={document.id}>
-    {failure && <FormErrorSummary summary={failure.summary} recovery={failure.recovery} errors={failure.field === 'revision' ? [{fieldId:'revision', message:'Enter the revision reference assigned by Document Control.'}] : failure.field === 'fileIds' ? [{fieldId:'fileIds', message:'Select at least one registered source file.'}] : []} listHref={`/documents/${document.id}`} listLabel="document" />}
-    <input type="hidden" name="expectedDocumentVersion" value={values.expectedDocumentVersion} />
-    {values.expectedPredecessorId && <>
-      <input type="hidden" name="expectedPredecessorId" value={values.expectedPredecessorId} />
-      <input type="hidden" name="expectedPredecessorState" value={values.expectedPredecessorState} />
-      <input type="hidden" name="expectedPredecessorVersion" value={values.expectedPredecessorVersion} />
-    </>}
-    <fieldset><legend>Revision details</legend>
-      <label for="revision">Revision reference<input id="revision" name="revision" required value={values.revision} aria-invalid={failure?.field === 'revision' ? 'true' : undefined} aria-describedby={failure?.field === 'revision' ? 'revision-help revision-error' : 'revision-help'} /></label>
-      <p id="revision-help" class="hint">Use the revision reference assigned by Document Control.</p>
-      {failure?.field === 'revision' && <p id="revision-error" class="field-error">A revision reference is required.</p>}
-      <label for="changeSummary">Change summary<textarea id="changeSummary" name="changeSummary" rows="3">{values.changeSummary}</textarea></label>
-    </fieldset>
-    <fieldset id="fileIds" aria-invalid={failure?.field === 'fileIds' ? 'true' : undefined} aria-describedby={failure?.field === 'fileIds' ? 'fileIds-error' : undefined}><legend>Registered source files</legend>
-      <p class="hint">The system checks each file against this document and calculates the revision fingerprint on the server. A browser-provided hash is not accepted.</p>
-      {sourceFailure === 'UNAVAILABLE'
-        ? <p class="notice" role="status">The source file list is unavailable. Your revision cannot be submitted until the list is available.</p>
-        : sourceFailure === 'DENIED'
-          ? <p class="notice" role="alert">Your account cannot read the source file list for this document. Ask Document Control to confirm the access scope.</p>
-          : sourceFailure === 'MISSING'
-            ? <p class="notice" role="alert">The source document record is no longer available. Return to the document register and reload.</p>
-        : sourceFiles.length
-          ? <ul class="source-list">{sourceFiles.map((file) => <li><label class="file-option"><input type="checkbox" name="fileId" value={file.id} checked={values.fileIds.includes(file.id)} /><span><strong>{file.originalFilename}</strong><small>{file.sizeBytes.toLocaleString('en-US')} bytes · Added {formatDate(file.uploadedAt)}</small></span></label></li>)}</ul>
-          : <p class="notice" role="status">No registered source file is available for this document. Ask Document Control to register the source file, then return here.</p>}
-      {failure?.field === 'fileIds' && <p id="fileIds-error" class="field-error">Select at least one registered source file.</p>}
-    </fieldset>
-    <div class="actions"><a href={`/documents/${document.id}`}>Cancel</a><button type="submit" data-submit disabled={!sourceFiles.length || sourceFailure !== null || !creationDecision.allowed}>Create draft version</button></div>
-    <p data-result role="status" aria-live="polite" tabindex="-1"></p>
-  </form> : !canCreate ? <section class="denied" role="alert"><h2>Revision unavailable</h2><p>Creating a revision requires the permission assigned to the current document history. Contact an administrator if you need access.</p></section>
-    : !creationDecision.allowed ? <section class="denied" role="status"><h2>Revision unavailable</h2><p>{creationDecision.reason === 'REVISION_IN_PROGRESS' ? `Revision ${creationDecision.blockingVersion.revision} is already in progress (${creationDecision.blockingVersion.state}). Open it to continue the existing workflow.` : `The latest revision (${creationDecision.blockingVersion.revision}) is ${creationDecision.blockingVersion.state}. Ask Document Control to confirm the next allowed step.`}</p><a href={`/documents/${document.id}/versions/${creationDecision.blockingVersion.id}`}>Open latest revision</a></section>
-    : <section class="denied" role="status"><h2>Revision unavailable</h2><p>This account does not have the permission needed to create the next revision from the current history.</p></section>}
+  <div class="new-version">
+    <PageHeader purpose={`Creates one draft revision for ${document.documentNo}. Existing controlled history stays unchanged.`}>
+      <Fragment slot="heading"><h1>New controlled version</h1></Fragment>
+      <p class="record-meta">
+        <span class="record-title">{document.title}</span>
+        <span><span class="meta-label">Type</span> {document.documentType}</span>
+        <span>
+          <span class="meta-label">Identity version</span>
+          <strong class="numeric">{document.version.toString()}</strong>
+        </span>
+      </p>
+      <Fragment slot="actions"><a href={`/documents/${document.id}`}>Back to document</a></Fragment>
+    </PageHeader>
+
+    {canCreateForCurrentHistory || (formData && canCreate) ? <form class="form" method="post" data-action="documents.createVersion" data-document-id={document.id}>
+      {failure && <FormErrorSummary summary={failure.summary} recovery={failure.recovery} errors={failure.field === 'revision' ? [{fieldId:'revision', message:'Enter the revision reference assigned by Document Control.'}] : failure.field === 'fileIds' ? [{fieldId:'fileIds', message:'Select at least one registered source file.'}] : []} listHref={`/documents/${document.id}`} listLabel="document" />}
+      <input type="hidden" name="expectedDocumentVersion" value={values.expectedDocumentVersion} />
+      {values.expectedPredecessorId && <>
+        <input type="hidden" name="expectedPredecessorId" value={values.expectedPredecessorId} />
+        <input type="hidden" name="expectedPredecessorState" value={values.expectedPredecessorState} />
+        <input type="hidden" name="expectedPredecessorVersion" value={values.expectedPredecessorVersion} />
+      </>}
+
+      <section class="context-panel" aria-labelledby="context-heading">
+        <div class="panel-heading">
+          <div>
+            <p class="eyebrow">Controlled document</p>
+            <h2 id="context-heading">Revision context</h2>
+          </div>
+        </div>
+        <dl class="facts-grid">
+          <div><dt>Document number</dt><dd class="identifier">{document.documentNo}</dd></div>
+          <div><dt>Document record</dt><dd>{document.active ? 'Active' : 'Inactive'}</dd></div>
+          <div>
+            <dt>Latest revision</dt>
+            <dd>{latestVersion ? `${latestVersion.revision} · ${stateLabel(latestVersion.state)}` : 'No revision'}</dd>
+          </div>
+          <div>
+            <dt>Effective revision</dt>
+            <dd>{effectiveVersion?.revision ?? 'None'}</dd>
+          </div>
+          <div class="fact-wide"><dt>Revision basis</dt><dd>{revisionBasis}</dd></div>
+        </dl>
+        <p class="note">
+          A new revision can start only from an effective predecessor. Approved is not effective.
+          This form creates a draft; it does not approve, activate or supersede a revision. The server
+          rechecks the document identity version, the latest revision and the selected source files on
+          submit.
+        </p>
+      </section>
+
+      <fieldset>
+        <legend>Revision details</legend>
+        <p class="section-note">
+          Reference and summary are recorded on the draft. They do not approve the revision or make it
+          effective.
+        </p>
+        <div class="field-grid">
+          <div class="field">
+            <label for="revision">Revision reference</label>
+            <p class="hint" id="revision-help">Use the revision reference assigned by Document Control.</p>
+            <input id="revision" name="revision" required value={values.revision} aria-invalid={failure?.field === 'revision' ? 'true' : undefined} aria-describedby={failure?.field === 'revision' ? 'revision-help revision-error' : 'revision-help'} />
+            {failure?.field === 'revision' && <p id="revision-error" class="field-error">A revision reference is required.</p>}
+          </div>
+          <div class="field">
+            <label for="changeSummary">Change summary</label>
+            <p class="hint" id="changeSummary-help">Optional. Describe what changed in this revision.</p>
+            <textarea id="changeSummary" name="changeSummary" rows="3" aria-describedby="changeSummary-help">{values.changeSummary}</textarea>
+          </div>
+        </div>
+      </fieldset>
+
+      <fieldset id="fileIds" aria-invalid={failure?.field === 'fileIds' ? 'true' : undefined} aria-describedby={failure?.field === 'fileIds' ? 'fileIds-help fileIds-error' : 'fileIds-help'}><legend>Registered source files</legend>
+        <p class="hint" id="fileIds-help">The system checks each file against this document and calculates the revision fingerprint on the server. A browser-provided hash is not accepted.</p>
+        {sourceFailure === 'UNAVAILABLE'
+          ? <p class="notice" role="status">The source file list is unavailable. Your revision cannot be submitted until the list is available.</p>
+          : sourceFailure === 'DENIED'
+            ? <p class="notice" role="alert">Your account cannot read the source file list for this document. Ask Document Control to confirm the access scope.</p>
+            : sourceFailure === 'MISSING'
+              ? <p class="notice" role="alert">The source document record is no longer available. Return to the document register and reload.</p>
+          : sourceFiles.length
+            ? <ul class="source-list">{sourceFiles.map((file) => <li><label class="file-option"><input type="checkbox" name="fileId" value={file.id} checked={values.fileIds.includes(file.id)} /><span><strong>{file.originalFilename}</strong><small>{file.sizeBytes.toLocaleString('en-US')} bytes · Added {formatDate(file.uploadedAt)}</small></span></label></li>)}</ul>
+            : <p class="notice" role="status">No registered source file is available for this document. Ask Document Control to register the source file, then return here.</p>}
+        {failure?.field === 'fileIds' && <p id="fileIds-error" class="field-error">Select at least one registered source file.</p>}
+      </fieldset>
+
+      <div class="actions">
+        <a class="secondary" href={`/documents/${document.id}`}>Cancel</a>
+        <button type="submit" data-submit disabled={!sourceFiles.length || sourceFailure !== null || !creationDecision.allowed}>Create draft version</button>
+      </div>
+      <p class="result-status" data-result role="status" aria-live="polite" tabindex="-1"></p>
+    </form> : !canCreate ? <section class="denied" role="alert"><h2>Revision unavailable</h2><p>Creating a revision requires the permission assigned to the current document history. Contact an administrator if you need access.</p></section>
+      : !creationDecision.allowed ? <section class="denied" role="status"><h2>Revision unavailable</h2><p>{creationDecision.reason === 'REVISION_IN_PROGRESS' ? `Revision ${creationDecision.blockingVersion.revision} is already in progress (${creationDecision.blockingVersion.state}). Open it to continue the existing workflow.` : `The latest revision (${creationDecision.blockingVersion.revision}) is ${creationDecision.blockingVersion.state}. Ask Document Control to confirm the next allowed step.`}</p><a href={`/documents/${document.id}/versions/${creationDecision.blockingVersion.id}`}>Open latest revision</a></section>
+      : <section class="denied" role="status"><h2>Revision unavailable</h2><p>This account does not have the permission needed to create the next revision from the current history.</p></section>}
+  </div>
 </AppLayout>
 <script>
   import { actions } from 'astro:actions';
@@ -160,5 +234,303 @@ if (formData && canCreate) {
   }
 </script>
 <style>
-  .head{display:flex;justify-content:space-between;gap:var(--space-5);align-items:flex-start;margin-bottom:var(--space-6)}h1{margin:.25rem 0 .4rem}.eyebrow{margin:0;color:var(--text-muted);font-size:.7rem;letter-spacing:.13em;font-weight:700}.head p:not(.eyebrow),.hint,.denied p{color:var(--text-muted);font-size:.85rem}.head a,.actions a{color:var(--color-accent-primary-hover)}.form{max-width:840px;display:grid;gap:var(--space-5)}fieldset{display:grid;gap:var(--space-4);padding:var(--space-5);border:1px solid var(--color-border-subtle);border-radius:var(--radius-lg);background:var(--surface-panel)}legend{padding-inline:.5rem;font-weight:700}label{display:grid;gap:.4rem;color:var(--text-secondary);font-size:.82rem}input:not([type=checkbox]),textarea{min-height:var(--control-height);padding:.65rem;background:var(--surface-raised);border:1px solid var(--border-default);border-radius:var(--radius-sm);color:inherit;font:inherit}textarea{resize:vertical}.hint,.notice{margin:0;color:var(--text-muted);font-size:.84rem;line-height:1.5}.notice{padding:var(--space-4);border-inline-start:3px solid var(--status-warning);background:var(--surface-raised)}.source-list{list-style:none;padding:0;margin:0;display:grid;gap:var(--space-3)}.file-option{display:flex;align-items:center;gap:var(--space-3);padding:var(--space-3);border:1px solid var(--color-border-subtle);border-radius:var(--radius-md);background:var(--surface-raised)}.file-option input{width:1.15rem;height:1.15rem;flex:0 0 auto}.file-option span{display:grid;gap:.3rem;min-width:0}.file-option strong{overflow-wrap:anywhere}.file-option small{color:var(--text-muted)}.actions{display:flex;justify-content:flex-end;gap:var(--space-3);align-items:center}.actions button{min-height:var(--control-height);padding:.65rem 1rem;border:1px solid var(--color-accent-primary);border-radius:var(--radius-sm);background:var(--color-accent-primary);color:var(--text-on-accent);font:inherit;font-weight:700}button[disabled]{opacity:.6}.field-error{margin:0;color:var(--status-danger);font-size:.8rem}.denied{padding:var(--space-6);border-inline-start:3px solid var(--status-warning);background:var(--surface-panel)}@media(max-width:650px){.head{display:grid}.actions{display:grid;justify-content:stretch}}
+  .new-version { min-inline-size: 0; }
+  .record-meta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: var(--space-2) var(--space-4);
+    margin: var(--space-3) 0 0;
+    color: var(--text-secondary);
+    font-size: var(--font-size-sm);
+    line-height: var(--line-height-normal);
+  }
+  .record-meta > span { min-inline-size: 0; overflow-wrap: anywhere; }
+  .record-title {
+    flex-basis: 100%;
+    color: var(--text-primary);
+    font-size: var(--font-size-md);
+    font-weight: 600;
+  }
+  .meta-label { color: var(--text-muted); font-weight: 600; }
+
+  .form {
+    inline-size: min(100%, 56rem);
+    display: grid;
+    gap: var(--space-5);
+    margin: 0;
+  }
+  fieldset {
+    min-inline-size: 0;
+    margin: 0;
+    padding: clamp(var(--space-4), 3vw, var(--space-6));
+    border: 1px solid var(--color-border-subtle);
+    border-radius: var(--radius-lg);
+    background: var(--surface-panel);
+  }
+  fieldset[aria-invalid='true'] { border-color: var(--status-danger); }
+  legend {
+    padding-inline: 0.5rem;
+    color: var(--text-primary);
+    font-size: var(--font-size-lg);
+    font-weight: 700;
+  }
+  .section-note {
+    margin: 0 0 var(--space-4);
+    color: var(--text-secondary);
+    font-size: var(--font-size-sm);
+    line-height: var(--line-height-relaxed);
+    overflow-wrap: anywhere;
+  }
+  .field-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--space-5);
+    align-items: start;
+  }
+  .field { min-inline-size: 0; }
+  label {
+    display: block;
+    color: var(--text-primary);
+    font-size: var(--font-size-sm);
+    font-weight: 600;
+  }
+  .hint {
+    margin: 0 0 var(--space-2);
+    color: var(--text-secondary);
+    font-size: var(--font-size-xs);
+    line-height: var(--line-height-normal);
+    overflow-wrap: anywhere;
+  }
+  .field .hint { margin-block-start: var(--space-1); }
+  input:not([type='checkbox']),
+  textarea {
+    box-sizing: border-box;
+    inline-size: 100%;
+    padding: 0.65rem 0.75rem;
+  }
+  textarea { resize: vertical; }
+  .field-error {
+    margin: var(--space-2) 0 0;
+    color: var(--status-danger);
+    font-size: var(--font-size-sm);
+    line-height: var(--line-height-normal);
+  }
+
+  .context-panel {
+    min-inline-size: 0;
+    padding: clamp(var(--space-4), 3vw, var(--space-5));
+    border: 1px solid var(--color-border-subtle);
+    border-radius: var(--radius-lg);
+    background: var(--surface-panel);
+  }
+  .panel-heading {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: var(--space-4);
+    margin-block-end: var(--space-4);
+  }
+  .eyebrow {
+    margin: 0 0 var(--space-1);
+    color: var(--text-muted);
+    font-size: var(--font-size-xs);
+    font-weight: 700;
+  }
+  .context-panel h2 {
+    margin: 0;
+    color: var(--text-primary);
+    font-size: var(--font-size-lg);
+    line-height: var(--line-height-tight);
+    overflow-wrap: anywhere;
+  }
+  .facts-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--space-3) var(--space-5);
+    margin: 0;
+  }
+  .facts-grid > div {
+    min-inline-size: 0;
+    padding-block-start: var(--space-3);
+    border-block-start: 1px solid var(--color-border-subtle);
+  }
+  .fact-wide { grid-column: 1 / -1; }
+  dt {
+    color: var(--text-muted);
+    font-size: var(--font-size-xs);
+    font-weight: 600;
+  }
+  dd {
+    margin: var(--space-1) 0 0;
+    color: var(--text-primary);
+    font-size: var(--font-size-sm);
+    line-height: var(--line-height-relaxed);
+    overflow-wrap: anywhere;
+  }
+  .identifier {
+    font-family: var(--font-mono);
+    font-size: var(--font-size-xs);
+    overflow-wrap: anywhere;
+  }
+  .numeric { font-variant-numeric: tabular-nums; }
+  .note {
+    margin: var(--space-4) 0 0;
+    color: var(--text-muted);
+    font-size: var(--font-size-sm);
+    line-height: var(--line-height-relaxed);
+    overflow-wrap: anywhere;
+  }
+
+  .notice {
+    margin: 0 0 var(--space-3);
+    padding: var(--space-3) var(--space-4);
+    border-inline-start: 3px solid var(--status-warning);
+    border-radius: var(--radius-sm);
+    background: var(--surface-raised);
+    color: var(--text-primary);
+    font-size: var(--font-size-sm);
+    line-height: var(--line-height-relaxed);
+    overflow-wrap: anywhere;
+  }
+  .source-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: var(--space-2);
+  }
+  .file-option {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--space-3);
+    min-block-size: 44px;
+    padding: var(--space-3);
+    border: 1px solid var(--color-border-subtle);
+    border-radius: var(--radius-md);
+    background: var(--surface-raised);
+    font-weight: 400;
+    cursor: pointer;
+  }
+  .file-option:hover { border-color: var(--border-default); }
+  .source-list .file-option input[type='checkbox'] {
+    inline-size: 1.15rem;
+    block-size: 1.15rem;
+    min-block-size: auto;
+    margin-block-start: 0.1rem;
+    flex: 0 0 auto;
+  }
+  .file-option span {
+    display: grid;
+    gap: var(--space-1);
+    min-inline-size: 0;
+  }
+  .file-option strong { font-weight: 600; overflow-wrap: anywhere; }
+  .file-option small {
+    color: var(--text-secondary);
+    font-size: var(--font-size-xs);
+    line-height: var(--line-height-normal);
+  }
+
+  .actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: flex-end;
+    gap: var(--space-3);
+  }
+  .actions .secondary,
+  .actions button {
+    box-sizing: border-box;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-block-size: max(var(--control-height), 44px);
+    padding: 0.65rem 1rem;
+    border: 1px solid var(--border-default);
+    border-radius: var(--radius-sm);
+    font: inherit;
+    font-weight: 700;
+    text-align: center;
+    text-decoration: none;
+  }
+  .actions .secondary {
+    background: var(--surface-raised);
+    color: var(--text-primary);
+  }
+  .actions button {
+    border-color: var(--color-accent-primary);
+    background: var(--color-accent-primary);
+    color: var(--text-on-accent);
+  }
+  button[disabled] { opacity: 0.6; cursor: not-allowed; }
+  a:focus-visible,
+  button:focus-visible {
+    outline: 2px solid var(--focus-ring);
+    outline-offset: 2px;
+  }
+  .result-status {
+    margin: 0;
+    color: var(--text-secondary);
+    font-size: var(--font-size-sm);
+    line-height: var(--line-height-normal);
+    overflow-wrap: anywhere;
+  }
+  .result-status:empty { min-block-size: 0; }
+  .result-status:focus-visible {
+    outline: 2px solid var(--focus-ring);
+    outline-offset: 2px;
+  }
+
+  .denied {
+    padding: var(--space-6);
+    border: 1px solid var(--color-border-subtle);
+    border-inline-start: 3px solid var(--status-warning);
+    border-radius: var(--radius-lg);
+    background: var(--surface-panel);
+  }
+  .denied h2 {
+    margin: 0 0 var(--space-2);
+    color: var(--text-primary);
+    font-size: var(--font-size-lg);
+    line-height: var(--line-height-tight);
+  }
+  .denied p {
+    margin: 0 0 var(--space-3);
+    color: var(--text-secondary);
+    font-size: var(--font-size-sm);
+    line-height: var(--line-height-relaxed);
+  }
+  .denied a {
+    display: inline-flex;
+    align-items: center;
+    min-block-size: 44px;
+    color: var(--color-accent-primary-hover);
+    font-weight: 600;
+  }
+
+  @media (min-width: 48rem) {
+    .facts-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  }
+  @media (min-width: 64rem) {
+    .field-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  }
+  @media (max-width: 40rem) {
+    .actions { display: grid; grid-template-columns: 1fr; }
+    .actions > * { inline-size: 100%; }
+  }
+  @media (forced-colors: active) {
+    fieldset,
+    .context-panel,
+    .denied,
+    .file-option,
+    input:not([type='checkbox']),
+    textarea,
+    .actions .secondary,
+    .actions button {
+      border: 1px solid ButtonText;
+    }
+    .field-error,
+    .notice { color: CanvasText; }
+  }
 </style>
