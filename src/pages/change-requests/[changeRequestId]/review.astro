@@ -5,6 +5,8 @@ import { actions } from 'astro:actions';
 import { changeRequestsReadDependencies } from '../../../modules/change-requests/application/dependencies.js';
 import { classifyReadFailure, providerUnavailableResponse } from '../../../shared/errors/read-failure.js';
 import { isUuid } from '../../../shared/id/uuid.js';
+import { stateLabel, transitionLabel, targetTypeLabel } from '../../../shared/copy/ux-vocabulary.js';
+import { formatDateTime } from '../../../shared/copy/format.js';
 
 const actor = Astro.locals.actor;
 if (!actor) return Astro.redirect(`/login?returnTo=${encodeURIComponent(Astro.url.pathname)}`);
@@ -13,9 +15,18 @@ if (!isUuid(id)) return Astro.redirect('/404');
 let aggregate;
 try { aggregate = await changeRequestsReadDependencies().get.execute({ actor, id }); } catch (error) { if (classifyReadFailure(error) === 'UNAVAILABLE') return providerUnavailableResponse('Change request details are temporarily unavailable', Astro.url.pathname + Astro.url.search); return Astro.redirect('/404'); }
 if (!aggregate) return Astro.redirect('/404');
-const { changeRequest, changes } = aggregate;
+const { changeRequest, changes, history } = aggregate;
 const permission = (code: string) => actor.permissions.some((item) => item.active !== false && item.code === code);
-const canStartReview = changeRequest.state === 'SUBMITTED' && permission('PERM-CHG-REVIEW') && permission('PERM-APR-REVIEW');
+const holdsReviewPermission = permission('PERM-CHG-REVIEW');
+const holdsApprovalReviewPermission = permission('PERM-APR-REVIEW');
+const isRequester = actor.id === changeRequest.requestedBy;
+// Presentation mirror only: the server re-checks state, both permissions,
+// scope, expected version and separation of duties before any transition.
+const canStartReview =
+  changeRequest.state === 'SUBMITTED' &&
+  holdsReviewPermission &&
+  holdsApprovalReviewPermission &&
+  !isRequester;
 let reviewPostFailure = false;
 if (Astro.request.method === 'POST') {
   const form = await Astro.request.formData();
@@ -39,35 +50,283 @@ if (Astro.request.method === 'POST') {
   }
   reviewPostFailure = true;
 }
-const stringify = (value: unknown) => { try { return JSON.stringify(value, (_, item) => typeof item === 'bigint' ? item.toString() : item); } catch { return '[unavailable]'; } };
+const stringify = (value: unknown) => { try { return JSON.stringify(value, (_, item) => typeof item === 'bigint' ? item.toString() : item, 2); } catch { return '[unavailable]'; } };
+const timestamp = (value?: Date) => value ? formatDateTime(value) : 'Not recorded';
+const reviewConditions = [
+  { label: 'The request is submitted and waiting for review', met: changeRequest.state === 'SUBMITTED' },
+  { label: 'This account holds PERM-CHG-REVIEW', met: holdsReviewPermission },
+  { label: 'This account holds PERM-APR-REVIEW', met: holdsApprovalReviewPermission },
+  { label: 'This account is not the requester (separation of duties)', met: !isRequester },
+];
+const unavailableReason =
+  changeRequest.state === 'SUBMITTED'
+    ? !holdsReviewPermission || !holdsApprovalReviewPermission
+      ? 'This account can read the request but does not hold both permissions the review step requires.'
+      : isRequester
+        ? 'Separation of duties denies a review of your own request.'
+        : 'The server did not confirm review eligibility for this account and loaded version.'
+    : changeRequest.state === 'DRAFT'
+      ? 'This request is a draft. It must be submitted before a review can start.'
+      : changeRequest.state === 'UNDER_REVIEW'
+        ? 'Review has already started. The next decisions are return, rejection or approval through the controlled approval workflow.'
+        : changeRequest.state === 'RETURNED'
+          ? 'This request was returned for correction. Review restarts after the request is resumed and submitted again.'
+          : changeRequest.state === 'APPROVED' || changeRequest.state === 'APPLYING' || changeRequest.state === 'APPLIED'
+            ? 'The review decision is already recorded. Application is a separate controlled action.'
+            : changeRequest.state === 'REJECTED'
+              ? 'This request was rejected. No further review decision is available.'
+              : changeRequest.state === 'CANCELLED'
+                ? 'This request was cancelled. No further review decision is available.'
+                : changeRequest.state === 'APPLICATION_FAILED'
+                  ? 'Review is complete. The recorded application attempt failed and is preserved in the record history.'
+                  : 'No review decision is available for the recorded state.';
+const decisionOutline = [
+  { name: 'Approve', requirement: 'UNDER_REVIEW · PERM-CHG-APPROVE + PERM-APR-APPROVE · signature policy applies' },
+  { name: 'Reject', requirement: 'UNDER_REVIEW · PERM-CHG-REJECT + PERM-APR-REJECT · reason required' },
+  { name: 'Return for correction', requirement: 'UNDER_REVIEW · PERM-CHG-RETURN + PERM-APR-RETURN · reason required' },
+];
 ---
+
 <AppLayout title={`Review ${changeRequest.changeNo} · QC Operations`} locale="en" direction="ltr">
-  <PageHeader><Fragment slot="heading"><h1>Review {changeRequest.changeNo}</h1></Fragment><p class="lede">Version {changeRequest.version.toString()} · target version {changeRequest.targetVersion.toString()}</p><Fragment slot="actions"><a href={`/change-requests/${changeRequest.id}`}>Back to record</a></Fragment></PageHeader>
-  <section class="notice" role="note"><strong>Controlled decision boundary</strong><span>Approval records a decision against this request version. It does not silently edit the target record or mean RELEASED.</span></section>
-  <section class="panel"><h2>Proposed changes</h2><p>{changeRequest.reason}</p><ul>{changes.map((change) => <li><strong>{change.fieldPath}</strong>: <code>{stringify(change.currentValue)}</code> to <code>{stringify(change.proposedValue)}</code></li>)}</ul></section>
-  {canStartReview && <form class="decision" method="post" data-action="start-review" data-change-request-id={changeRequest.id} data-change-request-version={changeRequest.version.toString()}><input type="hidden" name="action" value="START_REVIEW" /><input type="hidden" name="expectedVersion" value={changeRequest.version.toString()} /><button type="submit" data-submit>Start review</button><p class="action-status" data-result role="status" tabindex="-1"></p></form>}
-  {reviewPostFailure && <p class="action-status" role="alert">The review could not be started. The request may have changed or authorization may have changed; refresh and check the current state.</p>}
-  {!canStartReview && <section class="denied" role="note"><h2>Decision unavailable</h2><p>Only an assigned, authorized review step can move this request forward. Return, rejection, and approval are not available through this direct route; they require the controlled approval workflow and an applicable approved signature policy.</p></section>}
+  <div class="review-workspace">
+    <PageHeader>
+      <Fragment slot="heading"><h1>Review {changeRequest.changeNo}</h1></Fragment>
+      <p class="record-meta">
+        <span><span class="meta-label">Target</span> {targetTypeLabel(changeRequest.targetType)}</span>
+        <span><span class="meta-label">Request version</span> <strong class="numeric">{changeRequest.version.toString()}</strong></span>
+        <span><span class="meta-label">Target version at request</span> <strong class="numeric">{changeRequest.targetVersion.toString()}</strong></span>
+      </p>
+      <Fragment slot="actions">
+        <div class="head-actions">
+          <span class="state" data-state={changeRequest.state}>{stateLabel(changeRequest.state)}</span>
+          <a class="text-link" href={`/change-requests/${changeRequest.id}`}>Back to record</a>
+          <a class="text-link" href="/change-requests">All requests</a>
+        </div>
+      </Fragment>
+    </PageHeader>
+
+    <section class="notice" role="note">
+      <strong>Controlled decision boundary</strong>
+      <span>Approval records a decision against this request version. It does not silently edit the target record or mean RELEASED.</span>
+    </section>
+
+    <div class="review-grid">
+      <div class="review-main">
+        <section class="panel" aria-labelledby="context-heading">
+          <div class="section-heading">
+            <div>
+              <p class="eyebrow">Record facts</p>
+              <h2 id="context-heading">Request context</h2>
+            </div>
+            <span class="section-index" aria-hidden="true">01</span>
+          </div>
+          <dl class="facts">
+            <div><dt>Target type</dt><dd>{targetTypeLabel(changeRequest.targetType)}</dd></div>
+            <div><dt>Target record</dt><dd class="identifier">{changeRequest.targetId}</dd></div>
+            <div><dt>Request version</dt><dd class="numeric">{changeRequest.version.toString()}</dd></div>
+            <div><dt>Target version at request</dt><dd class="numeric">{changeRequest.targetVersion.toString()}</dd></div>
+            <div><dt>Requested by</dt><dd class="identifier">{changeRequest.requestedBy}</dd></div>
+            <div><dt>Created</dt><dd>{timestamp(changeRequest.createdAt)}</dd></div>
+            <div><dt>Submitted</dt><dd>{timestamp(changeRequest.submittedAt)}</dd></div>
+            <div><dt>Last updated</dt><dd>{timestamp(changeRequest.updatedAt)}</dd></div>
+            <div class="fact-wide"><dt>Reason for change</dt><dd>{changeRequest.reason}</dd></div>
+          </dl>
+        </section>
+
+        <section class="panel" aria-labelledby="evidence-heading">
+          <div class="section-heading">
+            <div>
+              <p class="eyebrow">Review evidence</p>
+              <h2 id="evidence-heading">Proposed changes</h2>
+            </div>
+            <span class="section-index" aria-hidden="true">02</span>
+          </div>
+          <p class="note">The captured snapshot and the before/after values below were derived by the server when the request was created. They are review evidence, not a live target read.</p>
+          <dl class="evidence-facts">
+            <div><dt>Snapshot hash</dt><dd class="identifier">{changeRequest.targetSnapshotHash ?? 'Not supplied by record source'}</dd></div>
+            <div><dt>Proposed field changes</dt><dd class="numeric">{changes.length}</dd></div>
+          </dl>
+          <details class="snapshot">
+            <summary>Show captured target snapshot</summary>
+            <pre role="region" aria-label="Captured target snapshot JSON" tabindex="0">{stringify(changeRequest.targetSnapshot)}</pre>
+          </details>
+          {changes.length ? (
+            <div class="table-scroll" role="region" aria-label="Field-level proposed changes table" tabindex="0">
+              <table>
+                <caption>Field-level proposed changes</caption>
+                <thead><tr><th scope="col">Field path</th><th scope="col">Current (before)</th><th scope="col">Proposed (after)</th><th scope="col">Data type</th></tr></thead>
+                <tbody>{changes.map((change) => <tr><th scope="row">{change.fieldPath}</th><td><code>{stringify(change.currentValue)}</code></td><td><code>{stringify(change.proposedValue)}</code></td><td>{change.dataType}</td></tr>)}</tbody>
+              </table>
+            </div>
+          ) : (
+            <p class="note">No proposed field changes are recorded for this request.</p>
+          )}
+        </section>
+
+        <section class="panel" aria-labelledby="history-heading">
+          <div class="section-heading">
+            <div>
+              <p class="eyebrow">Append-only source</p>
+              <h2 id="history-heading">Recorded history</h2>
+            </div>
+            <span class="section-index" aria-hidden="true">03</span>
+          </div>
+          {history.length ? (
+            <ol class="timeline">
+              {history.map((event) => <li><strong>{event.action}</strong><span>{transitionLabel(event.oldState, event.newState)} · {formatDateTime(event.occurredAt)}</span>{event.reason && <small>{event.reason}</small>}</li>)}
+            </ol>
+          ) : (
+            <p class="note">No audit events are recorded for this request yet.</p>
+          )}
+        </section>
+      </div>
+
+      <aside class="decision-rail" aria-label="Review decision">
+        <section class="panel decision-panel" aria-labelledby="decision-heading">
+          <p class="eyebrow">Controlled decision</p>
+          <h2 id="decision-heading">Review decision</h2>
+          <p class="rail-state"><span class="meta-label">Recorded state</span> <strong>{stateLabel(changeRequest.state)}</strong> · <span class="meta-label">Version</span> <span class="numeric">{changeRequest.version.toString()}</span></p>
+
+          {canStartReview ? (
+            <form class="decision" method="post" data-action="start-review" data-change-request-id={changeRequest.id} data-change-request-version={changeRequest.version.toString()}>
+              <input type="hidden" name="action" value="START_REVIEW" />
+              <input type="hidden" name="expectedVersion" value={changeRequest.version.toString()} />
+              <p>Starting the review moves this request to <strong>Under review</strong>. It records no approval, no rejection and no application.</p>
+              <button type="submit" data-submit>Start review</button>
+            </form>
+          ) : (
+            <div class="unavailable">
+              <h3>Decision unavailable</h3>
+              <p>{unavailableReason}</p>
+            </div>
+          )}
+
+          <div class="conditions">
+            <h3>Conditions the server checks</h3>
+            <ul>
+              {reviewConditions.map((condition) => <li><span class="condition-mark" data-met={condition.met ? 'true' : 'false'}>{condition.met ? 'Met' : 'Not met'}</span><span>{condition.label}</span></li>)}
+              <li><span class="condition-mark" data-met="server">Server</span><span>Account scope covers this record and the loaded version is current; a stale submission is refused.</span></li>
+            </ul>
+          </div>
+
+          <div class="decision-feedback" data-decision-feedback>
+            <p class="action-status" data-result role={reviewPostFailure ? 'alert' : 'status'} aria-live={reviewPostFailure ? 'assertive' : 'polite'} tabindex="-1">{reviewPostFailure ? 'The review could not be started. The request may have changed or authorization may have changed; refresh and check the current state.' : ''}</p>
+          </div>
+          <p class="muted">Page visibility does not grant decision authority. Every transition is re-authorized on the server.</p>
+        </section>
+
+        <section class="panel boundary-panel" aria-labelledby="boundary-heading">
+          <p class="eyebrow">Not offered on this route</p>
+          <h2 id="boundary-heading">Direct approval decisions</h2>
+          <p>Only an assigned, authorized review step can move this request forward. Return, rejection, and approval are not available through this direct route; they require the controlled approval workflow and an applicable approved signature policy.</p>
+          <dl class="decision-outline">
+            {decisionOutline.map((item) => <div><dt>{item.name}</dt><dd>{item.requirement}</dd></div>)}
+          </dl>
+        </section>
+      </aside>
+    </div>
+  </div>
 </AppLayout>
 <script>
   import { actions } from 'astro:actions';
   const transition = async (form: HTMLFormElement) => {
     if (form.getAttribute('aria-busy') === 'true') return;
-    // Keep progress and recovery feedback scoped to this review action.
-    const output = form.querySelector<HTMLElement>('[data-result]');
+    // One canonical feedback region carries pending, failure and recovery text.
+    const output = document.querySelector<HTMLElement>('[data-result]');
     const submit = form.querySelector<HTMLButtonElement>('[data-submit], button[type="submit"]');
     form.setAttribute('aria-busy', 'true');
     if (submit) submit.disabled = true;
-    if (output) output.textContent = 'Starting the controlled review…';
+    if (output) { output.setAttribute('role', 'status'); output.textContent = 'Starting the controlled review…'; }
     try {
       const result = await actions.changeRequests.transition({ id: String(form.dataset.changeRequestId), action: 'START_REVIEW', expectedVersion: BigInt(form.dataset.changeRequestVersion ?? '0') });
       if (result.data) { window.location.href = `/change-requests/${result.data.changeRequest.id}`; return; }
-      if (output) { output.textContent = 'The decision was not applied. The request may have changed or authorization may have changed — refresh and try again if permitted.'; output.focus?.(); }
+      if (output) { output.setAttribute('role', 'alert'); output.textContent = 'The decision was not applied. The request may have changed or authorization may have changed — refresh and try again if permitted.'; output.focus?.(); }
     } catch {
-      if (output) { output.textContent = 'The service did not confirm the result. Your reason is kept. Refresh the record and its history before deciding whether to try again.'; output.focus?.(); }
+      if (output) { output.setAttribute('role', 'alert'); output.textContent = 'The service did not confirm the result. The request was not moved to review. Refresh the record and its history before deciding whether to try again.'; output.focus?.(); }
     } finally { form.removeAttribute('aria-busy'); if (submit) submit.disabled = false; }
   };
   const startForm = document.querySelector<HTMLFormElement>('[data-action="start-review"]');
   if (startForm) { if (!startForm.querySelector('[data-submit]')) startForm.querySelector('button[type="submit"]')?.setAttribute('data-submit',''); startForm.addEventListener('submit', (event) => { event.preventDefault(); void transition(startForm); }); }
 </script>
-<style>.page-head{display:flex;justify-content:space-between;gap:var(--space-5);align-items:start;margin-bottom:var(--space-6)}h1{margin:.25rem 0}.eyebrow{margin:0;color:var(--text-muted);font-size:var(--font-size-xs);letter-spacing:.12em;font-weight:700}.lede,.muted{color:var(--text-muted);font-size:.86rem}.page-head a{color:var(--color-accent-primary-hover)}.notice,.panel,.decision,.denied{padding:var(--space-5);margin-bottom:var(--space-5);border:1px solid var(--color-border-subtle);border-radius:var(--radius-lg);background:var(--surface-panel)}.notice{display:grid;gap:.35rem;border-inline-start:3px solid var(--status-warning)}.notice span{color:var(--text-muted);font-size:.85rem}.panel h2,.denied h2{margin-top:0;font-size:1rem}.panel li{margin:.6rem 0}.action-status{margin:0 0 var(--space-3);color:var(--text-secondary);font-size:.85rem;min-height:1.25rem}.decision{display:grid;gap:var(--space-4)}label{display:grid;gap:.4rem;color:var(--text-secondary);font-size:.82rem}textarea{width:100%;padding:.65rem;background:var(--surface-raised);border:1px solid var(--border-default);border-radius:var(--radius-sm);color:inherit;font:inherit}.actions{display:flex;gap:var(--space-3);flex-wrap:wrap}.actions button,.decision>button{min-height:var(--control-height);padding:.65rem 1rem;border:1px solid var(--color-accent-primary);border-radius:var(--radius-sm);background:var(--color-accent-primary);color:var(--color-text-inverse);font:inherit;font-weight:700}.actions button:first-child{background:transparent;color:var(--color-accent-primary-hover)}.denied{border-inline-start:3px solid var(--status-warning)}code{overflow-wrap:anywhere}@media(max-width:650px){.page-head{display:grid}.actions{display:grid}}</style>
+<style>
+  .review-workspace { --review-gap: var(--space-5); min-inline-size: 0; }
+  .record-meta { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--space-2) var(--space-4); margin: var(--space-3) 0 0; color: var(--text-secondary); font-size: var(--font-size-sm); line-height: var(--line-height-normal); }
+  .record-meta > span { min-inline-size: 0; overflow-wrap: anywhere; }
+  .meta-label { color: var(--text-muted); font-weight: 600; }
+  .head-actions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-3); }
+  .head-actions a { display: inline-flex; align-items: center; min-block-size: 44px; }
+  .text-link { color: var(--color-accent-primary-hover); font-weight: 600; }
+  .numeric { font-variant-numeric: tabular-nums; }
+  .identifier { font-family: var(--font-mono); font-size: var(--font-size-xs); font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+  .state { display: inline-flex; align-items: center; min-block-size: 32px; padding-inline: var(--space-3); border: 1px solid var(--color-border-subtle); border-inline-start: 3px solid var(--color-accent-primary); border-radius: var(--radius-md); background: var(--surface-raised); color: var(--text-primary); font-size: var(--font-size-sm); font-weight: 700; }
+  .state[data-state='REJECTED'], .state[data-state='CANCELLED'], .state[data-state='APPLICATION_FAILED'] { border-inline-start-color: var(--status-danger); }
+  .state[data-state='APPROVED'], .state[data-state='APPLIED'] { border-inline-start-color: var(--status-success); }
+  .state[data-state='SUBMITTED'], .state[data-state='UNDER_REVIEW'], .state[data-state='APPLYING'] { border-inline-start-color: var(--status-review); }
+  .notice { display: grid; gap: var(--space-1); margin-block-end: var(--review-gap); padding: var(--space-4) var(--space-5); border: 1px solid var(--color-border-subtle); border-inline-start: 3px solid var(--status-warning); border-radius: var(--radius-lg); background: var(--surface-panel); }
+  .notice strong { font-size: var(--font-size-md); }
+  .notice span { color: var(--text-secondary); font-size: var(--font-size-sm); line-height: var(--line-height-relaxed); overflow-wrap: anywhere; }
+  .review-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(18rem, 21rem); align-items: start; gap: var(--review-gap); }
+  .review-main, .decision-rail { display: grid; min-inline-size: 0; gap: var(--review-gap); }
+  .panel { min-inline-size: 0; margin: 0; padding: var(--space-5); border: 1px solid var(--color-border-subtle); border-radius: var(--radius-lg); background: var(--surface-panel); }
+  .section-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--space-4); margin-block-end: var(--space-4); }
+  .section-heading h2 { margin: 0; font-size: var(--font-size-lg); line-height: var(--line-height-tight); overflow-wrap: anywhere; }
+  .eyebrow { margin: 0 0 var(--space-1); color: var(--text-muted); font-size: var(--font-size-xs); font-weight: 700; }
+  .section-index { color: var(--text-muted); font-size: var(--font-size-xs); font-variant-numeric: tabular-nums; }
+  .facts, .evidence-facts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-4); margin: 0; }
+  .evidence-facts { margin-block: var(--space-4); }
+  .facts > div, .evidence-facts > div { min-inline-size: 0; padding-block-start: var(--space-3); border-block-start: 1px solid var(--color-border-subtle); }
+  .fact-wide { grid-column: 1 / -1; }
+  dt { color: var(--text-muted); font-size: var(--font-size-xs); font-weight: 600; }
+  dd { margin: var(--space-1) 0 0; color: var(--text-primary); font-size: var(--font-size-sm); line-height: var(--line-height-relaxed); overflow-wrap: anywhere; }
+  .note { margin: 0 0 var(--space-3); color: var(--text-muted); font-size: var(--font-size-sm); line-height: var(--line-height-relaxed); overflow-wrap: anywhere; }
+  .snapshot { margin-block-end: var(--space-4); }
+  summary { min-block-size: 44px; padding-block: var(--space-2); color: var(--color-accent-primary-hover); font-size: var(--font-size-sm); font-weight: 600; cursor: pointer; overflow-wrap: anywhere; }
+  summary:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
+  pre { max-block-size: 320px; overflow: auto; margin: var(--space-3) 0 0; padding: var(--space-4); border: 1px solid var(--color-border-subtle); border-radius: var(--radius-sm); background: var(--surface-raised); color: var(--text-primary); font-family: var(--font-mono); font-size: var(--font-size-xs); line-height: var(--line-height-normal); white-space: pre-wrap; overflow-wrap: anywhere; }
+  pre:focus-visible, .table-scroll:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
+  .table-scroll { max-inline-size: 100%; overflow-x: auto; overscroll-behavior-inline: contain; border: 1px solid var(--color-border-subtle); border-radius: var(--radius-md); }
+  table { inline-size: 100%; border-collapse: collapse; }
+  caption { padding: var(--space-3) var(--space-4); text-align: start; color: var(--text-muted); font-size: var(--font-size-xs); }
+  th, td { padding: var(--space-3); text-align: start; border-block-start: 1px solid var(--color-border-subtle); font-size: var(--font-size-sm); vertical-align: top; }
+  thead th { background: var(--table-header-background); }
+  th { font-weight: 700; }
+  code { font-family: var(--font-mono); white-space: pre-wrap; overflow-wrap: anywhere; }
+  .timeline { display: grid; gap: var(--space-3); margin: 0; padding-inline-start: 1.25rem; }
+  .timeline li { display: grid; gap: var(--space-1); padding-block-end: var(--space-3); border-block-end: 1px solid var(--color-border-subtle); }
+  .timeline li:last-child { padding-block-end: 0; border-block-end: 0; }
+  .timeline strong { font-size: var(--font-size-sm); }
+  .timeline span, .timeline small { color: var(--text-muted); font-size: var(--font-size-xs); line-height: var(--line-height-normal); overflow-wrap: anywhere; }
+  .decision-panel { border-inline-start: 3px solid var(--color-accent-primary); }
+  .decision-panel h2, .boundary-panel h2 { margin: 0; font-size: var(--font-size-lg); line-height: var(--line-height-tight); overflow-wrap: anywhere; }
+  .decision-panel h3, .boundary-panel h3 { margin: 0 0 var(--space-2); font-size: var(--font-size-md); overflow-wrap: anywhere; }
+  .rail-state { display: flex; flex-wrap: wrap; gap: var(--space-2); margin: var(--space-3) 0 0; color: var(--text-secondary); font-size: var(--font-size-sm); }
+  .decision { display: grid; gap: var(--space-3); margin-block-start: var(--space-4); }
+  .decision p { margin: 0; color: var(--text-secondary); font-size: var(--font-size-sm); line-height: var(--line-height-relaxed); overflow-wrap: anywhere; }
+  .decision button, .decision-panel button { min-block-size: 44px; padding-inline: var(--space-4); border: 1px solid var(--color-accent-primary); border-radius: var(--radius-sm); background: var(--color-accent-primary); color: var(--text-on-accent); font: inherit; font-weight: 700; cursor: pointer; }
+  .decision button:hover, .decision-panel button:hover { background: var(--color-accent-primary-hover); border-color: var(--color-accent-primary-hover); }
+  .decision button[disabled] { cursor: progress; opacity: 0.85; }
+  .unavailable { margin-block-start: var(--space-4); padding: var(--space-4); border: 1px solid var(--color-border-subtle); border-inline-start: 3px solid var(--status-warning); border-radius: var(--radius-md); background: var(--surface-raised); }
+  .unavailable p { margin: 0; color: var(--text-secondary); font-size: var(--font-size-sm); line-height: var(--line-height-relaxed); overflow-wrap: anywhere; }
+  .conditions { margin-block-start: var(--space-5); }
+  .conditions ul { display: grid; gap: var(--space-2); margin: 0; padding: 0; list-style: none; }
+  .conditions li { display: grid; grid-template-columns: 5.5rem minmax(0, 1fr); align-items: start; gap: var(--space-3); padding-block-start: var(--space-2); border-block-start: 1px solid var(--color-border-subtle); color: var(--text-secondary); font-size: var(--font-size-sm); line-height: var(--line-height-normal); overflow-wrap: anywhere; }
+  .condition-mark { display: inline-flex; align-items: center; min-block-size: 24px; padding-inline: var(--space-2); border: 1px solid var(--color-border-subtle); border-radius: var(--radius-sm); background: var(--surface-raised); color: var(--text-primary); font-size: var(--font-size-xs); font-weight: 700; }
+  .condition-mark[data-met='false'] { border-color: var(--status-warning); }
+  .decision-feedback { margin-block-start: var(--space-3); }
+  .action-status { margin: 0; color: var(--text-secondary); font-size: var(--font-size-sm); line-height: var(--line-height-relaxed); min-block-size: 1.5rem; overflow-wrap: anywhere; }
+  .action-status:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
+  .decision-panel p.muted, .boundary-panel p { color: var(--text-muted); font-size: var(--font-size-xs); line-height: var(--line-height-relaxed); overflow-wrap: anywhere; }
+  .decision-panel p.muted { margin: var(--space-2) 0 0; }
+  .boundary-panel { border-inline-start: 3px solid var(--color-border-subtle); }
+  .boundary-panel p { margin: 0; }
+  .decision-outline { display: grid; gap: var(--space-3); margin: var(--space-4) 0 0; }
+  .decision-outline > div { min-inline-size: 0; padding-block-start: var(--space-2); border-block-start: 1px solid var(--color-border-subtle); }
+  @media (forced-colors: active) { .state, .notice, .panel, .unavailable, .condition-mark { border-color: CanvasText; } }
+  @media (max-width: 1000px) { .review-grid { grid-template-columns: minmax(0, 1fr); } }
+  @media (max-width: 760px) {
+    .facts, .evidence-facts { grid-template-columns: minmax(0, 1fr); }
+    .fact-wide { grid-column: auto; }
+    .panel, .notice { padding: var(--space-4); }
+    .conditions li { grid-template-columns: minmax(0, 1fr); gap: var(--space-1); }
+  }
+</style>
