@@ -46,7 +46,7 @@ const initialJson = JSON.stringify(design, null, 2);
   data-doc-code={template.templateCode}
   data-report-revision={template.versionNo}
   data-source-title={template.name}
-  aria-labelledby="designer-heading"
+  aria-labelledby="designer-identity"
 >
   <input type="hidden" name="intent" value="save-design" />
   <input type="hidden" name="expectedVersion" value={template.version.toString()} />
@@ -303,13 +303,13 @@ const initialJson = JSON.stringify(design, null, 2);
   .block-head{display:flex;justify-content:space-between;align-items:center;gap:var(--space-4);flex-wrap:wrap}
   h2{margin:0 0 var(--space-2);font-size:1rem}
   .note{margin:0 0 var(--space-3);color:var(--text-muted);font-size:.8rem;line-height:1.5}
-  .identity{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:var(--space-3);margin:0 0 var(--space-4)}
+  .identity{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,180px),1fr));gap:var(--space-3);margin:0 0 var(--space-4)}
   dt{color:var(--text-muted);font-size:var(--font-size-xs)}
   dd{margin:.2rem 0 0;font-size:.85rem;font-weight:600}
-  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:var(--space-3)}
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,220px),1fr));gap:var(--space-3)}
   .field{display:grid;gap:.3rem;font-size:.78rem}
   .field span{color:var(--text-muted)}
-  input,select,textarea{min-height:2.4rem;padding:.5rem;border:1px solid var(--border-default);border-radius:var(--radius-sm);background:var(--surface-raised);color:inherit;font:inherit;font-size:.82rem}
+  input,select,textarea{min-height:44px;padding:.5rem;border:1px solid var(--border-default);border-radius:var(--radius-sm);background:var(--surface-raised);color:inherit;font:inherit;font-size:.82rem}
   textarea{min-height:3.5rem}
   .list{display:grid;gap:var(--space-3);margin-bottom:var(--space-3)}
   .nested{padding-inline-start:var(--space-4);border-inline-start:2px solid var(--color-border-subtle)}
@@ -319,7 +319,7 @@ const initialJson = JSON.stringify(design, null, 2);
   .row-actions{display:flex;gap:.4rem;flex-wrap:wrap}
   .section{padding:var(--space-4);border:1px solid var(--color-border-subtle);border-radius:var(--radius-md);display:grid;gap:var(--space-3)}
   legend{font-weight:700;font-size:.85rem}
-  button{min-height:2.4rem;padding:.45rem .7rem;border:1px solid var(--border-default);border-radius:var(--radius-sm);background:var(--surface-raised);color:inherit;font:inherit;font-size:.78rem;cursor:pointer}
+  button{min-height:44px;padding:.45rem .7rem;border:1px solid var(--border-default);border-radius:var(--radius-sm);background:var(--surface-raised);color:inherit;font:inherit;font-size:.78rem;cursor:pointer}
   button[disabled]{opacity:.5}
   .palette{display:flex;flex-wrap:wrap;gap:.5rem}
   .palette-group{display:flex;flex-wrap:wrap;gap:.35rem;align-items:center;padding:.35rem .5rem;border:1px dashed var(--color-border-subtle);border-radius:var(--radius-sm)}
@@ -332,4 +332,9 @@ const initialJson = JSON.stringify(design, null, 2);
   .raw summary{cursor:pointer;font-size:.82rem;font-weight:600}
   .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
   @media(max-width:760px){.savebar{position:static}}
+  .block,.row,.section,.grid,.field{min-inline-size:0}dd,.note,legend{overflow-wrap:anywhere}
+  input,select,textarea{inline-size:100%;min-inline-size:0;box-sizing:border-box}textarea{resize:vertical}
+  .savebar a,.raw summary{min-block-size:44px;display:flex;align-items:center}
+  button[disabled]{opacity:1;color:var(--text-muted);cursor:not-allowed}
+  button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,a:focus-visible,summary:focus-visible{outline:2px solid var(--color-accent-primary);outline-offset:3px}
 </style>

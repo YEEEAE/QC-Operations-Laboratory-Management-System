@@ -66,11 +66,13 @@ try {
 }
 ---
 <AppLayout title="Inspections · Quarantine" locale="en" direction="ltr">
+  <div class="inspections-register">
   <PageHeader purpose="Report status and scientific result are shown separately.">
     <Fragment slot="heading"><h1>Inspection reports</h1></Fragment>
     <Fragment slot="actions"><a href="/quarantine/receiving">Open receiving register</a></Fragment>
   </PageHeader>
-  <form class="filters" method="get">
+  <section class="filter-panel" aria-label="Inspection filters">
+  <form class="filters" method="get" role="search" aria-label="Filter inspection reports">
     <label for="state">Workflow state<select id="state" name="state">
         <option value="">All states</option>
         {states.map((value) => (
@@ -96,17 +98,26 @@ try {
   <AppliedFilters
     filters={appliedFilters}
     clearHref={hasFilters ? '/quarantine/inspections' : undefined}
-    note={providerUnavailable ? undefined : `${total} inspection reports in your authorized scope.`}
   />
+  </section>
+  {/* READ and FILTER use the server read and native GET contract. EXPORT and
+      mutation pending states are N/A: this register has no export or mutation.
+      AUTH has a login redirect; read failures currently share the provider
+      fallback (pre-existing classification debt, outside presentation scope). */}
+  {!providerUnavailable && (
+    <p class="register-count" role="status">
+      <strong>{total}</strong> inspection report{total === 1 ? '' : 's'}
+      {hasFilters ? ' matching the current filters' : ' in your authorized scope'}.
+    </p>
+  )}
   {
     providerUnavailable ? (
       <ProviderUnavailableState title="Inspection data is temporarily unavailable" />
     ) : inspections.length ? (
-      <div class="table-wrap">
+      <div class="table-wrap" role="region" aria-label="Inspection reports" tabindex="0">
         <table>
           <caption>
-            {total} inspection report{total === 1 ? '' : 's'}
-            {hasFilters ? ' matching the current filters' : ''}
+            Inspection reports — workflow state and inspection result
           </caption>
           <thead>
             <tr>
@@ -152,8 +163,34 @@ try {
       </section>
     )
   }
-  {!providerUnavailable && <Pagination page={page} totalPages={Math.max(1, Math.ceil(total / pageSize))} total={total} itemLabel="inspection reports" />}
+  {!providerUnavailable && <Pagination page={page} totalPages={Math.max(1, Math.ceil(total / pageSize))} />}
+  </div>
 </AppLayout>
 <style>
-  .page-head{display:flex;justify-content:space-between;align-items:flex-start;gap:var(--space-5);margin-bottom:var(--space-6)}h1{margin:.25rem 0 .4rem}.eyebrow{margin:0;color:var(--text-muted);font-size:.75rem;letter-spacing:.12em;font-weight:700}.lede,.empty p{color:var(--text-muted);font-size:.85rem}.page-head a,a{color:var(--color-accent-primary-hover)}.filters{display:flex;align-items:end;gap:var(--space-3);margin-bottom:var(--space-4);flex-wrap:wrap}label{display:grid;gap:.35rem;color:var(--text-secondary);font-size:.8rem}select,button{min-height:var(--control-height);padding:.6rem .8rem;background:var(--surface-panel);border:1px solid var(--border-default);border-radius:var(--radius-sm);color:inherit;font:inherit}button{background:var(--color-accent-primary);border-color:var(--color-accent-primary);color:var(--text-on-accent);font-weight:700}.table-wrap{overflow-x:auto;border:1px solid var(--color-border-subtle);border-radius:var(--radius-lg)}table{width:100%;min-width:760px;border-collapse:collapse;background:var(--surface-panel)}caption{text-align:start;padding:var(--space-4);color:var(--text-muted);font-size:.8rem}th,td{padding:.85rem;text-align:start;border-top:1px solid var(--color-border-subtle);font-size:.8rem}.state{padding:.25rem .5rem;border:1px solid var(--color-border-subtle);border-radius:999px;font-size:.75rem;font-weight:700}.empty{padding:3rem 1.5rem;text-align:center;background:var(--surface-panel);border:1px dashed var(--color-border-strong);border-radius:var(--radius-lg)}@media(max-width:650px){.page-head,.filters{display:grid}}
+  .inspections-register { display: grid; gap: var(--space-5); min-inline-size: 0; inline-size: 100%; }
+  .filter-panel { padding: var(--space-5); background: var(--surface-panel); border: 1px solid var(--border-default); border-radius: var(--radius-lg); min-inline-size: 0; }
+  .filters { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)) auto; align-items: end; gap: var(--space-4); }
+  label { display: grid; gap: var(--space-2); min-inline-size: 0; color: var(--text-secondary); font-size: var(--font-size-sm); }
+  select, button { min-block-size: max(var(--control-height), 44px); min-inline-size: 0; max-inline-size: 100%; padding: .6rem .8rem; background: var(--surface-panel); border: 1px solid var(--border-default); border-radius: var(--radius-sm); color: var(--text-primary); font: inherit; }
+  button { background: var(--color-accent-primary); border-color: var(--color-accent-primary); color: var(--text-on-accent); font-weight: 700; cursor: pointer; }
+  a { color: var(--color-accent-primary-hover); }
+  a:focus-visible, button:focus-visible, select:focus-visible, .table-wrap:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 3px; }
+  .filter-panel :global(.applied-filters) { margin-block: var(--space-4) 0; }
+  .register-count { margin: 0; color: var(--text-secondary); font-size: var(--font-size-sm); font-variant-numeric: tabular-nums; }
+  .register-count strong { color: var(--text-primary); }
+  .table-wrap { min-inline-size: 0; max-inline-size: 100%; overflow-x: auto; border: 1px solid var(--color-border-subtle); border-radius: var(--radius-lg); }
+  table { inline-size: 100%; min-inline-size: 900px; table-layout: fixed; border-collapse: collapse; background: var(--surface-panel); font-variant-numeric: tabular-nums; }
+  caption { text-align: start; padding: var(--space-4); color: var(--text-secondary); font-size: var(--font-size-sm); }
+  th, td { padding: var(--space-4); text-align: start; vertical-align: top; border-block-start: 1px solid var(--color-border-subtle); font-size: var(--font-size-sm); line-height: 1.6; white-space: normal; overflow-wrap: anywhere; }
+  thead th { overflow-wrap: normal; }
+  th:nth-child(1) { inline-size: 22%; }
+  th:nth-child(2) { inline-size: 26%; }
+  tbody th a { display: inline-flex; align-items: center; min-block-size: 44px; max-inline-size: 100%; text-decoration: underline; }
+  .state { display: inline-block; max-inline-size: 100%; padding: .25rem .5rem; border: 1px solid var(--color-border-subtle); border-radius: var(--radius-sm); font-size: var(--font-size-xs); font-weight: 700; }
+  .empty { padding: var(--space-8) var(--space-5); text-align: center; background: var(--surface-panel); border: 1px dashed var(--color-border-strong); border-radius: var(--radius-lg); }
+  .empty h2 { margin-block: 0 var(--space-3); }
+  .empty p { color: var(--text-secondary); }
+  .empty a { display: inline-flex; align-items: center; min-block-size: 44px; }
+  @media (max-width: 900px) { .filters { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  @media (max-width: 560px) { .filters { grid-template-columns: minmax(0, 1fr); } .filter-panel { padding: var(--space-4); } }
 </style>

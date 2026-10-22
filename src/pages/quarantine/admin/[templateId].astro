@@ -144,11 +144,57 @@ const designerDesign =
     <Fragment slot="actions"><span class="state">{stateLabel(template.state)}</span></Fragment></PageHeader>
 
   {failure && <FormErrorSummary summary={failure.summary} recovery={failure.recovery} errors={Object.entries(failure.fieldErrors).map(([fieldId, message]) => ({ fieldId: `${fieldId}-error`, message }))} listHref="/quarantine/admin" listLabel="template administration" />}
-  {failure?.fieldErrors.expectedVersion && <p class="field-error" id="expectedVersion-error" role="alert">The expected version submitted for this action is invalid. Reload this page and try again; no change was applied.</p>}
+  {failure?.fieldErrors.expectedVersion && <p class="field-error" id="expectedVersion-error">The expected version submitted for this action is invalid. Reload this page and try again; no change was applied.</p>}
   {notice && <p class="notice" role="status">{notice}</p>}
 
-  <section class="layout">
+  <!-- READ: persisted template context. FORM: guarded native POST below.
+       DIALOG N/A: this route has no dialog; lifecycle confirmation is inline.
+       FILTER / EXPORT N/A: no such actions are exposed by this detail route. -->
+  <section class="layout" aria-label="Template record">
     <div class="workspace-main">
+      <section class="panel" aria-labelledby="facts-title">
+        <h2 id="facts-title">Template facts</h2>
+        <dl>
+          <div><dt>Code</dt><dd>{template.templateCode}</dd></div>
+          <div><dt>Version</dt><dd>{template.versionNo}</dd></div>
+          <div><dt>State</dt><dd>{stateLabel(template.state)}</dd></div>
+          <div><dt>Record version</dt><dd>{template.version.toString()}</dd></div>
+          <div><dt>Version ID</dt><dd>{template.id}</dd></div>
+          <div><dt>Template ID</dt><dd>{template.templateId}</dd></div>
+          <div><dt>Description</dt><dd>{template.description ?? 'Not recorded'}</dd></div>
+        </dl>
+      </section>
+      <section class="panel" aria-labelledby="evidence-title">
+        <h2 id="evidence-title">Controlled evidence</h2>
+        <dl>
+          <div><dt>Origin</dt><dd>{template.authoringOrigin === 'USER_AUTHORED_SPECIFICATION' ? 'User-authored specification' : 'Source transcription'}</dd></div>
+          <div><dt>Source document</dt><dd>{template.sourceDocument ?? 'Not recorded'}</dd></div>
+          <div><dt>Content hash</dt><dd><code>{template.contentHash ?? 'Not recorded'}</code></dd></div>
+          <div><dt>Report revision</dt><dd>{template.reportRevision ?? 'Not recorded'}</dd></div>
+        </dl>
+        <p class="muted">The preview below shows saved template content, not an inspection snapshot.</p>
+        <dl>
+          <div><dt>Inspection Result</dt><dd>Not applicable — template record</dd></div>
+          <div><dt>Release System State</dt><dd>Not applicable — no receiving record</dd></div>
+        </dl>
+        <p class="muted">Template approval does not release receiving items or lift HOLD. Approval and effectivity are separate.</p>
+      </section>
+      <section class="panel" aria-labelledby="history-title">
+        <h2 id="history-title">Recorded history</h2>
+        <dl>
+          <div><dt>Created</dt><dd>{template.createdAt.toISOString()}</dd></div>
+          <div><dt>Updated</dt><dd>{template.updatedAt.toISOString()}</dd></div>
+          <div><dt>Approved</dt><dd>{template.approvedAt?.toISOString() ?? 'Not recorded'}</dd></div>
+        </dl>
+        <p class="muted">These are recorded timestamps; a full transition history is not supplied on this page.</p>
+      </section>
+      <section class="panel" aria-labelledby="relationships-title">
+        <h2 id="relationships-title">Relationships</h2>
+        <a href="/quarantine/admin">Open template administration</a>
+        <p class="muted">Revision actions apply to this template version. Inspection snapshots and equipment evidence belong to inspection records.</p>
+      </section>
+    </div>
+    <aside aria-label="Current template actions">
       <section class="panel">
         <h2>Lifecycle actions</h2>
         {!isAuthority && <p class="muted">Employee accounts cannot review, approve, stop, void, or supersede (P-06). Those actions require Supervisor, Manager, or yazeed with reauthentication and E-Signature.</p>}
@@ -201,12 +247,6 @@ const designerDesign =
         )}
         <p class="muted">Replacement is a new DRAFT revision of {template.versionNo} followed by Supersede of the approved revision.</p>
       </section>
-    </div>
-    <aside>
-      <section class="panel">
-        <h2>Record context</h2>
-        <dl><div><dt>Code</dt><dd>{template.templateCode}</dd></div><div><dt>Version</dt><dd>{template.versionNo}</dd></div><div><dt>State</dt><dd>{stateLabel(template.state)}</dd></div><div><dt>Record version</dt><dd>{template.version.toString()}</dd></div></dl>
-      </section>
     </aside>
   </section>
   {isAuthoredDraft && hasTemplatePermission && (
@@ -218,16 +258,25 @@ const designerDesign =
         design={designerDesign as unknown as import('../../../ui/client/template-designer.js').DesignerDesign}
         editable={true}
         schemaVersion={2}
-        {...(formIntent === 'save-design' && failure
-          ? { failureSummary: failure.summary, failureRecovery: failure.recovery }
-          : {})}
       />
     </section>
   )}
-{digitalPreview.success && <ControlledInspectionForm schema={digitalPreview.data} values={{headers:{},points:{}}} receiving={{}} editable={false} canSubmit={false} inspectionId={template.id} version={template.version.toString()} />}
+<section class="preview-shell" aria-labelledby="preview-title">
+  <h2 id="preview-title">Saved template preview · read only</h2>
+  {digitalPreview.success && <ControlledInspectionForm schema={digitalPreview.data} templatePreview={true} values={{headers:{},points:{}}} receiving={{}} editable={false} canSubmit={false} inspectionId={template.id} version={template.version.toString()} />}
+  {!digitalPreview.success && <p class="muted">A digital preview is unavailable for the saved template content.</p>}
+  </section>
 </AppLayout>
 <style>
-  .crumb{display:flex;gap:.5rem;margin-bottom:var(--space-5);color:var(--text-muted);font-size:.8rem}.crumb a{color:var(--color-accent-primary-hover)}.head{display:flex;justify-content:space-between;gap:var(--space-5);align-items:flex-start;margin-bottom:var(--space-5)}h1{margin:.25rem 0 .4rem}.eyebrow{margin:0;color:var(--text-muted);font-size:.7rem;letter-spacing:.12em;font-weight:700}.lede,.muted,.notice{color:var(--text-muted);font-size:.84rem}.state{padding:.45rem .7rem;border:1px solid var(--color-border-subtle);border-radius:999px;font-size:.75rem;font-weight:700}.layout{display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:var(--space-5)}.workspace-main,aside{display:grid;gap:var(--space-5);align-content:start}.panel{padding:var(--space-5);background:var(--surface-panel);border:1px solid var(--color-border-subtle);border-radius:var(--radius-lg)}h2{margin:0 0 var(--space-3);font-size:1rem}.actions{display:grid;gap:var(--space-4)}form{display:grid;gap:.6rem;padding:var(--space-4);border:1px solid var(--color-border-subtle);border-radius:var(--radius-md)}label{display:grid;gap:.35rem;font-size:.8rem}input,textarea{padding:.6rem;border:1px solid var(--border-default);border-radius:var(--radius-sm);background:var(--surface-raised);color:inherit;font:inherit}.field-error{color:var(--status-danger);font-size:.85rem}input[aria-invalid="true"],textarea[aria-invalid="true"]{border-color:var(--status-danger)}button{min-height:var(--control-height);padding:.6rem .8rem;border:1px solid var(--color-accent-primary);border-radius:var(--radius-sm);background:var(--color-accent-primary);color:var(--text-on-accent);font-weight:700}button[disabled]{opacity:.55}.revise{margin-top:var(--space-3)}dl{display:grid;gap:var(--space-3);margin:var(--space-4) 0 0}dt{color:var(--text-muted);font-size:.75rem}dd{margin:.25rem 0 0;font-weight:600}.notice{padding:.7rem;border-inline-start:3px solid var(--status-success);background:var(--surface-panel)}@media(max-width:820px){.layout{grid-template-columns:1fr}}
+  .crumb{display:flex;gap:.5rem;margin-bottom:var(--space-5);color:var(--text-muted);font-size:.8rem}.crumb a{color:var(--color-accent-primary-hover)}.head{display:flex;justify-content:space-between;gap:var(--space-5);align-items:flex-start;margin-bottom:var(--space-5)}h1{margin:.25rem 0 .4rem}.eyebrow{margin:0;color:var(--text-muted);font-size:.7rem;letter-spacing:.12em;font-weight:700}.lede,.muted,.notice{color:var(--text-muted);font-size:.84rem}.state{padding:.45rem .7rem;border:1px solid var(--color-border-subtle);border-radius:999px;font-size:.75rem;font-weight:700}.layout{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(280px,1fr);gap:var(--space-5)}.workspace-main,aside{display:grid;gap:var(--space-5);align-content:start}.panel{padding:var(--space-5);background:var(--surface-panel);border:1px solid var(--color-border-subtle);border-radius:var(--radius-lg)}h2{margin:0 0 var(--space-3);font-size:1rem}.actions{display:grid;gap:var(--space-4)}form{display:grid;gap:.6rem;padding:var(--space-4);border:1px solid var(--color-border-subtle);border-radius:var(--radius-md)}label{display:grid;gap:.35rem;font-size:.8rem}input,textarea{padding:.6rem;border:1px solid var(--border-default);border-radius:var(--radius-sm);background:var(--surface-raised);color:inherit;font:inherit}.field-error{color:var(--status-danger);font-size:.85rem}input[aria-invalid="true"],textarea[aria-invalid="true"]{border-color:var(--status-danger)}button{min-height:max(var(--control-height),44px);padding:.6rem .8rem;border:1px solid var(--color-accent-primary);border-radius:var(--radius-sm);background:var(--color-accent-primary);color:var(--text-on-accent);font-weight:700}button[disabled]{opacity:.55}.revise{margin-top:var(--space-3)}dl{display:grid;gap:var(--space-3);margin:var(--space-4) 0 0}dt{color:var(--text-muted);font-size:.75rem}dd{margin:.25rem 0 0;font-weight:600}.notice{padding:.7rem;border-inline-start:3px solid var(--status-success);background:var(--surface-panel)}@media(max-width:820px){.layout{grid-template-columns:1fr}}
+  .workspace-main,aside,.panel,.designer-shell,.preview-shell{min-inline-size:0}
+  .designer-shell,.preview-shell{margin-block-start:var(--space-6)}
+  .panel dl{grid-template-columns:repeat(auto-fit,minmax(min(100%,15rem),1fr))}
+  dd,code,.crumb{overflow-wrap:anywhere}dd{font-variant-numeric:tabular-nums}
+  input,textarea{min-inline-size:0;inline-size:100%;box-sizing:border-box;min-block-size:44px}
+  textarea{resize:vertical}button{cursor:pointer}button:disabled{cursor:not-allowed;opacity:1;color:var(--text-muted);background:var(--surface-raised);border-color:var(--border-default)}
+  a:focus-visible,button:focus-visible,input:focus-visible,textarea:focus-visible{outline:2px solid var(--color-accent-primary);outline-offset:3px}
+  .crumb a,.panel a{display:inline-flex;align-items:center;min-block-size:44px}
 </style>
 <script>
   document.querySelectorAll<HTMLFormElement>('form[method="post"]').forEach((form) => {

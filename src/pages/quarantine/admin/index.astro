@@ -112,6 +112,18 @@ function disabledReason(state: string, action: 'REVIEW' | 'APPROVE' | 'STOP' | '
 }
 ---
 <AppLayout title="Quarantine Administration · QC Operations" locale="en" direction="ltr">
+  <!-- CA-P-QUARANTINE-ADMIN: READ follows templateResult/catalogResult;
+       FILTER is the existing GET search on the catalogue only.
+       EXPORT: N/A — no export action or route is wired on this surface.
+       Inspection Result / Release System State: N/A — these rows are template
+       versions, not inspections or receiving records. No approval here releases
+       material or lifts HOLD. Snapshot, notes and equipment on related records
+       remain on their existing detail routes.
+       Literal visual-reference matching is unconfirmed; local tokens are used.
+       Prior functional debt, outside this presentation scope: native authored
+       creation can fall through to catalogue creation if no ID is extracted;
+       POST failure field mapping is catalogue-oriented for all intents. -->
+  <div class="admin-register">
   <PageHeader><Fragment slot="heading"><h1>Quarantine administration</h1></Fragment>
       
       
@@ -125,13 +137,14 @@ function disabledReason(state: string, action: 'REVIEW' | 'APPROVE' | 'STOP' | '
     </section>
   ) : (
     <section class="panel" aria-labelledby="catalog-title"><h2 id="catalog-title">Inspection Report catalogue · Rev 14</h2>
-      <form method="get"><label for="catalog-search">Search Doc. Code or official title<input id="catalog-search" name="search" type="search" maxlength="120" value={search} /></label><button type="submit">Search catalogue</button></form>
-      {catalogResult?.status === 'UNAVAILABLE' ? <p role="alert">Catalogue is temporarily unavailable. Reload before creating a template.</p> : <div class="table-wrap"><table><caption>Master identities, source status and digital readiness</caption><thead><tr><th>Doc. Code</th><th>Official title</th><th>Master Rev</th><th>Digital template</th><th>Version</th><th>Item mappings</th><th>Source</th></tr></thead><tbody>{catalog.map(c => <tr><th scope="row">{c.doc_code}</th><td>{c.official_title}</td><td>{c.master_revision}</td><td>{c.digitalTemplateStatus ?? 'NOT_DIGITIZED'}</td><td>{c.templateVersion ?? '—'}</td><td>{c.mappingCount}</td><td>{c.source_document_status}</td></tr>)}</tbody></table></div>}
-      {isAuthority && hasTemplatePermission && <form method="post"><input type="hidden" name="intent" value="import-sources"/><p>Import the verified source transcriptions as DRAFT. This records conflicts and source digests; it creates no approval or item mapping.</p><button type="submit">Import source drafts</button></form>}
-      {!catalog.length && catalogResult?.status === 'AVAILABLE' && <p role="status">No controlled identities match this search.</p>}
+      <form method="get" class="catalog-filters" role="search" aria-label="Filter Inspection Report catalogue"><label for="catalog-search">Search Doc. Code or official title<input id="catalog-search" name="search" type="search" maxlength="120" value={search} /></label><button type="submit">Search catalogue</button><a href="/quarantine/admin">Clear search</a></form>
+      {search && <p class="active-filter">Active catalogue filter: <strong>{search}</strong></p>}
+      {catalogResult?.status === 'AVAILABLE' && <p class="register-count" role="status">{catalog.length} identities on catalogue page {page}{search ? ` matching “${search}”` : ''}. Catalogue search does not filter template versions.</p>}
+      {catalogResult?.status === 'UNAVAILABLE' ? <p role="alert">Catalogue is temporarily unavailable. Reload before creating a template.</p> : <div class="table-wrap" role="region" aria-label="Inspection Report catalogue" tabindex="0"><table><caption>Master identities, source status and digital readiness</caption><thead><tr><th scope="col">Doc. Code</th><th scope="col">Official title</th><th scope="col">Master Rev</th><th scope="col">Digital template</th><th scope="col">Version</th><th scope="col">Item mappings</th><th scope="col">Source</th></tr></thead><tbody>{catalog.map(c => <tr><th scope="row">{c.doc_code}</th><td>{c.official_title}</td><td>{c.master_revision}</td><td>{c.digitalTemplateStatus ?? 'NOT_DIGITIZED'}</td><td>{c.templateVersion ?? '—'}</td><td>{c.mappingCount}</td><td>{c.source_document_status}</td></tr>)}</tbody></table></div>}
+      {!catalog.length && catalogResult?.status === 'AVAILABLE' && <p class="empty">No controlled identities match this search.</p>}
       <nav aria-label="Catalogue pages">{page > 1 && <a href={`?search=${encodeURIComponent(search)}&page=${page-1}`}>Previous</a>} {catalog.length === 50 && <a href={`?search=${encodeURIComponent(search)}&page=${page+1}`}>Next</a>}</nav>
     </section>
-    <div class="grid">
+    <div class="register-stack">
       <section class="panel">
         <div class="panel-head"><div><p class="eyebrow">TEMPLATE LIFECYCLE</p><h2>Inspection template versions</h2></div></div>
         {!isAuthority && (
@@ -140,19 +153,21 @@ function disabledReason(state: string, action: 'REVIEW' | 'APPROVE' | 'STOP' | '
         {isAuthority && (
           <p class="note" role="note">Catalogue authoring creates a draft until matching source evidence and digital content are bound. Approval retains the authorized E-Signature ceremony and the template-only SoD exception.</p>
         )}
+        {templateResult.status === 'AVAILABLE' && <p class="register-count" role="status">{templateResult.value.total} template versions · Page {templateResult.value.page} of {Math.max(1, Math.ceil(templateResult.value.total / templateResult.value.pageSize))}</p>}
         {listUnavailable ? (
-          <p class="empty" role="status">The template list is temporarily unavailable. Retry this page before treating the list as empty.</p>
+          <p class="empty" role="alert">The template list is temporarily unavailable. Retry this page before treating the list as empty.</p>
         ) : templates.length ? (
-          <div class="table-wrap"><table>
+          <div class="table-wrap" role="region" aria-label="Inspection template versions" tabindex="0"><table>
             <caption>Template versions with lifecycle state</caption>
-            <thead><tr><th scope="col">Code</th><th scope="col">Version</th><th scope="col">State</th><th scope="col">Open</th></tr></thead>
+            <thead><tr><th scope="col">Code</th><th scope="col">Version</th><th scope="col">Template lifecycle state</th><th scope="col">Origin / source</th><th scope="col">Open</th></tr></thead>
             <tbody>
               {templates.map((t) => (
                 <tr>
-                  <th scope="row">{t.templateCode}</th>
+                  <th scope="row">{t.templateCode}<span class="cell-detail">{t.name}</span></th>
                   <td>{t.versionNo}</td>
                   <td>{stateLabel(t.state)} · v{t.version.toString()}</td>
-                  <td><a href={`/quarantine/admin/${t.id}`}>Open</a></td>
+                  <td>{t.authoringOrigin}<span class="cell-detail">{t.sourceDocument ?? 'No source bound'}</span><span class="cell-detail">Snapshot hash: {t.contentHash ?? 'Not bound'}</span></td>
+                  <td><a href={`/quarantine/admin/${t.id}`} aria-label={`Open ${t.templateCode} revision ${t.versionNo}`}>Open</a></td>
                 </tr>
               ))}
             </tbody>
@@ -160,7 +175,9 @@ function disabledReason(state: string, action: 'REVIEW' | 'APPROVE' | 'STOP' | '
         ) : (
           <p class="empty">No inspection template versions are available in your authorized scope.</p>
         )}
-        <h3>Lifecycle availability</h3>
+        {templateResult.status === 'AVAILABLE' && <nav aria-label="Template register pages">{templateResult.value.page > 1 && <a href={`?${new URLSearchParams({ ...Object.fromEntries(Astro.url.searchParams), templatePage: String(templateResult.value.page - 1) })}`}>Previous templates</a>}{templateResult.value.page * templateResult.value.pageSize < templateResult.value.total && <a href={`?${new URLSearchParams({ ...Object.fromEntries(Astro.url.searchParams), templatePage: String(templateResult.value.page + 1) })}`}>Next templates</a>}</nav>}
+        <h3>Lifecycle guidance</h3>
+        <p class="hint">These preliminary state and permission checks are guidance only. Open a version for server-controlled eligibility, source requirements and signature checks.</p>
         <ul class="states">
           {templates.map((t) => (
             <li>
@@ -168,7 +185,7 @@ function disabledReason(state: string, action: 'REVIEW' | 'APPROVE' | 'STOP' | '
               <small>
                 {(['REVIEW', 'APPROVE', 'STOP', 'VOID', 'SUPERSEDE', 'REVISE'] as const).map((a) => {
                   const reason = disabledReason(t.state, a);
-                  return <span class={reason ? 'off' : 'on'}>{a}{reason ? ` — disabled: ${reason}` : ' — available'}</span>;
+                  return <span class={reason ? 'off' : 'on'}>{a}{reason ? ` — disabled: ${reason}` : ' — subject to server eligibility'}</span>;
                 })}
               </small>
             </li>
@@ -176,14 +193,17 @@ function disabledReason(state: string, action: 'REVIEW' | 'APPROVE' | 'STOP' | '
         </ul>
       </section>
 
+      {failure && <FormErrorSummary summary={failure.summary} recovery={failure.recovery} errors={Object.entries(failure.fieldErrors).map(([fieldId, message]) => ({ fieldId, message }))} listHref="/quarantine/admin" listLabel="template administration" />}
+      <div class="creation-grid">
       <section class="panel">
-        <p class="eyebrow">CREATE</p>
+        <p class="eyebrow">SOURCE_TRANSCRIPTION</p>
         <h2>Create template</h2>
+        {isAuthority && hasTemplatePermission && <form method="post"><input type="hidden" name="intent" value="import-sources"/><p>Import the verified source transcriptions as DRAFT. This records conflicts and source digests; it creates no approval or item mapping.</p><button type="submit">Import source drafts</button></form>}
+
         {!hasTemplatePermission ? (
           <p class="empty">Creation requires the explicit template administration permission.</p>
         ) : (
           <form method="post" data-template-create>
-            {failure && <FormErrorSummary summary={failure.summary} recovery={failure.recovery} errors={Object.entries(failure.fieldErrors).map(([fieldId, message]) => ({ fieldId, message }))} listHref="/quarantine/admin" listLabel="template administration" />}
             <fieldset><legend>Template identity <span class="req-note">All fields marked * are required</span></legend>
             <label for="catalogId">Inspection Report<span aria-hidden="true"> *</span><span class="hint" id="catalogId-help">Choose the exact Rev 14 master identity. Source-conflicted entries cannot be used.</span><select id="catalogId" name="catalogId" required aria-invalid={invalid('catalogId')} aria-describedby={describedBy('catalogId')}><option value="">Choose Inspection Report…</option>{catalog.filter(c => c.catalog_state === 'ACTIVE').map(c => <option value={c.id} selected={values.catalogId === c.id}>{c.doc_code} · {c.official_title} · Rev {c.master_revision}</option>)}</select></label>
             {failure?.fieldErrors.catalogId && <p class="field-error" id="catalogId-error">{failure.fieldErrors.catalogId}</p>}
@@ -199,7 +219,7 @@ function disabledReason(state: string, action: 'REVIEW' | 'APPROVE' | 'STOP' | '
       </section>
 
       <section class="panel">
-        <p class="eyebrow">AUTHORING</p>
+        <p class="eyebrow">USER_AUTHORED_SPECIFICATION</p>
         <h2>Create a template from scratch</h2>
         <p class="note">
           Starts an in-system authored specification: an identity plus a DRAFT version. You design
@@ -234,14 +254,16 @@ function disabledReason(state: string, action: 'REVIEW' | 'APPROVE' | 'STOP' | '
               The revision digest is server-owned and completes once a design is saved and a
               controlled document is bound.
             </p>
-            <p class="hint" data-authored-result role="status" aria-live="polite" tabindex="-1"></p>
+            <p class="hint" data-authored-result data-result role="status" aria-live="polite" tabindex="-1"></p>
             <div class="actions"><button type="submit" data-submit>Create draft template</button></div>
           </form>
         )}
       </section>
+      </div>
     </div>
   )}
-  {templateResult.status === 'AVAILABLE' && <nav aria-label="Template register pages"><span>Page {templateResult.value.page} of {Math.max(1, Math.ceil(templateResult.value.total / templateResult.value.pageSize))}; {templateResult.value.total} templates</span>{templateResult.value.page > 1 && <a href={`?${new URLSearchParams({ ...Object.fromEntries(Astro.url.searchParams), templatePage: String(templateResult.value.page - 1) })}`}>Previous templates</a>}{templateResult.value.page * templateResult.value.pageSize < templateResult.value.total && <a href={`?${new URLSearchParams({ ...Object.fromEntries(Astro.url.searchParams), templatePage: String(templateResult.value.page + 1) })}`}>Next templates</a>}</nav>}
+
+  </div>
 </AppLayout>
 <script>
   import { actions } from 'astro:actions';
@@ -297,5 +319,31 @@ function disabledReason(state: string, action: 'REVIEW' | 'APPROVE' | 'STOP' | '
   }
 </script>
 <style>
-  .head{display:flex;justify-content:space-between;gap:var(--space-5);align-items:flex-start;margin-bottom:var(--space-6)}h1{margin:.25rem 0 .4rem}.eyebrow{margin:0;color:var(--text-muted);font-size:.7rem;letter-spacing:.12em;font-weight:700}.lede,.empty,.note,.denied p,.hint{color:var(--text-muted);font-size:.84rem}.head a{color:var(--color-accent-primary-hover)}.grid{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(300px,.75fr);gap:var(--space-5)}.panel{padding:var(--space-5);background:var(--surface-panel);border:1px solid var(--color-border-subtle);border-radius:var(--radius-lg)}.panel-head{display:flex;justify-content:space-between;align-items:flex-start}.table-wrap{overflow-x:auto;margin-top:var(--space-4)}table{width:100%;min-width:520px;border-collapse:collapse}caption{text-align:start;padding:.75rem 0;color:var(--text-muted);font-size:.8rem}th,td{padding:.7rem 0;border-top:1px solid var(--color-border-subtle);text-align:start;font-size:.8rem}.states{list-style:none;margin:var(--space-4) 0;padding:0;display:grid;gap:.6rem}.states li{display:grid;gap:.3rem;font-size:.8rem}.states small{display:grid;gap:.2rem;color:var(--text-muted)}.on{color:var(--text-primary)}.off{color:var(--text-muted)}form{display:grid;gap:.7rem;margin-top:var(--space-4)}label{display:grid;gap:.35rem;font-size:.8rem}input,textarea,select{padding:.6rem;border:1px solid var(--border-default);border-radius:var(--radius-sm);background:var(--surface-raised);color:inherit;font:inherit}.actions{display:flex;justify-content:flex-end}button{min-height:var(--control-height);padding:.6rem 1rem;border:1px solid var(--color-accent-primary);border-radius:var(--radius-sm);background:var(--color-accent-primary);color:var(--text-on-accent);font-weight:700}.note{margin-top:var(--space-4);padding-top:var(--space-4);border-top:1px solid var(--color-border-subtle);line-height:1.5}.denied{padding:var(--space-5);border-inline-start:3px solid var(--status-warning);background:var(--surface-panel)}@media(max-width:760px){.head,.grid{display:grid}}
+  .admin-register{inline-size:100%;min-inline-size:0;display:grid;gap:var(--space-5)}
+  h1{margin:0}.eyebrow{margin:0;color:var(--text-muted);font-size:var(--font-size-xs);font-weight:700;overflow-wrap:anywhere}
+  .lede,.empty,.note,.denied p,.hint{color:var(--text-secondary);font-size:.875rem;line-height:1.6}
+  .register-stack{display:grid;gap:var(--space-5);min-inline-size:0}
+  .creation-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--space-5)}
+  .panel{min-inline-size:0;padding:var(--space-5);background:var(--surface-panel);border:1px solid var(--color-border-subtle);border-radius:var(--radius-lg)}
+  .panel-head{display:flex;justify-content:space-between;align-items:flex-start}
+  .catalog-filters{display:flex;align-items:end;flex-wrap:wrap;gap:var(--space-3)}.catalog-filters label{flex:1 1 20rem}
+  .active-filter{padding:var(--space-3);background:var(--surface-raised);border:1px solid var(--border-default);border-radius:var(--radius-sm);overflow-wrap:anywhere}
+  .register-count{color:var(--text-secondary);font-size:.875rem}
+  .table-wrap{overflow-x:auto;max-inline-size:100%;margin-block-start:var(--space-4)}
+  table{inline-size:100%;min-inline-size:48rem;border-collapse:collapse;table-layout:fixed}
+  caption{text-align:start;padding-block:.75rem;color:var(--text-secondary);font-size:.875rem}
+  th,td{padding:.75rem;border-block-start:1px solid var(--color-border-subtle);text-align:start;vertical-align:top;font-size:.875rem;line-height:1.6;overflow-wrap:anywhere;white-space:normal}
+  thead{background:var(--surface-raised)}.cell-detail{display:block;margin-block-start:.25rem;color:var(--text-secondary);font-weight:400}
+  .states{list-style:none;margin:var(--space-4) 0;padding:0;display:grid;gap:var(--space-4)}
+  .states li{display:grid;gap:.3rem;font-size:.875rem;overflow-wrap:anywhere}.states small{display:grid;gap:.2rem;font-size:var(--font-size-xs);color:var(--text-secondary)}.on,.off{color:var(--text-secondary)}
+  form{display:grid;gap:.75rem;margin-block-start:var(--space-4)}fieldset{min-inline-size:0;display:grid;gap:var(--space-4);border:1px solid var(--border-default);padding:var(--space-4)}
+  label{display:grid;gap:.4rem;font-size:.875rem}input,textarea,select{box-sizing:border-box;inline-size:100%;min-inline-size:0;min-block-size:44px;padding:.65rem;border:1px solid var(--border-default);border-radius:var(--radius-sm);background:var(--surface-raised);color:var(--text-primary);font:inherit}
+  .actions{display:flex;justify-content:flex-end;flex-wrap:wrap;gap:var(--space-3)}button{min-block-size:44px;padding:.65rem 1rem;border:1px solid var(--color-accent-primary);border-radius:var(--radius-sm);background:var(--color-accent-primary);color:var(--text-on-accent);font-weight:700;white-space:normal}
+  a{display:inline-flex;align-items:center;min-block-size:44px;color:var(--color-accent-primary-hover);overflow-wrap:anywhere}
+  nav{display:flex;align-items:center;flex-wrap:wrap;gap:var(--space-4);margin-block-start:var(--space-4)}
+  :is(a,button,input,select,textarea,.table-wrap):focus-visible{outline:2px solid var(--color-accent-primary);outline-offset:3px}
+  .note{margin-block-start:var(--space-4);padding-block-start:var(--space-4);border-block-start:1px solid var(--color-border-subtle)}
+  .denied{padding:var(--space-5);border-inline-start:3px solid var(--status-warning);background:var(--surface-panel)}.field-error{color:var(--status-danger)}
+  @media(max-width:900px){.creation-grid{grid-template-columns:minmax(0,1fr)}}
+  @media(max-width:480px){.panel{padding:var(--space-3)}.catalog-filters{align-items:stretch}.catalog-filters button{inline-size:100%}}
 </style>

@@ -24,13 +24,98 @@ try {
   else providerUnavailable = true;
 }
 ---
+<!-- READ is server-rendered: available (including empty), authorization denied,
+     or provider unavailable. Pending is N/A: no client read request exists.
+     FILTER / EXPORT are N/A: this overview only links to existing registers.
+     AUTH uses the existing actor redirect and application authorization. -->
 <AppLayout title="Quarantine · QC Operations" locale="en" direction="ltr" scope={overview.scopeLabel}>
-  <PageHeader><Fragment slot="heading"><h1>Quarantine</h1></Fragment><p class="lede">Receiving, inspections and release status.</p><Fragment slot="actions"><div class="head-meta"><span>{overview.scopeLabel}</span><time datetime={overview.generatedAt.toISOString()}>Server snapshot · {formatDateTime(overview.generatedAt)}</time></div></Fragment></PageHeader>
-  {accessDenied && <section class="denied" role="alert"><h2>Your account cannot read the quarantine overview</h2><p>This account needs the quarantine view permission. Ask your administrator to confirm access. Each KPI count is withheld until this account is authorized to read the overview.</p><a href="/tasks">Go to your tasks</a></section>}
-  {providerUnavailable && <ProviderUnavailableState title="Quarantine data is unavailable" description="Quarantine data could not be confirmed. No counts are shown. Reload to check again." />}
-  {!accessDenied && <div class="grid"><section class="panel" aria-labelledby="attention-title"><div class="panel-head"><div><p class="eyebrow">ATTENTION BOARD</p><h2 id="attention-title">Items needing follow-up</h2></div><a href="/quarantine/receiving">Receiving register</a></div>{providerUnavailable ? <p class="empty">Items needing follow-up could not be loaded. Reload to check again.</p> : overview.attention.length ? <ul class="attention">{overview.attention.map((item) => <li><a href={item.href}><span><strong>{item.title}</strong><small>{item.summary}</small></span><StatusBadge status={item.severity === 'CRITICAL' ? 'FAIL' : 'WARNING'} label={item.state} /></a></li>)}</ul> : <p class="empty">No items need attention in this snapshot.</p>}</section><section class="panel" aria-labelledby="distribution-title"><div class="panel-head"><div><p class="eyebrow">STATE DISTRIBUTION</p><h2 id="distribution-title">Receiving workflow</h2></div></div>{providerUnavailable ? <p class="empty">Distribution data is unavailable, so no state breakdown is shown.</p> : overview.distributions.length ? <ul class="bars">{overview.distributions.map((item) => <li><span>{item.label}</span><strong style={`--bar-size:${Math.min(item.value * 10, 100)}%`}>{item.value}</strong></li>)}</ul> : <p class="empty">No receiving item you are allowed to read exists in this snapshot.</p>}<p class="callout"><strong>PASS is not Released.</strong> Inspection result and Release System State remain separate controlled facts.</p></section></div>}
-  {!accessDenied && !providerUnavailable && <section class="metrics" aria-label="Quarantine key metrics">{overview.metrics.map((metric) => <KpiCard label={metric.label} value={metric.value} unit={metric.unit} definition={metric.definition} source={metric.source} timeRange={metric.timeRange} numerator={metric.numerator} state={metric.state} actorScope={metric.actorScope} href={metric.href} drilldownLabel={metric.drilldownLabel} tone={metric.tone} />)}</section>}
+  <PageHeader>
+    <Fragment slot="heading"><h1>Quarantine</h1></Fragment>
+    <p class="lede">Receiving, inspections and release status.</p>
+    <Fragment slot="actions">
+      <div class="head-meta">
+        <span>{overview.scopeLabel}</span>
+        {!accessDenied && !providerUnavailable && <time datetime={overview.generatedAt.toISOString()}>Server snapshot · {formatDateTime(overview.generatedAt)}</time>}
+      </div>
+    </Fragment>
+  </PageHeader>
+
+  <div class="read-feedback">
+    {accessDenied && <section class="denied" role="alert">
+      <h2>Your account cannot read the quarantine overview</h2>
+      <p>This account needs the quarantine view permission. Ask your administrator to confirm access. Each KPI count is withheld until this account is authorized to read the overview.</p>
+      <a href="/tasks">Go to your tasks</a>
+    </section>}
+    {providerUnavailable && <ProviderUnavailableState title="Quarantine data is unavailable" description="Quarantine data could not be confirmed. No counts are shown. Reload to check again." />}
+  </div>
+
+  {!accessDenied && <div class="overview-grid">
+    <section class="panel" aria-labelledby="attention-title">
+      <div class="panel-head">
+        <div><p class="eyebrow">Attention board</p><h2 id="attention-title">Items needing follow-up</h2></div>
+        <a class="register-link" href="/quarantine/receiving">Receiving register</a>
+      </div>
+      {!providerUnavailable && (overview.attention.length ? <ul class="attention">
+        {overview.attention.map((item) => <li>
+          <a href={item.href}>
+            <span class="attention-copy"><strong>{item.title}</strong><small>{item.summary}</small></span>
+            <StatusBadge status={item.severity === 'CRITICAL' ? 'FAIL' : 'WARNING'} label={item.state} />
+          </a>
+        </li>)}
+      </ul> : <p class="empty">No items need attention in this snapshot.</p>)}
+    </section>
+
+    <section class="panel" aria-labelledby="distribution-title">
+      <div class="panel-head">
+        <div><p class="eyebrow">State distribution</p><h2 id="distribution-title">Receiving workflow</h2></div>
+      </div>
+      {!providerUnavailable && (overview.distributions.length ? <ul class="distribution">
+        {overview.distributions.map((item) => <li><span>{item.label}</span><strong>{item.value}</strong></li>)}
+      </ul> : <p class="empty">No receiving item you are allowed to read exists in this snapshot.</p>)}
+      <p class="callout"><strong>PASS is not Released.</strong> Inspection result and Release System State remain separate controlled facts.</p>
+    </section>
+  </div>}
+
+  {!accessDenied && !providerUnavailable && <section class="metrics" aria-label="Quarantine key metrics">
+    {overview.metrics.map((metric) => <KpiCard label={metric.label} value={metric.value} unit={metric.unit} definition={metric.definition} source={metric.source} timeRange={metric.timeRange} numerator={metric.numerator} state={metric.state} actorScope={metric.actorScope} href={metric.href} drilldownLabel={metric.drilldownLabel} tone={metric.tone} />)}
+  </section>}
 </AppLayout>
 <style>
-  .page-head,.panel-head{display:flex;justify-content:space-between;gap:var(--space-5);align-items:flex-start}.page-head{margin-bottom:var(--space-6)}h1{margin:.25rem 0 .4rem;font-size:clamp(1.9rem,4vw,2.8rem)}.eyebrow{margin:0;color:var(--text-muted);font-size:var(--font-size-xs);letter-spacing:.12em;font-weight:700}.lede,.head-meta,.empty,.panel p{color:var(--text-muted);font-size:var(--font-size-sm)}.head-meta{display:grid;gap:.45rem;text-align:end}.metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:var(--space-3);margin-bottom:var(--space-5)}.grid{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(300px,.75fr);gap:var(--space-5)}.panel{padding:var(--space-5);background:var(--surface-panel);border:1px solid var(--color-border-subtle);border-radius:var(--radius-lg)}.panel h2{margin:.25rem 0 0;font-size:1rem}.panel-head a{color:var(--color-accent-primary-hover);font-size:var(--font-size-xs)}.attention,.bars{list-style:none;margin:var(--space-4) 0 0;padding:0}.attention li,.bars li{border-block-start:1px solid var(--color-border-subtle)}.attention a{display:flex;justify-content:space-between;align-items:center;gap:var(--space-3);padding:.8rem 0;color:inherit;text-decoration:none}.attention strong,.attention small{display:block}.attention small{margin-top:4px;color:var(--text-muted);font-size:var(--font-size-xs)}.bars li{display:grid;grid-template-columns:1fr auto;gap:.6rem;padding:.8rem 0;align-items:center}.bars strong{position:relative;min-width:2rem;text-align:end;color:var(--color-accent-primary-hover)}.bars strong::before{content:'';position:absolute;inset-inline-end:calc(100% + .7rem);top:50%;width:min(120px,var(--bar-size));height:5px;background:var(--color-accent-primary);border-radius:99px}.callout{margin:var(--space-5) 0 0;padding:var(--space-3);border-inline-start:3px solid var(--status-released);background:var(--status-released-bg)}.callout strong{color:var(--status-released)}.denied{margin-bottom:var(--space-5);padding:var(--space-5);background:var(--status-warning-bg);border:1px solid var(--status-warning);border-radius:var(--radius-lg)}.denied h2{margin:0 0 var(--space-2)}.denied p{margin:0 0 var(--space-3)}@media(max-width:1100px){.metrics{grid-template-columns:repeat(2,minmax(0,1fr))}}@media(max-width:760px){.page-head{display:grid}.head-meta{text-align:start}.grid{grid-template-columns:1fr}}@media(max-width:520px){.metrics{grid-template-columns:minmax(0,1fr)}.panel{padding:var(--space-4)}}
+  .lede { margin-block: var(--space-2) 0; color: var(--text-secondary); font-size: var(--font-size-sm); }
+  .head-meta { display: grid; gap: var(--space-2); min-inline-size: 0; color: var(--text-muted); font-size: var(--font-size-xs); text-align: end; overflow-wrap: anywhere; }
+  .read-feedback:has(> *) { margin-block-end: var(--space-5); }
+  .overview-grid { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr); gap: var(--space-5); margin-block-end: var(--space-5); }
+  .panel { min-inline-size: 0; padding: var(--space-5); background: var(--surface-panel); border: 1px solid var(--color-border-subtle); border-radius: var(--radius-lg); }
+  .panel-head { display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: var(--space-3); }
+  .panel-head > div { min-inline-size: 0; }
+  .eyebrow { margin: 0; color: var(--text-muted); font-size: var(--font-size-xs); font-weight: var(--font-weight-semibold); }
+  .panel h2 { margin-block: var(--space-1) 0; color: var(--text-primary); font-size: var(--font-size-md); }
+  .register-link { display: inline-flex; align-items: center; justify-content: center; min-block-size: 44px; padding: var(--space-2) var(--space-3); border: 1px solid var(--control-border); border-radius: var(--radius-sm); color: var(--color-accent-primary-hover); background: var(--surface-inset); font-size: var(--font-size-sm); font-weight: var(--font-weight-semibold); overflow-wrap: anywhere; }
+  .register-link:hover { background: var(--surface-raised); }
+  .attention, .distribution { list-style: none; margin: var(--space-4) 0 0; padding: 0; }
+  .attention li, .distribution li { border-block-start: 1px solid var(--color-border-subtle); }
+  .attention a { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: var(--space-3); min-block-size: 44px; padding-block: var(--space-4); color: var(--text-primary); text-decoration: none; }
+  .attention a:hover strong { text-decoration: underline; }
+  .attention-copy { flex: 1 1 14rem; min-inline-size: 0; overflow-wrap: anywhere; }
+  .attention strong, .attention small { display: block; }
+  .attention strong { font-size: var(--font-size-sm); }
+  .attention small { margin-block-start: var(--space-1); color: var(--text-muted); font-size: var(--font-size-xs); }
+  .distribution li { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: var(--space-3); padding-block: var(--space-3); align-items: baseline; font-size: var(--font-size-sm); }
+  .distribution span { color: var(--text-secondary); overflow-wrap: anywhere; }
+  .distribution strong { color: var(--text-primary); font-variant-numeric: tabular-nums; }
+  .empty, .callout { color: var(--text-muted); font-size: var(--font-size-sm); line-height: var(--line-height-normal); }
+  .empty { margin-block: var(--space-4) 0; }
+  .callout { margin: var(--space-5) 0 0; padding: var(--space-3); border-inline-start: 3px solid var(--color-border-default); background: var(--surface-inset); }
+  .callout strong { color: var(--text-primary); }
+  .metrics { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); align-items: start; gap: var(--space-3); }
+  .metrics :global(.kpi) { min-inline-size: 0; }
+  .denied { padding: var(--space-5); background: var(--status-warning-bg); border: 1px solid var(--status-warning); border-radius: var(--radius-lg); }
+  .denied h2 { margin: 0 0 var(--space-2); font-size: var(--font-size-md); }
+  .denied p { margin: 0 0 var(--space-3); color: var(--text-secondary); }
+  .denied a { display: inline-flex; align-items: center; min-block-size: 44px; }
+  .register-link:focus-visible, .attention a:focus-visible, .denied a:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 3px; }
+  @media (max-width: 1200px) { .metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  @media (max-width: 900px) { .overview-grid { grid-template-columns: minmax(0, 1fr); } }
+  @media (max-width: 760px) { .head-meta { text-align: start; } }
+  @media (max-width: 520px) { .metrics { grid-template-columns: minmax(0, 1fr); } .panel { padding: var(--space-4); } }
 </style>
