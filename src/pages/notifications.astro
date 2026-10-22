@@ -4,6 +4,7 @@ import { actions } from 'astro:actions';
 import AppLayout from '../ui/layouts/AppLayout.astro';
 import ProviderUnavailableState from '../ui/components/feedback/ProviderUnavailableState.astro';
 import Pagination from '../ui/components/data/Pagination.astro';
+import AppliedFilters from '../ui/components/data/AppliedFilters.astro';
 import { NotificationService } from '../shared/notifications/notification-service.js';
 import { notificationDependencies } from '../shared/notifications/notification-dependencies.js';
 import { notificationDestination } from '../shared/notifications/notification-destination.js';
@@ -50,18 +51,51 @@ const markReadMessage = (reason: string) => reason === 'missing'
     : 'The service did not confirm whether this notification changed. Refresh the register before deciding whether to retry.';
 ---
 <AppLayout title="Notifications · QC Operations" locale="en" direction="ltr">
-  <PageHeader><Fragment slot="heading"><h1>Notifications</h1></Fragment><p>Only notifications addressed to your authenticated account are shown.</p><Fragment slot="actions"><nav aria-label="Notification filters" class="notif-filters"><a href="/notifications" aria-current={unreadOnly ? undefined : 'page'}>All</a><a href="/notifications?unread=1" aria-current={unreadOnly ? 'page' : undefined}>Unread</a></nav></Fragment></PageHeader>
-  {providerUnavailable ? <ProviderUnavailableState title="Notifications are temporarily unavailable" description="The notification source did not confirm a result. No empty state or count is shown; refresh when the service is available." retryHref={Astro.url.pathname + Astro.url.search} /> : accessDenied ? <section class="empty" role="alert"><h2>Notifications are unavailable for this account</h2><p>Your account cannot read this notification register. Contact your administrator if you need access.</p></section> : invalidPage ? <section class="empty" role="alert"><h2>This page number is not valid</h2><p>Open the first page of the notification register to continue.</p><a href={pageBase}>Open page 1</a></section> : <>
-    {unclassifiedActionError && <p class="action-error" role="alert" tabindex="-1">{unclassifiedActionError}</p>}
-    <p class="bounded-label" role="status" aria-live="polite">{result?.total === 0 ? (unreadOnly ? 'No unread notifications. Your notifications are still available in All notifications.' : 'No notifications have been sent to this account.') : pageLabel}</p>
-    {notifications.length ? <ul class="notifications">{notifications.map((notification) => <li class:list={{ unread: !notification.readAt }}>
-      <article class="notification-row">
-        <a class="destination" href={notificationDestination(notification.subjectType, notification.subjectId)}><span class={`severity ${notification.severity.toLowerCase()}`} aria-hidden="true"></span><span class="sr-only">{notification.severity}</span><span class="notification-copy"><strong>{notification.title}</strong><span>{notification.message}</span><small>{formatDateTime(notification.createdAt)}</small><small>{notification.readAt ? 'Read' : 'Unread'}</small></span></a>
-        {!notification.readAt && <form class="read-form" method="POST" action={actions.notifications.markOwnRead} data-mark-read><input type="hidden" name="notificationId" value={notification.id} /><button type="submit" aria-describedby={`mark-status-${notification.id}`}>Mark “{notification.title.slice(0, 60)}” as read</button><p id={`mark-status-${notification.id}`} class="action-status" role={markReadError && 'notificationId' in markReadError && markReadError.notificationId === notification.id ? 'alert' : 'status'} aria-live="polite" tabindex="-1">{markReadError && 'notificationId' in markReadError && markReadError.notificationId === notification.id ? markReadMessage(markReadError.reason) : ''}</p></form>}
-      </article>
-    </li>)}</ul> : null}
+  <PageHeader title="Notifications" purpose="Only notifications addressed to your authenticated account are shown." />
+  <!-- Source-bound UI: READ uses listOwnPage and its denied/unavailable/invalid/empty branches.
+       FILTER uses the existing unread=1 links, resets page, and preserves unread in Pagination.
+       READ pending is the server navigation; no client read state is simulated.
+       EXPORT N/A: no export action or destination exists on this page.
+       AUTH is the existing actor redirect / service permission denial, not a new control. -->
+  <section class="notification-filters" aria-labelledby="notification-filters-title">
+    <h2 id="notification-filters-title">Read state</h2>
+    <nav aria-label="Notification filters" class="notif-filters">
+      <a href="/notifications" aria-current={unreadOnly ? undefined : 'page'}>All</a>
+      <a href="/notifications?unread=1" aria-current={unreadOnly ? 'page' : undefined}>Unread</a>
+    </nav>
+    <AppliedFilters
+      filters={unreadOnly ? [{ label: 'Read state', value: 'Unread', href: '/notifications' }] : []}
+      note="All notifications addressed to this account."
+    />
+  </section>
+  <p id="mark-read-status" class="action-status" role={markReadError || unclassifiedActionError ? 'alert' : 'status'} aria-live="polite" aria-atomic="true" tabindex="-1">{markReadError ? markReadMessage(markReadError.reason) : unclassifiedActionError}</p>
+  {providerUnavailable ? <ProviderUnavailableState title="Notifications are temporarily unavailable" description="The notification source did not confirm a result. No empty state or count is shown; refresh when the service is available." retryHref={Astro.url.pathname + Astro.url.search} /> : accessDenied ? <section class="empty" role="alert"><h2>Notifications are unavailable for this account</h2><p>Your account cannot read this notification register. Contact your administrator if you need access.</p></section> : invalidPage ? <section class="empty" role="alert"><h2>This page number is not valid</h2><p>Open the first page of the notification register to continue.</p><a href={pageBase}>Open page 1</a></section> : <section class="notification-register" aria-labelledby="notification-register-title">
+    <div class="register-heading">
+      <h2 id="notification-register-title">{unreadOnly ? 'Unread notifications' : 'All notifications'}</h2>
+      <p id="notification-count" class="bounded-label" role="status" aria-live="polite">{result?.total === 0 ? (unreadOnly ? 'No unread notifications. Your notifications are still available in All notifications.' : 'No notifications have been sent to this account.') : pageLabel}</p>
+    </div>
+    {notifications.length ? <div class="table-scroll" role="region" aria-labelledby="notification-register-title" tabindex="0">
+      <table class="notifications" aria-describedby="notification-count">
+        <caption class="sr-only">Notifications addressed to your authenticated account</caption>
+        <thead><tr><th scope="col">Notification</th><th scope="col">Severity</th><th scope="col">Received</th><th scope="col">Read state</th><th scope="col">Action</th></tr></thead>
+        <tbody>{notifications.map((notification) => <tr class:list={{ unread: !notification.readAt }}>
+          <th scope="row" class="notification-content">
+            <a class="destination" href={notificationDestination(notification.subjectType, notification.subjectId)}>{notification.title}</a>
+            <p class="notification-message">{notification.message}</p>
+          </th>
+          <td><span class="severity-label"><span class={`severity ${notification.severity.toLowerCase()}`} aria-hidden="true"></span>{notification.severity}</span></td>
+          <td class="received">{formatDateTime(notification.createdAt)}</td>
+          <td><span class="read-state">{notification.readAt ? 'Read' : 'Unread'}</span></td>
+          <td>{!notification.readAt && <form class="read-form" method="POST" action={actions.notifications.markOwnRead} data-mark-read>
+            <input type="hidden" name="notificationId" value={notification.id} />
+            <button type="submit" aria-describedby="mark-read-status">Mark as read<span class="sr-only">: {notification.title}</span></button>
+          </form>}</td>
+        </tr>)}</tbody>
+      </table>
+    </div> : null}
     {result && result.total > result.pageSize && <Pagination page={result.page} totalPages={totalPages} total={result.total} itemLabel={unreadOnly ? 'unread notifications' : 'notifications'} baseUrl="/notifications" />}
-  </>}
+  </section>}
+
 </AppLayout>
 <script>
   import { actions } from 'astro:actions';
@@ -70,11 +104,14 @@ const markReadMessage = (reason: string) => reason === 'missing'
       event.preventDefault();
       if (form.getAttribute('aria-busy') === 'true') return;
       const button = form.querySelector<HTMLButtonElement>('button[type="submit"]');
-        const status = form.querySelector<HTMLElement>('[role="status"], [role="alert"]');
-        const formData = new FormData(form);
+      const status = document.getElementById('mark-read-status');
+      const formData = new FormData(form);
       form.setAttribute('aria-busy', 'true');
       if (button) button.disabled = true;
-      if (status) status.textContent = 'Marking this notification as read…';
+      if (status) {
+        status.setAttribute('role', 'status');
+        status.textContent = 'Marking this notification as read…';
+      }
       try {
         const result = await actions.notifications.markOwnRead(formData);
         if (result.data?.ok) {
@@ -82,6 +119,7 @@ const markReadMessage = (reason: string) => reason === 'missing'
           return;
         }
         const reason = result.data?.reason;
+        status?.setAttribute('role', 'alert');
         if (status) status.textContent = reason === 'missing'
           ? 'This notification is no longer available or is not addressed to this account. Refresh the register to see the current list.'
           : reason === 'denied'
@@ -93,6 +131,7 @@ const markReadMessage = (reason: string) => reason === 'missing'
                 : 'The service did not confirm whether this notification changed. Refresh the register before deciding whether to retry.';
         status?.focus();
       } catch {
+        status?.setAttribute('role', 'alert');
         if (status) status.textContent = 'The service did not confirm whether this notification was changed. Refresh the register before deciding whether to retry.';
         status?.focus();
       } finally {
@@ -103,5 +142,97 @@ const markReadMessage = (reason: string) => reason === 'missing'
   });
 </script>
 <style>
-  .page-head{display:flex;justify-content:space-between;gap:var(--space-5);align-items:flex-start}.page-head h1{margin:.3rem 0}.page-head p,.bounded-label{color:var(--text-muted);font-size:.85rem}.page-head nav{display:flex;gap:var(--space-3);flex-wrap:wrap}.page-head nav a{color:var(--color-accent-primary-hover);font-size:.85rem}.page-head nav a[aria-current=page]{font-weight:var(--font-weight-semibold);text-decoration:underline;text-underline-offset:.25em}.bounded-label{margin:var(--space-5) 0}.action-error{color:var(--status-danger);margin-block:var(--space-4)}.notifications{list-style:none;margin:var(--space-4) 0;padding:0;max-width:900px}.notifications li{border-block-start:1px solid var(--color-border-subtle)}.notification-row{display:flex;justify-content:space-between;align-items:center;gap:var(--space-4);padding:var(--space-4) 0}.destination{display:flex;gap:var(--space-3);min-width:0;color:inherit;text-decoration:none}.notification-copy{display:grid;gap:4px;min-width:0}.notification-copy strong{color:var(--text-primary)}.notification-copy>span,.notification-copy small{color:var(--text-secondary);font-size:.85rem;overflow-wrap:anywhere}.notification-copy small{color:var(--text-muted);font-size:.75rem}.notifications .unread strong{color:var(--color-accent-primary-hover)}.severity{width:10px;height:10px;flex:0 0 auto;margin-top:6px;border-radius:50%;background:var(--status-neutral)}.severity.warning{background:var(--status-warning)}.severity.critical{background:var(--status-danger)}.read-form{flex:0 0 auto;max-width:18rem}.read-form button{min-height:44px;padding:var(--space-2) var(--space-3);border:1px solid var(--color-border-default);border-radius:var(--radius-md);background:var(--surface-panel);color:var(--text-primary);cursor:pointer}.read-form button:focus-visible,.page-head a:focus-visible,.destination:focus-visible{outline:3px solid var(--color-accent-primary);outline-offset:3px}.read-form button:disabled{opacity:.65;cursor:wait}.action-status{max-width:18rem;margin:var(--space-2) 0 0;color:var(--text-muted);font-size:.8rem}.empty{padding:var(--space-8);text-align:center;border:1px dashed var(--color-border-default);border-radius:var(--radius-lg);color:var(--text-muted)}.empty h2{color:var(--text-primary);font-size:1rem}.pagination{margin-block:var(--space-5)}.notif-filters a{display:inline-flex;align-items:center;justify-content:center;min-inline-size:24px;min-block-size:24px;padding-inline:4px}@media(max-width:650px){.page-head{display:grid}.notification-row{align-items:flex-start;display:grid}.read-form{width:100%;max-width:none}.read-form button{width:100%;min-height:48px}.action-status{max-width:none}}
+  .notification-filters {
+    display: grid;
+    gap: var(--space-3);
+    padding: var(--space-5);
+    margin-block-end: var(--space-5);
+    background: var(--surface-panel);
+    border: 1px solid var(--color-border-default);
+    border-radius: var(--radius-lg);
+    min-inline-size: 0;
+  }
+  .notification-filters h2, .register-heading h2 { margin: 0; }
+  .notif-filters { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+  .notif-filters a {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-inline-size: 44px;
+    min-block-size: 44px;
+    padding-inline: var(--space-4);
+    border: 1px solid var(--control-border);
+    border-radius: var(--radius-md);
+    color: var(--text-secondary);
+  }
+  .notif-filters a[aria-current='page'] {
+    background: var(--surface-inset);
+    border-color: var(--color-accent-primary);
+    font-weight: var(--font-weight-semibold);
+    text-decoration: underline;
+    text-underline-offset: .25em;
+  }
+  .notification-register {
+    min-inline-size: 0;
+    background: var(--surface-register);
+    border: 1px solid var(--color-border-default);
+    border-radius: var(--radius-lg);
+  }
+  .register-heading { display: grid; gap: var(--space-2); padding: var(--space-5); }
+  .bounded-label { margin: 0; color: var(--text-muted); font-size: var(--font-size-sm); }
+  .table-scroll { max-inline-size: 100%; overflow-x: auto; }
+  .notifications { inline-size: 100%; min-inline-size: 54rem; border-collapse: collapse; table-layout: fixed; }
+  .notifications th, .notifications td {
+    padding: var(--space-4);
+    border-block-end: 1px solid var(--color-border-subtle);
+    text-align: start;
+    vertical-align: top;
+    overflow-wrap: anywhere;
+    white-space: normal;
+    line-height: 1.55;
+    font-size: var(--font-size-sm);
+  }
+  .notifications thead th { background: var(--table-header-background); font-weight: var(--font-weight-semibold); }
+  .notifications thead th:first-child { inline-size: 45%; }
+  .notifications thead th:nth-child(2) { inline-size: 12%; }
+  .notifications thead th:nth-child(3) { inline-size: 17%; }
+  .notifications thead th:nth-child(4) { inline-size: 11%; }
+  .notifications thead th:last-child { inline-size: 15%; }
+  .notification-content { font-weight: var(--font-weight-normal); }
+  .destination { display: flex; align-items: center; min-block-size: 44px; font-weight: var(--font-weight-semibold); }
+  .notification-message { margin: var(--space-1) 0 0; color: var(--text-secondary); white-space: pre-wrap; }
+  .notifications tbody tr:nth-child(even) { background: var(--surface-table-stripe); }
+  .notifications .unread .read-state { font-weight: var(--font-weight-semibold); }
+  .severity-label { display: inline-flex; align-items: baseline; gap: var(--space-2); }
+  .severity { inline-size: 10px; block-size: 10px; flex: none; border-radius: 50%; background: var(--status-neutral); }
+  .severity.warning { background: var(--status-warning); }
+  .severity.critical { background: var(--status-danger); }
+  .received { color: var(--text-secondary); font-variant-numeric: tabular-nums; }
+  .read-form { margin: 0; }
+  .read-form button {
+    min-block-size: 44px;
+    max-inline-size: 100%;
+    padding: var(--space-2) var(--space-3);
+    border: 1px solid var(--control-border);
+    border-radius: var(--radius-md);
+    background: var(--surface-inset);
+    color: var(--text-primary);
+    font: inherit;
+    overflow-wrap: anywhere;
+    cursor: pointer;
+  }
+  .read-form button:disabled { opacity: var(--disabled-opacity); cursor: wait; }
+  .action-status { margin: 0; color: var(--text-secondary); font-size: var(--font-size-sm); overflow-wrap: anywhere; }
+  .action-status:not(:empty) { margin-block: var(--space-4); padding: var(--space-4); border: 1px solid var(--color-border-default); border-radius: var(--radius-md); background: var(--surface-panel); }
+  .action-status[role='alert'] { color: var(--status-danger); }
+  .empty { padding: var(--space-6); border: 1px dashed var(--color-border-default); border-radius: var(--radius-lg); color: var(--text-muted); }
+  .empty h2 { color: var(--text-primary); }
+  .empty a { display: inline-flex; align-items: center; min-block-size: 44px; }
+  .notif-filters a:focus-visible, .destination:focus-visible, .read-form button:focus-visible, .table-scroll:focus-visible, .empty a:focus-visible, .action-status:focus {
+    outline: 2px solid var(--focus-ring);
+    outline-offset: 2px;
+  }
+  @media (max-width: 760px) {
+    .notification-filters, .register-heading { padding: var(--space-4); }
+  }
 </style>

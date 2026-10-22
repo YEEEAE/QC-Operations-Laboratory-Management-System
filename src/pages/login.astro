@@ -31,29 +31,41 @@ const copy = {
 <AuthLayout title="Sign in · QC Operations" locale="en" direction="ltr" systemBackground={false} transparent visualDirection="capa-a">
   <QCLogin3DBackground modelUrl="/assets/qc-medical-hero.glb" />
   <section class="login-panel login-content" aria-labelledby="login-title">
-      <p>{copy.application}</p>
-      <h1 id="login-title">{copy.title}</h1>
-      <p>{copy.description}</p>
+      <header class="login-heading">
+        <p class="login-application">{copy.application}</p>
+        <h1 id="login-title">{copy.title}</h1>
+        <p class="login-description">{copy.description}</p>
+      </header>
       {sessionNotice && <p id="session-recovery" role="status">{sessionRecoveryCopy(sessionNotice)}</p>}
-      {error && <p id="form-error" role="alert">{retryAfterSeconds ? copy.throttledFor(retryAfterSeconds) : error.startsWith('AUTH_RATE_LIMITED') ? copy.throttled : error === 'AUTH_RATE_LIMIT_STORE_UNAVAILABLE' ? copy.unavailable : copy.error}</p>}
+      {/* AUTH/FORM: native required fields → pending → server rejection,
+          throttle, unavailable, or safe 303. Session recovery is independent.
+          FILTER/EXPORT, stale/version and record reconciliation: N/A — this
+          action accepts only loginIdentity, password and returnTo. Signed-in
+          success leaves this page; logout belongs to the account surface. */}
+      <p id="form-error" data-login-feedback role={error ? 'alert' : 'status'} aria-live={error ? 'assertive' : 'polite'} aria-atomic="true" hidden={!error}>{error && (retryAfterSeconds ? copy.throttledFor(retryAfterSeconds) : error.startsWith('AUTH_RATE_LIMITED') ? copy.throttled : error === 'AUTH_RATE_LIMIT_STORE_UNAVAILABLE' ? copy.unavailable : copy.error)}</p>
       <form class="login-form" method="POST" action={actions.login} aria-describedby={error ? 'form-error' : undefined}>
         <input type="hidden" name="returnTo" value={returnTo} />
-        <label for="loginIdentity">{copy.identity}</label>
-        <input id="loginIdentity" name="loginIdentity" type="text" autocomplete="username" required autofocus />
-        <label for="password">{copy.password}</label>
-        <div class="password-field">
-          <input id="password" name="password" type="password" autocomplete="current-password" required />
-          <button type="button" data-password-toggle aria-pressed="false" aria-controls="password" aria-label="Show password">Show</button>
+        <div class="login-field">
+          <label for="loginIdentity">{copy.identity}</label>
+          <input id="loginIdentity" name="loginIdentity" type="text" autocomplete="username" required autofocus />
+        </div>
+        <div class="login-field">
+          <label for="password">{copy.password}</label>
+          <div class="password-field">
+            <input id="password" name="password" type="password" autocomplete="current-password" required />
+            <button type="button" data-password-toggle aria-pressed="false" aria-controls="password" aria-label="Show password">Show</button>
+          </div>
         </div>
         <button type="submit" data-login-submit>{copy.submit}</button>
-        <p data-login-pending role="status" aria-live="polite" hidden>Signing in… Keep this page open while we check your access.</p>
       </form>
       <script>
         const toggle = document.querySelector<HTMLButtonElement>('[data-password-toggle]');
         const input = document.getElementById('password') as HTMLInputElement | null;
         const form = document.querySelector<HTMLFormElement>('.login-form');
         const submit = form?.querySelector<HTMLButtonElement>('[data-login-submit]');
-        const pending = form?.querySelector<HTMLElement>('[data-login-pending]');
+        const feedback = document.querySelector<HTMLElement>('[data-login-feedback]');
+        // Existing debt: pending has no pageshow/aborted-navigation recovery.
+        // Keep that lifecycle work outside this presentation change.
         let submitting = false;
         form?.addEventListener('submit', (event) => {
           if (submitting) {
@@ -63,11 +75,17 @@ const copy = {
           // Keep the browser's native POST/navigation as the transport. This
           // only guards repeated enhanced submits and leaves no-JS intact.
           submitting = true;
+          form?.setAttribute('aria-busy', 'true');
           if (submit) {
             submit.disabled = true;
             submit.textContent = 'Signing in…';
           }
-          if (pending) pending.hidden = false;
+          if (feedback) {
+            feedback.setAttribute('role', 'status');
+            feedback.setAttribute('aria-live', 'polite');
+            feedback.textContent = 'Signing in… Keep this page open while we check your access.';
+            feedback.hidden = false;
+          }
         });
         toggle?.addEventListener('click', () => {
           if (!input || !toggle) return;
@@ -81,31 +99,43 @@ const copy = {
   </section>
 </AuthLayout>
 <style>
-  .login-panel { position: relative; z-index: 1; width: min(100%, 440px); padding: var(--space-8); background: var(--surface-panel); border: 1px solid var(--color-border-subtle); border-radius: var(--radius-lg); box-shadow: var(--shadow-2); }
-  .login-panel > p:first-child { margin: 0 0 var(--space-6); color: var(--color-accent-primary-hover); font-size: .8rem; font-weight: 700; letter-spacing: .04em; }
-  .login-panel h1 { margin: 0; font-size: 2rem; line-height: var(--line-height-tight); }
-  .login-panel h1 + p { margin: var(--space-2) 0 var(--space-6); color: var(--text-secondary); }
-  #form-error { padding: var(--space-3); border: 1px solid var(--status-danger); border-radius: var(--radius-sm); color: var(--status-danger); background: var(--status-danger-bg); }
-  #session-recovery { padding: var(--space-3); border: 1px solid var(--status-review); border-radius: var(--radius-sm); color: var(--text-primary); background: var(--status-review-bg); }
-  .login-form { display: grid; gap: var(--space-3); }
+  .login-panel { position: relative; z-index: 1; display: grid; gap: var(--space-6); inline-size: min(100%, 460px); min-inline-size: 0; padding: var(--space-8); color: var(--text-primary); background: var(--surface-panel); border: 1px solid var(--color-border-default); border-radius: var(--radius-lg); box-shadow: var(--shadow-2); overflow-wrap: anywhere; }
+  .login-heading { display: grid; gap: var(--space-2); }
+  .login-heading p { margin: 0; }
+  .login-application { padding-block-end: var(--space-4); color: var(--color-accent-primary-hover); font-size: var(--font-size-sm); font-weight: 600; }
+  .login-panel h1 { margin: 0; font-size: 2rem; font-weight: 600; line-height: var(--line-height-tight); }
+  .login-description { color: var(--text-secondary); }
+  #form-error, #session-recovery { margin: 0; padding: var(--space-4); border: 1px solid var(--status-review); border-radius: var(--radius-sm); color: var(--text-primary); background: var(--status-review-bg); font-size: var(--font-size-sm); }
+  #form-error[role="alert"] { border-color: var(--status-danger); color: var(--status-danger); background: var(--status-danger-bg); }
+  .login-form { display: grid; gap: var(--space-5); min-inline-size: 0; }
+  .login-field { display: grid; gap: var(--space-2); min-inline-size: 0; }
   .login-form label { font-weight: 600; }
-  .login-form input:not([type="hidden"]) { width: 100%; min-height: 48px; padding-inline: var(--space-3); border: 1px solid var(--control-border); border-radius: var(--radius-sm); background: var(--surface-raised); }
+  .login-form input:not([type="hidden"]) { inline-size: 100%; min-inline-size: 0; min-block-size: 48px; padding: var(--space-3); border: 1px solid var(--control-border); border-radius: var(--radius-sm); color: var(--text-primary); background: var(--surface-inset); }
   .password-field { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: var(--space-2); align-items: center; }
-  .password-field [data-password-toggle] { min-height: 48px; min-width: 72px; margin-top: 0; padding-inline: var(--space-3); border: 1px solid var(--control-border); border-radius: var(--radius-sm); background: var(--surface-raised); color: var(--text-primary); font-weight: 600; cursor: pointer; }
-  .login-form button { min-height: 48px; margin-top: var(--space-2); padding-inline: var(--space-4); border: 1px solid var(--color-accent-primary); border-radius: var(--radius-sm); background: var(--color-accent-primary); color: var(--color-text-inverse); font-weight: 700; cursor: pointer; }
-  .login-form button:hover { background: var(--color-accent-primary-hover); border-color: var(--color-accent-primary-hover); }
-  .login-form button:active { transform: scale(.96); }
+  .login-form button { min-block-size: 48px; min-inline-size: 48px; padding: var(--space-3) var(--space-4); border: 1px solid var(--color-accent-primary); border-radius: var(--radius-sm); background: var(--color-accent-primary); color: var(--text-on-accent); font-weight: 600; cursor: pointer; white-space: normal; overflow-wrap: anywhere; }
+  .login-form [data-login-submit] { margin-block-start: var(--space-1); inline-size: 100%; }
+  .login-form [data-login-submit]:hover:not(:disabled) { background: var(--color-accent-primary-hover); border-color: var(--color-accent-primary-hover); }
+  .login-form [data-login-submit]:active:not(:disabled) { background: var(--color-accent-primary-active); }
+  .password-field [data-password-toggle] { min-inline-size: 72px; padding-inline: var(--space-3); border-color: var(--control-border); background: var(--surface-raised); color: var(--text-primary); }
+  .password-field [data-password-toggle]:hover { background: var(--color-surface-hover); }
+  .password-field [data-password-toggle]:active { background: var(--color-surface-active); }
+  .login-form :is(input, button):focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
+  .login-form button:disabled { opacity: var(--disabled-opacity); cursor: progress; }
   @media (max-width: 520px) { .login-panel { padding: var(--space-5); } }
+  @media (min-width: 1100px) { .login-panel { justify-self: end; margin-inline-end: clamp(0px, 6vw, 120px); } }
   @keyframes login-rise {
-    from { opacity: 0; transform: translateY(10px); filter: blur(4px); }
-    to { opacity: 1; transform: translateY(0); filter: blur(0); }
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
   }
   @media (prefers-reduced-motion: no-preference) {
-    .login-panel > p:first-child { animation: login-rise var(--motion-duration-fast) var(--motion-ease-standard) 0ms both; }
-    .login-panel h1 { animation: login-rise var(--motion-duration-fast) var(--motion-ease-standard) 50ms both; }
-    .login-panel h1 + p { animation: login-rise var(--motion-duration-fast) var(--motion-ease-standard) 90ms both; }
+    .login-heading { animation: login-rise var(--motion-duration-fast) var(--motion-ease-standard) both; }
     #session-recovery,
     #form-error,
     .login-form { animation: login-rise var(--motion-duration-fast) var(--motion-ease-standard) 130ms both; }
+  }
+  @media (forced-colors: active) {
+    .login-panel, #form-error, #form-error[role="alert"], #session-recovery { border-color: CanvasText; color: CanvasText; background: Canvas; box-shadow: none; }
+    .login-form :is(input, button) { border-color: ButtonBorder; }
+    .login-form :is(input, button):focus-visible { outline-color: Highlight; }
   }
 </style>
