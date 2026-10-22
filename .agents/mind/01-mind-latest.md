@@ -1,3 +1,9 @@
+- **2026-10-23 — CA-P-QUARANTINE-RECEIVING / CAPA A receiving register**
+  - Changed: `/quarantine/receiving` now reads header → server filter panel (same native GET fields) + applied chips → one canonical count → focusable wide register → offset pager; long receiving numbers/item codes/lots wrap instead of truncating, row links meet 44px, and `Receiving state`, `Inspection result`, `Quarantine status` and `Release system state` stay separate columns (workflow state is the existing list projection). Filters, read use case, guards, create/open links and Sidebar unchanged; no export, mutation, measurement, limit or policy added.
+  - Evidence: NOT RUN by task instruction (no tests/typecheck/lint/build/browser/QA); source and textual `git diff` review only. Literal visual-reference match not confirmed.
+  - State: DONE — code edit only; untested.
+  - Key files: `src/pages/quarantine/receiving/index.astro`.
+  - Pre-existing debt (not repaired): `PostgresReceivingRepository.listPage` returns an empty page with total 0 when the `PERM-QUAR-VIEW` grant lacks OWN/GLOBAL scope, so page-level denial is indistinguishable from an empty authorized scope.
 - **2026-10-22 — CA-P-LABORATORY-TESTS-LABTESTID-EXECUTE / CAPA A execution workspace**
   - Changed: execution route reorganized into a wide header, controlled observation entry, separate submit/equipment sections, and read-only frozen context; sample order, exact measurement strings/units, server decisions, actions, guards and Sidebar retained. Prior JS-only mutation/no-JS baseline debt remains outside scope.
   - Evidence: NOT RUN by instruction; source and textual `git diff` review only. Literal visual-reference match not confirmed.

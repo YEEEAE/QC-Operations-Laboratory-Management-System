@@ -10,10 +10,12 @@ import {
   parseReceivingFilters,
 } from '../../../modules/quarantine/receiving/application/receiving-filters.js';
 import {
+  INSPECTION_RESULTS,
   RECEIVING_INSPECTION_STATUSES,
   RECEIVING_QUARANTINE_STATUSES,
+  RECEIVING_WORKFLOW_STATES,
+  deriveQuarantineStatus,
 } from '../../../modules/quarantine/receiving/application/presentation.js';
-import { RECEIVING_WORKFLOW_STATES, INSPECTION_RESULTS, deriveQuarantineStatus } from '../../../modules/quarantine/receiving/application/presentation.js';
 import { stateLabel, releaseStateLabel, copy } from '../../../shared/copy/ux-vocabulary.js';
 const actor = Astro.locals.actor;
 if (!actor) return Astro.redirect('/login?returnTo=%2Fquarantine%2Freceiving');
@@ -106,158 +108,481 @@ const day = (value: Date | undefined): string =>
   value ? value.toISOString().slice(0, 10) : '—';
 const quantity = (item: (typeof items)[number]): string =>
   item.quantityUnit ? `${item.qty} ${item.quantityUnit}` : `${item.qty} (unit not recorded)`;
+const totalPages = Math.max(1, Math.ceil(total / pageSize));
+const shownStart = items.length ? (page - 1) * pageSize + 1 : 0;
+const shownEnd = items.length ? shownStart + items.length - 1 : 0;
+const countText = total
+  ? `Showing ${shownStart}–${shownEnd} of ${total} receiving item${total === 1 ? '' : 's'}${hasFilters ? ' matching the current filters' : ' in your authorized scope'} · Page ${page} of ${totalPages}`
+  : hasFilters
+    ? '0 receiving items match the current filters'
+    : '0 receiving items in your authorized scope';
 ---
 
 <AppLayout title="Receiving Items · Quarantine" locale="en" direction="ltr">
-  <PageHeader purpose="Inspection result and release state are shown separately.">
-    <Fragment slot="heading"><h1>Receiving items</h1></Fragment>
-    <Fragment slot="actions"><a class="button" href="/quarantine/receiving/new">Create receiving item</a></Fragment>
-  </PageHeader>
-  {rejectedNotice && (
-    <p class="rejected" role="status">
-      Not applied: {rejectedNotice}. Nothing was filtered by these values.
-    </p>
-  )}
-  <FilterBar clearHref={hasFilters ? '/quarantine/receiving' : undefined}>
-    <label for="q">Search<input id="q" name="q" type="search" value={filters.q ?? ''} maxlength="200" placeholder="Receiving number, item, lot, supplier, PO" /></label>
-    <label for="itemCode">Item code<input id="itemCode" name="itemCode" value={filters.itemCode ?? ''} maxlength="120" /></label>
-    <label for="lot">Lot<input id="lot" name="lot" value={filters.lot ?? ''} maxlength="120" /></label>
-    <label for="supplier">Supplier<input id="supplier" name="supplier" value={filters.supplier ?? ''} maxlength="200" /></label>
-    <label for="purchaseOrderNo">Purchase order<input id="purchaseOrderNo" name="purchaseOrderNo" value={filters.purchaseOrderNo ?? ''} maxlength="120" /></label>
-    <label for="state">Workflow state<select id="state" name="state">
-        <option value="">All states</option>
-        {RECEIVING_WORKFLOW_STATES.map((value) => (
-          <option value={value} selected={state === value}>
-            {stateLabel(value)}
-          </option>
-        ))}
-      </select></label>
-    <label for="inspectionStatus">Inspection status<select id="inspectionStatus" name="inspectionStatus">
-        <option value="">All statuses</option>
-        {RECEIVING_INSPECTION_STATUSES.map((value) => (
-          <option value={value} selected={inspectionStatus === value}>
-            {stateLabel(value)}
-          </option>
-        ))}
-      </select></label>
-    <label for="quarantine">Quarantine status<select id="quarantine" name="quarantine">
-        <option value="">All statuses</option>
-        {RECEIVING_QUARANTINE_STATUSES.map((value) => (
-          <option value={value} selected={quarantine === value}>
-            {stateLabel(value)}
-          </option>
-        ))}
-      </select></label>
-    <label for="inspectionResult">Inspection result<select id="inspectionResult" name="inspectionResult">
-        <option value="">All results</option>
-        {INSPECTION_RESULTS.map((value) => (
-          <option value={value} selected={inspectionResult === value}>
-            {stateLabel(value)}
-          </option>
-        ))}
-      </select></label>
-    <label for="releaseState">Release state<select id="releaseState" name="releaseState">
-        <option value="">Any release state</option>
-        <option value="NOT_RELEASED" selected={releaseState === 'NOT_RELEASED'}>{releaseStateLabel(false)}</option>
-        <option value="RELEASE_PENDING" selected={releaseState === 'RELEASE_PENDING'}>{stateLabel('RELEASE_PENDING')}</option>
-        <option value="RELEASED" selected={releaseState === 'RELEASED'}>{releaseStateLabel(true)}</option>
-      </select></label>
-    <label for="receivedFrom">Received from<input id="receivedFrom" name="receivedFrom" type="date" value={filters.receivedFrom ?? ''} /></label>
-    <label for="receivedTo">Received to<input id="receivedTo" name="receivedTo" type="date" value={filters.receivedTo ?? ''} /></label>
-    <label for="expiryFrom">Expiry from<input id="expiryFrom" name="expiryFrom" type="date" value={filters.expiryFrom ?? ''} /></label>
-    <label for="expiryTo">Expiry to<input id="expiryTo" name="expiryTo" type="date" value={filters.expiryTo ?? ''} /></label>
-    <label for="ownership">Ownership<select id="ownership" name="ownership">
-        <option value="">All records</option>
-        <option value="mine" selected={ownership === 'mine'}>Only mine</option>
-      </select></label>
-    <label for="receivedOn">Received on<select id="receivedOn" name="receivedOn">
-        <option value="">Any date</option>
-        <option value="today" selected={receivedOn === 'today'}>Today</option>
-      </select></label>
-  </FilterBar>
-  <AppliedFilters
-    filters={appliedFilters}
-    clearHref={hasFilters ? '/quarantine/receiving' : undefined}
-    note={providerUnavailable ? undefined : `${total} receiving items in your authorized scope.`}
-  />
-  {
-    providerUnavailable ? (
-      <ProviderUnavailableState title="Receiving data is temporarily unavailable" />
-    ) : items.length ? (
-      <div class="table-wrap">
-        <table>
-          <caption>
-            {total} receiving item{total === 1 ? '' : 's'}
-            {hasFilters ? ' matching the current filters' : ''}
-          </caption>
-          <thead>
-            <tr>
-              <th scope="col">Receiving number</th>
-              <th scope="col">Item code</th>
-              <th scope="col">Description</th>
-              <th scope="col">Lot</th>
-              <th scope="col">Quantity</th>
-              <th scope="col">Received</th>
-              <th scope="col">Expiry</th>
-              <th scope="col">Inspection</th>
-              <th scope="col">Quarantine</th>
-              <th scope="col">Release</th>
-              <th scope="col">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {items.map((item) => (
-              <tr>
-                <th scope="row">
-                  <a href={`/quarantine/receiving/${item.id}`}>{item.receivingNo}</a>
-                </th>
-                <td>{item.itemCode}</td>
-                <td>{item.description}</td>
-                <td>{item.lot}</td>
-                <td>{quantity(item)}</td>
-                <td>{day(item.receivingDate)}</td>
-                <td>{item.expiryDate ? day(item.expiryDate) : '—'}</td>
-                <td>
-                  <span class:list={['result', item.inspectionResult.toLowerCase()]}>
-                    {stateLabel(item.inspectionResult)}
-                  </span>
-                </td>
-                <td>
-                  <span class:list={['quarantine', { danger: deriveQuarantineStatus(item) === 'HOLD' }]}>
-                    {stateLabel(deriveQuarantineStatus(item))}
-                  </span>
-                </td>
-                <td>
-                  <span class:list={['release', { yes: item.releaseSystem }]}>
-                    {releaseStateLabel(item.releaseSystem)}
-                  </span>
-                </td>
-                <td>
-                  <a class="row-action" href={`/quarantine/receiving/${item.id}`}>Open</a>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+  <div class="receiving-register">
+    <PageHeader purpose="Inspection result and release state are shown separately.">
+      <Fragment slot="heading"><h1>Receiving items</h1></Fragment>
+      <Fragment slot="actions"><a class="button" href="/quarantine/receiving/new">Create receiving item</a></Fragment>
+    </PageHeader>
+    <section class="filter-panel" aria-labelledby="receiving-filter-heading">
+      <div class="filter-panel-heading">
+        <h2 id="receiving-filter-heading">Find receiving items</h2>
+        <p>Every filter is applied by the server; each applied chip removes one filter.</p>
       </div>
-    ) : (
-      <section class="empty-state">
-        <h2>{hasFilters ? 'No receiving items match these filters' : 'No receiving items yet'}</h2>
-        <p>
-          {hasFilters
-            ? 'Nothing in your authorized scope matches the filters above. Remove a filter to widen the search.'
-            : copy.states.noRecords + ' Create the first one to start quarantine tracking.'}
+      {rejectedNotice && (
+        <p class="filter-notice" role="status">
+          Not applied: {rejectedNotice}. Nothing was filtered by these values.
         </p>
-        {hasFilters ? (
-          <a href="/quarantine/receiving">Clear all filters</a>
-        ) : (
-          <a href="/quarantine/receiving/new">Create receiving item</a>
-        )}
-      </section>
-    )
-  }
-  {!providerUnavailable && <Pagination page={page} totalPages={Math.max(1, Math.ceil(total / pageSize))} total={total} itemLabel="receiving items" />}
+      )}
+      <FilterBar
+        label="Receiving item filters"
+        clearHref={hasFilters ? '/quarantine/receiving' : undefined}
+      >
+        <label for="q">Search<input id="q" name="q" type="search" value={filters.q ?? ''} maxlength="200" placeholder="Receiving number, item, lot, supplier, PO" /></label>
+        <label for="itemCode">Item code<input id="itemCode" name="itemCode" value={filters.itemCode ?? ''} maxlength="120" /></label>
+        <label for="lot">Lot<input id="lot" name="lot" value={filters.lot ?? ''} maxlength="120" /></label>
+        <label for="supplier">Supplier<input id="supplier" name="supplier" value={filters.supplier ?? ''} maxlength="200" /></label>
+        <label for="purchaseOrderNo">Purchase order<input id="purchaseOrderNo" name="purchaseOrderNo" value={filters.purchaseOrderNo ?? ''} maxlength="120" /></label>
+        <label for="state">Workflow state<select id="state" name="state">
+            <option value="">All states</option>
+            {RECEIVING_WORKFLOW_STATES.map((value) => (
+              <option value={value} selected={state === value}>
+                {stateLabel(value)}
+              </option>
+            ))}
+          </select></label>
+        <label for="inspectionStatus">Inspection status<select id="inspectionStatus" name="inspectionStatus">
+            <option value="">All statuses</option>
+            {RECEIVING_INSPECTION_STATUSES.map((value) => (
+              <option value={value} selected={inspectionStatus === value}>
+                {stateLabel(value)}
+              </option>
+            ))}
+          </select></label>
+        <label for="quarantine">Quarantine status<select id="quarantine" name="quarantine">
+            <option value="">All statuses</option>
+            {RECEIVING_QUARANTINE_STATUSES.map((value) => (
+              <option value={value} selected={quarantine === value}>
+                {stateLabel(value)}
+              </option>
+            ))}
+          </select></label>
+        <label for="inspectionResult">Inspection result<select id="inspectionResult" name="inspectionResult">
+            <option value="">All results</option>
+            {INSPECTION_RESULTS.map((value) => (
+              <option value={value} selected={inspectionResult === value}>
+                {stateLabel(value)}
+              </option>
+            ))}
+          </select></label>
+        <label for="releaseState">Release state<select id="releaseState" name="releaseState">
+            <option value="">Any release state</option>
+            <option value="NOT_RELEASED" selected={releaseState === 'NOT_RELEASED'}>{releaseStateLabel(false)}</option>
+            <option value="RELEASE_PENDING" selected={releaseState === 'RELEASE_PENDING'}>{stateLabel('RELEASE_PENDING')}</option>
+            <option value="RELEASED" selected={releaseState === 'RELEASED'}>{releaseStateLabel(true)}</option>
+          </select></label>
+        <label for="receivedFrom">Received from<input id="receivedFrom" name="receivedFrom" type="date" value={filters.receivedFrom ?? ''} /></label>
+        <label for="receivedTo">Received to<input id="receivedTo" name="receivedTo" type="date" value={filters.receivedTo ?? ''} /></label>
+        <label for="expiryFrom">Expiry from<input id="expiryFrom" name="expiryFrom" type="date" value={filters.expiryFrom ?? ''} /></label>
+        <label for="expiryTo">Expiry to<input id="expiryTo" name="expiryTo" type="date" value={filters.expiryTo ?? ''} /></label>
+        <label for="ownership">Ownership<select id="ownership" name="ownership">
+            <option value="">All records</option>
+            <option value="mine" selected={ownership === 'mine'}>Only mine</option>
+          </select></label>
+        <label for="receivedOn">Received on<select id="receivedOn" name="receivedOn">
+            <option value="">Any date</option>
+            <option value="today" selected={receivedOn === 'today'}>Today</option>
+          </select></label>
+      </FilterBar>
+    </section>
+    <AppliedFilters
+      filters={appliedFilters}
+      clearHref={hasFilters ? '/quarantine/receiving' : undefined}
+    />
+    {/* READ and FILTER use the server read and the native GET contract. EXPORT is
+        N/A: this register has no export action. AUTH is the login redirect above;
+        mutation, inspection approval, and release are N/A on this read surface. */}
+    {!providerUnavailable && (
+      <p class="result-count" role="status" aria-live="polite">{countText}</p>
+    )}
+    {
+      providerUnavailable ? (
+        <ProviderUnavailableState
+          title="Receiving data is temporarily unavailable"
+          description="Receiving items could not be loaded. No count is shown; this does not mean the register is empty."
+        />
+      ) : items.length ? (
+        <section class="register" aria-labelledby="receiving-register-title">
+          <h2 id="receiving-register-title" class="sr-only">Receiving item register</h2>
+          <div class="table-wrap" role="region" aria-label="Receiving item register table" tabindex="0">
+            <table>
+              <caption>
+                Receiving items in your authorized scope. Inspection result, quarantine
+                status, and release system state are recorded separately.
+              </caption>
+              <thead>
+                <tr>
+                  <th scope="col">Receiving number</th>
+                  <th scope="col">Item code</th>
+                  <th scope="col">Description</th>
+                  <th scope="col">Lot</th>
+                  <th scope="col">Quantity</th>
+                  <th scope="col">Received</th>
+                  <th scope="col">Expiry</th>
+                  <th scope="col">Receiving state</th>
+                  <th scope="col">Inspection result</th>
+                  <th scope="col">Quarantine status</th>
+                  <th scope="col">Release system state</th>
+                  <th scope="col">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {items.map((item) => (
+                  <tr>
+                    <th scope="row" class="receiving-number">
+                      <a href={`/quarantine/receiving/${item.id}`}>{item.receivingNo}</a>
+                    </th>
+                    <td class="code">{item.itemCode}</td>
+                    <td class="description">{item.description}</td>
+                    <td class="code">{item.lot}</td>
+                    <td class="quantity">{quantity(item)}</td>
+                    <td class="date"><time datetime={day(item.receivingDate)}>{day(item.receivingDate)}</time></td>
+                    <td class="date">
+                      {item.expiryDate ? (
+                        <time datetime={day(item.expiryDate)}>{day(item.expiryDate)}</time>
+                      ) : (
+                        '—'
+                      )}
+                    </td>
+                    <td>
+                      <span class="state-pill">{stateLabel(item.workflowState)}</span>
+                    </td>
+                    <td>
+                      <span class:list={['result', item.inspectionResult.toLowerCase()]}>
+                        {stateLabel(item.inspectionResult)}
+                      </span>
+                    </td>
+                    <td>
+                      <span class:list={['quarantine', { danger: deriveQuarantineStatus(item) === 'HOLD' }]}>
+                        {stateLabel(deriveQuarantineStatus(item))}
+                      </span>
+                    </td>
+                    <td>
+                      <span class:list={['release', { yes: item.releaseSystem }]}>
+                        {releaseStateLabel(item.releaseSystem)}
+                      </span>
+                    </td>
+                    <td>
+                      <a class="row-action" href={`/quarantine/receiving/${item.id}`}>Open</a>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      ) : (
+        <section class="empty-state">
+          <h2>{hasFilters ? 'No receiving items match these filters' : 'No receiving items yet'}</h2>
+          <p>
+            {hasFilters
+              ? 'Nothing in your authorized scope matches the filters above. Remove a filter to widen the search.'
+              : copy.states.noRecords + ' Create the first one to start quarantine tracking.'}
+          </p>
+          {hasFilters ? (
+            <a href="/quarantine/receiving">Clear all filters</a>
+          ) : (
+            <a href="/quarantine/receiving/new">Create receiving item</a>
+          )}
+        </section>
+      )
+    }
+    {!providerUnavailable && (
+      <Pagination
+        page={page}
+        totalPages={totalPages}
+        total={total}
+        itemLabel="receiving items"
+      />
+    )}
+  </div>
 </AppLayout>
 <style>
-  .page-head{display:flex;justify-content:space-between;align-items:flex-start;gap:var(--space-5);margin-bottom:var(--space-6)}h1{margin:.25rem 0 .4rem}.eyebrow{margin:0;color:var(--text-muted);font-size:.75rem;letter-spacing:.12em;font-weight:700}.lede,.empty-state p{color:var(--text-muted);font-size:.85rem}.button{display:inline-flex;align-items:center;justify-content:center;min-height:var(--control-height);padding-inline:1rem;border:1px solid var(--color-accent-primary);border-radius:var(--radius-sm);background:var(--color-accent-primary);color:var(--color-text-inverse);font-weight:700;text-decoration:none}.button.secondary{background:var(--surface-raised);border-color:var(--border-default);color:var(--text-primary)}.filters{display:flex;align-items:end;gap:var(--space-3);margin-bottom:var(--space-4);flex-wrap:wrap}label{display:grid;gap:.35rem;color:var(--text-secondary);font-size:.8rem}select{min-height:var(--control-height);padding-inline:.7rem;background:var(--surface-panel);border:1px solid var(--border-default);border-radius:var(--radius-sm);color:inherit}.table-wrap{overflow-x:auto;border:1px solid var(--color-border-subtle);border-radius:var(--radius-lg)}table{width:100%;min-width:880px;border-collapse:collapse;background:var(--surface-panel)}caption{text-align:start;padding:var(--space-4);color:var(--text-muted);font-size:.8rem}th,td{padding:.85rem;border-top:1px solid var(--color-border-subtle);text-align:start;font-size:.8rem}th{font-weight:700}a{color:var(--color-accent-primary-hover)}.state-pill,.result,.release{display:inline-flex;padding:.25rem .5rem;border-radius:999px;border:1px solid var(--color-border-subtle);font-size:.75rem;font-weight:700}.result.pass{color:var(--status-pass);background:var(--status-pass-bg)}.result.fail,.result.hold{color:var(--status-danger);background:var(--status-danger-bg)}.result.not_started{color:var(--text-muted)}.release{color:var(--text-muted)}.release.yes{color:var(--status-released);background:var(--status-released-bg);border-color:var(--status-released)}.quarantine{display:inline-flex;padding:.25rem .5rem;border-radius:999px;border:1px solid var(--color-border-subtle);font-size:.75rem;font-weight:700;color:var(--text-muted)}.quarantine.danger{color:var(--status-danger);background:var(--status-danger-bg);border-color:var(--status-danger)}.rejected{margin:0 0 var(--space-4);padding:var(--space-3) var(--space-4);border-inline-start:3px solid var(--status-warning);background:var(--surface-panel);color:var(--text-secondary);font-size:var(--font-size-xs)}.row-action{font-weight:700}.empty-state{padding:3rem 1.5rem;text-align:center;background:var(--surface-panel);border:1px dashed var(--color-border-strong);border-radius:var(--radius-lg)}.empty-state h2{margin:.5rem 0}.empty-state a{font-weight:700}@media(max-width:650px){.page-head,.filters{display:grid}.button{width:max-content}}
+  .receiving-register {
+    min-inline-size: 0;
+    inline-size: 100%;
+  }
+  .button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-block-size: 44px;
+    padding-inline: var(--space-4);
+    border: 1px solid var(--color-accent-primary);
+    border-radius: var(--radius-sm);
+    background: var(--color-accent-primary);
+    color: var(--text-on-accent);
+    font-weight: var(--font-weight-bold);
+    text-decoration: none;
+  }
+  .filter-panel {
+    margin-block-end: var(--space-4);
+    padding: var(--space-5);
+    background: var(--surface-panel);
+    border: 1px solid var(--border-default);
+    border-radius: var(--card-radius);
+  }
+  .filter-panel-heading {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: var(--space-2) var(--space-4);
+    margin-block-end: var(--space-4);
+  }
+  .filter-panel-heading h2 {
+    margin: 0;
+    color: var(--text-primary);
+    font-size: var(--font-size-md);
+  }
+  .filter-panel-heading p {
+    margin: 0;
+    max-inline-size: 55ch;
+    color: var(--text-muted);
+    font-size: var(--font-size-xs);
+    line-height: 1.5;
+  }
+  .filter-panel :global(.filters) {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 12rem), 1fr));
+    align-items: end;
+    gap: var(--space-3);
+    margin: 0;
+  }
+  .filter-panel :global(label),
+  .filter-panel :global(input),
+  .filter-panel :global(select) {
+    min-inline-size: 0;
+    max-inline-size: 100%;
+  }
+  .filter-panel :global(input),
+  .filter-panel :global(select) {
+    inline-size: 100%;
+  }
+  .filter-panel :global(.filters-actions),
+  .filter-panel :global(.submit-status) {
+    grid-column: 1 / -1;
+  }
+  .filter-notice {
+    margin: 0 0 var(--space-4);
+    padding: var(--space-3) var(--space-4);
+    border-inline-start: 3px solid var(--status-warning);
+    background: var(--surface-inset);
+    color: var(--text-secondary);
+    font-size: var(--font-size-xs);
+    line-height: 1.6;
+  }
+  .result-count {
+    margin: 0 0 var(--space-3);
+    color: var(--text-secondary);
+    font-size: var(--font-size-xs);
+    line-height: 1.6;
+    font-variant-numeric: var(--numeric-figures);
+  }
+  .register {
+    min-inline-size: 0;
+  }
+  .table-wrap {
+    max-inline-size: 100%;
+    overflow-x: auto;
+    border: 1px solid var(--color-border-subtle);
+    border-radius: var(--radius-lg);
+  }
+  .table-wrap:focus-visible {
+    outline: 2px solid var(--focus-ring);
+    outline-offset: 2px;
+  }
+  table {
+    inline-size: 100%;
+    min-inline-size: 76rem;
+    border-collapse: collapse;
+    background: var(--surface-panel);
+  }
+  caption {
+    padding: var(--space-4) var(--space-5);
+    color: var(--text-muted);
+    text-align: start;
+    font-size: var(--font-size-xs);
+    line-height: 1.6;
+  }
+  th,
+  td {
+    padding: var(--space-3) var(--space-4);
+    border-block-start: 1px solid var(--color-border-subtle);
+    text-align: start;
+    vertical-align: top;
+    font-size: var(--font-size-sm);
+    line-height: 1.6;
+    overflow-wrap: anywhere;
+    word-break: normal;
+    white-space: normal;
+  }
+  thead th {
+    background: var(--table-header-background);
+    color: var(--text-primary);
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-semibold);
+    white-space: nowrap;
+  }
+  tbody tr:nth-child(even) {
+    background: var(--table-stripe-background);
+  }
+  .receiving-number {
+    min-inline-size: 9rem;
+    color: var(--text-primary);
+    font-weight: var(--font-weight-semibold);
+  }
+  .receiving-number a,
+  .row-action {
+    display: inline-flex;
+    align-items: center;
+    max-inline-size: 100%;
+    min-block-size: 44px;
+    overflow-wrap: anywhere;
+    white-space: normal;
+  }
+  .receiving-number a {
+    text-decoration: underline;
+  }
+  .code {
+    min-inline-size: 8rem;
+  }
+  .description {
+    min-inline-size: 14rem;
+  }
+  .quantity,
+  .date {
+    min-inline-size: 8rem;
+    white-space: nowrap;
+    font-variant-numeric: var(--numeric-figures);
+  }
+  .receiving-register .state-pill,
+  .receiving-register .result,
+  .receiving-register .quarantine,
+  .receiving-register .release {
+    display: inline-flex;
+    align-items: center;
+    max-inline-size: 100%;
+    padding: var(--space-1) var(--space-2);
+    border: 1px solid var(--color-border-subtle);
+    border-radius: var(--radius-sm);
+    color: var(--text-primary);
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-semibold);
+    line-height: 1.4;
+    overflow-wrap: anywhere;
+    white-space: normal;
+  }
+  .receiving-register .state-pill {
+    color: var(--text-secondary);
+  }
+  .receiving-register .result.pass {
+    color: var(--status-pass);
+    background: var(--status-pass-bg);
+    border-color: var(--status-pass);
+  }
+  .receiving-register .result.fail,
+  .receiving-register .result.hold {
+    color: var(--status-danger);
+    background: var(--status-danger-bg);
+    border-color: var(--status-danger);
+  }
+  .receiving-register .result.not_started {
+    color: var(--text-muted);
+  }
+  .receiving-register .quarantine.danger {
+    color: var(--status-danger);
+    background: var(--status-danger-bg);
+    border-color: var(--status-danger);
+  }
+  .receiving-register .release {
+    color: var(--text-muted);
+  }
+  .receiving-register .release.yes {
+    color: var(--status-released);
+    background: var(--status-released-bg);
+    border-color: var(--status-released);
+  }
+  .row-action {
+    justify-self: start;
+    font-weight: var(--font-weight-semibold);
+  }
+  .empty-state {
+    padding: var(--space-8) var(--space-5);
+    text-align: center;
+    background: var(--surface-panel);
+    border: 1px dashed var(--color-border-strong);
+    border-radius: var(--radius-lg);
+  }
+  .empty-state h2 {
+    margin: 0 0 var(--space-3);
+    color: var(--text-primary);
+    font-size: var(--font-size-lg);
+  }
+  .empty-state p {
+    margin: 0 auto;
+    max-inline-size: 60ch;
+    color: var(--text-muted);
+    font-size: var(--font-size-sm);
+    line-height: 1.6;
+  }
+  .empty-state a {
+    display: inline-flex;
+    align-items: center;
+    min-block-size: 44px;
+    margin-block-start: var(--space-2);
+    font-weight: var(--font-weight-semibold);
+  }
+  .receiving-register a:focus-visible,
+  .receiving-register .button:focus-visible {
+    outline: 2px solid var(--focus-ring);
+    outline-offset: 2px;
+  }
+  .sr-only {
+    position: absolute;
+    inline-size: 1px;
+    block-size: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+  @media (max-width: 760px) {
+    .filter-panel {
+      padding: var(--space-4);
+    }
+    .result-count {
+      margin-block-end: var(--space-2);
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .table-wrap {
+      scroll-behavior: auto;
+    }
+  }
+  @media (forced-colors: active) {
+    .filter-panel,
+    .table-wrap,
+    .empty-state,
+    .button {
+      border-color: CanvasText;
+    }
+    .table-wrap:focus-visible,
+    .receiving-register a:focus-visible,
+    .receiving-register .button:focus-visible {
+      outline-color: Highlight;
+    }
+  }
 </style>
