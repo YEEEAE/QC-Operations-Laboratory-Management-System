@@ -1,19 +1,697 @@
 ---
-import PageHeader from "../../../ui/components/PageHeader.astro";
-import AppLayout from '../../../ui/layouts/AppLayout.astro'; import JourneyContextPanel from '../../../ui/components/workflow/JourneyContextPanel.astro'; import ProviderUnavailableState from '../../../ui/components/feedback/ProviderUnavailableState.astro'; import { assetsReadDependencies } from '../../../modules/assets/application/dependencies.js'; import { stateLabel } from '../../../shared/copy/ux-vocabulary.js'; import AssetActionRail from '../../../ui/components/workflow/AssetActionRail.astro'; import { AppError } from '../../../shared/errors/app-error.js';
-const actor=Astro.locals.actor;if(!actor)return Astro.redirect(`/login?returnTo=${encodeURIComponent(Astro.url.pathname)}`);const read=assetsReadDependencies();let record;let recordUnavailable=false;try{record=await read.calibration.get.execute({actor,calibrationId:Astro.params.calibrationId??''});}catch(error){if(!(error instanceof AppError&&error.code==='RESOURCE_NOT_FOUND'))recordUnavailable=true;}if(!record&&!recordUnavailable)return Astro.redirect('/404');if(recordUnavailable)Astro.response.status=503;let history: readonly import('../../../modules/assets/calibration/ports/repository.js').CalibrationHistory[]=[];let historyUnavailable=false;if(record){try{history=await read.calibration.history.execute({actor,calibrationId:record.id});}catch{historyUnavailable=true;}}
+import PageHeader from '../../../ui/components/PageHeader.astro';
+import AppLayout from '../../../ui/layouts/AppLayout.astro';
+import JourneyContextPanel from '../../../ui/components/workflow/JourneyContextPanel.astro';
+import ProviderUnavailableState from '../../../ui/components/feedback/ProviderUnavailableState.astro';
+import { assetsReadDependencies } from '../../../modules/assets/application/dependencies.js';
+import { stateLabel } from '../../../shared/copy/ux-vocabulary.js';
+import AssetActionRail from '../../../ui/components/workflow/AssetActionRail.astro';
+import { AppError } from '../../../shared/errors/app-error.js';
+
+const actor = Astro.locals.actor;
+if (!actor) return Astro.redirect(`/login?returnTo=${encodeURIComponent(Astro.url.pathname)}`);
+
+const read = assetsReadDependencies();
+let record;
+let recordUnavailable = false;
+try {
+  record = await read.calibration.get.execute({
+    actor,
+    calibrationId: Astro.params.calibrationId ?? '',
+  });
+} catch (error) {
+  if (
+    !(error instanceof AppError && ['RESOURCE_NOT_FOUND', 'AUTHZ_DENIED'].includes(error.code))
+  ) {
+    recordUnavailable = true;
+  }
+}
+
+if (!record && !recordUnavailable) return Astro.redirect('/404');
+if (recordUnavailable) Astro.response.status = 503;
+
+let history: readonly import('../../../modules/assets/calibration/ports/repository.js').CalibrationHistory[] = [];
+let historyUnavailable = false;
+if (record) {
+  try {
+    history = await read.calibration.history.execute({ actor, calibrationId: record.id });
+  } catch {
+    historyUnavailable = true;
+  }
+}
+
 let eligibility: Awaited<ReturnType<typeof read.equipment.assessEligibility.assess>> | undefined;
 let eligibilityUnavailable = false;
 let equipment: Awaited<ReturnType<typeof read.equipment.get.execute>> | undefined;
 if (record) {
-  try { eligibility = await read.equipment.assessEligibility.assess(actor, record.equipmentId); }
-  catch { eligibilityUnavailable = true; }
-  try { equipment = await read.equipment.get.execute({ actor, equipmentId: record.equipmentId }); }
-  catch { /* Keep the calibration record available when its related equipment read is denied or unavailable. */ }
+  try {
+    eligibility = await read.equipment.assessEligibility.assess(actor, record.equipmentId);
+  } catch {
+    eligibilityUnavailable = true;
+  }
+  try {
+    equipment = await read.equipment.get.execute({ actor, equipmentId: record.equipmentId });
+  } catch {
+    // Keep the calibration record available when its related equipment read is denied or unavailable.
+  }
 }
-const nextAction = record && (['DRAFT','SUBMITTED','APPROVED'].includes(record.state) ? record.state === 'DRAFT' ? 'Submit calibration' : record.state === 'SUBMITTED' ? 'Review calibration' : 'Make calibration current' : record.state === 'DUE' || record.state === 'OVERDUE' ? 'Create next calibration record' : undefined);
-const nextOwner = record && (['DRAFT','SUBMITTED'].includes(record.state) ? 'Calibration owner / reviewer' : record.state === 'APPROVED' ? 'Calibration owner' : record.state === 'DUE' || record.state === 'OVERDUE' ? 'Calibration owner' : undefined);
+
+const nextAction =
+  record &&
+  (['DRAFT', 'SUBMITTED', 'APPROVED'].includes(record.state)
+    ? record.state === 'DRAFT'
+      ? 'Submit calibration'
+      : record.state === 'SUBMITTED'
+        ? 'Review calibration'
+          : 'Current calibration selection is policy controlled'
+    : record.state === 'DUE' || record.state === 'OVERDUE'
+      ? 'Create next calibration record'
+      : undefined);
+const nextOwner =
+  record &&
+  (['DRAFT', 'SUBMITTED'].includes(record.state)
+    ? 'Calibration owner / reviewer'
+    : record.state === 'APPROVED' || record.state === 'DUE' || record.state === 'OVERDUE'
+      ? 'Calibration owner'
+      : undefined);
+
+const date = (value?: Date) =>
+  value?.toLocaleDateString('en-SA', { timeZone: 'Asia/Riyadh' }) ?? 'Not supplied by source';
+const timestamp = (value?: Date) =>
+  value?.toLocaleString('en-SA', { timeZone: 'Asia/Riyadh' }) ?? 'Not recorded';
 ---
-<AppLayout title={record ? `${record.calibrationNo} · Calibration` : "Calibration · Assets"} locale="en" direction="ltr">{recordUnavailable ? <ProviderUnavailableState title="Calibration record is temporarily unavailable" /> : record ? <><div class="crumb"><a href="/assets">Assets</a><span>/</span><a href="/assets/calibrations">Calibrations</a><span>/</span><span>{record.calibrationNo}</span></div><PageHeader><Fragment slot="heading"><h1>{record.calibrationNo}</h1></Fragment><p>Equipment <a href={`/assets/equipment/${record.equipmentId}`}>{equipment ? `${equipment.equipmentNo} · ${equipment.name}` : 'Equipment record'}</a> · Version {record.version.toString()}</p><Fragment slot="actions"><span class="state">{stateLabel(record.state)}</span></Fragment></PageHeader><JourneyContextPanel ownerDomain="Equipment & Calibration" currentState={record.state} nextAction={nextAction} nextOwner={nextOwner} whyUnavailable={record.state === 'OVERDUE' ? 'BR-CAL-004: overdue equipment is not eligible for laboratory or inspection use; submit a new calibration and complete its approved review/current-selection flow' : record.state === 'APPROVED' ? 'policy: approved-to-current activation is explicitly separate and policy-controlled' : undefined} waitingOn={record.state === 'SUBMITTED' ? 'Calibration reviewer' : record.state === 'APPROVED' ? 'Calibration activation policy owner' : record.state === 'DUE' || record.state === 'OVERDUE' ? 'Next calibration execution' : undefined} expectedEvent={record.state === 'APPROVED' ? 'Make current when policy permits' : record.state === 'DUE' || record.state === 'OVERDUE' ? 'New calibration submission' : undefined} controlledContext={`Equipment ${equipment?.equipmentNo ?? 'record'} · calibration ${record.calibrationNo}`} evidenceSummary={`Certificate ${record.certificateNo ?? 'not supplied'} · due date ${record.dueDate?.toLocaleDateString('en-SA',{timeZone:'Asia/Riyadh'}) ?? 'not supplied by source'}`} auditHref={`/audit?subjectType=CALIBRATION_RECORD&subjectId=${encodeURIComponent(record.id)}`} relatedLinks={[{ label: 'Equipment record', href: `/assets/equipment/${record.equipmentId}`, detail: 'Equipment-owned status' }, { label: 'Calibration register', href: '/assets/calibrations', detail: 'Historical calibration records' }]} /><section class="panel eligibility" aria-labelledby="eligibility-heading"><h2 id="eligibility-heading">Laboratory and inspection use</h2>{eligibilityUnavailable ? <p role="status"><strong>Eligibility could not be confirmed.</strong> Do not use this equipment in laboratory work or inspection until the equipment and current-calibration sources are available and eligibility is confirmed. <a href="/assets/equipment">Review equipment</a>.</p> : eligibility?.eligible ? <p role="status"><strong>Eligible based on the current source records.</strong> This reading does not reserve the equipment; use is checked again when recorded.</p> : <p role="status"><strong>Not eligible for laboratory or inspection use.</strong> {eligibility?.reason === 'CALIBRATION_EXPIRED' ? 'The current source due date has passed.' : eligibility?.reason === 'CALIBRATION_NOT_CURRENT' ? 'The source does not identify a current calibration for this equipment.' : eligibility?.reason === 'NO_CURRENT_CALIBRATION' ? 'No current calibration is available in the source.' : eligibility?.reason === 'UNDER_MAINTENANCE' ? 'The equipment is under maintenance.' : eligibility?.reason === 'OUT_OF_SERVICE' ? 'The equipment is out of service.' : 'The equipment is not active.'} Laboratory and inspection submission is blocked until the approved equipment and calibration workflow makes it eligible again.</p>}{eligibility?.dueDate && <p class="muted">Source calibration due date: {eligibility.dueDate.toLocaleDateString('en-SA',{timeZone:'Asia/Riyadh'})}.</p>}</section><div class="grid"><section class="panel"><h2>Calibration information</h2><dl><div><dt>Calibration date</dt><dd>{record.calibrationDate.toLocaleDateString('en-SA',{timeZone:'Asia/Riyadh'})}</dd></div><div><dt>Due date</dt><dd>{record.dueDate?.toLocaleDateString('en-SA',{timeZone:'Asia/Riyadh'})??'Not supplied by source'}</dd></div><div><dt>Provider</dt><dd>{record.provider??'Not supplied'}</dd></div><div><dt>Certificate</dt><dd>{record.certificateNo??'Not supplied'}</dd></div><div><dt>Result</dt><dd>{record.result??'Not supplied'}</dd></div><div><dt>Equipment</dt><dd><a href={`/assets/equipment/${record.equipmentId}`}>{equipment ? `${equipment.equipmentNo} · ${equipment.name}` : 'Equipment record'}</a></dd></div></dl></section><section class="panel"><h2>Controlled status</h2><p class="notice">No calibration interval is inferred. The source due date determines whether a current calibration is overdue. BR-CAL-004 blocks laboratory and inspection use whenever equipment is not eligible; no bypass is authorized.</p><p class="muted">Historical calibration records are preserved. A future current-calibration selection remains a separate approved transition.</p></section></div><AssetActionRail kind="calibration" record={record} actor={actor} returnTo={Astro.url.pathname + Astro.url.search} /><section class="panel history"><h2>Immutable history</h2>{historyUnavailable ? <p role="status">Calibration history is temporarily unavailable. Retry this record later; the calibration details remain available.</p> : history.length ? <table><caption>Append-only calibration state history</caption><thead><tr><th scope="col">Action</th><th scope="col">State</th><th scope="col">Version</th><th scope="col">Changed</th></tr></thead><tbody>{history.map((item)=><tr><th scope="row">{item.action}</th><td>{stateLabel(item.state)}</td><td>{item.recordVersion.toString()}</td><td>{item.changedAt.toLocaleString('en-SA',{timeZone:'Asia/Riyadh'})}</td></tr>)}</tbody></table> : <p class="muted">No calibration history entries are recorded.</p>}<dl><div><dt>Created by</dt><dd>{record.createdBy}</dd></div><div><dt>Created</dt><dd>{record.createdAt.toLocaleString('en-SA',{timeZone:'Asia/Riyadh'})}</dd></div><div><dt>Approved</dt><dd>{record.approvedAt?.toLocaleString('en-SA',{timeZone:'Asia/Riyadh'})??'Not approved'}</dd></div><div><dt>Version</dt><dd>{record.version.toString()}</dd></div></dl></section></> : <section class="panel"><h1>Calibration record not found</h1><p>This record does not exist or is outside your authorized scope.</p><a href="/assets/calibrations">Return to calibrations</a></section>}</AppLayout>
-<style>.crumb{display:flex;gap:.5rem;margin-bottom:var(--space-5);color:var(--text-muted);font-size:.8rem}.crumb a,.head a{color:var(--color-accent-primary-hover)}.head{display:flex;justify-content:space-between;gap:var(--space-5);align-items:flex-start;margin-bottom:var(--space-5)}h1{margin:.25rem 0 .4rem}.eyebrow{margin:0;color:var(--text-muted);font-size:.7rem;letter-spacing:.12em;font-weight:700}.head p:not(.eyebrow),.muted,.notice{color:var(--text-muted);font-size:.85rem}.state{padding:.45rem .7rem;border:1px solid var(--color-border-subtle);border-radius:999px;font-size:.75rem;font-weight:700}.grid{display:grid;grid-template-columns:1.2fr .8fr;gap:var(--space-5)}.panel{padding:var(--space-5);background:var(--surface-panel);border:1px solid var(--color-border-subtle);border-radius:var(--radius-lg)}.panel h2{margin:0;font-size:1rem}.eligibility{margin:var(--space-5) 0;border-inline-start:3px solid var(--status-warning)}.eligibility p{line-height:1.55}.eligibility a{color:var(--color-accent-primary-hover)}dl{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--space-4);margin:var(--space-5) 0 0}dt{color:var(--text-muted);font-size:.75rem}dd{margin:.3rem 0 0;font-weight:700;font-size:.86rem}.notice{padding:var(--space-4);border-inline-start:3px solid var(--status-warning);background:var(--surface-raised);line-height:1.55}.history{margin-top:var(--space-5)}@media(max-width:700px){.head{display:grid}.grid{grid-template-columns:1fr}dl{grid-template-columns:1fr}}
+
+<AppLayout
+  title={record ? `${record.calibrationNo} · Calibration` : 'Calibration · Assets'}
+  locale="en"
+  direction="ltr"
+>
+  {recordUnavailable ? (
+    <ProviderUnavailableState title="Calibration record is temporarily unavailable" />
+  ) : record ? (
+    <div id="calibration-detail" class="calibration-detail">
+      <nav class="crumb" aria-label="Breadcrumb">
+        <a href="/assets">Assets</a>
+        <span aria-hidden="true">/</span>
+        <a href="/assets/calibrations">Calibrations</a>
+        <span aria-hidden="true">/</span>
+        <span aria-current="page">{record.calibrationNo}</span>
+      </nav>
+
+      <PageHeader>
+        <Fragment slot="heading">
+          <h1>{record.calibrationNo}</h1>
+        </Fragment>
+        <p>
+          Equipment <a href={`/assets/equipment/${record.equipmentId}`}>
+            {equipment ? `${equipment.equipmentNo} · ${equipment.name}` : 'Equipment record'}
+          </a>
+          <span class="header-separator" aria-hidden="true">·</span>
+          Version <span class="numeric">{record.version.toString()}</span>
+        </p>
+        <Fragment slot="actions">
+          <span class="state" data-state={record.state}>{stateLabel(record.state)}</span>
+        </Fragment>
+      </PageHeader>
+
+      <div class="record-layout">
+        <div class="record-content">
+          <JourneyContextPanel
+            ownerDomain="Equipment & Calibration"
+            currentState={record.state}
+            nextAction={nextAction}
+            nextOwner={nextOwner}
+            whyUnavailable={
+              record.state === 'OVERDUE'
+                ? 'BR-CAL-004: overdue equipment is not eligible for laboratory or inspection use; submit a new calibration and complete its approved review/current-selection flow'
+                : record.state === 'APPROVED'
+                  ? 'Policy: approved-to-current activation is separate and policy-controlled.'
+                  : undefined
+            }
+            waitingOn={
+              record.state === 'SUBMITTED'
+                ? 'Calibration reviewer'
+                : record.state === 'APPROVED'
+                  ? 'Calibration activation policy owner'
+                  : record.state === 'DUE' || record.state === 'OVERDUE'
+                    ? 'Next calibration execution'
+                    : undefined
+            }
+            expectedEvent={
+              record.state === 'APPROVED'
+                ? 'Current-calibration selection when policy permits'
+                : record.state === 'DUE' || record.state === 'OVERDUE'
+                  ? 'New calibration submission'
+                  : undefined
+            }
+            controlledContext={`Equipment ${equipment?.equipmentNo ?? 'record'} · calibration ${record.calibrationNo}`}
+            evidenceSummary={`Certificate ${record.certificateNo ?? 'not supplied'} · due date ${date(record.dueDate)}`}
+            auditHref={`/audit?subjectType=CALIBRATION_RECORD&subjectId=${encodeURIComponent(record.id)}`}
+            relatedLinks={[
+              {
+                label: 'Equipment record',
+                href: `/assets/equipment/${record.equipmentId}`,
+                detail: 'Equipment-owned status',
+              },
+              {
+                label: 'Calibration register',
+                href: '/assets/calibrations',
+                detail: 'Historical calibration records',
+              },
+            ]}
+          />
+
+          <section class="panel eligibility" aria-labelledby="eligibility-heading">
+            <div class="section-heading">
+              <div>
+                <p class="eyebrow">Source assessment</p>
+                <h2 id="eligibility-heading">Laboratory and inspection use</h2>
+              </div>
+            </div>
+
+            {eligibilityUnavailable ? (
+              <p class="assessment-message" role="status">
+                <strong>Eligibility could not be confirmed.</strong> Do not use this equipment in
+                laboratory work or inspection until the equipment and current-calibration sources
+                are available and eligibility is confirmed. <a href="/assets/equipment">Review
+                  equipment</a>.
+              </p>
+            ) : eligibility?.eligible ? (
+              <p class="assessment-message" role="status">
+                <strong>Eligible based on the current source records.</strong> This reading does not
+                reserve the equipment; use is checked again when recorded.
+              </p>
+            ) : (
+              <p class="assessment-message" role="status">
+                <strong>Not eligible for laboratory or inspection use.</strong>{' '}
+                {eligibility?.reason === 'CALIBRATION_EXPIRED'
+                  ? 'The current source due date has passed.'
+                  : eligibility?.reason === 'CALIBRATION_NOT_CURRENT'
+                    ? 'The source does not identify a current calibration for this equipment.'
+                    : eligibility?.reason === 'NO_CURRENT_CALIBRATION'
+                      ? 'No current calibration is available in the source.'
+                      : eligibility?.reason === 'UNDER_MAINTENANCE'
+                        ? 'The equipment is under maintenance.'
+                        : eligibility?.reason === 'OUT_OF_SERVICE'
+                          ? 'The equipment is out of service.'
+                          : 'The equipment is not active.'}{' '}
+                Laboratory and inspection submission is blocked until the approved equipment and
+                calibration workflow makes it eligible again.
+              </p>
+            )}
+
+            <dl class="source-status-grid">
+              <div>
+                <dt>Equipment state</dt>
+                <dd>{eligibility?.equipmentState ? stateLabel(eligibility.equipmentState) : 'Not available from source'}</dd>
+              </div>
+              <div>
+                <dt>Current calibration</dt>
+                <dd>
+                  {eligibility?.calibrationNo
+                    ? `${eligibility.calibrationNo} · ${stateLabel(eligibility.calibrationState)}`
+                    : 'Not supplied by source'}
+                </dd>
+              </div>
+              <div>
+                <dt>Calibration due date</dt>
+                <dd>{eligibility?.dueDate ? date(eligibility.dueDate) : 'Not supplied by source'}</dd>
+              </div>
+              <div>
+                <dt>Current maintenance</dt>
+                <dd>
+                  {eligibility?.maintenanceNo
+                    ? `${eligibility.maintenanceNo} · ${stateLabel(eligibility.maintenanceState)}`
+                    : 'Not supplied by source'}
+                </dd>
+              </div>
+            </dl>
+          </section>
+
+          <section class="panel" aria-labelledby="calibration-information-heading">
+            <div class="section-heading">
+              <div>
+                <p class="eyebrow">Record facts</p>
+                <h2 id="calibration-information-heading">Calibration information</h2>
+              </div>
+              <span class="section-index" aria-hidden="true">01</span>
+            </div>
+            <dl class="facts-grid">
+              <div><dt>Calibration date</dt><dd>{date(record.calibrationDate)}</dd></div>
+              <div><dt>Due date</dt><dd>{date(record.dueDate)}</dd></div>
+              <div><dt>Provider</dt><dd>{record.provider ?? 'Not supplied by source'}</dd></div>
+              <div><dt>Certificate</dt><dd>{record.certificateNo ?? 'Not supplied by source'}</dd></div>
+              <div><dt>Result</dt><dd>{record.result ?? 'Not supplied by source'}</dd></div>
+              <div>
+                <dt>Equipment</dt>
+                <dd>
+                  <a href={`/assets/equipment/${record.equipmentId}`}>
+                    {equipment ? `${equipment.equipmentNo} · ${equipment.name}` : 'Equipment record'}
+                  </a>
+                </dd>
+              </div>
+            </dl>
+          </section>
+
+          <section class="panel controlled-status" aria-labelledby="controlled-status-heading">
+            <div class="section-heading">
+              <div>
+                <p class="eyebrow">Policy and traceability</p>
+                <h2 id="controlled-status-heading">Controlled status</h2>
+              </div>
+              <span class="section-index" aria-hidden="true">02</span>
+            </div>
+            <p class="notice">
+              No calibration interval is inferred. The source due date determines whether a current
+              calibration is overdue. BR-CAL-004 blocks laboratory and inspection use whenever
+              equipment is not eligible; no bypass is authorized.
+            </p>
+            <p class="muted">
+              Historical calibration records are preserved. A future current-calibration selection
+              remains a separate approved transition.
+            </p>
+          </section>
+
+          <section class="panel history" aria-labelledby="history-heading">
+            <div class="section-heading">
+              <div>
+                <p class="eyebrow">Append-only source</p>
+                <h2 id="history-heading">Calibration history</h2>
+              </div>
+              <span class="section-index" aria-hidden="true">03</span>
+            </div>
+            {historyUnavailable ? (
+              <p class="history-state" role="status">
+                Calibration history is temporarily unavailable. Retry this record later; the
+                calibration details remain available.
+              </p>
+            ) : history.length ? (
+              <div
+                class="table-scroll"
+                role="region"
+                aria-label="Calibration state history"
+                tabindex="0"
+              >
+                <table>
+                  <caption>Append-only calibration state history</caption>
+                  <thead>
+                    <tr>
+                      <th scope="col">Action</th>
+                      <th scope="col">State</th>
+                      <th scope="col">Version</th>
+                      <th scope="col">Changed</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {history.map((item) => (
+                      <tr>
+                        <th scope="row">{item.action}</th>
+                        <td>{stateLabel(item.state)}</td>
+                        <td class="numeric">{item.recordVersion.toString()}</td>
+                        <td>{timestamp(item.changedAt)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              <p class="muted">No calibration history entries are recorded.</p>
+            )}
+
+            <dl class="history-facts">
+              <div><dt>Created by</dt><dd>{record.createdBy}</dd></div>
+              <div><dt>Created</dt><dd>{timestamp(record.createdAt)}</dd></div>
+              <div><dt>Last updated</dt><dd>{timestamp(record.updatedAt)}</dd></div>
+              <div><dt>Approved by</dt><dd>{record.approvedBy ?? 'Not approved'}</dd></div>
+              <div><dt>Approved</dt><dd>{timestamp(record.approvedAt)}</dd></div>
+              <div><dt>Became current</dt><dd>{timestamp(record.becameCurrentAt)}</dd></div>
+              <div><dt>Superseded</dt><dd>{timestamp(record.supersededAt)}</dd></div>
+              <div><dt>Voided</dt><dd>{timestamp(record.voidedAt)}</dd></div>
+              <div><dt>Void reason</dt><dd>{record.voidReason ?? 'Not recorded'}</dd></div>
+              <div><dt>Current version</dt><dd class="numeric">{record.version.toString()}</dd></div>
+            </dl>
+          </section>
+        </div>
+
+        <aside class="action-column" aria-label="Calibration actions">
+          <AssetActionRail
+            kind="calibration"
+            record={record}
+            actor={actor}
+            returnTo={Astro.url.pathname + Astro.url.search}
+          />
+        </aside>
+      </div>
+    </div>
+  ) : (
+    <section class="panel not-found">
+      <p class="eyebrow">Calibration record</p>
+      <h1>Calibration record not found</h1>
+      <p>This record does not exist or is outside your authorized scope.</p>
+      <a href="/assets/calibrations">Return to calibrations</a>
+    </section>
+  )}
+</AppLayout>
+
+<style>
+  .calibration-detail {
+    --detail-gap: var(--space-5);
+    min-inline-size: 0;
+  }
+
+  .crumb {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-2);
+    margin-block-end: var(--space-5);
+    color: var(--text-muted);
+    font-size: var(--font-size-xs);
+  }
+
+  .crumb a,
+  .calibration-detail a {
+    color: var(--color-accent-primary-hover);
+    overflow-wrap: anywhere;
+  }
+
+  .crumb a,
+  .facts-grid a,
+  .related a {
+    display: inline-flex;
+    align-items: center;
+    min-block-size: 44px;
+  }
+
+  .calibration-detail :global([data-page-header]) {
+    align-items: center;
+    margin-block-end: var(--space-5);
+    padding-block-end: var(--space-5);
+  }
+
+  .calibration-detail :global([data-page-header] p) {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-2);
+    margin-block-start: var(--space-3);
+    color: var(--text-secondary);
+    font-size: var(--font-size-sm);
+    overflow-wrap: anywhere;
+  }
+
+  .header-separator {
+    color: var(--text-muted);
+  }
+
+  .state {
+    display: inline-flex;
+    align-items: center;
+    min-block-size: 44px;
+    padding-inline: var(--space-4);
+    border: 1px solid var(--color-border-subtle);
+    border-inline-start: 3px solid var(--color-accent-primary);
+    border-radius: var(--radius-md);
+    background: var(--surface-raised);
+    color: var(--text-primary);
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-bold);
+  }
+
+  .state[data-state='OVERDUE'],
+  .state[data-state='FAILED'],
+  .state[data-state='VOID'] {
+    border-inline-start-color: var(--status-warning);
+  }
+
+  .record-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(17rem, 20rem);
+    align-items: start;
+    gap: var(--detail-gap);
+  }
+
+  .record-content {
+    display: grid;
+    min-inline-size: 0;
+    gap: var(--detail-gap);
+  }
+
+  .record-content > :global(.journey-panel),
+  .panel {
+    min-inline-size: 0;
+    margin: 0;
+    padding: var(--space-5);
+    border: 1px solid var(--color-border-subtle);
+    border-radius: var(--radius-lg);
+    background: var(--surface-panel);
+  }
+
+  .record-content > :global(.journey-panel) {
+    display: grid;
+    gap: var(--space-4);
+  }
+
+  .record-content > :global(.journey-panel) :global([data-record-header]),
+  .record-content > :global(.journey-panel) :global(.state-value) {
+    display: none;
+  }
+
+  .record-content > :global(.journey-panel) :global(.journey-grid) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--space-3);
+  }
+
+  .section-heading {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: var(--space-4);
+    margin-block-end: var(--space-4);
+  }
+
+  .section-heading h2 {
+    margin: 0;
+    font-size: var(--font-size-lg);
+    line-height: var(--line-height-tight);
+    overflow-wrap: anywhere;
+  }
+
+  .eyebrow {
+    margin: 0 0 var(--space-1);
+    color: var(--text-muted);
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-semibold);
+  }
+
+  .section-index {
+    color: var(--text-muted);
+    font-size: var(--font-size-xs);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .eligibility {
+    border-inline-start: 3px solid var(--status-warning);
+  }
+
+  .assessment-message {
+    margin: 0;
+    padding: var(--space-4);
+    border: 1px solid var(--color-border-subtle);
+    border-radius: var(--radius-md);
+    background: var(--surface-raised);
+    color: var(--text-primary);
+    font-size: var(--font-size-sm);
+    line-height: var(--line-height-relaxed);
+    overflow-wrap: anywhere;
+  }
+
+  .source-status-grid,
+  .facts-grid,
+  .history-facts {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--space-4);
+    margin: var(--space-5) 0 0;
+  }
+
+  .source-status-grid > div,
+  .facts-grid > div,
+  .history-facts > div {
+    min-inline-size: 0;
+    padding-block-start: var(--space-3);
+    border-block-start: 1px solid var(--color-border-subtle);
+  }
+
+  dt {
+    color: var(--text-muted);
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-semibold);
+  }
+
+  dd {
+    margin: var(--space-1) 0 0;
+    color: var(--text-primary);
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-semibold);
+    line-height: var(--line-height-relaxed);
+    overflow-wrap: anywhere;
+  }
+
+  .numeric {
+    font-variant-numeric: tabular-nums;
+  }
+
+  .notice {
+    margin: 0;
+    padding: var(--space-4);
+    border-inline-start: 3px solid var(--status-warning);
+    border-radius: var(--radius-sm);
+    background: var(--surface-raised);
+    color: var(--text-primary);
+    font-size: var(--font-size-sm);
+    line-height: var(--line-height-relaxed);
+    overflow-wrap: anywhere;
+  }
+
+  .muted {
+    margin: var(--space-3) 0 0;
+    color: var(--text-muted);
+    font-size: var(--font-size-sm);
+    line-height: var(--line-height-relaxed);
+  }
+
+  .history-state {
+    margin: 0;
+    padding: var(--space-4);
+    border-inline-start: 3px solid var(--status-warning);
+    background: var(--surface-raised);
+    color: var(--text-primary);
+    font-size: var(--font-size-sm);
+    line-height: var(--line-height-relaxed);
+  }
+
+  .table-scroll {
+    max-inline-size: 100%;
+    overflow-x: auto;
+    overscroll-behavior-inline: contain;
+    border: 1px solid var(--color-border-subtle);
+    border-radius: var(--radius-md);
+  }
+
+  .table-scroll:focus-visible,
+  a:focus-visible {
+    outline: 2px solid var(--focus-ring);
+    outline-offset: 3px;
+  }
+
+  table {
+    inline-size: 100%;
+    border-collapse: collapse;
+    text-align: start;
+  }
+
+  caption {
+    padding: var(--space-3);
+    color: var(--text-secondary);
+    font-size: var(--font-size-xs);
+    text-align: start;
+  }
+
+  th,
+  td {
+    min-inline-size: 7rem;
+    padding: var(--space-3);
+    border-block-start: 1px solid var(--color-border-subtle);
+    color: var(--text-primary);
+    font-size: var(--font-size-sm);
+    line-height: var(--line-height-relaxed);
+    text-align: start;
+    overflow-wrap: break-word;
+  }
+
+  th {
+    color: var(--text-secondary);
+    font-weight: var(--font-weight-semibold);
+  }
+
+  .action-column {
+    min-inline-size: 0;
+  }
+
+  .action-column :global(.action-rail) {
+    position: sticky;
+    inset-block-start: var(--space-5);
+    margin: 0;
+  }
+
+  .not-found {
+    max-inline-size: 44rem;
+    margin-inline: auto;
+  }
+
+  .not-found h1 {
+    margin: 0;
+    font-size: var(--font-size-xl);
+    overflow-wrap: anywhere;
+  }
+
+  .not-found p:not(.eyebrow) {
+    color: var(--text-secondary);
+    font-size: var(--font-size-sm);
+    line-height: var(--line-height-relaxed);
+  }
+
+  .not-found a {
+    display: inline-flex;
+    align-items: center;
+    min-block-size: 44px;
+  }
+
+  @media (max-width: 1024px) {
+    .record-layout {
+      grid-template-columns: minmax(0, 1fr);
+    }
+
+    .action-column {
+      grid-row: 1;
+    }
+
+    .action-column :global(.action-rail) {
+      position: static;
+    }
+  }
+
+  @media (max-width: 700px) {
+    .record-content > :global(.journey-panel),
+    .panel {
+      padding: var(--space-4);
+    }
+
+    .record-content > :global(.journey-panel) :global(.journey-grid),
+    .source-status-grid,
+    .facts-grid,
+    .history-facts {
+      grid-template-columns: minmax(0, 1fr);
+    }
+
+    .section-heading {
+      align-items: flex-start;
+    }
+  }
+
+  @media (forced-colors: active) {
+    .state,
+    .eligibility,
+    .notice,
+    .history-state,
+    .table-scroll {
+      border: 1px solid CanvasText;
+    }
+
+    a:focus-visible,
+    .table-scroll:focus-visible {
+      outline-color: Highlight;
+    }
+  }
 </style>

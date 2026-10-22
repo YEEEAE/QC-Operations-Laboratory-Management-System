@@ -12,13 +12,19 @@ describe('record journey linkage contract (QC-100-FINAL-024)', () => {
     const rcaRegister = read('src/pages/quality/rca/index.astro');
     const capaRegister = read('src/pages/quality/capa/index.astro');
     expect(ncrRegister).toContain('ncrReadDependencies().list.executePage({ actor, state, page:');
-    expect(ncrRegister).toContain('rcaReadDependencies().list.executePage({ actor, ncrId: ncr.id, page:');
+    expect(ncrRegister).toContain(
+      'rcaReadDependencies().list.executePage({ actor, ncrId: ncr.id, page:',
+    );
     expect(ncrRegister).toContain('PD-15');
     expect(ncrRegister).toContain('PD-16');
     expect(ncrRegister).toContain('QC owner');
-    expect(rcaRegister).toContain('rcaReadDependencies().list.executePage({ actor, ncrId, state, page:');
+    expect(rcaRegister).toContain(
+      'rcaReadDependencies().list.executePage({ actor, ncrId, state, page:',
+    );
     expect(rcaRegister).toContain('ncrReadDependencies().list.executePage({ actor, page:');
-    expect(capaRegister).toContain('capaReadDependencies().list.executePage({ actor, state, ncrId, page:');
+    expect(capaRegister).toContain(
+      'capaReadDependencies().list.executePage({ actor, state, ncrId, page:',
+    );
     expect(capaRegister).toContain('PD-18');
     for (const page of [ncrRegister, rcaRegister, capaRegister]) {
       expect(page).toContain('ProviderUnavailableState');
@@ -160,18 +166,33 @@ describe('record journey linkage contract (QC-100-FINAL-024)', () => {
 
   it('uses the approved equipment eligibility decision for calibration detail copy', () => {
     const page = read('src/pages/assets/calibrations/[calibrationId].astro');
-    const policy = read('Documents/BUSINESS-RULES.md');
+    const actionRail = read('src/ui/components/workflow/AssetActionRail.astro');
+    const eligibilityUseCase = read(
+      'src/modules/assets/equipment/application/get-equipment-eligibility.ts',
+    );
     expect(page).toContain('read.equipment.assessEligibility.assess(actor, record.equipmentId)');
     expect(page).toContain('Eligibility could not be confirmed');
     expect(page).toContain('Not eligible for laboratory or inspection use');
     expect(page).toContain('Do not use this equipment');
     expect(page).not.toContain('overdue equipment-use consequence is not approved');
-    expect(page).toContain("error.code==='RESOURCE_NOT_FOUND'");
-    expect(page).toContain('recordUnavailable ? <ProviderUnavailableState');
-    expect(page).toContain('historyUnavailable ?');
+    expect(page).toContain("['RESOURCE_NOT_FOUND', 'AUTHZ_DENIED'].includes(error.code)");
+    expect(page).toContain('recordUnavailable ? (');
+    expect(page).toContain(
+      '<ProviderUnavailableState title="Calibration record is temporarily unavailable"',
+    );
+    expect(page).toContain('historyUnavailable ? (');
     expect(page).toContain('No calibration history entries are recorded');
-    expect(policy).toContain('## BR-CAL-004 — Equipment Use While Overdue');
-    expect(policy).toContain('لا يوجد استثناء تجاوز ضمن هذا المسار');
+    expect(page).toContain('eligibility?.equipmentState');
+    expect(page).toContain('eligibility.calibrationState');
+    expect(page).toContain('eligibility.maintenanceState');
+    expect(page).toContain('record.becameCurrentAt');
+    expect(page).toContain('record.supersededAt');
+    expect(page).toContain('record.voidedAt');
+    expect(page).toContain('record.voidReason');
+    expect(actionRail).toContain('name="expectedVersion" value={record.version.toString()}');
+    expect(eligibilityUseCase).toContain("equipment.state !== 'ACTIVE'");
+    expect(eligibilityUseCase).toContain("calibration.state !== 'CURRENT'");
+    expect(eligibilityUseCase).toContain('isCalibrationOverdue(calibration, this.now())');
   });
 
   it('links the lab test to its source receiving record with scope preserved', () => {
