@@ -68,14 +68,96 @@ if (Astro.request.method === 'POST' && canCreate) {
   }
 }
 
-const describedBy = (name: keyof typeof values): string | undefined =>
-  failure?.fieldErrors[name] ? `${name}-error` : undefined;
 const invalid = (name: keyof typeof values): 'true' | undefined =>
   failure?.fieldErrors[name] ? 'true' : undefined;
 ---
 <AppLayout title="Create controlled document · QC Operations" locale="en" direction="ltr">
-  <PageHeader><Fragment slot="heading"><h1>Create controlled document</h1></Fragment><p>Create a catalog record for the document. This does not approve its content or make it effective.</p><Fragment slot="actions"><a href={returnHref}>Back to library</a></Fragment></PageHeader>
-  {canCreate ? <form class="form" method="post" data-action="documents.create">{failure && <FormErrorSummary summary={failure.summary} recovery={failure.recovery} errors={Object.entries(failure.fieldErrors).map(([fieldId, message]) => ({ fieldId, message }))} listHref={returnHref} listLabel="library" />}<fieldset><legend>Document identity</legend><div class="fields"><div><label for="documentNo">Document code<span class="hint" id="documentNo-help">Use the code from your approved source. Reference numbers are assigned automatically.</span><input id="documentNo" name="documentNo" required value={values.documentNo} aria-invalid={invalid('documentNo')} aria-describedby={failure?.fieldErrors.documentNo ? 'documentNo-error documentNo-help' : 'documentNo-help'} /></label>{failure?.fieldErrors.documentNo && <p class="field-error" id="documentNo-error">{failure.fieldErrors.documentNo}</p>}</div><div><label for="documentType">Document type<span class="hint" id="documentType-help">Choose the document type from the list.</span><select id="documentType" name="documentType" required aria-invalid={invalid('documentType')} aria-describedby={failure?.fieldErrors.documentType ? 'documentType-error documentType-help' : 'documentType-help'}><option value="">Select document type…</option>{DOCUMENT_TYPE_OPTIONS.map((option)=><option value={option} selected={option===values.documentType}>{option}</option>)}</select></label>{failure?.fieldErrors.documentType && <p class="field-error" id="documentType-error">{failure.fieldErrors.documentType}</p>}</div><div><label for="title">Title<input id="title" name="title" required value={values.title} aria-invalid={invalid('title')} aria-describedby={describedBy('title')} /></label>{failure?.fieldErrors.title && <p class="field-error" id="title-error">{failure.fieldErrors.title}</p>}</div></div></fieldset><div class="actions"><a href={returnHref}>Cancel</a><button type="submit" data-submit>Create document</button></div><p role="status" data-result></p></form> : <section class="denied" role="alert"><h2>Creation unavailable</h2><p>Creating a document requires PERM-DOC-CREATE. Contact an administrator if you need access.</p></section>}
+  <div class="new-document">
+    <PageHeader>
+      <Fragment slot="heading"><h1>Create controlled document</h1></Fragment>
+      <p>Create a catalog record for the document. This does not approve its content, create a revision or make it effective.</p>
+      <Fragment slot="actions"><a href={returnHref}>Back to library</a></Fragment>
+    </PageHeader>
+
+    {canCreate ? (
+      <form class="form" method="post" data-action="documents.create">
+        {failure && (
+          <FormErrorSummary
+            summary={failure.summary}
+            recovery={failure.recovery}
+            errors={Object.entries(failure.fieldErrors).map(([fieldId, message]) => ({ fieldId, message }))}
+            listHref={returnHref}
+            listLabel="library"
+          />
+        )}
+
+        <fieldset>
+          <legend>Document identity</legend>
+          <p class="section-note">
+            This form records the controlled identity only: document code, type and title. Revisions,
+            source files and content fingerprints are recorded on a version, which is created separately.
+          </p>
+          <div class="field-grid">
+            <div class="field">
+              <label for="documentNo">Document code</label>
+              <p class="hint" id="documentNo-help">Use the code from your approved source. Reference numbers are assigned automatically.</p>
+              <input
+                id="documentNo"
+                name="documentNo"
+                required
+                value={values.documentNo}
+                aria-invalid={invalid('documentNo')}
+                aria-describedby={failure?.fieldErrors.documentNo ? 'documentNo-error documentNo-help' : 'documentNo-help'}
+              />
+              {failure?.fieldErrors.documentNo && <p class="field-error" id="documentNo-error">{failure.fieldErrors.documentNo}</p>}
+            </div>
+
+            <div class="field">
+              <label for="documentType">Document type</label>
+              <p class="hint" id="documentType-help">Choose the document type from the list.</p>
+              <select
+                id="documentType"
+                name="documentType"
+                required
+                aria-invalid={invalid('documentType')}
+                aria-describedby={failure?.fieldErrors.documentType ? 'documentType-error documentType-help' : 'documentType-help'}
+              >
+                <option value="">Select document type…</option>
+                {DOCUMENT_TYPE_OPTIONS.map((option) => <option value={option} selected={option === values.documentType}>{option}</option>)}
+              </select>
+              {failure?.fieldErrors.documentType && <p class="field-error" id="documentType-error">{failure.fieldErrors.documentType}</p>}
+            </div>
+
+            <div class="field field-wide">
+              <label for="title">Title</label>
+              <p class="hint" id="title-help">Use the title from the approved document source.</p>
+              <input
+                id="title"
+                name="title"
+                required
+                value={values.title}
+                aria-invalid={invalid('title')}
+                aria-describedby={failure?.fieldErrors.title ? 'title-error title-help' : 'title-help'}
+              />
+              {failure?.fieldErrors.title && <p class="field-error" id="title-error">{failure.fieldErrors.title}</p>}
+            </div>
+          </div>
+        </fieldset>
+
+        <div class="actions">
+          <a class="secondary" href={returnHref}>Cancel</a>
+          <button type="submit" data-submit>Create document</button>
+        </div>
+        <p class="result-status" data-result role="status" aria-live="polite" tabindex="-1"></p>
+      </form>
+    ) : (
+      <section class="denied" role="alert">
+        <h2>Creation unavailable</h2>
+        <p>Creating a document requires PERM-DOC-CREATE. Contact an administrator if you need access.</p>
+        <a href={returnHref}>Back to library</a>
+      </section>
+    )}
+  </div>
 </AppLayout>
 <script>
 import { actions } from 'astro:actions';
@@ -89,5 +171,177 @@ if(form){enhanceClassifiedForm(form,{
   detailBaseHref:'/documents',
 });guardUnsavedChanges(form);}
 </script>
-<style>.head{display:flex;justify-content:space-between;gap:var(--space-5);align-items:flex-start;margin-bottom:var(--space-6)}h1{margin:.25rem 0 .4rem}.eyebrow{margin:0;color:var(--text-muted);font-size:.7rem;letter-spacing:.13em;font-weight:700}.head p:not(.eyebrow),.denied p{color:var(--text-muted);font-size:.85rem}.hint{color:var(--text-muted);font-size:.78rem}.head a,.actions a{color:var(--color-accent-primary-hover)}.form{max-width:900px;display:grid;gap:var(--space-5)}fieldset{padding:var(--space-5);border:1px solid var(--color-border-subtle);border-radius:var(--radius-lg);background:var(--surface-panel)}legend{padding-inline:.5rem;font-weight:700}.fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--space-4)}.fields>div{display:grid;gap:.4rem;color:var(--text-secondary);font-size:.82rem}.fields>div:last-child{grid-column:1/-1}label{display:grid;gap:.4rem}input,select{min-height:var(--control-height);padding:.65rem;background:var(--surface-raised);border:1px solid var(--border-default);border-radius:var(--radius-sm);color:inherit;font:inherit}input[aria-invalid="true"],select[aria-invalid="true"]{border-color:var(--status-danger)}.field-error{margin:0;color:var(--status-danger);font-size:.8rem}.actions{display:flex;justify-content:flex-end;gap:var(--space-3);align-items:center}.actions button{min-height:var(--control-height);padding:.65rem 1rem;border:1px solid var(--color-accent-primary);border-radius:var(--radius-sm);background:var(--color-accent-primary);color:var(--text-on-accent);font:inherit;font-weight:700}button[disabled]{opacity:.6}.denied{padding:var(--space-6);border-inline-start:3px solid var(--status-warning);background:var(--surface-panel)}@media(max-width:650px){.head{display:grid}.fields{grid-template-columns:1fr}.fields>div:last-child{grid-column:auto}.actions{justify-content:stretch;display:grid}}
+<style>
+  .new-document { min-inline-size: 0; }
+
+  .form {
+    inline-size: min(100%, 56rem);
+    display: grid;
+    gap: var(--space-5);
+    margin: 0;
+    min-inline-size: 0;
+  }
+  fieldset {
+    min-inline-size: 0;
+    margin: 0;
+    padding: clamp(var(--space-4), 3vw, var(--space-6));
+    border: 1px solid var(--color-border-subtle);
+    border-radius: var(--radius-lg);
+    background: var(--surface-panel);
+  }
+  legend {
+    padding-inline: 0.5rem;
+    color: var(--text-primary);
+    font-size: var(--font-size-lg);
+    font-weight: 700;
+  }
+  .section-note {
+    margin: 0 0 var(--space-5);
+    max-inline-size: 70ch;
+    color: var(--text-secondary);
+    font-size: var(--font-size-sm);
+    line-height: var(--line-height-relaxed);
+    overflow-wrap: anywhere;
+  }
+
+  .field-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--space-5);
+    align-items: start;
+  }
+  .field { min-inline-size: 0; }
+  .field-wide { grid-column: 1 / -1; }
+  label {
+    display: block;
+    color: var(--text-primary);
+    font-size: var(--font-size-sm);
+    font-weight: 600;
+  }
+  .hint {
+    margin: var(--space-1) 0 var(--space-2);
+    color: var(--text-secondary);
+    font-size: var(--font-size-xs);
+    line-height: var(--line-height-normal);
+    overflow-wrap: anywhere;
+  }
+  input,
+  select {
+    box-sizing: border-box;
+    inline-size: 100%;
+    min-block-size: max(var(--control-height), 44px);
+    padding: 0.65rem;
+    background: var(--surface-raised);
+    border: 1px solid var(--border-default);
+    border-radius: var(--radius-sm);
+    color: var(--text-primary);
+    font: inherit;
+    min-inline-size: 0;
+  }
+  input[aria-invalid='true'],
+  select[aria-invalid='true'] { border-color: var(--status-danger); }
+  .field-error {
+    margin: var(--space-2) 0 0;
+    color: var(--status-danger);
+    font-size: var(--font-size-sm);
+    line-height: var(--line-height-normal);
+  }
+
+  .actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: flex-end;
+    gap: var(--space-3);
+  }
+  .actions .secondary,
+  .actions button {
+    box-sizing: border-box;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-block-size: max(var(--control-height), 44px);
+    padding: 0.65rem 1rem;
+    border: 1px solid var(--border-default);
+    border-radius: var(--radius-sm);
+    font: inherit;
+    font-weight: 700;
+    text-align: center;
+    text-decoration: none;
+  }
+  .actions .secondary {
+    background: var(--surface-raised);
+    color: var(--text-primary);
+  }
+  .actions button {
+    border-color: var(--color-accent-primary);
+    background: var(--color-accent-primary);
+    color: var(--text-on-accent);
+  }
+  button[disabled] { opacity: 0.6; cursor: not-allowed; }
+
+  .result-status {
+    margin: 0;
+    color: var(--text-secondary);
+    font-size: var(--font-size-sm);
+    line-height: var(--line-height-normal);
+    overflow-wrap: anywhere;
+  }
+  .result-status:empty { min-block-size: 0; }
+  .result-status:focus-visible {
+    outline: 2px solid var(--focus-ring);
+    outline-offset: 2px;
+  }
+
+  a:focus-visible,
+  button:focus-visible,
+  input:focus-visible,
+  select:focus-visible {
+    outline: 2px solid var(--focus-ring);
+    outline-offset: 2px;
+  }
+
+  .denied {
+    padding: var(--space-6);
+    border: 1px solid var(--color-border-subtle);
+    border-inline-start: 3px solid var(--status-warning);
+    border-radius: var(--radius-lg);
+    background: var(--surface-panel);
+  }
+  .denied h2 {
+    margin: 0 0 var(--space-2);
+    color: var(--text-primary);
+    font-size: var(--font-size-lg);
+    line-height: var(--line-height-tight);
+  }
+  .denied p {
+    margin: 0 0 var(--space-3);
+    color: var(--text-secondary);
+    font-size: var(--font-size-sm);
+    line-height: var(--line-height-relaxed);
+  }
+  .denied a {
+    display: inline-flex;
+    align-items: center;
+    min-block-size: 44px;
+    color: var(--color-accent-primary-hover);
+    font-weight: 600;
+  }
+
+  @media (min-width: 64rem) {
+    .field-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  }
+  @media (max-width: 40rem) {
+    .actions { display: grid; grid-template-columns: 1fr; }
+    .actions > * { inline-size: 100%; }
+  }
+  @media (forced-colors: active) {
+    fieldset,
+    .denied,
+    input,
+    select,
+    .actions .secondary,
+    .actions button { border: 1px solid ButtonText; }
+    .field-error { color: CanvasText; }
+  }
 </style>
