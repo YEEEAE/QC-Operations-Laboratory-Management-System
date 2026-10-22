@@ -1,6 +1,9 @@
 ---
-import PageHeader from "../../ui/components/PageHeader.astro";
+import PageHeader from '../../ui/components/PageHeader.astro';
 import AppLayout from '../../ui/layouts/AppLayout.astro';
+import AppliedFilters from '../../ui/components/data/AppliedFilters.astro';
+import EmptyTableState from '../../ui/components/data/EmptyTableState.astro';
+import FilterBar from '../../ui/components/data/FilterBar.astro';
 import Pagination from '../../ui/components/data/Pagination.astro';
 import StatusBadge from '../../ui/components/StatusBadge.astro';
 import ProviderUnavailableState from '../../ui/components/feedback/ProviderUnavailableState.astro';
@@ -10,10 +13,22 @@ import { stateLabel, targetTypeLabel } from '../../shared/copy/ux-vocabulary.js'
 
 const actor = Astro.locals.actor;
 if (!actor) return Astro.redirect('/login?returnTo=%2Fchange-requests');
-const validStates = ['DRAFT', 'SUBMITTED', 'UNDER_REVIEW', 'RETURNED', 'APPROVED', 'REJECTED', 'APPLYING', 'APPLIED', 'APPLICATION_FAILED', 'CANCELLED'] as const;
-const requestedState = Astro.url.searchParams.get('state');
+const params = Astro.url.searchParams;
+const validStates = [
+  'DRAFT',
+  'SUBMITTED',
+  'UNDER_REVIEW',
+  'RETURNED',
+  'APPROVED',
+  'REJECTED',
+  'APPLYING',
+  'APPLIED',
+  'APPLICATION_FAILED',
+  'CANCELLED',
+] as const;
+const requestedState = params.get('state');
 const state = validStates.find((value) => value === requestedState);
-const targetType = Astro.url.searchParams.get('targetType')?.trim().slice(0, 100) || undefined;
+const targetType = params.get('targetType')?.trim().slice(0, 100) || undefined;
 // A dependency outage is UNAVAILABLE, never an empty register and never zero.
 let providerUnavailable = false;
 let page = 1;
@@ -26,26 +41,385 @@ try {
   const result = await changeRequestsReadDependencies().list.executePage({
     actor,
     filter: { ...(state ? { state } : {}), ...(targetType ? { targetType } : {}) },
-    page: { page: Astro.url.searchParams.get('page') ?? 1, pageSize },
+    page: { page: params.get('page') ?? 1, pageSize },
   });
   requests = result.items;
   ({ page, total, pageSize } = result);
 } catch {
   providerUnavailable = true;
 }
-const canCreate = actor.permissions.some((permission) => permission.active !== false && permission.code === 'PERM-CHG-CREATE');
+const canCreate = actor.permissions.some(
+  (permission) => permission.active !== false && permission.code === 'PERM-CHG-CREATE',
+);
 const hasFilters = Boolean(state || targetType);
+
+/** Drop only the selected filter and reset paging while preserving the rest. */
+const chipHref = (drop: string): string => {
+  const next = new URLSearchParams(params);
+  next.delete(drop);
+  next.delete('page');
+  const query = next.toString();
+  return `/change-requests${query ? `?${query}` : ''}`;
+};
+const appliedFilters = [
+  targetType && {
+    label: 'Target type',
+    value: targetTypeLabel(targetType),
+    href: chipHref('targetType'),
+  },
+  state && { label: 'State', value: stateLabel(state), href: chipHref('state') },
+].filter((chip): chip is { label: string; value: string; href: string } => Boolean(chip));
+
+/** Presentation tone for the recorded state; the stored state is unchanged. */
+const badgeStatus = (requestState: string): 'REVIEW' | 'REJECTED' | 'APPROVED' | 'DRAFT' =>
+  requestState === 'UNDER_REVIEW' || requestState === 'SUBMITTED'
+    ? 'REVIEW'
+    : requestState === 'REJECTED' || requestState === 'CANCELLED'
+      ? 'REJECTED'
+      : requestState === 'APPROVED' || requestState === 'APPLIED'
+        ? 'APPROVED'
+        : 'DRAFT';
+
+const totalPages = Math.max(1, Math.ceil(total / pageSize));
+const shownStart = requests.length ? (page - 1) * pageSize + 1 : 0;
+const shownEnd = requests.length ? shownStart + requests.length - 1 : 0;
+const countText = `Showing ${shownStart}–${shownEnd} of ${total} change request${total === 1 ? '' : 's'}${hasFilters ? ' matching these filters' : ' in your authorized scope'} · Page ${page} of ${totalPages}`;
 ---
+
 <AppLayout title="Change requests · QC Operations" locale="en" direction="ltr">
-  <PageHeader><Fragment slot="heading"><h1>Change requests</h1></Fragment><p class="lede">Review proposed changes. Approval does not automatically update the record.</p><Fragment slot="actions"> {canCreate && <a class="button" href="/change-requests/new">New change request</a>}
-  </section>
-  </Fragment></PageHeader>
-  <form class="filters" method="get" aria-label="Change request filters">
-    <label for="targetType">Target type<input id="targetType" name="targetType" value={targetType ?? ''} maxlength="100" /></label>
-    <label for="state">State<select id="state" name="state"><option value="">All states</option>{validStates.map((value) => <option value={value} selected={state === value}>{stateLabel(value)}</option>)}</select></label>
-    <button type="submit">Filter</button>
-  </form>
-  {providerUnavailable ? <ProviderUnavailableState title="Change requests are temporarily unavailable" description="The change-request read did not return a confirmed result, so this register is not treated as empty." retryHref="/change-requests" /> : requests.length ? <div class="table-wrap"><table><caption>Change requests in your authorized scope</caption><thead><tr><th scope="col">Change no.</th><th scope="col">Target</th><th scope="col">State</th><th scope="col">Target version</th><th scope="col">Request version</th><th scope="col">Updated</th></tr></thead><tbody>{requests.map(({ changeRequest }) => <tr><th scope="row"><a href={`/change-requests/${changeRequest.id}`}>{changeRequest.changeNo}</a></th><td>{targetTypeLabel(changeRequest.targetType)}<small>{changeRequest.targetId}</small></td><td><StatusBadge status={changeRequest.state === 'UNDER_REVIEW' || changeRequest.state === 'SUBMITTED' ? 'REVIEW' : changeRequest.state === 'REJECTED' || changeRequest.state === 'CANCELLED' ? 'REJECTED' : changeRequest.state === 'APPROVED' || changeRequest.state === 'APPLIED' ? 'APPROVED' : 'DRAFT'} label={stateLabel(changeRequest.state)} /></td><td>{changeRequest.targetVersion.toString()}</td><td>{changeRequest.version.toString()}</td><td>{formatDate(changeRequest.updatedAt)}</td></tr>)}</tbody></table></div> : <section class="empty"><h2>{hasFilters ? 'No change requests match these filters' : 'No change requests found'}</h2><p>Requests outside your authorized scope are intentionally excluded.</p>{hasFilters && <a href="/change-requests">Clear all filters</a>}</section>}
-  {!providerUnavailable && <Pagination page={page} totalPages={Math.max(1, Math.ceil(total / pageSize))} total={total} itemLabel="change requests" />}
+  <div class="change-register">
+    <PageHeader purpose="Review proposed changes. Approval does not automatically update the record.">
+      <Fragment slot="heading"><h1>Change requests</h1></Fragment>
+      <Fragment slot="actions">
+        {canCreate && <a class="button" href="/change-requests/new">New change request</a>}
+      </Fragment>
+    </PageHeader>
+
+    <section class="filter-panel" aria-labelledby="change-filters-heading">
+      <h2 id="change-filters-heading">Find change requests</h2>
+      <FilterBar
+        label="Change request filters"
+        clearHref={hasFilters ? '/change-requests' : undefined}
+      >
+        <label for="targetType"
+          >Target type<input
+            id="targetType"
+            name="targetType"
+            type="text"
+            maxlength="100"
+            value={targetType ?? ''}
+          /></label
+        >
+        <label for="state"
+          >State<select id="state" name="state">
+            <option value="">All states</option>
+            {validStates.map((value) => (
+              <option value={value} selected={state === value}>{stateLabel(value)}</option>
+            ))}
+          </select></label
+        >
+      </FilterBar>
+    </section>
+
+    <AppliedFilters filters={appliedFilters} clearHref={hasFilters ? '/change-requests' : undefined} />
+
+    {
+      providerUnavailable ? (
+        <ProviderUnavailableState
+          title="Change requests are temporarily unavailable"
+          description="The change-request read did not return a confirmed result, so this register is not treated as empty."
+          retryHref={`${Astro.url.pathname}${Astro.url.search}`}
+        />
+      ) : (
+        <section class="register" aria-labelledby="change-register-title">
+          <h2 id="change-register-title" class="sr-only">
+            Change request register
+          </h2>
+          {requests.length ? (
+            <Fragment>
+              <p class="result-count" role="status" aria-live="polite">
+                {countText}
+              </p>
+              <div
+                class="table-wrap"
+                role="region"
+                aria-label="Change request register table"
+                tabindex="0"
+              >
+                <table>
+                  <caption>Change requests in your authorized scope</caption>
+                  <thead>
+                    <tr>
+                      <th scope="col">Change no.</th>
+                      <th scope="col">Target</th>
+                      <th scope="col">State</th>
+                      <th scope="col">Target version</th>
+                      <th scope="col">Request version</th>
+                      <th scope="col">Updated</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {requests.map(({ changeRequest }) => (
+                      <tr>
+                        <th scope="row" class="change-number">
+                          <a href={`/change-requests/${changeRequest.id}`}>{changeRequest.changeNo}</a>
+                        </th>
+                        <td class="target">
+                          <span class="target-type">{targetTypeLabel(changeRequest.targetType)}</span>
+                          <span class="target-reference">{changeRequest.targetId}</span>
+                        </td>
+                        <td class="state">
+                          <StatusBadge
+                            status={badgeStatus(changeRequest.state)}
+                            label={stateLabel(changeRequest.state)}
+                          />
+                        </td>
+                        <td class="numeric">{changeRequest.targetVersion.toString()}</td>
+                        <td class="numeric">{changeRequest.version.toString()}</td>
+                        <td class="updated">
+                          <time datetime={changeRequest.updatedAt.toISOString()}>
+                            {formatDate(changeRequest.updatedAt)}
+                          </time>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </Fragment>
+          ) : hasFilters ? (
+            <EmptyTableState
+              title="No change requests match these filters"
+              description="Nothing in your authorized scope matches the selected filters."
+              clearHref="/change-requests"
+            />
+          ) : (
+            <EmptyTableState
+              title="No change requests found"
+              description="Requests outside your authorized scope are intentionally excluded."
+            />
+          )}
+        </section>
+      )
+    }
+
+    {!providerUnavailable && total > 0 && (
+      <Pagination
+        page={page}
+        totalPages={totalPages}
+        total={total}
+        itemLabel="change requests"
+      />
+    )}
+  </div>
 </AppLayout>
-<style>.page-head{display:flex;justify-content:space-between;gap:var(--space-5);align-items:start;margin-bottom:var(--space-6)}h1{margin:.25rem 0}.eyebrow{margin:0;color:var(--text-muted);font-size:var(--font-size-xs);letter-spacing:.12em;font-weight:700}.lede,.empty p{color:var(--text-muted);font-size:.86rem}.button,button{border:1px solid var(--color-accent-primary);background:var(--color-accent-primary);color:var(--color-text-inverse);padding:.65rem 1rem;border-radius:var(--radius-md);text-decoration:none;font-weight:700}.filters{display:flex;gap:var(--space-4);align-items:end;margin-bottom:var(--space-5)}label{display:grid;gap:.35rem;font-size:.8rem;color:var(--text-secondary)}input,select{min-height:2.5rem;padding:.5rem;background:var(--surface-panel);color:inherit;border:1px solid var(--color-border-subtle);border-radius:var(--radius-sm)}.table-wrap{overflow-x:auto;border:1px solid var(--color-border-subtle);border-radius:var(--radius-lg)}table{width:100%;min-width:920px;border-collapse:collapse;background:var(--surface-panel)}caption{text-align:start;padding:var(--space-4);color:var(--text-muted)}th,td{padding:.75rem;text-align:start;border-top:1px solid var(--color-border-subtle);font-size:.8rem}th{font-weight:700}a{color:var(--color-accent-primary-hover)}small{display:block;margin-top:.25rem;color:var(--text-muted);font-weight:400;font-size:var(--font-size-xs)}.empty{padding:var(--space-8);text-align:center;background:var(--surface-panel);border:1px dashed var(--color-border-strong);border-radius:var(--radius-lg)}@media(max-width:650px){.page-head,.filters{display:grid}.filters button{width:max-content}}</style>
+
+<style>
+  .change-register {
+    min-inline-size: 0;
+  }
+  .button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-block-size: 44px;
+    padding-inline: var(--space-4);
+    border: 1px solid var(--color-accent-primary);
+    border-radius: var(--radius-sm);
+    background: var(--color-accent-primary);
+    color: var(--color-text-inverse);
+    font-weight: var(--font-weight-bold);
+    text-decoration: none;
+  }
+  .filter-panel {
+    margin-block-end: var(--space-4);
+    padding: var(--space-5);
+    background: var(--surface-panel);
+    border: 1px solid var(--border-default);
+    border-radius: var(--card-radius);
+  }
+  .filter-panel h2 {
+    margin: 0 0 var(--space-4);
+    color: var(--text-primary);
+    font-size: var(--font-size-md);
+  }
+  .filter-panel :global(.filters) {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 12rem), 1fr));
+    align-items: end;
+    margin: 0;
+  }
+  .filter-panel :global(label) {
+    min-inline-size: 0;
+  }
+  .filter-panel :global(input),
+  .filter-panel :global(select) {
+    inline-size: 100%;
+    min-inline-size: 0;
+    min-block-size: 44px;
+    border-color: var(--control-border);
+  }
+  .filter-panel :global(.filters-actions) {
+    grid-column: 1 / -1;
+    flex-wrap: wrap;
+  }
+  .filter-panel :global(.advanced-filters),
+  .filter-panel :global(.filter-presets),
+  .filter-panel :global(.submit-status) {
+    grid-column: 1 / -1;
+  }
+  .filter-panel :global(.filter-presets) {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: end;
+    gap: var(--space-3);
+  }
+  .filter-panel :global(.filter-presets input),
+  .filter-panel :global(.filter-presets select) {
+    inline-size: auto;
+    max-inline-size: 100%;
+  }
+  .register {
+    min-inline-size: 0;
+    background: var(--surface-panel);
+    border: 1px solid var(--color-border-subtle);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+  }
+  .result-count {
+    margin: 0;
+    padding: var(--space-4) var(--space-5) var(--space-2);
+    color: var(--text-secondary);
+    font-size: var(--font-size-xs);
+    line-height: 1.5;
+  }
+  .table-wrap {
+    max-inline-size: 100%;
+    overflow-x: auto;
+    border-block-start: 1px solid var(--color-border-subtle);
+  }
+  .table-wrap:focus-visible {
+    outline: 2px solid var(--color-accent-primary);
+    outline-offset: -2px;
+  }
+  table {
+    inline-size: 100%;
+    min-inline-size: 56rem;
+    border-collapse: collapse;
+    background: var(--surface-panel);
+  }
+  caption {
+    padding: var(--space-4) var(--space-5);
+    color: var(--text-muted);
+    text-align: start;
+    font-size: var(--font-size-xs);
+  }
+  th,
+  td {
+    padding: var(--space-3) var(--space-4);
+    border-block-start: 1px solid var(--color-border-subtle);
+    text-align: start;
+    vertical-align: top;
+    font-size: var(--font-size-sm);
+    overflow-wrap: anywhere;
+    word-break: normal;
+  }
+  thead th {
+    background: var(--table-header-background);
+    color: var(--text-primary);
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-semibold);
+    white-space: nowrap;
+  }
+  tbody tr:nth-child(even) {
+    background: var(--table-stripe-background);
+  }
+  .change-number {
+    min-inline-size: 9rem;
+    color: var(--text-primary);
+    font-weight: var(--font-weight-semibold);
+  }
+  .change-number a {
+    display: inline-flex;
+    align-items: center;
+    min-block-size: 44px;
+    overflow-wrap: anywhere;
+  }
+  .target {
+    min-inline-size: 12rem;
+  }
+  .target-type,
+  .target-reference {
+    display: block;
+  }
+  .target-reference {
+    margin-block-start: 2px;
+    color: var(--text-secondary);
+    font-size: var(--font-size-xs);
+    line-height: 1.45;
+    overflow-wrap: anywhere;
+    white-space: normal;
+  }
+  .state {
+    min-inline-size: 8rem;
+  }
+  .numeric {
+    min-inline-size: 6rem;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+  .updated {
+    min-inline-size: 8rem;
+    font-variant-numeric: tabular-nums;
+  }
+  .register :global(.empty) {
+    border-block-start: 1px solid var(--color-border-subtle);
+  }
+  .register :global(.empty h2) {
+    margin: 0;
+    color: var(--text-primary);
+    font-size: var(--font-size-lg);
+  }
+  .register :global(.empty p) {
+    margin: 8px auto 0;
+    max-inline-size: 46ch;
+    color: var(--text-muted);
+    font-size: var(--font-size-xs);
+    line-height: 1.5;
+  }
+  .sr-only {
+    position: absolute;
+    inline-size: 1px;
+    block-size: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+  @media (max-width: 760px) {
+    .filter-panel {
+      padding: var(--space-4);
+    }
+    .result-count {
+      padding-inline: var(--space-4);
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .table-wrap {
+      scroll-behavior: auto;
+    }
+  }
+  @media (forced-colors: active) {
+    .filter-panel,
+    .register,
+    .button,
+    .table-wrap {
+      border-color: CanvasText;
+    }
+    .table-wrap:focus-visible {
+      outline-color: Highlight;
+    }
+  }
+</style>

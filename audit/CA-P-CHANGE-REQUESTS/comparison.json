@@ -1,0 +1,761 @@
+{
+  "task": "CA-P-CHANGE-REQUESTS",
+  "candidate": "working tree (no commit)",
+  "account": "verify-admin (ACTIVE ADMIN, GLOBAL scope)",
+  "readDeniedAccount": "verify-manager (ACTIVE MANAGER, TEAM scope only)",
+  "database": "qc_disposable @ localhost:55432 (PostgreSQL 18.6)",
+  "fixture": "28 rows in qc.change_requests inserted into the disposable database and removed after evidence",
+  "widths": [
+    {
+      "width": 320,
+      "before": {
+        "rows": 25,
+        "count": null,
+        "chips": 0,
+        "globalOverflow": 0,
+        "undersized": 0,
+        "smallText": 0,
+        "clipped": 0,
+        "ellipsis": 0,
+        "axe": 0,
+        "table": {
+          "role": "region",
+          "label": "Change requests in your authorized scope — scrollable",
+          "tabindex": "0",
+          "scrollWidth": 286,
+          "clientWidth": 286
+        },
+        "empty": null
+      },
+      "after": {
+        "rows": 25,
+        "count": "Showing 1–25 of 28 change requests in your authorized scope · Page 1 of 2",
+        "chips": 0,
+        "globalOverflow": 0,
+        "undersized": 0,
+        "smallText": 0,
+        "clipped": 0,
+        "ellipsis": 0,
+        "axe": 0,
+        "table": {
+          "role": "region",
+          "label": "Change request register table",
+          "tabindex": "0",
+          "scrollWidth": 286,
+          "clientWidth": 286
+        },
+        "empty": null
+      }
+    },
+    {
+      "width": 390,
+      "before": {
+        "rows": 25,
+        "count": null,
+        "chips": 0,
+        "globalOverflow": 0,
+        "undersized": 0,
+        "smallText": 0,
+        "clipped": 0,
+        "ellipsis": 0,
+        "axe": 0,
+        "table": {
+          "role": "region",
+          "label": "Change requests in your authorized scope — scrollable",
+          "tabindex": "0",
+          "scrollWidth": 356,
+          "clientWidth": 356
+        },
+        "empty": null
+      },
+      "after": {
+        "rows": 25,
+        "count": "Showing 1–25 of 28 change requests in your authorized scope · Page 1 of 2",
+        "chips": 0,
+        "globalOverflow": 0,
+        "undersized": 0,
+        "smallText": 0,
+        "clipped": 0,
+        "ellipsis": 0,
+        "axe": 0,
+        "table": {
+          "role": "region",
+          "label": "Change request register table",
+          "tabindex": "0",
+          "scrollWidth": 356,
+          "clientWidth": 356
+        },
+        "empty": null
+      }
+    },
+    {
+      "width": 768,
+      "before": {
+        "rows": 25,
+        "count": null,
+        "chips": 0,
+        "globalOverflow": 0,
+        "undersized": 24,
+        "smallText": 0,
+        "clipped": 0,
+        "ellipsis": 0,
+        "axe": 0,
+        "table": {
+          "role": "region",
+          "label": "Change requests in your authorized scope — scrollable",
+          "tabindex": "0",
+          "scrollWidth": 920,
+          "clientWidth": 454
+        },
+        "empty": null
+      },
+      "after": {
+        "rows": 25,
+        "count": "Showing 1–25 of 28 change requests in your authorized scope · Page 1 of 2",
+        "chips": 0,
+        "globalOverflow": 0,
+        "undersized": 0,
+        "smallText": 0,
+        "clipped": 0,
+        "ellipsis": 0,
+        "axe": 0,
+        "table": {
+          "role": "region",
+          "label": "Change request register table",
+          "tabindex": "0",
+          "scrollWidth": 896,
+          "clientWidth": 454
+        },
+        "empty": null
+      }
+    },
+    {
+      "width": 1024,
+      "before": {
+        "rows": 25,
+        "count": null,
+        "chips": 0,
+        "globalOverflow": 0,
+        "undersized": 24,
+        "smallText": 0,
+        "clipped": 0,
+        "ellipsis": 0,
+        "axe": 0,
+        "table": {
+          "role": "region",
+          "label": "Change requests in your authorized scope — scrollable",
+          "tabindex": "0",
+          "scrollWidth": 920,
+          "clientWidth": 710
+        },
+        "empty": null
+      },
+      "after": {
+        "rows": 25,
+        "count": "Showing 1–25 of 28 change requests in your authorized scope · Page 1 of 2",
+        "chips": 0,
+        "globalOverflow": 0,
+        "undersized": 0,
+        "smallText": 0,
+        "clipped": 0,
+        "ellipsis": 0,
+        "axe": 0,
+        "table": {
+          "role": "region",
+          "label": "Change request register table",
+          "tabindex": "0",
+          "scrollWidth": 896,
+          "clientWidth": 710
+        },
+        "empty": null
+      }
+    },
+    {
+      "width": 1440,
+      "before": {
+        "rows": 25,
+        "count": null,
+        "chips": 0,
+        "globalOverflow": 0,
+        "undersized": 25,
+        "smallText": 0,
+        "clipped": 0,
+        "ellipsis": 0,
+        "axe": 0,
+        "table": null,
+        "empty": null
+      },
+      "after": {
+        "rows": 25,
+        "count": "Showing 1–25 of 28 change requests in your authorized scope · Page 1 of 2",
+        "chips": 0,
+        "globalOverflow": 0,
+        "undersized": 0,
+        "smallText": 0,
+        "clipped": 0,
+        "ellipsis": 0,
+        "axe": 0,
+        "table": {
+          "role": "region",
+          "label": "Change request register table",
+          "tabindex": "0",
+          "scrollWidth": 1126,
+          "clientWidth": 1126
+        },
+        "empty": null
+      }
+    }
+  ],
+  "states": {
+    "filtered": {
+      "before": {
+        "rows": 4,
+        "count": null,
+        "chips": 0,
+        "globalOverflow": 0,
+        "undersized": 1,
+        "smallText": 0,
+        "clipped": 0,
+        "ellipsis": 0,
+        "axe": 0,
+        "table": {
+          "role": "region",
+          "label": "Change requests in your authorized scope — scrollable",
+          "tabindex": "0",
+          "scrollWidth": 356,
+          "clientWidth": 356
+        },
+        "empty": null
+      },
+      "after": {
+        "rows": 4,
+        "count": "Showing 1–4 of 4 change requests matching these filters · Page 1 of 1",
+        "chips": 1,
+        "globalOverflow": 0,
+        "undersized": 0,
+        "smallText": 0,
+        "clipped": 0,
+        "ellipsis": 0,
+        "axe": 0,
+        "table": {
+          "role": "region",
+          "label": "Change request register table",
+          "tabindex": "0",
+          "scrollWidth": 356,
+          "clientWidth": 356
+        },
+        "empty": null
+      }
+    },
+    "filteredTarget": {
+      "before": {
+        "rows": 1,
+        "count": null,
+        "chips": 0,
+        "globalOverflow": 0,
+        "undersized": 2,
+        "smallText": 0,
+        "clipped": 0,
+        "ellipsis": 0,
+        "axe": 0,
+        "table": {
+          "role": "region",
+          "label": "Change requests in your authorized scope — scrollable",
+          "tabindex": "0",
+          "scrollWidth": 356,
+          "clientWidth": 356
+        },
+        "empty": null
+      },
+      "after": {
+        "rows": 1,
+        "count": "Showing 1–1 of 1 change request matching these filters · Page 1 of 1",
+        "chips": 1,
+        "globalOverflow": 0,
+        "undersized": 0,
+        "smallText": 0,
+        "clipped": 0,
+        "ellipsis": 0,
+        "axe": 0,
+        "table": {
+          "role": "region",
+          "label": "Change request register table",
+          "tabindex": "0",
+          "scrollWidth": 356,
+          "clientWidth": 356
+        },
+        "empty": null
+      }
+    },
+    "filteredEmpty": {
+      "before": {
+        "rows": 0,
+        "count": null,
+        "chips": 0,
+        "globalOverflow": 0,
+        "undersized": 3,
+        "smallText": 0,
+        "clipped": 0,
+        "ellipsis": 0,
+        "axe": 0,
+        "table": null,
+        "empty": "No change requests match these filtersRequests outside your authorized scope are intentionally excluded.Clear all filters"
+      },
+      "after": {
+        "rows": 0,
+        "count": null,
+        "chips": 1,
+        "globalOverflow": 0,
+        "undersized": 0,
+        "smallText": 0,
+        "clipped": 0,
+        "ellipsis": 0,
+        "axe": 0,
+        "table": null,
+        "empty": "No change requests match these filters Nothing in your authorized scope matches the selected filters. Clear filters"
+      }
+    },
+    "pageTwo": {
+      "before": {
+        "rows": 3,
+        "count": null,
+        "chips": 0,
+        "globalOverflow": 0,
+        "undersized": 3,
+        "smallText": 0,
+        "clipped": 0,
+        "ellipsis": 0,
+        "axe": 0,
+        "table": null,
+        "empty": null
+      },
+      "after": {
+        "rows": 3,
+        "count": "Showing 26–28 of 28 change requests in your authorized scope · Page 2 of 2",
+        "chips": 0,
+        "globalOverflow": 0,
+        "undersized": 0,
+        "smallText": 0,
+        "clipped": 0,
+        "ellipsis": 0,
+        "axe": 0,
+        "table": {
+          "role": "region",
+          "label": "Change request register table",
+          "tabindex": "0",
+          "scrollWidth": 1126,
+          "clientWidth": 1126
+        },
+        "empty": null
+      }
+    },
+    "longRecord": {
+      "before": {
+        "rows": 25,
+        "count": null,
+        "chips": 0,
+        "globalOverflow": 0,
+        "undersized": 0,
+        "smallText": 0,
+        "clipped": 0,
+        "ellipsis": 0,
+        "axe": 0,
+        "table": {
+          "role": "region",
+          "label": "Change requests in your authorized scope — scrollable",
+          "tabindex": "0",
+          "scrollWidth": 286,
+          "clientWidth": 286
+        },
+        "empty": null
+      },
+      "after": {
+        "rows": 25,
+        "count": "Showing 1–25 of 28 change requests in your authorized scope · Page 1 of 2",
+        "chips": 0,
+        "globalOverflow": 0,
+        "undersized": 0,
+        "smallText": 0,
+        "clipped": 0,
+        "ellipsis": 0,
+        "axe": 0,
+        "table": {
+          "role": "region",
+          "label": "Change request register table",
+          "tabindex": "0",
+          "scrollWidth": 286,
+          "clientWidth": 286
+        },
+        "empty": null
+      }
+    }
+  },
+  "navigation": {
+    "status": "PASS",
+    "recordHref": "/change-requests/d2ad13d6-7ccf-4d05-8add-e32738a36cb3",
+    "recordHeading": "CR-2026-LONG-IDENTIFIER-LONG-IDENTIFIER-LONG-IDENTIFIER-LONG-IDENTIFIER-LONG-IDENTIFIER-LONG-IDENTIFIER-001",
+    "createForm": true,
+    "nextPageRows": 3,
+    "chipCount": 1,
+    "clearedRows": 25
+  },
+  "readDenied": {
+    "before": {
+      "status": "RECORDED",
+      "text": "Governance Change requests Review proposed changes. Approval does not automatically update the record. New change request Target type State All states Draft Submitted Under review Returned Approved Rejected Applying Applied Application failed Cancelled Filter Saved filters Preset name Save filters Delete preset No change requests found Requests outside your authorized scope are intentionally excluded. Page 1 of 1 — 0 change requests Previous Next",
+      "rows": 0,
+      "table": 0,
+      "count": null,
+      "empty": 1,
+      "unavailable": 0,
+      "mutationForms": 0,
+      "overflow": 0
+    },
+    "after": {
+      "status": "PASS",
+      "text": "Governance Change requests Review proposed changes. Approval does not automatically update the record. New change request Find change requests Target type State All states Draft Submitted Under review Returned Approved Rejected Applying Applied Application failed Cancelled Apply filters Saved filters Preset name Save filters Delete preset Change request register No change requests found Requests outside your authorized scope are intentionally excluded.",
+      "rows": 0,
+      "table": 0,
+      "count": null,
+      "empty": 1,
+      "unavailable": 0,
+      "mutationForms": 0,
+      "overflow": 0
+    }
+  },
+  "leastPrivileged": {
+    "before": {
+      "status": "RECORDED",
+      "rows": 25,
+      "overflow": 0,
+      "mutationForms": 0
+    },
+    "after": {
+      "status": "PASS",
+      "rows": 25,
+      "overflow": 0,
+      "mutationForms": 0
+    }
+  },
+  "noJs": {
+    "before": {
+      "status": "PASS",
+      "rowsAfterFilter": 1,
+      "rowsAfterClear": 25
+    },
+    "after": {
+      "status": "PASS",
+      "rowsAfterFilter": 1,
+      "rowsAfterClear": 25
+    }
+  },
+  "providerUnavailable": {
+    "before": {
+      "status": "RECORDED",
+      "text": "Governance Change requests Review proposed changes. Approval does not automatically update the record. New change request Target type State All states Draft Submitted Under review Returned Approved Rejected Applying Applied Application failed Cancelled Filter Saved filters Preset name Save filters Delete preset ! Change requests are temporarily unavailable The change-request read did not return a confirmed result, so this register is not treated as empty. Try again",
+      "unavailable": 1,
+      "rows": 0,
+      "count": null,
+      "pager": 0,
+      "overflow": 0
+    },
+    "after": {
+      "status": "PASS",
+      "text": "Governance Change requests Review proposed changes. Approval does not automatically update the record. New change request Find change requests Target type State All states Draft Submitted Under review Returned Approved Rejected Applying Applied Application failed Cancelled Apply filters Saved filters Preset name Save filters Delete preset ! Change requests are temporarily unavailable The change-request read did not return a confirmed result, so this register is not treated as empty. Try again",
+      "unavailable": 1,
+      "rows": 0,
+      "count": null,
+      "pager": 0,
+      "overflow": 0
+    }
+  },
+  "unauthenticated": {
+    "before": {
+      "status": "PASS",
+      "finalUrl": "http://127.0.0.1:4333/login?returnTo=%2Fchange-requests"
+    },
+    "after": {
+      "status": "PASS",
+      "finalUrl": "http://127.0.0.1:4333/login?returnTo=%2Fchange-requests"
+    }
+  },
+  "keyboard": {
+    "before": [
+      {
+        "label": "filter-input",
+        "status": "NOT PRESENT"
+      },
+      {
+        "label": "table-region",
+        "status": "PASS",
+        "active": true,
+        "outlineStyle": "auto",
+        "outlineWidth": "1px",
+        "outlineColor": "rgb(153, 200, 255)"
+      },
+      {
+        "label": "pager-link",
+        "status": "PASS",
+        "active": true,
+        "outlineStyle": "solid",
+        "outlineWidth": "2px",
+        "outlineColor": "rgb(146, 184, 242)"
+      },
+      {
+        "label": "applied-filter-chip",
+        "status": "NOT PRESENT"
+      }
+    ],
+    "after": [
+      {
+        "label": "filter-input",
+        "status": "PASS",
+        "active": true,
+        "outlineStyle": "solid",
+        "outlineWidth": "2px",
+        "outlineColor": "rgb(146, 184, 242)"
+      },
+      {
+        "label": "table-region",
+        "status": "PASS",
+        "active": true,
+        "outlineStyle": "solid",
+        "outlineWidth": "2px",
+        "outlineColor": "rgb(146, 184, 242)"
+      },
+      {
+        "label": "pager-link",
+        "status": "PASS",
+        "active": true,
+        "outlineStyle": "solid",
+        "outlineWidth": "2px",
+        "outlineColor": "rgb(146, 184, 242)"
+      },
+      {
+        "label": "applied-filter-chip",
+        "status": "PASS",
+        "active": true,
+        "outlineStyle": "solid",
+        "outlineWidth": "2px",
+        "outlineColor": "rgb(146, 184, 242)"
+      }
+    ],
+    "tabWalk": [
+      {
+        "tag": "select",
+        "text": "All states DraftSubmittedUnder reviewReturnedApprovedRejecte",
+        "inTable": false,
+        "outlineStyle": "solid",
+        "outlineWidth": "2px"
+      },
+      {
+        "tag": "button",
+        "text": "Apply filters",
+        "inTable": false,
+        "outlineStyle": "solid",
+        "outlineWidth": "2px"
+      },
+      {
+        "tag": "select",
+        "text": "Saved filter presets",
+        "inTable": false,
+        "outlineStyle": "solid",
+        "outlineWidth": "2px"
+      },
+      {
+        "tag": "input",
+        "text": "Filter preset name",
+        "inTable": false,
+        "outlineStyle": "solid",
+        "outlineWidth": "2px"
+      },
+      {
+        "tag": "button",
+        "text": "Save filters",
+        "inTable": false,
+        "outlineStyle": "solid",
+        "outlineWidth": "2px"
+      },
+      {
+        "tag": "button",
+        "text": "Delete preset",
+        "inTable": false,
+        "outlineStyle": "solid",
+        "outlineWidth": "2px"
+      },
+      {
+        "tag": "div",
+        "text": "Change request register table",
+        "inTable": false,
+        "outlineStyle": "solid",
+        "outlineWidth": "2px"
+      },
+      {
+        "tag": "a",
+        "text": "CR-2026-LONG-IDENTIFIER-LONG-IDENTIFIER-LONG-IDENTIFIER-LONG",
+        "inTable": true,
+        "outlineStyle": "solid",
+        "outlineWidth": "2px"
+      },
+      {
+        "tag": "a",
+        "text": "CR-2026-0002",
+        "inTable": true,
+        "outlineStyle": "solid",
+        "outlineWidth": "2px"
+      },
+      {
+        "tag": "a",
+        "text": "CR-2026-0003",
+        "inTable": true,
+        "outlineStyle": "solid",
+        "outlineWidth": "2px"
+      },
+      {
+        "tag": "a",
+        "text": "CR-2026-0004",
+        "inTable": true,
+        "outlineStyle": "solid",
+        "outlineWidth": "2px"
+      },
+      {
+        "tag": "a",
+        "text": "CR-2026-0005",
+        "inTable": true,
+        "outlineStyle": "solid",
+        "outlineWidth": "2px"
+      },
+      {
+        "tag": "a",
+        "text": "CR-2026-0006",
+        "inTable": true,
+        "outlineStyle": "solid",
+        "outlineWidth": "2px"
+      },
+      {
+        "tag": "a",
+        "text": "CR-2026-0007",
+        "inTable": true,
+        "outlineStyle": "solid",
+        "outlineWidth": "2px"
+      }
+    ]
+  },
+  "contrast": {
+    "min": 8.09,
+    "entries": [
+      {
+        "label": "h1",
+        "selector": "h1",
+        "fontSize": 24,
+        "fontWeight": "600",
+        "foreground": "rgb(232, 237, 245)",
+        "background": "rgb(20 24 30)",
+        "ratio": 15.15
+      },
+      {
+        "label": "purpose",
+        "selector": ".purpose",
+        "fontSize": 14,
+        "fontWeight": "400",
+        "foreground": "rgb(195, 203, 214)",
+        "background": "rgb(20 24 30)",
+        "ratio": 10.88
+      },
+      {
+        "label": "filter heading",
+        "selector": ".filter-panel h2",
+        "fontSize": 14,
+        "fontWeight": "600",
+        "foreground": "rgb(232, 237, 245)",
+        "background": "rgb(37 43 52)",
+        "ratio": 12.12
+      },
+      {
+        "label": "filter label",
+        "selector": ".filter-panel label",
+        "fontSize": 12,
+        "fontWeight": "400",
+        "foreground": "rgb(195, 203, 214)",
+        "background": "rgb(37 43 52)",
+        "ratio": 8.71
+      },
+      {
+        "label": "result count",
+        "selector": ".result-count",
+        "fontSize": 12,
+        "fontWeight": "400",
+        "foreground": "rgb(195, 203, 214)",
+        "background": "rgb(37 43 52)",
+        "ratio": 8.71
+      },
+      {
+        "label": "table header",
+        "selector": "thead th",
+        "fontSize": 12,
+        "fontWeight": "600",
+        "foreground": "rgb(232, 237, 245)",
+        "background": "rgb(43 50 60)",
+        "ratio": 11
+      },
+      {
+        "label": "change number",
+        "selector": "tbody th a",
+        "fontSize": 13,
+        "fontWeight": "600",
+        "foreground": "rgb(166, 197, 245)",
+        "background": "rgb(37 43 52)",
+        "ratio": 8.09
+      },
+      {
+        "label": "target label",
+        "selector": "tbody td",
+        "fontSize": 13,
+        "fontWeight": "400",
+        "foreground": "rgb(232, 237, 245)",
+        "background": "rgb(37 43 52)",
+        "ratio": 12.12
+      },
+      {
+        "label": "target reference",
+        "selector": ".target-reference",
+        "fontSize": 12,
+        "fontWeight": "400",
+        "foreground": "rgb(195, 203, 214)",
+        "background": "rgb(37 43 52)",
+        "ratio": 8.71
+      },
+      {
+        "label": "applied filter chip",
+        "selector": "[data-applied-filters] .chip-value",
+        "fontSize": 13,
+        "fontWeight": "600",
+        "foreground": "rgb(232, 237, 245)",
+        "background": "rgb(43 50 60)",
+        "ratio": 11
+      }
+    ]
+  },
+  "media": [
+    {
+      "media": {
+        "reducedMotion": "reduce"
+      },
+      "status": "PASS",
+      "overflow": 0
+    },
+    {
+      "media": {
+        "forcedColors": "active"
+      },
+      "status": "PASS",
+      "overflow": 0
+    }
+  ],
+  "pageErrors": [],
+  "limitations": [
+    "Native 200%/400% browser zoom NOT RUN",
+    "Screen reader (VoiceOver/NVDA) NOT RUN",
+    "Export N/A (no export function exists)"
+  ]
+}
