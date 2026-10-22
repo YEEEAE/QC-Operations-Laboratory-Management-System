@@ -1,3 +1,8 @@
+- **2026-10-22 — CA-P-ASSETS-EQUIPMENT / CAPA A equipment register**
+  - Changed: equipment register now presents source-derived eligibility, current calibration, in-progress maintenance and source requirement flags; list reads, guards, detail history and Sidebar remain unchanged.
+  - Evidence: focused 36/36, Docker PostgreSQL 18 integration 20/20, and Astro build PASS; `astro check` FAIL on 2 unrelated CA-P-500 imports. Authenticated populated-record comparison and responsive/accessibility matrix NOT RUN (no source-backed equipment record in the disposable database); graph refresh BLOCKED (CLI unavailable). `audit/CA-P-ASSETS-EQUIPMENT/execution-status.md`.
+  - State: PARTIAL.
+  - Key files: `src/pages/assets/equipment/index.astro`, `tests/unit/ui/equipment-register-surface.test.ts`.
 - **2026-10-22 — CA-P-ASSETS-CALIBRATIONS-NEW / CAPA A calibration create form**
   - Changed: responsive single-column/two-independent-field form, source-state status text and equipment-history link; native POST, fields, Sidebar and server authorization retained.
   - Evidence: focused 14/14 tests and final Astro build PASS; `astro check` still has 2 unrelated CA-P-500 imports. Authorized populated-record browser, viewport, keyboard, contrast and zoom evidence NOT RUN; browser access denied and local PG18 unavailable. Graph refresh BLOCKED (CLI unavailable). `audit/CA-P-ASSETS-CALIBRATIONS-NEW/execution-status.md`.

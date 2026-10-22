@@ -7,10 +7,16 @@ import AppliedFilters from '../../../ui/components/data/AppliedFilters.astro';
 import EmptyTableState from '../../../ui/components/data/EmptyTableState.astro';
 import FilterBar from '../../../ui/components/data/FilterBar.astro';
 import { assetsReadDependencies } from '../../../modules/assets/application/dependencies.js';
+import type { EquipmentEligibilityAssessment } from '../../../modules/assets/equipment/application/get-equipment-eligibility.js';
 import { stateLabel } from '../../../shared/copy/ux-vocabulary.js';
+import { formatDate } from '../../../shared/copy/format.js';
+import { classifyReadFailure } from '../../../shared/errors/read-failure.js';
+
 const actor = Astro.locals.actor;
 if (!actor) return Astro.redirect('/login?returnTo=%2Fassets%2Fequipment');
-const canCreate = actor.permissions.some((permission) => permission.active !== false && permission.code === 'PERM-EQP-CREATE');
+const canCreate = actor.permissions.some(
+  (permission) => permission.active !== false && permission.code === 'PERM-EQP-CREATE',
+);
 const states = [
   'DRAFT',
   'ACTIVE',
@@ -21,25 +27,66 @@ const states = [
 const params = Astro.url.searchParams;
 const requested = params.get('state');
 const state = states.find((value) => value === requested);
+const invalidStateFilter = Boolean(requested && !state);
 const search = params.get('q')?.slice(0, 200) || undefined;
-let equipment: readonly import('../../../modules/assets/equipment/domain/equipment.js').Equipment[] =
-  [];
+let equipment: readonly import('../../../modules/assets/equipment/domain/equipment.js').Equipment[] = [];
 let providerUnavailable = false;
 let page = 1;
 let total = 0;
 let pageSize = 25;
+type EligibilityCell =
+  | { kind: 'ASSESSED'; assessment: EquipmentEligibilityAssessment }
+  | { kind: 'DENIED' }
+  | { kind: 'UNAVAILABLE' };
+const eligibilityByEquipment = new Map<string, EligibilityCell>();
+let eligibilityUnavailable = false;
+let eligibilityDenied = false;
 try {
-  const result = await assetsReadDependencies().equipment.list.executePage({
+  const read = assetsReadDependencies();
+  const result = await read.equipment.list.executePage({
     actor,
     filter: { state, search },
     page: { page: params.get('page') ?? 1, pageSize },
   });
   equipment = result.items;
   ({ page, total, pageSize } = result);
-} catch {
+  const equipmentIds = equipment.map((item) => item.id);
+  try {
+    const assessed = await read.equipment.assessEligibility.assessMany(actor, equipmentIds);
+    for (const id of equipmentIds) {
+      const assessment = assessed.get(id);
+      eligibilityByEquipment.set(
+        id,
+        assessment ? { kind: 'ASSESSED', assessment } : { kind: 'UNAVAILABLE' },
+      );
+    }
+  } catch {
+    // Keep each equipment row visible when one linked source is denied or unavailable.
+    const settled = await Promise.allSettled(
+      equipmentIds.map((id) => read.equipment.assessEligibility.assess(actor, id)),
+    );
+    settled.forEach((outcome, index) => {
+      const id = equipmentIds[index]!;
+      eligibilityByEquipment.set(
+        id,
+        outcome.status === 'fulfilled'
+          ? { kind: 'ASSESSED', assessment: outcome.value }
+          : classifyReadFailure(outcome.reason) === 'DENIED'
+            ? { kind: 'DENIED' }
+            : { kind: 'UNAVAILABLE' },
+      );
+    });
+  }
+  eligibilityDenied = [...eligibilityByEquipment.values()].some((cell) => cell.kind === 'DENIED');
+  eligibilityUnavailable = [...eligibilityByEquipment.values()].some(
+    (cell) => cell.kind === 'UNAVAILABLE',
+  );
+} catch (error) {
+  if (classifyReadFailure(error) === 'DENIED') return Astro.redirect('/404');
   providerUnavailable = true;
 }
-/** One link per filter that drops only that filter and keeps the rest. */
+
+/** Drop only the selected filter and reset the page while preserving the rest. */
 const chipHref = (drop: string) => {
   const next = new URLSearchParams(params);
   next.delete(drop);
@@ -52,89 +99,200 @@ const appliedFilters = [
   search && { label: 'Search', value: search, href: chipHref('q') },
 ].filter((chip): chip is { label: string; value: string; href: string } => Boolean(chip));
 const hasFilters = appliedFilters.length > 0;
+const eligibilityReason = (reason: string | undefined) => {
+  switch (reason) {
+    case 'UNDER_MAINTENANCE': return 'Equipment is under maintenance';
+    case 'OUT_OF_SERVICE': return 'Equipment is out of service';
+    case 'NOT_ACTIVE': return 'Equipment is not active';
+    case 'NO_CURRENT_CALIBRATION': return 'No current calibration is recorded';
+    case 'CALIBRATION_NOT_CURRENT': return 'Current calibration is not confirmed';
+    case 'CALIBRATION_EXPIRED': return 'Current source due date has passed';
+    default: return 'Eligibility not confirmed';
+  }
+};
 ---
 
 <AppLayout title="Equipment · Assets" locale="en" direction="ltr">
-  <PageHeader purpose="Stable equipment identity and its current operational state.">
+  <PageHeader purpose="Equipment identity, source-recorded status, and authorized use eligibility.">
     <Fragment slot="heading"><h1>Equipment</h1></Fragment>
-    <Fragment slot="actions">{canCreate && <a class="button" href="/assets/equipment/new">Add equipment</a>}</Fragment>
+    <Fragment slot="actions">
+      {canCreate && <a class="button" href="/assets/equipment/new">Add equipment</a>}
+    </Fragment>
   </PageHeader>
-  <FilterBar clearHref={hasFilters ? '/assets/equipment' : undefined}>
+
+  <FilterBar clearHref={hasFilters ? '/assets/equipment' : undefined} label="Equipment filters">
     <label for="q">Search<input id="q" name="q" value={search ?? ''} maxlength="200" /></label>
-    <label for="state">Operational state<select id="state" name="state">
+    <label for="state">
+      Operational state
+      <select id="state" name="state">
         <option value="">All states</option>
-        {
-          states.map((value) => (
-            <option value={value} selected={state === value}>
-              {stateLabel(value)}
-            </option>
-          ))
-        }
-      </select></label>
+        {states.map((value) => (
+          <option value={value} selected={state === value}>{stateLabel(value)}</option>
+        ))}
+      </select>
+    </label>
   </FilterBar>
+
   <AppliedFilters
     filters={appliedFilters}
     clearHref={hasFilters ? '/assets/equipment' : undefined}
     note={providerUnavailable ? undefined : `${total} equipment records in your authorized scope.`}
   />
-  {
-    providerUnavailable ? (
-      <ProviderUnavailableState
-        title="Equipment data is temporarily unavailable"
-        description="Equipment records could not be loaded. This does not mean the register is empty."
-        retryHref="/assets/equipment"
-      />
-    ) : equipment.length ? (
-      <div class="table-wrap">
-        <table>
-          <caption>
-            {total} authorized equipment record{total === 1 ? '' : 's'}
-            {hasFilters ? ' matching the current filters' : ''}
-          </caption>
-          <thead>
-            <tr>
-              <th scope="col">Equipment number</th>
-              <th scope="col">Name</th>
-              <th scope="col">Model / serial</th>
-              <th scope="col">Operational state</th>
-              <th scope="col">Location</th>
-              <th scope="col">Version</th>
-            </tr>
-          </thead>
-          <tbody>
-            {equipment.map((item) => (
+  {invalidStateFilter && (
+    <p class="filter-notice" role="status">State filter was not applied. Choose an available operational state.</p>
+  )}
+  {!providerUnavailable && eligibilityUnavailable && (
+    <p class="source-notice" role="status">
+      Some linked source reads could not be confirmed. Equipment records remain available.
+    </p>
+  )}
+  {!providerUnavailable && eligibilityDenied && (
+    <p class="access-notice" role="status">
+      Some linked eligibility reads are outside your authorized scope. Equipment records remain available.
+    </p>
+  )}
+
+  {providerUnavailable ? (
+    <ProviderUnavailableState
+      title="Equipment data is temporarily unavailable"
+      description="Equipment records could not be loaded. This does not mean the register is empty."
+      retryHref="/assets/equipment"
+    />
+  ) : equipment.length ? (
+    <div class="table-wrap" role="region" aria-label="Equipment register table" tabindex="0" data-scroll-region>
+      <table>
+        <caption>
+          {total} authorized equipment record{total === 1 ? '' : 's'}
+          {hasFilters ? ' matching the current filters' : ''}
+        </caption>
+        <thead>
+          <tr>
+            <th scope="col">Equipment number</th>
+            <th scope="col">Name</th>
+            <th scope="col">Model / serial</th>
+            <th scope="col">Operational state</th>
+            <th scope="col">Use eligibility</th>
+            <th scope="col">Current calibration</th>
+            <th scope="col">In-progress maintenance</th>
+            <th scope="col">Location and requirements</th>
+            <th scope="col">Version</th>
+          </tr>
+        </thead>
+        <tbody>
+          {equipment.map((item) => {
+            const cell = eligibilityByEquipment.get(item.id);
+            const assessment = cell?.kind === 'ASSESSED' ? cell.assessment : undefined;
+            const calibrationHref = item.currentCalibrationId
+              ? `/assets/calibrations/${item.currentCalibrationId}`
+              : undefined;
+            const maintenanceHref = assessment?.maintenanceNo
+              ? `/assets/maintenance?equipmentId=${encodeURIComponent(item.id)}`
+              : undefined;
+            return (
               <tr>
-                <th scope="row">
+                <th scope="row" class="identifier">
                   <a href={`/assets/equipment/${item.id}`}>{item.equipmentNo}</a>
                 </th>
-                <td>{item.name}</td>
-                <td>{[item.model, item.serialNo].filter(Boolean).join(' · ') || 'Not supplied'}</td>
+                <td class="long-value">{item.name}</td>
+                <td class="long-value">{[item.model, item.serialNo].filter(Boolean).join(' · ') || 'Not supplied'}</td>
+                <td><span class="state">{stateLabel(item.state)}</span></td>
                 <td>
-                  <span class="state">{stateLabel(item.state)}</span>
+                  {assessment
+                    ? assessment.eligible
+                      ? <span class="assessment">Eligible</span>
+                      : <span class="assessment">Not eligible: {eligibilityReason(assessment.reason)}</span>
+                    : <span class="assessment">
+                        {cell?.kind === 'DENIED' ? 'Not available in your authorized scope' : 'Not confirmed'}
+                      </span>}
                 </td>
-                <td>{item.location ?? 'Not supplied'}</td>
-                <td>{item.version.toString()}</td>
+                <td>
+                  {assessment?.calibrationNo && calibrationHref ? (
+                    <div class="record-cell">
+                      <a class="identifier" href={calibrationHref}>{assessment.calibrationNo}</a>
+                      <span class="state">{stateLabel(assessment.calibrationState)}</span>
+                      <span class="supporting">Due {assessment.dueDate ? formatDate(assessment.dueDate) : 'not supplied'}</span>
+                    </div>
+                  ) : (
+                    <span>{assessment ? 'No current calibration record' : cell?.kind === 'DENIED' ? 'Not available in your authorized scope' : 'Not confirmed'}</span>
+                  )}
+                </td>
+                <td>
+                  {assessment?.maintenanceNo ? (
+                    <div class="record-cell">
+                      <a class="identifier" href={maintenanceHref}>{assessment.maintenanceNo}</a>
+                      <span class="state">{stateLabel(assessment.maintenanceState)}</span>
+                      <span class="supporting">
+                        {assessment.maintenanceStartedAt
+                          ? `Started ${formatDate(assessment.maintenanceStartedAt)}`
+                          : assessment.maintenancePlannedAt
+                            ? `Planned ${formatDate(assessment.maintenancePlannedAt)}`
+                            : 'Date not supplied'}
+                      </span>
+                    </div>
+                  ) : (
+                    <span>{assessment ? 'No in-progress maintenance recorded' : cell?.kind === 'DENIED' ? 'Not available in your authorized scope' : 'Not confirmed'}</span>
+                  )}
+                </td>
+                <td>
+                  <div class="record-cell">
+                    <span class="long-value">{item.location ?? 'Not supplied'}</span>
+                    <span class="supporting">
+                      Calibration required: {item.calibrationRequired === undefined ? 'Not specified' : item.calibrationRequired ? 'Yes' : 'No'}
+                    </span>
+                    <span class="supporting">
+                      Maintenance required: {item.maintenanceRequired === undefined ? 'Not specified' : item.maintenanceRequired ? 'Yes' : 'No'}
+                    </span>
+                  </div>
+                </td>
+                <td class="version">{item.version.toString()}</td>
               </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    ) : hasFilters ? (
-      <EmptyTableState
-        title="No equipment matches these filters"
-        description="Nothing in your authorized scope matches the selected filters."
-        clearHref="/assets/equipment"
-      />
-    ) : (
-      <EmptyTableState
-        title="No equipment yet"
-        description="No equipment record exists in your authorized scope. Create the first draft to start the asset register."
-        actionLabel={canCreate ? 'Add equipment' : undefined}
-        actionHref={canCreate ? '/assets/equipment/new' : undefined}
-      />
-    )
-  }
-  {!providerUnavailable && <Pagination page={page} totalPages={Math.max(1, Math.ceil(total / pageSize))} total={total} itemLabel="equipment records" />}
+            );
+          })}
+        </tbody>
+      </table>
+    </div>
+  ) : hasFilters ? (
+    <EmptyTableState
+      title="No equipment matches these filters"
+      description="Nothing in your authorized scope matches the selected filters."
+      clearHref="/assets/equipment"
+    />
+  ) : (
+    <EmptyTableState
+      title="No equipment yet"
+      description="No equipment record exists in your authorized scope. Create the first draft to start the asset register."
+      actionLabel={canCreate ? 'Add equipment' : undefined}
+      actionHref={canCreate ? '/assets/equipment/new' : undefined}
+    />
+  )}
+
+  {!providerUnavailable && (
+    <Pagination
+      page={page}
+      totalPages={Math.max(1, Math.ceil(total / pageSize))}
+      total={total}
+      itemLabel="equipment records"
+    />
+  )}
 </AppLayout>
+
 <style>
-  .head{display:flex;justify-content:space-between;gap:var(--space-5);align-items:flex-start;margin-bottom:var(--space-6)}h1{margin:.25rem 0 .4rem}.eyebrow{margin:0;color:var(--text-muted);font-size:var(--font-size-xs);letter-spacing:.12em;font-weight:700}.head p:not(.eyebrow){color:var(--text-muted);font-size:var(--font-size-sm)}.button{display:inline-flex;align-items:center;justify-content:center;min-height:var(--control-height);padding-inline:1rem;border:1px solid var(--color-accent-primary);border-radius:var(--radius-sm);background:var(--color-accent-primary);color:var(--color-text-inverse);text-decoration:none;font-weight:var(--font-weight-bold)}.table-wrap{overflow-x:auto;border:1px solid var(--color-border-subtle);border-radius:var(--radius-lg)}table{width:100%;min-width:850px;border-collapse:collapse;background:var(--surface-panel)}caption{text-align:start;padding:var(--space-4);color:var(--text-muted);font-size:var(--font-size-xs)}th,td{padding:.85rem;border-top:1px solid var(--color-border-subtle);text-align:start;font-size:var(--font-size-sm)}th{font-weight:var(--font-weight-semibold)}a{color:var(--color-accent-primary-hover)}.state{display:inline-flex;padding:.28rem .5rem;border:1px solid var(--color-border-subtle);border-radius:999px;font-size:var(--font-size-xs);font-weight:var(--font-weight-semibold)}@media(max-width:650px){.head{display:grid}.button{width:max-content}}</style>
+  .button{display:inline-flex;align-items:center;justify-content:center;min-height:max(var(--control-height),44px);padding-inline:1rem;border:1px solid var(--color-accent-primary);border-radius:var(--radius-sm);background:var(--color-accent-primary);color:var(--color-text-inverse);text-decoration:none;font-weight:var(--font-weight-bold)}
+  .table-wrap{max-width:100%;overflow-x:auto;border:1px solid var(--color-border-subtle);border-radius:var(--radius-lg);outline-offset:3px}
+  .table-wrap:focus-visible{outline:2px solid var(--color-accent-primary)}
+  table{width:100%;min-width:1180px;border-collapse:collapse;background:var(--surface-panel)}
+  caption{text-align:start;padding:var(--space-4);color:var(--text-muted);font-size:var(--font-size-xs)}
+  th,td{padding:.85rem; border-top:1px solid var(--color-border-subtle);text-align:start;vertical-align:top;font-size:var(--font-size-sm)}
+  th{font-weight:var(--font-weight-semibold)}
+  a{color:var(--color-accent-primary-hover)}
+  .identifier{overflow-wrap:anywhere;word-break:break-word}
+  .long-value{min-width:10rem;overflow-wrap:anywhere;word-break:break-word}
+  .record-cell{display:grid;justify-items:start;gap:.35rem;min-width:10rem}
+  .state,.assessment{display:inline-flex;align-items:center;max-width:18rem;padding:.3rem .5rem;border:1px solid var(--color-border-subtle);border-radius:var(--radius-sm);font-size:var(--font-size-xs);font-weight:var(--font-weight-semibold);line-height:1.4;overflow-wrap:anywhere}
+  .assessment{border-radius:var(--radius-md);background:var(--surface-raised)}
+  .supporting{color:var(--text-secondary);font-size:var(--font-size-xs);overflow-wrap:anywhere}
+  .version{font-variant-numeric:tabular-nums;white-space:nowrap}
+  .source-notice{margin:0 0 var(--space-4);padding:var(--space-3) var(--space-4);border-inline-start:3px solid var(--status-warning);background:var(--status-warning-bg);color:var(--text-primary);font-size:var(--font-size-sm)}
+  .filter-notice{margin:0 0 var(--space-4);color:var(--text-secondary);font-size:var(--font-size-xs)}
+  .access-notice{margin:0 0 var(--space-4);padding:var(--space-3) var(--space-4);border-inline-start:3px solid var(--color-border-strong);background:var(--surface-inset);color:var(--text-primary);font-size:var(--font-size-sm)}
+</style>
