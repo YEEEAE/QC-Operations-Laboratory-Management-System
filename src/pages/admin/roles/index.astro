@@ -3,7 +3,14 @@ import PageHeader from "../../../ui/components/PageHeader.astro";
 import AppLayout from '../../../ui/layouts/AppLayout.astro';
 import { administrationDependencies } from '../../../modules/administration/application/dependencies.js';
 import { AppError } from '../../../shared/errors/app-error.js';
-import { stateLabel } from '../../../shared/copy/ux-vocabulary.js';
+import { stateLabel, uxVocabulary } from '../../../shared/copy/ux-vocabulary.js';
+import {
+  buildRoleRegisterHref,
+  filterRoleRecords,
+  paginateRoleRecords,
+  parseRoleRegisterStatus,
+} from '../../../ui/administration/roles-register.js';
+import type { RoleRegisterStatus } from '../../../ui/administration/roles-register.js';
 
 const actor = Astro.locals.actor;
 if (!actor) return Astro.redirect(`/login?returnTo=${encodeURIComponent(Astro.url.pathname)}`);
@@ -17,122 +24,458 @@ try {
   denied = error instanceof AppError && error.category === 'AUTHORIZATION';
   if (!denied) throw error;
 }
+
+const rawQuery = Astro.url.searchParams.get('q') ?? '';
+const query = rawQuery.trim();
+const requestedStatus = Astro.url.searchParams.get('status') ?? '';
+const validStatus: RoleRegisterStatus = parseRoleRegisterStatus(requestedStatus);
+const rejectedStatus = requestedStatus !== '' && !validStatus;
+const hasFilters = Boolean(query || validStatus);
+const filteredRoles = filterRoleRecords(roles ?? [], query, validStatus);
+const requestedPage = Number(Astro.url.searchParams.get('page') ?? '1');
+const { currentPage, pageCount, items: visibleRoles } = paginateRoleRecords(filteredRoles, requestedPage);
+const rolesHref = (updates: { query?: string; status?: string; page?: number } = {}) =>
+  buildRoleRegisterHref({
+    query: updates.query ?? query,
+    status: (updates.status ?? validStatus) as RoleRegisterStatus,
+    page: updates.page,
+  });
+const previousHref = rolesHref({ page: currentPage - 1 });
+const nextHref = rolesHref({ page: currentPage + 1 });
+const countLabel = `${filteredRoles.length} ${filteredRoles.length === 1 ? 'role' : 'roles'}${hasFilters ? ' match the selected filters' : ' configured'}`;
+const filterNotice = rejectedStatus
+  ? 'Not applied: the status filter is not recognized. Nothing was filtered by this value.'
+  : '';
 ---
 
 <AppLayout title="Roles · Administration" locale="en" direction="ltr">
-  <PageHeader><Fragment slot="heading"><h1>Roles</h1></Fragment>
-      
-      
-      <p class="lede">Read-only role catalog.</p>
-    <Fragment slot="actions"><a href="/admin">Back to administration</a></Fragment></PageHeader>
+  <PageHeader>
+    <Fragment slot="heading"><h1>Roles</h1></Fragment>
+    <p class="lede">Read-only role catalog.</p>
+    <Fragment slot="actions"><a href="/admin">Back to administration</a></Fragment>
+  </PageHeader>
+
   {
     denied || !roles ? (
-      <section class="denied" role="alert">
-        <h2>Role administration is not available</h2>
+      <section class="denied" role="alert" aria-labelledby="roles-unavailable-title">
+        <h2 id="roles-unavailable-title">Role administration is not available</h2>
         <p>
           Role information is temporarily unavailable. Retry this page to read the current records.
         </p>
       </section>
-    ) : roles.length ? (
-      <div class="table-wrap">
-        <table>
-          <caption>Configured roles</caption>
-          <thead>
-            <tr>
-              <th scope="col">Name</th>
-              <th scope="col">Role type</th>
-              <th scope="col">Status</th>
-              <th scope="col">Version</th>
-            </tr>
-          </thead>
-          <tbody>
-            {roles.map((role) => (
-              <tr>
-                <th scope="row">
-                  <a href={`/admin/roles/${role.id}`}>{role.name}</a>
-                  <small class="code">{role.code}</small>
-                </th>
-                <td>{role.isSystemRole ? 'System role' : 'Custom role'}</td>
-                <td>{stateLabel(role.active ? 'ACTIVE' : 'INACTIVE')}</td>
-                <td>{role.version.toString()}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
     ) : (
-      <p class="empty">No roles are configured.</p>
+      <section class="register" aria-labelledby="roles-register-title">
+        <h2 id="roles-register-title" class="sr-only">Role catalog</h2>
+        <form class="filters" action="/admin/roles" method="get" role="search">
+          <div class="filter-field filter-query">
+            <label for="role-query">Search roles</label>
+            <input
+              id="role-query"
+              name="q"
+              type="search"
+              autocomplete="off"
+              value={rawQuery}
+              placeholder="Name, code, or description"
+            />
+          </div>
+          <div class="filter-field">
+            <label for="role-status">Status</label>
+            <select id="role-status" name="status">
+              <option value="" selected={!validStatus}>All statuses</option>
+              <option value="active" selected={validStatus === 'active'}>Active</option>
+              <option value="inactive" selected={validStatus === 'inactive'}>Inactive</option>
+            </select>
+          </div>
+          <div class="filter-actions">
+            <button type="submit">Apply filters</button>
+            <a class="clear-filter" href="/admin/roles">Clear filters</a>
+          </div>
+        </form>
+
+        <div class="active-filters" aria-label="Applied role filters" hidden={!hasFilters}>
+          <span class="active-label">Active filters</span>
+{query && (
+            <span class="filter-chip">
+              <span class="chip-value">Search: {query}</span>
+              <a href={buildRoleRegisterHref({ status: validStatus })} aria-label="Remove search filter">Remove</a>
+            </span>
+          )}
+          {validStatus && (
+            <span class="filter-chip">
+              <span class="chip-value">Status: {stateLabel(validStatus.toUpperCase())}</span>
+              <a href={buildRoleRegisterHref({ query })} aria-label="Remove status filter">Remove</a>
+            </span>
+          )}
+        </div>
+
+        <p class="result-count" role="status" aria-live="polite">
+          {countLabel}{filterNotice ? ` · ${filterNotice}` : ''}
+        </p>
+
+        {filteredRoles.length ? (
+          <>
+            <div class="table-wrap" role="region" aria-label="Role catalog table" tabindex="0">
+              <table>
+                <caption>Configured roles</caption>
+                <thead>
+                  <tr>
+                    <th scope="col">Name and code</th>
+                    <th scope="col">Description</th>
+                    <th scope="col">Role type</th>
+                    <th scope="col">Status</th>
+                    <th scope="col">Version</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {visibleRoles.map((role) => (
+                    <tr>
+                      <th scope="row">
+                        <a class="role-link" href={`/admin/roles/${role.id}`}>
+                          <span class="role-name">{role.name}</span>
+                          <code class="role-code">{role.code}</code>
+                        </a>
+                      </th>
+                      <td class="description">{role.description ?? '—'}</td>
+                      <td>{role.isSystemRole ? 'System role' : 'Custom role'}</td>
+                      <td>{stateLabel(role.active ? 'ACTIVE' : 'INACTIVE')}</td>
+                      <td class="version">{role.version.toString()}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            {pageCount > 1 && (
+              <nav class="pagination" aria-label="Role catalog pages">
+                {currentPage > 1
+                  ? <a href={previousHref} rel="prev">Previous</a>
+                  : <span class="pagination-disabled" aria-disabled="true">Previous</span>}
+                <span class="page-status" aria-current="page">Page {currentPage} of {pageCount}</span>
+                {currentPage < pageCount
+                  ? <a href={nextHref} rel="next">Next</a>
+                  : <span class="pagination-disabled" aria-disabled="true">Next</span>}
+              </nav>
+            )}
+          </>
+        ) : roles.length === 0 ? (
+          <p class="empty">No roles are configured.</p>
+        ) : (
+          <section class="filtered-empty" aria-labelledby="roles-filtered-empty-title">
+            <h3 id="roles-filtered-empty-title">{uxVocabulary.states.noFilterMatches}</h3>
+            <p>Clear one or more filters to see the configured roles.</p>
+            <a class="clear-empty" href="/admin/roles">Clear filters</a>
+          </section>
+        )}
+      </section>
     )
   }
 </AppLayout>
+
 <style>
-  .page-head {
-    display: flex;
-    justify-content: space-between;
-    gap: var(--space-5);
-    align-items: start;
-    margin-bottom: var(--space-6);
-  }
-  h1 {
-    margin: 0.25rem 0;
-  }
-  .eyebrow {
-    margin: 0;
-    color: var(--text-muted);
-    font-size: 0.7rem;
-    letter-spacing: 0.12em;
-    font-weight: 700;
-  }
   .lede,
   .empty {
     color: var(--text-muted);
-    font-size: 0.86rem;
+    font-size: 0.875rem;
   }
-  .denied {
+
+  .denied,
+  .filtered-empty {
     padding: var(--space-5);
     background: var(--surface-panel);
     border: 1px solid var(--color-border-subtle);
     border-inline-start: 3px solid var(--status-warning);
     border-radius: var(--radius-lg);
   }
-  .denied p {
+
+  .denied h2,
+  .filtered-empty h3 {
+    margin-block: 0 0.5rem;
+    font-size: var(--font-size-lg);
+  }
+
+  .denied p,
+  .filtered-empty p {
+    margin-block: 0.5rem 0;
     color: var(--text-muted);
-    font-size: 0.84rem;
+    font-size: var(--font-size-sm);
+    line-height: 1.5;
   }
+
+  .clear-empty {
+    display: inline-flex;
+    align-items: center;
+    min-block-size: 44px;
+    margin-block-start: var(--space-3);
+  }
+
+  .register {
+    min-inline-size: 0;
+  }
+
+  .filters {
+    display: grid;
+    grid-template-columns: minmax(14rem, 1fr) minmax(10rem, 0.45fr) auto;
+    gap: var(--space-3);
+    align-items: end;
+    margin-block-end: var(--space-4);
+  }
+
+  .filter-field {
+    display: grid;
+    gap: var(--space-2);
+    min-inline-size: 0;
+  }
+
+  .filter-field label {
+    color: var(--text-secondary);
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-semibold);
+  }
+
+  .filter-field input,
+  .filter-field select {
+    inline-size: 100%;
+    min-inline-size: 0;
+    min-block-size: 44px;
+    padding: 0.625rem 0.75rem;
+    border: 1px solid var(--control-border, var(--color-border-subtle));
+    border-radius: var(--radius-sm);
+    background: var(--surface-inset, var(--surface-page));
+    color: var(--text-primary);
+    font: inherit;
+  }
+
+  .filter-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-2);
+  }
+
+  .filter-actions button,
+  .filter-actions a,
+  .pagination a,
+  .pagination-disabled {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-block-size: 44px;
+    padding-inline: var(--space-3);
+    border: 1px solid var(--control-border, var(--color-border-subtle));
+    border-radius: var(--radius-sm);
+    background: var(--surface-panel);
+    color: var(--text-primary);
+    font: inherit;
+    text-decoration: none;
+  }
+
+  .filter-actions button {
+    border-color: var(--color-accent-primary);
+    background: var(--color-accent-primary);
+    color: var(--text-on-accent);
+    font-weight: var(--font-weight-semibold);
+    cursor: pointer;
+  }
+
+  .filter-actions a:hover,
+  .pagination a:hover {
+    border-color: var(--color-accent-primary);
+  }
+
+  .active-filters {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-2);
+    margin-block-end: var(--space-3);
+    color: var(--text-secondary);
+    font-size: var(--font-size-xs);
+  }
+
+  .active-label {
+    font-weight: var(--font-weight-semibold);
+  }
+
+  .filter-chip {
+    display: inline-flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-2);
+    max-inline-size: 100%;
+    min-block-size: 44px;
+    padding-inline: 0.65rem;
+    border: 1px solid var(--color-border-subtle);
+    border-radius: var(--radius-sm);
+  }
+
+  .chip-value {
+    min-inline-size: 0;
+    overflow-wrap: anywhere;
+  }
+
+  .filter-chip a {
+    display: inline-flex;
+    align-items: center;
+    min-block-size: 44px;
+    color: var(--color-accent-primary-hover);
+  }
+
+  .result-count {
+    margin: 0 0 var(--space-3);
+    color: var(--text-secondary);
+    font-size: var(--font-size-xs);
+    line-height: 1.5;
+    overflow-wrap: anywhere;
+  }
+
   .table-wrap {
-    overflow-x: auto;
+    max-inline-size: 100%;
+    overflow: auto;
+    border: 1px solid var(--color-border-subtle);
+    border-radius: var(--radius-lg);
+    scrollbar-width: auto;
   }
+
+  .table-wrap:focus-visible,
+  :where(button, input, select, a):focus-visible {
+    outline: 2px solid var(--focus-ring);
+    outline-offset: 2px;
+  }
+
   table {
-    width: 100%;
+    inline-size: 100%;
+    min-inline-size: 62rem;
     border-collapse: collapse;
     background: var(--surface-panel);
   }
+
   caption {
-    text-align: start;
     padding: var(--space-4);
     color: var(--text-muted);
+    text-align: start;
+    font-size: var(--font-size-xs);
   }
+
   th,
   td {
     padding: 0.75rem;
+    border-block-start: 1px solid var(--color-border-subtle);
     text-align: start;
-    border-top: 1px solid var(--color-border-subtle);
+    vertical-align: top;
   }
-  th {
-    font-weight: 700;
+
+  thead th {
+    color: var(--text-secondary);
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-semibold);
+    white-space: nowrap;
   }
-  .code {
-    display: block;
+
+  tbody th {
+    min-inline-size: 12rem;
+    font-weight: var(--font-weight-semibold);
+  }
+
+  tbody tr:nth-child(even) {
+    background: var(--surface-inset, var(--surface-page));
+  }
+
+  .role-link {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: flex-start;
+    min-block-size: 44px;
+    gap: 0.25rem;
+    color: var(--color-accent-primary-hover);
+    text-decoration-thickness: 1px;
+    text-underline-offset: 0.18em;
+  }
+
+  .role-name,
+  .description,
+  .role-code {
+    overflow-wrap: anywhere;
+    word-break: normal;
+  }
+
+  .role-code {
+    color: var(--text-muted);
+    font-family: var(--font-family-mono, monospace);
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-regular);
+  }
+
+  .description {
+    min-inline-size: 14rem;
+    max-inline-size: 34rem;
+    color: var(--text-secondary);
+    line-height: 1.5;
+  }
+
+  .version {
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+
+  .pagination {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-3);
+    margin-block-start: var(--space-4);
+  }
+
+  .page-status,
+  .pagination-disabled {
     color: var(--text-muted);
     font-size: var(--font-size-xs);
-    font-weight: 400;
   }
-  a {
-    color: var(--color-accent-primary-hover);
+
+  .pagination-disabled {
+    opacity: 0.65;
   }
-  @media (max-width: 600px) {
-    .page-head {
-      display: grid;
+
+  .sr-only {
+    position: absolute;
+    inline-size: 1px;
+    block-size: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+
+  @media (max-width: 760px) {
+    .filters {
+      grid-template-columns: minmax(0, 1fr);
+    }
+
+    .filter-actions {
+      align-items: stretch;
+    }
+
+    .filter-actions > * {
+      flex: 1 1 auto;
+    }
+  }
+
+  @media (forced-colors: active) {
+    .table-wrap:focus-visible,
+    :where(button, input, select, a):focus-visible {
+      outline: 2px solid Highlight;
+    }
+
+    .filter-field input,
+    .filter-field select,
+    .filter-actions button,
+    .filter-actions a,
+    .filter-chip,
+    .pagination a,
+    .pagination-disabled {
+      border: 1px solid ButtonText;
     }
   }
 </style>

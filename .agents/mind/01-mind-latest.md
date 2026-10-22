@@ -1,3 +1,8 @@
+- **2026-10-22 — CA-P-ADMIN-ROLES / CAPA A roles register**
+  - Changed: `/admin/roles` now has native GET filters, applied-filter chips, count, and pagination; role projection and detail-only grant guard remain unchanged.
+  - Evidence: focused contracts 20/20 and Astro compile PASS; full build evidence writer/typecheck blocked by missing verification context, unsupported Node 22, and unrelated CA-P-500 imports. Real-data browser/AT and matched comparison NOT RUN; `audit/CA-P-ADMIN-ROLES/execution-status.md`.
+  - State: PARTIAL.
+  - Key files: `src/pages/admin/roles/index.astro`, `src/ui/administration/roles-register.ts`, `tests/unit/admin/roles-register.test.ts`.
 - **2026-10-22 — CA-P-ADMIN-PERMISSIONS / CAPA A permissions register**
   - Changed: `/admin/permissions` now presents the full safe permission projection (including existing riskLevel) with client-side filtering/count/pagination; server read and authorization guards unchanged. No export, mutation, schema/API, or Sidebar change.
   - Evidence: focused 15/15 and Astro build PASS; graph refreshed. Authenticated populated before/after, browser sizes/keyboard/zoom/AT and measured contrast NOT RUN. Details: `audit/CA-P-ADMIN-PERMISSIONS/execution-status.md`.
