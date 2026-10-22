@@ -1,3 +1,12 @@
+- **2026-10-22 — CA-P-ASSETS-CALIBRATIONS-NEW / CAPA A calibration create form**
+  - Changed: responsive single-column/two-independent-field form, source-state status text and equipment-history link; native POST, fields, Sidebar and server authorization retained.
+  - Evidence: focused 14/14 tests and final Astro build PASS; `astro check` still has 2 unrelated CA-P-500 imports. Authorized populated-record browser, viewport, keyboard, contrast and zoom evidence NOT RUN; browser access denied and local PG18 unavailable. Graph refresh BLOCKED (CLI unavailable). `audit/CA-P-ASSETS-CALIBRATIONS-NEW/execution-status.md`.
+  - State: PARTIAL.
+  - Key files: `src/pages/assets/calibrations/new.astro`, `audit/CA-P-ASSETS-CALIBRATIONS-NEW/execution-status.md`.
+- **2026-10-22 — CODEX-STITCH-MCP-REPAIR / إصلاح مصادقة Stitch**
+  - Changed: تصحيح قسم Stitch في `~/.codex/config.toml`: إزالة Bearer وenv-header المعكوس، استخدام `X-Goog-Api-Key` ضمن `http_headers` الخاصة بالخادم فقط، مهلة startup/tool = 120s، وصلاحية الملف 600. لا تحميل للمفتاح في بيئة macOS العامة.
+  - Evidence: من الإعداد المحفوظ: initialize PASS، tools/list PASS (16 أداة)، list_projects PASS؛ بقية إعدادات Codex مطابقة.
+  - State: PARTIAL — الاتصال والإعداد VERIFIED؛ أدوات Stitch داخل جلسة Codex الجديدة NOT VERIFIED حتى إعادة تشغيل التطبيق. لا مفاتيح في السجل.
 - **2026-10-22 — CA-P-ASSETS / CAPA A assets overview**
   - Changed: `/assets` now visually prioritizes its existing Equipment register link and uses responsive graphite cards; source counts, labels/copy, scope display, three existing links, AppLayout/Sidebar, and read guards remain unchanged. No new status roll-up, action, filter, export, API, schema, or policy.
   - Evidence: focused UI contract 3/3, Astro build PASS; authenticated browser measured 320/390/768/1024/1440 with overflow 0, keyboard reached all 3 links with 2px focus, axe color-contrast 0 violations, links returned 200, reduced-motion/forced-colors emulated. Same-record before/after, real populated asset record (source returned 0/0/0), denied account (`verify-least` could read), native 200/400% zoom NOT VERIFIED. `astro check` still reports the 2 unrelated CA-P-500 missing BaseLayout imports. Details/screens: `audit/CA-P-ASSETS/`.

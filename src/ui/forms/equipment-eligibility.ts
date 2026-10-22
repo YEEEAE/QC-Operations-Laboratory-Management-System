@@ -15,6 +15,7 @@ const date = (value?: Date) =>
 export function equipmentEligibilityOptionLabel(
   identity: string,
   assessment: EquipmentEligibilityAssessment,
+  options: { includeSourceStates?: boolean } = {},
 ) {
   const eligibility = assessment.eligible
     ? 'Eligible for laboratory use'
@@ -27,5 +28,12 @@ export function equipmentEligibilityOptionLabel(
     : assessment.reason === 'UNDER_MAINTENANCE'
       ? 'Maintenance start date not supplied'
       : '';
-  return [identity, eligibility, calibration, maintenance].filter(Boolean).join(' · ');
+  const sourceStates = options.includeSourceStates
+    ? [
+        `Equipment state ${assessment.equipmentState ?? 'not supplied'}`,
+        `Calibration state ${assessment.calibrationState ?? 'not supplied'}`,
+        `Maintenance state ${assessment.maintenanceState ?? 'not supplied'}`,
+      ]
+    : [];
+  return [identity, ...sourceStates, eligibility, calibration, maintenance].filter(Boolean).join(' · ');
 }

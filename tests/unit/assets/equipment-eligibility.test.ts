@@ -227,22 +227,40 @@ describe('equipment eligibility capture', () => {
     ).rejects.toThrow();
   });
 
-  it('exposes the eligibility reason and calibration dates in a selectable equipment label', () => {
+  it('exposes source equipment, calibration, and maintenance states in a selectable label', () => {
     const label = equipmentEligibilityOptionLabel('EQ-1 · Balance', {
       eligible: false,
       reason: 'UNDER_MAINTENANCE',
-      equipmentState: 'ACTIVE',
+      equipmentState: 'UNDER_MAINTENANCE',
       calibrationNo: 'CAL-1',
+      calibrationState: 'OVERDUE',
       calibrationDate: calibration.calibrationDate,
       dueDate: new Date('2026-01-01T00:00:00.000Z'),
       maintenanceNo: 'MNT-1',
       maintenanceState: 'IN_PROGRESS',
       maintenanceStartedAt: maintenance.startedAt,
-    });
+    }, { includeSourceStates: true });
     expect(label).toContain('Not eligible: under maintenance');
+    expect(label).toContain('Equipment state UNDER_MAINTENANCE');
+    expect(label).toContain('Calibration state OVERDUE');
+    expect(label).toContain('Maintenance state IN_PROGRESS');
     expect(label).toContain('Calibration CAL-1');
     expect(label).toContain('calibrated');
     expect(label).toContain('due');
     expect(label).toContain('Maintenance MNT-1, in progress since');
+  });
+
+  it('keeps other equipment selectors unchanged unless source states are requested', () => {
+    const label = equipmentEligibilityOptionLabel('EQ-1 · Balance', {
+      eligible: true,
+      equipmentState: 'ACTIVE',
+      calibrationState: 'CURRENT',
+      maintenanceState: 'IN_PROGRESS',
+    });
+
+    expect(label).toContain('Eligible for laboratory use');
+    expect(label).not.toContain('Equipment state');
+    expect(label).not.toContain('Calibration state');
+    expect(label).not.toContain('Maintenance state');
   });
 });

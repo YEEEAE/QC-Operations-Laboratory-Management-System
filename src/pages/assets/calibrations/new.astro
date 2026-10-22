@@ -34,7 +34,7 @@ const REQUIRED_FIELDS = [
 // scope, loaded server-side through the application use case (which requires
 // PERM-EQP-VIEW). The UUID travels only as the selected option value; the
 // operator always sees the human-readable equipment number + name.
-let equipmentOptions: { value: string; label: string }[] = [];
+let equipmentOptions: { value: string; label: string; sourceStatus: string }[] = [];
 let equipmentError = false;
 if (canCreate) {
   try {
@@ -44,13 +44,18 @@ if (canCreate) {
       actor,
       equipment.map((item) => item.id),
     );
-    equipmentOptions = equipment.map((item) => ({
-      value: item.id,
-      label: equipmentEligibilityOptionLabel(
-        `${item.equipmentNo} · ${item.name}`,
-        eligibility.get(item.id) ?? { eligible: false, reason: 'NOT_ACTIVE' },
-      ),
-    }));
+    equipmentOptions = equipment.map((item) => {
+      const identity = `${item.equipmentNo} · ${item.name}`;
+      return {
+        value: item.id,
+        label: identity,
+        sourceStatus: equipmentEligibilityOptionLabel(
+          identity,
+          eligibility.get(item.id) ?? { eligible: false, reason: 'NOT_ACTIVE' },
+          { includeSourceStates: true },
+        ),
+      };
+    });
   } catch {
     // Fail closed into an error state below: the form stays submittable so
     // entries are preserved, and the server still validates the equipment
@@ -131,18 +136,150 @@ const describedBy = (name: keyof typeof values): string | undefined =>
   failure?.fieldErrors[name] ? `${name}-error` : undefined;
 const invalid = (name: keyof typeof values): 'true' | undefined =>
   failure?.fieldErrors[name] ? 'true' : undefined;
+const selectedEquipment = equipmentOptions.find((option) => option.value === values.equipmentId);
+const equipmentStatusMessage = staleSelection
+  ? 'The previously linked equipment is no longer available in your authorized scope. Choose the equipment explicitly.'
+  : equipmentError
+    ? 'The equipment list is temporarily unavailable. Keep your entries here and check the equipment register before submitting.'
+    : equipmentOptions.length === 0
+      ? 'No equipment is available in your authorized scope.'
+      : selectedEquipment?.sourceStatus ?? 'Choose equipment to view its source eligibility and current status.';
 ---
-<AppLayout title="New calibration · Assets" locale="en" direction="ltr"><PageHeader><Fragment slot="heading"><h1>New calibration record</h1></Fragment><p>Calibration is always linked to an equipment record. Due date is entered only when supplied by an approved source.</p><Fragment slot="actions"><a href={returnHref}>Back to calibrations</a></Fragment></PageHeader>{canCreate?<form class="form" method="post" data-action="assets.createCalibration">{failure && <FormErrorSummary summary={failure.summary} recovery={failure.recovery} errors={Object.entries(failure.fieldErrors).map(([fieldId, message]) => ({ fieldId, message }))} listHref={returnHref} listLabel="calibrations" />}<fieldset><legend>Calibration identity</legend><div class="fields"><div><label for="calibrationNo">Calibration number<span class="hint" id="calibrationNo-help">Use the calibration number from your approved source. Reference numbers are assigned automatically.</span><input id="calibrationNo" name="calibrationNo" required value={values.calibrationNo} aria-invalid={invalid('calibrationNo')} aria-describedby={failure?.fieldErrors.calibrationNo ? 'calibrationNo-error calibrationNo-help' : 'calibrationNo-help'} /></label>{failure?.fieldErrors.calibrationNo && <p class="field-error" id="calibrationNo-error">{failure.fieldErrors.calibrationNo}</p>}</div><div><label for="equipmentId">Equipment<span class="hint" id="equipmentId-help">Choose equipment in your authorized scope. <a href="/assets/equipment/new">Create equipment</a></span><select id="equipmentId" name="equipmentId" required aria-invalid={invalid('equipmentId')} aria-describedby={failure?.fieldErrors.equipmentId ? 'equipmentId-error equipmentId-help' : 'equipmentId-help'}><option value="">Select equipment…</option>{equipmentOptions.map((option)=><option value={option.value} selected={option.value===values.equipmentId}>{option.label}</option>)}</select></label>{staleSelection && <p class="field-warning" role="status">The previously linked equipment is no longer available in your authorized scope. Choose the equipment explicitly.</p>}{equipmentError && <p class="field-warning" role="status">The equipment list is temporarily unavailable. Keep your entries here and check the equipment register before submitting.</p>}{!equipmentError && equipmentOptions.length===0 && <p class="field-warning" role="status">No equipment is available in your authorized scope. <a href="/assets/equipment/new">Create the equipment first</a>, then return here.</p>}{failure?.fieldErrors.equipmentId && <p class="field-error" id="equipmentId-error">{failure.fieldErrors.equipmentId}</p>}</div><div><label for="calibrationDate">Calibration date<input id="calibrationDate" name="calibrationDate" type="date" required value={values.calibrationDate} aria-invalid={invalid('calibrationDate')} aria-describedby={describedBy('calibrationDate')} /></label>{failure?.fieldErrors.calibrationDate && <p class="field-error" id="calibrationDate-error">{failure.fieldErrors.calibrationDate}</p>}</div><div><label for="dueDate">Due date (source-provided)<input id="dueDate" name="dueDate" type="date" value={values.dueDate} /></label></div><div><label for="provider">Provider<input id="provider" name="provider" value={values.provider} /></label></div><div><label for="certificateNo">Certificate number<input id="certificateNo" name="certificateNo" value={values.certificateNo} /></label></div><div class="wide"><label for="result">Result / source note<textarea id="result" name="result">{values.result}</textarea></label></div></div></fieldset><div class="actions"><a class="secondary" href={returnHref}>Cancel</a><button type="submit" data-submit>Create draft</button></div><p role="status" data-result></p></form>:<section class="denied" role="alert"><h2>Creation is not available</h2><p>Your account does not have the explicit Calibration create permission.</p></section>}</AppLayout>
+<AppLayout title="New calibration · Assets" locale="en" direction="ltr">
+  <PageHeader>
+    <Fragment slot="heading"><h1>New calibration record</h1></Fragment>
+    <p>Calibration is always linked to an equipment record. Due date is entered only when supplied by an approved source.</p>
+    <Fragment slot="actions"><a href={returnHref}>Back to calibrations</a></Fragment>
+  </PageHeader>
+  {canCreate ? (
+    <form class="form" method="post" data-action="assets.createCalibration">
+      {failure && (
+        <FormErrorSummary
+          summary={failure.summary}
+          recovery={failure.recovery}
+          errors={Object.entries(failure.fieldErrors).map(([fieldId, message]) => ({ fieldId, message }))}
+          listHref={returnHref}
+          listLabel="calibrations"
+        />
+      )}
+      <fieldset>
+        <legend>Calibration identity</legend>
+        <div class="fields">
+          <div class="field">
+            <label for="calibrationNo">Calibration number
+              <span class="hint" id="calibrationNo-help">Use the calibration number from your approved source. Reference numbers are assigned automatically.</span>
+              <input id="calibrationNo" name="calibrationNo" required value={values.calibrationNo} aria-invalid={invalid('calibrationNo')} aria-describedby={failure?.fieldErrors.calibrationNo ? 'calibrationNo-error calibrationNo-help' : 'calibrationNo-help'} />
+            </label>
+            {failure?.fieldErrors.calibrationNo && <p class="field-error" id="calibrationNo-error">{failure.fieldErrors.calibrationNo}</p>}
+          </div>
+          <div class="field">
+            <label for="equipmentId">Equipment
+              <span class="hint" id="equipmentId-help">Choose equipment in your authorized scope. Each option includes its source eligibility and current status. <a href="/assets/equipment/new">Create equipment</a></span>
+              <select id="equipmentId" name="equipmentId" required aria-invalid={invalid('equipmentId')} aria-describedby={failure?.fieldErrors.equipmentId ? 'equipmentId-error equipmentId-help' : 'equipmentId-help'}>
+                <option value="" data-source-status={equipmentStatusMessage}>Select equipment…</option>
+                {equipmentOptions.map((option) => <option value={option.value} data-source-status={option.sourceStatus} selected={option.value === values.equipmentId}>{option.label}</option>)}
+              </select>
+            </label>
+            <p class="source-status" id="equipment-status" role="status" aria-live="polite">{equipmentStatusMessage}</p>
+            <div class="equipment-links">
+              <a href="/assets/equipment" data-equipment-record-link>Open equipment records and history</a>
+              {equipmentOptions.length === 0 && !equipmentError && <a href="/assets/equipment/new">Create the equipment first</a>}
+            </div>
+            {failure?.fieldErrors.equipmentId && <p class="field-error" id="equipmentId-error">{failure.fieldErrors.equipmentId}</p>}
+          </div>
+          <div class="field">
+            <label for="calibrationDate">Calibration date
+              <span class="hint" id="calibrationDate-help">Enter the date recorded by the calibration source.</span>
+              <input id="calibrationDate" name="calibrationDate" type="date" required value={values.calibrationDate} aria-invalid={invalid('calibrationDate')} aria-describedby={failure?.fieldErrors.calibrationDate ? 'calibrationDate-error calibrationDate-help' : 'calibrationDate-help'} />
+            </label>
+            {failure?.fieldErrors.calibrationDate && <p class="field-error" id="calibrationDate-error">{failure.fieldErrors.calibrationDate}</p>}
+          </div>
+          <div class="field">
+            <label for="dueDate">Due date (source-provided)
+              <span class="hint" id="dueDate-help">Leave blank when the approved source does not provide a due date.</span>
+              <input id="dueDate" name="dueDate" type="date" value={values.dueDate} aria-describedby="dueDate-help" />
+            </label>
+          </div>
+          <div class="field field--paired">
+            <label for="provider">Provider
+              <span class="hint" id="provider-help">Optional. Enter the provider recorded by the source.</span>
+              <input id="provider" name="provider" value={values.provider} aria-describedby="provider-help" />
+            </label>
+          </div>
+          <div class="field field--paired">
+            <label for="certificateNo">Certificate number
+              <span class="hint" id="certificateNo-help">Optional. Enter the certificate reference supplied with the source record.</span>
+              <input id="certificateNo" name="certificateNo" value={values.certificateNo} aria-describedby="certificateNo-help" />
+            </label>
+          </div>
+          <div class="field field--wide">
+            <label for="result">Result / source note
+              <span class="hint" id="result-help">Optional. Preserve the wording supplied by the source.</span>
+              <textarea id="result" name="result" aria-describedby="result-help">{values.result}</textarea>
+            </label>
+          </div>
+        </div>
+      </fieldset>
+      <div class="actions">
+        <a class="secondary" href={returnHref}>Cancel</a>
+        <button type="submit" data-submit>Create draft</button>
+      </div>
+      <p class="result-status" role="status" data-result></p>
+    </form>
+  ) : (
+    <section class="denied" role="alert"><h2>Creation is not available</h2><p>Your account does not have the explicit Calibration create permission.</p></section>
+  )}
+</AppLayout>
 <script>
 import{actions}from'astro:actions';
 import{enhanceClassifiedForm}from'../../../ui/forms/enhance-with-classification';
 import{guardUnsavedChanges}from'../../../ui/forms/unsaved-changes';
 const form=document.querySelector<HTMLFormElement>('[data-action="assets.createCalibration"]');
+const equipmentSelect=document.querySelector<HTMLSelectElement>('#equipmentId');
+const equipmentRecordLink=document.querySelector<HTMLAnchorElement>('[data-equipment-record-link]');
+const equipmentStatus=document.querySelector<HTMLElement>('#equipment-status');
+const updateEquipmentRecordLink=()=>{
+  if(!equipmentSelect||!equipmentRecordLink)return;
+  const selectedOption=equipmentSelect.selectedOptions[0];
+  if(equipmentStatus){
+    equipmentStatus.textContent=selectedOption?.dataset.sourceStatus
+      ?? 'Choose equipment to view its source eligibility and current status.';
+  }
+  equipmentRecordLink.href=equipmentSelect.value
+    ? `/assets/equipment/${encodeURIComponent(equipmentSelect.value)}`
+    : '/assets/equipment';
+};
+equipmentSelect?.addEventListener('change',updateEquipmentRecordLink);
+updateEquipmentRecordLink();
 if(form){enhanceClassifiedForm(form,{
   invoke:(payload)=>actions.assets.createCalibration(payload as Parameters<typeof actions.assets.createCalibration>[0]),
   payload:(data)=>{const calibrationRaw=String(data.get('calibrationDate'));const due=String(data.get('dueDate')||'');return{calibrationNo:String(data.get('calibrationNo')),equipmentId:String(data.get('equipmentId')),calibrationDate:new Date(`${calibrationRaw}T00:00:00.000Z`),dueDate:due?new Date(`${due}T00:00:00.000Z`):undefined,provider:String(data.get('provider')||'')||undefined,certificateNo:String(data.get('certificateNo')||'')||undefined,result:String(data.get('result')||'')||undefined};},
   progressText:'Saving calibration draft…',
   detailBaseHref:'/assets/calibrations',
 });guardUnsavedChanges(form);}</script>
-<style>.head{display:flex;justify-content:space-between;gap:var(--space-5);align-items:flex-start;margin-bottom:var(--space-6)}h1{margin:.25rem 0 .4rem}.eyebrow{margin:0;color:var(--text-muted);font-size:.7rem;letter-spacing:.12em;font-weight:700}.head p:not(.eyebrow),.denied p{color:var(--text-muted);font-size:.85rem}.head a{color:var(--color-accent-primary-hover)}.form{max-width:900px;display:grid;gap:var(--space-5)}fieldset{padding:var(--space-5);border:1px solid var(--color-border-subtle);border-radius:var(--radius-lg);background:var(--surface-panel)}legend{padding-inline:.5rem;font-weight:700}.fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--space-4)}label{display:grid;gap:.4rem;color:var(--text-secondary);font-size:.82rem}.hint{color:var(--text-muted);font-size:.78rem}.hint a{color:var(--color-accent-primary-hover)}.wide{grid-column:1/-1}input,select,textarea{min-height:var(--control-height);padding:.65rem;background:var(--surface-raised);border:1px solid var(--border-default);border-radius:var(--radius-sm);color:inherit;font:inherit}input[aria-invalid="true"],select[aria-invalid="true"]{border-color:var(--status-danger)}.field-error{margin:.25rem 0 0;color:var(--status-danger);font-size:.8rem}.field-warning{margin:.25rem 0 0;padding:.6rem;border-inline-start:3px solid var(--status-warning);background:var(--surface-panel);font-size:.8rem}.field-warning a{color:var(--color-accent-primary-hover)}textarea{min-height:6rem}.actions{display:flex;justify-content:flex-end;gap:var(--space-3)}button,.secondary{min-height:var(--control-height);padding:.65rem 1rem;border:1px solid var(--color-accent-primary);border-radius:var(--radius-sm);background:var(--color-accent-primary);color:var(--text-on-accent);font:inherit;font-weight:700}.secondary{border-color:var(--border-default);background:var(--surface-raised);color:var(--text-primary);text-decoration:none}button[disabled]{opacity:.6}.denied{padding:var(--space-6);border-inline-start:3px solid var(--status-warning);background:var(--surface-panel)}@media(max-width:650px){.head{display:grid}.fields{grid-template-columns:1fr}.wide{grid-column:auto}.actions{display:grid}}
+<style>
+  .form{inline-size:min(100%,56rem);display:grid;gap:var(--space-5)}
+  fieldset{min-inline-size:0;padding:clamp(var(--space-4),3vw,var(--space-6));border:1px solid var(--color-border-subtle);border-radius:var(--radius-lg);background:var(--surface-panel)}
+  legend{padding-inline:.5rem;font-weight:700}
+  .fields{display:grid;grid-template-columns:minmax(0,1fr);gap:var(--space-5)}
+  .field{min-inline-size:0}
+  label{display:grid;gap:.5rem;color:var(--text-primary);font-size:.9rem;font-weight:600}
+  .hint{color:var(--text-secondary);font-size:.78rem;font-weight:400;line-height:1.5}
+  .hint a,.equipment-links a{color:var(--color-accent-primary-hover);text-underline-offset:.18em}
+  input,select,textarea{box-sizing:border-box;inline-size:100%;min-block-size:max(var(--control-height),44px);padding:.65rem .75rem;background:var(--surface-raised);border:1px solid var(--border-default);border-radius:var(--radius-sm);color:var(--text-primary);font:inherit}
+  input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-visible,a:focus-visible{outline:2px solid var(--focus-ring);outline-offset:2px}
+  input[aria-invalid="true"],select[aria-invalid="true"]{border-color:var(--status-danger)}
+  .field-error{margin:.35rem 0 0;color:var(--status-danger);font-size:.82rem;line-height:1.5}
+  .source-status,.result-status{margin:.4rem 0 0;color:var(--text-secondary);font-size:.82rem;line-height:1.5}
+  .equipment-links{display:flex;flex-wrap:wrap;gap:var(--space-3);margin-block-start:.5rem;font-size:.82rem}
+  .actions{display:flex;justify-content:flex-end;flex-wrap:wrap;gap:var(--space-3)}
+  button,.secondary{box-sizing:border-box;min-block-size:max(var(--control-height),44px);display:inline-flex;align-items:center;justify-content:center;padding:.65rem 1rem;border:1px solid var(--color-accent-primary);border-radius:var(--radius-sm);background:var(--color-accent-primary);color:var(--text-on-accent);font:inherit;font-weight:700;text-align:center}
+  .secondary{border-color:var(--border-default);background:var(--surface-raised);color:var(--text-primary);text-decoration:none}
+  button[disabled]{opacity:.6}
+  .denied{padding:var(--space-6);border-inline-start:3px solid var(--status-warning);background:var(--surface-panel)}
+  @media(min-width:64rem){.fields{grid-template-columns:repeat(2,minmax(0,1fr))}.field--paired{grid-column:auto}.field:not(.field--paired){grid-column:1/-1}}
+  @media(max-width:40rem){.actions{display:grid;grid-template-columns:1fr}.actions>*{inline-size:100%}}
+  @media(prefers-reduced-motion:reduce){.form{scroll-behavior:auto}}
+  @media(forced-colors:active){input,select,textarea,button,.secondary{border:1px solid ButtonText}.field-error,.source-status{color:CanvasText}}
+  @media print{fieldset{background:transparent;border:1px solid currentColor}input,select,textarea{background:transparent}.actions,.equipment-links a{color:inherit}}
 </style>
