@@ -1,11 +1,18 @@
 ---
+import PageHeader from '../../../ui/components/PageHeader.astro';
 import AppLayout from '../../../ui/layouts/AppLayout.astro';
 import { RELEASE_GATE_KEYS, getReleaseApprovalPageModel } from '../../../modules/release-governance/application/capability.js';
+import { formatDateTime } from '../../../shared/copy/format.js';
+import { stateLabel } from '../../../shared/copy/ux-vocabulary.js';
 const actor = Astro.locals.actor;
 if (!actor) return Astro.redirect('/login?returnTo=%2Fgovernance%2Freleases');
 const releaseId = Astro.params.releaseId ?? '';
 const model = await getReleaseApprovalPageModel({ actor, releaseId });
 const { candidate, evidence } = model;
+const refreshHref = Astro.url.pathname + Astro.url.search;
+const auditHref = candidate
+  ? `/audit?subjectType=RELEASE_CANDIDATE&subjectId=${encodeURIComponent(candidate.releaseId)}`
+  : '/audit';
 const reasonCopy = (reason: string) => {
       if (reason === 'AUTHORITY') return 'An active QCM or the named Yazeed / SYSTEM_OWNER signer is required.';
   if (reason === 'RELEASE_NOT_FOUND') return 'The release candidate is unavailable.';
@@ -17,27 +24,145 @@ const reasonCopy = (reason: string) => {
 };
 ---
 <AppLayout title="Production release approval · Governance" locale="en" direction="ltr">
-  <div class="release-shell">
-    <h1>Production release approval</h1>
-    {model.candidateReadUnavailable ? <p role="alert" class="denied">Release details are temporarily unavailable. <a href={Astro.url.pathname + Astro.url.search}>Refresh this page</a> before reviewing or retrying an approval.</p> : candidate ? <>
-      <p class="lede">Read-only evidence for this release. Only trusted evidence can establish gate status.</p>
-      <section class="decision" aria-labelledby="decision-heading"><h2 id="decision-heading">Production decision: NO-GO</h2><p>The approved production baseline requires 19/19 mandatory gates on this exact candidate. This page currently reconciles eight release evidence classes; it does not contain an accepted 19-gate register, so these rows cannot produce an overall GO or RELEASED decision.</p><ul><li>Current candidate SHA: <code>{candidate.gitSha}</code></li><li>Current build: <code>{candidate.buildId}</code></li><li>Full 19-gate reconciliation: NOT VERIFIED</li></ul></section>
-      <dl class="identity"><div><dt>Git SHA</dt><dd>{candidate.gitSha}</dd></div><div><dt>Build ID</dt><dd>{candidate.buildId}</dd></div><div><dt>Application version</dt><dd>{candidate.applicationVersion}</dd></div><div><dt>Migration head</dt><dd>{candidate.migrationHead}</dd></div><div><dt>UAT cycle</dt><dd>{candidate.uatCycleId}</dd></div></dl>
-       {!model.authorized && <p role="alert" class="denied">Your account is not a release authority. Final approval requires QCM or Yazeed / SYSTEM_OWNER; Admin alone is denied.</p>}
-      {candidate.state !== 'PENDING' && <p role="status" class="denied">This release candidate is not pending approval.</p>}
-      <section aria-labelledby="evidence-heading" class="approve-panel">
-        <h2 id="evidence-heading">Server-derived release evidence</h2>
-        <p class="lede">Gate truth is read-only and comes from trusted evidence for this exact release identity. Browser form data cannot set PASS, UAT, signatures, or risk status.</p>
-        {model.evidenceReadUnavailable && <p role="alert" class="denied">The evidence provider is temporarily unavailable. Gate and risk outcomes are not inferred from an empty result; <a href={Astro.url.pathname + Astro.url.search}>refresh this page</a> before reviewing this candidate.</p>}
-        <div class="table-wrap"><table><caption>Release gates for {candidate.releaseId} at build {candidate.buildId}</caption><thead><tr><th scope="col">Gate</th><th scope="col">Status</th><th scope="col">Evidence reference</th><th scope="col">Source</th><th scope="col">Observed</th><th scope="col">Exact identity</th></tr></thead><tbody>
-          {RELEASE_GATE_KEYS.map((gate) => { const record = evidence?.gateRecords[gate]; const status = evidence?.gates[gate] ?? 'UNVERIFIED'; return <tr><th scope="row">{gate}</th><td><span class={'status status-' + status.toLowerCase()}>{status}</span></td><td>{model.evidenceReadUnavailable ? 'Evidence unavailable' : record?.immutableReference ?? 'No trusted evidence'}</td><td>{model.evidenceReadUnavailable ? 'UNAVAILABLE' : record?.source ?? 'UNVERIFIED'}</td><td>{model.evidenceReadUnavailable ? 'Not available' : record?.observedAt.toISOString() ?? '—'}</td><td><code>{record ? record.gitSha.slice(0, 12) + '… / ' + record.buildId + ' / ' + record.applicationVersion + ' / ' + record.migrationHead + ' / ' + record.uatCycleId : candidate.gitSha.slice(0, 12) + '… / ' + candidate.buildId + ' / ' + candidate.applicationVersion + ' / ' + candidate.migrationHead + ' / ' + candidate.uatCycleId}</code></td></tr>; })}
-        </tbody></table></div>
-        <section aria-labelledby="risk-heading" class="risk-summary"><h3 id="risk-heading">Controlled residual risks</h3>{model.evidenceReadUnavailable ? <p>Risk source unavailable; no risk state was inferred.</p> : evidence?.risks.length ? <ul>{evidence.risks.map((risk) => <li><strong>{risk.riskId}</strong> · {risk.severity} · {risk.status}</li>)}</ul> : <p>No current controlled residual risk evidence was returned.</p>}</section>
-        <p class="disabled-reason">Production decision: NO-GO. The approved 19-gate register is not reconciled to this exact candidate, so signed release approval is disabled.</p>
-        {!model.approvable && <ul class="reasons" aria-label="Approval blockers">{(model.disabledReasons.length ? model.disabledReasons : ['SERVER_EVIDENCE_REQUIRED']).map((reason) => <li>{reason === 'EVIDENCE_PROVIDER_UNAVAILABLE' ? 'Evidence provider is unavailable; no approval can be made.' : reasonCopy(reason)}</li>)}</ul>}
-        <form data-release-approve data-approvable={String(model.approvable)} method="post"><input type="hidden" name="releaseId" value={candidate.releaseId} /><input type="hidden" name="expectedVersion" value={candidate.version.toString()} /><label for="rel-reauth">Re-enter password</label><input id="rel-reauth" name="reauthenticationSecret" type="password" autocomplete="current-password" required /><p class="signature-meaning">I approve the server-derived evidence for release {candidate.releaseId}.</p><button type="submit" data-submit disabled={!model.approvable} aria-disabled={!model.approvable}>Approve release</button><output data-result role="status" tabindex="-1"></output></form>
-      </section>
-    </> : <p class="lede">The release candidate is unavailable or you are not authorized to view it.</p>}
+  <div class="release-detail">
+    <PageHeader purpose="Read-only evidence for this release. Only trusted evidence can establish gate status.">
+      <Fragment slot="heading"><h1>Production release approval</h1></Fragment>
+      {candidate && <p class="record-meta">
+        <span><span class="meta-label">Release candidate</span> <code class="identifier">{candidate.releaseId}</code></span>
+        <span><span class="meta-label">State</span> <span class="state" data-state={candidate.state}>{stateLabel(candidate.state)}</span></span>
+        <span><span class="meta-label">Candidate version</span> <strong class="numeric">{candidate.version.toString()}</strong></span>
+      </p>}
+      <Fragment slot="actions">
+        <a class="text-link" href={refreshHref}>Refresh candidate</a>
+      </Fragment>
+    </PageHeader>
+
+    {model.candidateReadUnavailable ? <p role="alert" class="notice notice-danger">Release details are temporarily unavailable. <a href={refreshHref}>Refresh this page</a> before reviewing or retrying an approval.</p> : candidate ? (
+      <div class="detail-layout">
+        <div class="detail-main">
+          <section class="panel" aria-labelledby="facts-heading">
+            <div class="section-heading">
+              <div>
+                <p class="eyebrow">Record facts</p>
+                <h2 id="facts-heading">Release identity</h2>
+              </div>
+              <span class="section-index" aria-hidden="true">01</span>
+            </div>
+            <p class="note">These identity fields are recorded on the candidate. Evidence is trusted only when all six identity fields match the current artifact.</p>
+            <dl class="facts">
+              <div><dt>Release candidate</dt><dd class="identifier">{candidate.releaseId}</dd></div>
+              <div><dt>Git SHA</dt><dd class="identifier"><code>{candidate.gitSha}</code></dd></div>
+              <div><dt>Build ID</dt><dd class="identifier">{candidate.buildId}</dd></div>
+              <div><dt>Application version</dt><dd class="identifier">{candidate.applicationVersion}</dd></div>
+              <div><dt>Migration head</dt><dd class="identifier">{candidate.migrationHead}</dd></div>
+              <div><dt>UAT cycle</dt><dd class="identifier">{candidate.uatCycleId}</dd></div>
+              <div><dt>Recorded state</dt><dd>{stateLabel(candidate.state)}</dd></div>
+              <div><dt>Candidate version</dt><dd class="numeric">{candidate.version.toString()}</dd></div>
+              <div><dt>Created</dt><dd class="numeric">{formatDateTime(candidate.createdAt)}</dd></div>
+              <div><dt>Last updated</dt><dd class="numeric">{formatDateTime(candidate.updatedAt)}</dd></div>
+            </dl>
+          </section>
+
+          <section class="panel decision-panel" aria-labelledby="decision-heading">
+            <div class="section-heading">
+              <div>
+                <p class="eyebrow">Server-derived decision</p>
+                <h2 id="decision-heading">Production decision: NO-GO</h2>
+              </div>
+              <span class="section-index" aria-hidden="true">02</span>
+            </div>
+            <p>The approved production baseline requires 19/19 mandatory gates on this exact candidate. This page currently reconciles eight release evidence classes; it does not contain an accepted 19-gate register, so these rows cannot produce an overall GO or RELEASED decision.</p>
+            <dl class="facts compact">
+              <div><dt>Current candidate SHA</dt><dd class="identifier"><code>{candidate.gitSha}</code></dd></div>
+              <div><dt>Current build</dt><dd class="identifier"><code>{candidate.buildId}</code></dd></div>
+              <div><dt>Full 19-gate reconciliation</dt><dd>NOT VERIFIED</dd></div>
+            </dl>
+          </section>
+
+          <section class="panel" aria-labelledby="evidence-heading">
+            <div class="section-heading">
+              <div>
+                <p class="eyebrow">Read-only evidence</p>
+                <h2 id="evidence-heading">Server-derived release evidence</h2>
+              </div>
+              <span class="section-index" aria-hidden="true">03</span>
+            </div>
+            <p class="note">Gate truth is read-only and comes from trusted evidence for this exact release identity. Browser form data cannot set PASS, UAT, signatures, or risk status.</p>
+            {model.evidenceReadUnavailable && <p role="alert" class="notice notice-warning">The evidence provider is temporarily unavailable. Gate and risk outcomes are not inferred from an empty result; <a href={refreshHref}>refresh this page</a> before reviewing this candidate.</p>}
+            <div class="table-scroll" role="region" aria-label="Release gate evidence table" tabindex="0">
+              <table>
+                <caption>Release gates for {candidate.releaseId} at build {candidate.buildId}</caption>
+                <thead><tr><th scope="col">Gate</th><th scope="col">Status</th><th scope="col">Evidence reference</th><th scope="col">Source</th><th scope="col">Observed</th><th scope="col">Exact identity</th></tr></thead>
+                <tbody>
+                  {RELEASE_GATE_KEYS.map((gate) => { const record = evidence?.gateRecords[gate]; const status = evidence?.gates[gate] ?? 'UNVERIFIED'; return <tr><th scope="row">{gate}</th><td><span class={'status status-' + status.toLowerCase()}>{status}</span></td><td>{model.evidenceReadUnavailable ? 'Evidence unavailable' : record?.immutableReference ?? 'No trusted evidence'}</td><td>{model.evidenceReadUnavailable ? 'UNAVAILABLE' : record?.source ?? 'UNVERIFIED'}</td><td>{model.evidenceReadUnavailable ? 'Not available' : record ? <time datetime={record.observedAt.toISOString()}>{formatDateTime(record.observedAt)}</time> : '—'}</td><td><code>{record ? record.gitSha.slice(0, 12) + '… / ' + record.buildId + ' / ' + record.applicationVersion + ' / ' + record.migrationHead + ' / ' + record.uatCycleId : candidate.gitSha.slice(0, 12) + '… / ' + candidate.buildId + ' / ' + candidate.applicationVersion + ' / ' + candidate.migrationHead + ' / ' + candidate.uatCycleId}</code></td></tr>; })}
+                </tbody>
+              </table>
+            </div>
+            <section class="risk-summary" aria-labelledby="risk-heading">
+              <h3 id="risk-heading">Controlled residual risks</h3>
+              {model.evidenceReadUnavailable ? <p>Risk source unavailable; no risk state was inferred.</p> : evidence?.risks.length ? <ul class="risk-list">{evidence.risks.map((risk) => <li><strong>{risk.riskId}</strong> · {risk.severity} · {risk.status}</li>)}</ul> : <p>No current controlled residual risk evidence was returned.</p>}
+            </section>
+          </section>
+
+          <section class="panel" aria-labelledby="history-heading">
+            <div class="section-heading">
+              <div>
+                <p class="eyebrow">Append-only source</p>
+                <h2 id="history-heading">Record history</h2>
+              </div>
+              <span class="section-index" aria-hidden="true">04</span>
+            </div>
+            <p class="note">Only recorded candidate timestamps are shown here. Approval decisions and evidence writes are kept in the audit register; this page does not rebuild them.</p>
+            <dl class="facts">
+              <div><dt>Candidate created</dt><dd class="numeric">{formatDateTime(candidate.createdAt)}</dd></div>
+              <div><dt>Candidate last updated</dt><dd class="numeric">{formatDateTime(candidate.updatedAt)}</dd></div>
+              <div><dt>Current state</dt><dd>{stateLabel(candidate.state)}</dd></div>
+            </dl>
+            <p class="link-row"><a href={auditHref}>View audit history for this release candidate</a></p>
+          </section>
+
+          <section class="panel" aria-labelledby="relationships-heading">
+            <div class="section-heading">
+              <div>
+                <p class="eyebrow">Related records</p>
+                <h2 id="relationships-heading">Relationships</h2>
+              </div>
+              <span class="section-index" aria-hidden="true">05</span>
+            </div>
+            <ul class="related">
+              <li><span class="related-label">Release gate evidence</span>Eight evidence classes derived server-side for this exact candidate and read-only on this page.</li>
+              <li><span class="related-label">Controlled residual risk register</span>Risk status is read from the controlled register; this page records no acceptance.</li>
+              <li><span class="related-label">Audit register</span><a href={auditHref}>Release candidate events for this release ID</a></li>
+            </ul>
+          </section>
+        </div>
+
+        <aside class="action-rail" aria-label="Current action">
+          <section class="panel action-panel" aria-labelledby="approval-heading">
+            <p class="eyebrow">Controlled action</p>
+            <h2 id="approval-heading">Approve release</h2>
+            <p class="note">Approval applies to the server-derived evidence above. The browser cannot set gate status, UAT, signatures, or risk acceptance.</p>
+            <p class="disabled-reason">Production decision: NO-GO. The approved 19-gate register is not reconciled to this exact candidate, so signed release approval is disabled.</p>
+            {!model.authorized && <p role="alert" class="notice notice-warning">Your account is not a release authority. Final approval requires QCM or Yazeed / SYSTEM_OWNER; Admin alone is denied.</p>}
+            {candidate.state !== 'PENDING' && <p role="status" class="notice notice-warning">This release candidate is not pending approval.</p>}
+            {!model.approvable && <div class="blockers" role="group" aria-labelledby="blockers-heading">
+              <h3 id="blockers-heading">Approval blockers</h3>
+              <ul>{(model.disabledReasons.length ? model.disabledReasons : ['SERVER_EVIDENCE_REQUIRED']).map((reason) => <li>{reason === 'EVIDENCE_PROVIDER_UNAVAILABLE' ? 'Evidence provider is unavailable; no approval can be made.' : reasonCopy(reason)}</li>)}</ul>
+            </div>}
+            <form data-release-approve data-approvable={String(model.approvable)} method="post">
+              <input type="hidden" name="releaseId" value={candidate.releaseId} />
+              <input type="hidden" name="expectedVersion" value={candidate.version.toString()} />
+              <label for="rel-reauth">Re-enter password</label>
+              <input id="rel-reauth" name="reauthenticationSecret" type="password" autocomplete="current-password" required />
+              <p class="signature-meaning">I approve the server-derived evidence for release {candidate.releaseId}.</p>
+              <button type="submit" data-submit disabled={!model.approvable} aria-disabled={!model.approvable}>Approve release</button>
+              <output data-result role="status" tabindex="-1"></output>
+            </form>
+            <p class="rail-note">The server decides eligibility from authority, state, version, and evidence. An enabled button is not a GO decision.</p>
+          </section>
+        </aside>
+      </div>
+    ) : <p class="notice">The release candidate is unavailable or you are not authorized to view it.</p>}
   </div>
 </AppLayout>
 <script>
@@ -46,5 +171,89 @@ const reasonCopy = (reason: string) => {
   form?.addEventListener('submit', async (event) => { event.preventDefault(); const output = form.querySelector<HTMLOutputElement>('[data-result]'); if (submit) submit.disabled = true; form.setAttribute('aria-busy', 'true'); if (output) output.textContent = 'Verifying server evidence and signature…'; try { const data = new FormData(form); const result = await actions.releaseGovernance.approveRelease({ releaseId: String(data.get('releaseId') ?? ''), expectedVersion: BigInt(String(data.get('expectedVersion') ?? '0')), reauthenticationSecret: String(data.get('reauthenticationSecret') ?? '') }); if (!result.error) { window.location.reload(); return; } if (output) output.textContent = 'The release was not approved. Refresh the candidate and review current server evidence.'; output?.focus(); } catch { if (output) output.textContent = 'The result is unconfirmed. Check the candidate and approval history before trying again.'; output?.focus(); } finally { form.removeAttribute('aria-busy'); if (submit) submit.disabled = form.dataset.approvable !== 'true'; } });
 </script>
 <style>
-.release-shell{max-width:78rem;margin:0 auto;padding:2rem 1rem}.eyebrow{margin:0;color:var(--text-muted);font-size:.7rem;letter-spacing:.12em;font-weight:700}.lede{color:var(--text-muted)}.identity{display:grid;gap:.5rem;grid-template-columns:repeat(auto-fit,minmax(16rem,1fr));margin:1rem 0}.identity div{padding:.75rem;background:var(--surface-panel);border:1px solid var(--color-border-subtle);border-radius:var(--radius-md)}.identity dt{font-size:.7rem;color:var(--text-muted)}.identity dd{margin:.25rem 0 0;overflow-wrap:anywhere}.denied,.disabled-reason{padding:.75rem;border:1px solid var(--color-border-subtle);border-radius:var(--radius-md)}.approve-panel{margin-top:1.5rem;padding:1.25rem;background:var(--surface-panel);border:1px solid var(--color-border-subtle);border-radius:var(--radius-lg)}.table-wrap{overflow-x:auto;margin:1rem 0}table{width:100%;min-width:70rem;border-collapse:collapse;font-size:.82rem}th,td{padding:.65rem;border-block-start:1px solid var(--color-border-subtle);text-align:start;vertical-align:top}thead th{color:var(--text-muted);font-size:.72rem}.status{font-weight:700}.status-pass{color:var(--status-pass)}.status-fail{color:var(--status-danger)}.status-unverified,.status-partial,.status-not_applicable{color:var(--status-warning)}code{overflow-wrap:anywhere}.risk-summary{border-block-start:1px solid var(--color-border-subtle);padding-block-start:1rem}.risk-summary ul{padding-inline-start:1.2rem}form{display:grid;gap:.6rem;max-width:40rem;margin-top:1rem}button{width:max-content;padding:.7rem 1rem}button[disabled]{opacity:.5;cursor:not-allowed}.signature-meaning{font-weight:600}output{min-height:1.5rem}
+  .release-detail { min-inline-size: 0; }
+  .record-meta { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--space-2) var(--space-4); margin: var(--space-3) 0 0; color: var(--text-secondary); font-size: var(--font-size-sm); line-height: var(--line-height-normal); }
+  .record-meta > span { display: inline-flex; flex-wrap: wrap; align-items: baseline; gap: var(--space-2); min-inline-size: 0; overflow-wrap: anywhere; }
+  .meta-label { color: var(--text-muted); font-weight: 600; }
+  .record-meta code { font-size: inherit; }
+  .state { display: inline-flex; align-items: center; min-block-size: 32px; padding-inline: var(--space-3); border: 1px solid var(--color-border-subtle); border-inline-start: 3px solid var(--color-accent-primary); border-radius: var(--radius-md); background: var(--surface-raised); color: var(--text-primary); font-size: var(--font-size-sm); font-weight: 700; }
+  .state[data-state='PENDING'] { border-inline-start-color: var(--status-review); }
+  .state[data-state='RELEASE_APPROVED'] { border-inline-start-color: var(--status-success); }
+  .text-link { display: inline-flex; align-items: center; min-block-size: 44px; color: var(--color-accent-primary-hover); font-weight: 600; }
+  .text-link:focus-visible, .notice a:focus-visible, .link-row a:focus-visible, .related a:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
+  .detail-layout { display: grid; grid-template-columns: minmax(0, 1fr) minmax(17rem, 21rem); align-items: start; gap: var(--space-5); }
+  .detail-main, .action-rail { display: grid; min-inline-size: 0; gap: var(--space-5); align-content: start; }
+  .panel { min-inline-size: 0; padding: var(--space-5); border: 1px solid var(--color-border-subtle); border-radius: var(--radius-lg); background: var(--surface-panel); }
+  .section-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--space-4); margin-block-end: var(--space-3); }
+  .section-heading h2 { margin: 0; font-size: var(--font-size-lg); line-height: var(--line-height-tight); overflow-wrap: anywhere; }
+  .eyebrow { margin: 0 0 var(--space-1); color: var(--text-muted); font-size: var(--font-size-xs); font-weight: 700; }
+  .section-index { color: var(--text-muted); font-size: var(--font-size-xs); font-variant-numeric: tabular-nums; }
+  .panel > p:not(.eyebrow) { margin: 0; font-size: var(--font-size-sm); line-height: var(--line-height-relaxed); overflow-wrap: anywhere; }
+  .decision-panel > p { color: var(--text-secondary); }
+  .facts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-4); margin: var(--space-4) 0 0; }
+  .facts.compact { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .facts > div { min-inline-size: 0; padding-block-start: var(--space-3); border-block-start: 1px solid var(--color-border-subtle); }
+  dt { color: var(--text-muted); font-size: var(--font-size-xs); font-weight: 600; }
+  dd { margin: var(--space-1) 0 0; color: var(--text-primary); font-size: var(--font-size-sm); line-height: var(--line-height-relaxed); overflow-wrap: anywhere; word-break: normal; }
+  .identifier { font-family: var(--font-mono); font-size: var(--font-size-xs); overflow-wrap: anywhere; word-break: break-word; }
+  .numeric { font-variant-numeric: tabular-nums; }
+  .note { color: var(--text-muted); }
+  .decision-panel { border-inline-start: 3px solid var(--status-warning); }
+  .table-scroll { max-inline-size: 100%; overflow-x: auto; overscroll-behavior-inline: contain; margin-block: var(--space-4) 0; border: 1px solid var(--color-border-subtle); border-radius: var(--radius-md); }
+  .table-scroll:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
+  table { inline-size: 100%; min-inline-size: 64rem; border-collapse: collapse; }
+  caption { padding: var(--space-3) var(--space-4); text-align: start; color: var(--text-muted); font-size: var(--font-size-xs); line-height: var(--line-height-normal); overflow-wrap: anywhere; }
+  th, td { padding: var(--space-3); border-block-start: 1px solid var(--color-border-subtle); text-align: start; vertical-align: top; font-size: var(--font-size-sm); line-height: var(--line-height-normal); overflow-wrap: anywhere; word-break: normal; }
+  thead th { background: var(--table-header-background); color: var(--text-muted); font-size: var(--font-size-xs); }
+  tbody th { font-weight: 700; }
+  .status { font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .status-pass { color: var(--status-success); }
+  .status-fail { color: var(--status-danger); }
+  .status-unverified, .status-partial, .status-not_applicable { color: var(--status-warning); }
+  code { font-family: var(--font-mono); font-size: var(--font-size-xs); overflow-wrap: anywhere; word-break: break-word; }
+  time { font-variant-numeric: tabular-nums; }
+  .risk-summary { margin-block-start: var(--space-4); padding-block-start: var(--space-4); border-block-start: 1px solid var(--color-border-subtle); }
+  .risk-summary h3 { margin: 0; font-size: var(--font-size-md); }
+  .risk-summary p { margin: var(--space-2) 0 0; color: var(--text-muted); font-size: var(--font-size-sm); line-height: var(--line-height-relaxed); }
+  .risk-list { display: grid; gap: var(--space-2); margin: var(--space-2) 0 0; padding-inline-start: 1.2rem; }
+  .risk-list li { font-size: var(--font-size-sm); line-height: var(--line-height-normal); overflow-wrap: anywhere; }
+  .panel > p.link-row { margin: var(--space-4) 0 0; }
+  .link-row a, .related a { display: inline-flex; align-items: center; min-block-size: 44px; color: var(--color-accent-primary-hover); font-weight: 600; overflow-wrap: anywhere; }
+  .related { display: grid; gap: var(--space-3); margin: 0; padding: 0; list-style: none; }
+  .related li { padding-block-start: var(--space-3); border-block-start: 1px solid var(--color-border-subtle); color: var(--text-secondary); font-size: var(--font-size-sm); line-height: var(--line-height-relaxed); overflow-wrap: anywhere; }
+  .related-label { display: block; margin-block-end: var(--space-1); color: var(--text-primary); font-weight: 700; }
+  .action-panel { border-inline-start: 3px solid var(--color-accent-primary); }
+  .action-panel h2 { margin: 0; font-size: var(--font-size-lg); line-height: var(--line-height-tight); overflow-wrap: anywhere; }
+  .action-panel > p.note,
+  .action-panel > p.disabled-reason,
+  .action-panel > p.notice,
+  .action-panel > p.rail-note,
+  .panel > p.notice,
+  .panel > p.disabled-reason { margin-block-start: var(--space-3); }
+  .disabled-reason { margin-block-start: var(--space-3); padding: var(--space-3); border-inline-start: 3px solid var(--status-warning); border-radius: var(--radius-sm); background: var(--surface-inset); color: var(--text-secondary); font-size: var(--font-size-sm); line-height: var(--line-height-relaxed); overflow-wrap: anywhere; }
+  .notice { margin-block-start: var(--space-3); padding: var(--space-3); border: 1px solid var(--color-border-subtle); border-inline-start: 3px solid var(--color-border-subtle); border-radius: var(--radius-sm); background: var(--surface-inset); color: var(--text-secondary); font-size: var(--font-size-sm); line-height: var(--line-height-relaxed); overflow-wrap: anywhere; }
+  .notice-warning { border-inline-start-color: var(--status-warning); }
+  .notice-danger { border-inline-start-color: var(--status-danger); }
+  .notice a { color: var(--color-accent-primary-hover); font-weight: 600; }
+  .blockers { margin-block-start: var(--space-3); padding: var(--space-3); border: 1px solid var(--color-border-subtle); border-radius: var(--radius-sm); background: var(--surface-inset); }
+  .blockers h3 { margin: 0; color: var(--text-primary); font-size: var(--font-size-sm); }
+  .blockers ul { display: grid; gap: var(--space-2); margin: var(--space-2) 0 0; padding-inline-start: 1.2rem; }
+  .blockers li { color: var(--text-secondary); font-size: var(--font-size-xs); line-height: var(--line-height-relaxed); overflow-wrap: anywhere; }
+  form { display: grid; gap: var(--space-3); margin-block-start: var(--space-4); }
+  label { color: var(--text-secondary); font-size: var(--font-size-sm); font-weight: 600; }
+  input[type='password'] { inline-size: 100%; min-inline-size: 0; min-block-size: 44px; padding: var(--space-2) var(--space-3); border: 1px solid var(--control-border); border-radius: var(--radius-sm); background: var(--input-background); color: var(--text-primary); font: inherit; font-size: var(--font-size-sm); }
+  input[type='password']:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
+  .signature-meaning { margin: 0; color: var(--text-secondary); font-size: var(--font-size-sm); font-weight: 600; line-height: var(--line-height-relaxed); overflow-wrap: anywhere; }
+  button[type='submit'] { inline-size: 100%; min-block-size: 44px; padding: var(--space-2) var(--space-4); border: 1px solid var(--color-accent-primary); border-radius: var(--radius-sm); background: var(--color-accent-primary); color: var(--text-on-accent); font: inherit; font-weight: 700; white-space: normal; cursor: pointer; }
+  button[type='submit']:hover:not(:disabled) { background: var(--color-accent-primary-hover); border-color: var(--color-accent-primary-hover); }
+  button[type='submit']:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
+  button[disabled] { opacity: var(--disabled-opacity); cursor: not-allowed; }
+  output { min-block-size: 1.5rem; color: var(--text-secondary); font-size: var(--font-size-xs); line-height: var(--line-height-normal); overflow-wrap: anywhere; }
+  output:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
+  .rail-note { margin-block-start: var(--space-3); color: var(--text-muted); font-size: var(--font-size-xs); line-height: var(--line-height-relaxed); overflow-wrap: anywhere; }
+  @media (max-width: 1000px) { .detail-layout { grid-template-columns: minmax(0, 1fr); } .action-rail { order: -1; } .facts.compact { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  @media (max-width: 760px) { .facts, .facts.compact { grid-template-columns: minmax(0, 1fr); } .panel { padding: var(--space-4); } .record-meta { align-items: flex-start; } }
+  @media (forced-colors: active) { .state, .panel, .notice, .disabled-reason, .blockers, .table-scroll { border-color: CanvasText; } .decision-panel, .action-panel { border-inline-start-color: Highlight; } .text-link:focus-visible, .notice a:focus-visible, .link-row a:focus-visible, .related a:focus-visible, .table-scroll:focus-visible, input[type='password']:focus-visible, button[type='submit']:focus-visible, output:focus-visible { outline: 2px solid Highlight; } }
+  @media (prefers-reduced-motion: reduce) { button[type='submit'] { transition: none; } }
+  @media print { .detail-layout { display: block; } .action-rail { margin-block-start: var(--space-5); } .panel, .table-scroll { border-color: var(--color-border-default); background: transparent; break-inside: avoid; } form { display: none; } }
 </style>

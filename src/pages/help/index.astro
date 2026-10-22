@@ -53,27 +53,39 @@ const sectionText: Record<string, string> = {
   interruption: helpSectionSearchText('interruption'),
 };
 const showSection = (id: string) => navigationMatches(sectionText[id] ?? '', query);
+const visibleSectionCount = Object.keys(sectionText).filter(showSection).length;
+const activeQuery = query.trim().length > 0;
+const matchLabel = (count: number) => `${count} matching section${count === 1 ? '' : 's'}`;
+const guidanceColumns = HELP_SECTIONS['guidance-matrix'].columns;
+const troubleshootingColumns = HELP_SECTIONS.troubleshooting.columns;
 ---
 
 <AppLayout title="Operating guides · QC Operations" locale="en" direction="ltr">
-  <section class="page-head">
-    <div>
+  <header class="page-head">
+    <div class="page-heading">
       <p class="eyebrow">Support</p>
       <h1>Operating guides</h1>
       <p class="lede">Daily workflows and help with blocked actions.</p>
     </div>
     <button type="button" class="print-button" data-print-guide aria-label="Print this guide" title="Print this guide"><Icon name="reports" /></button>
+  </header>
+
+  <section class="guide-filters" aria-label="Guide search">
+    <form class="filter-form" method="get" action="/help" role="search">
+      <label for="help-query">Search this guide</label>
+      <input id="help-query" name="q" type="search" value={query} maxlength="200" data-help-query />
+      <button type="submit" aria-label="Search this guide" title="Search this guide"><Icon name="search" /></button>
+    </form>
+    <div class="active-filters" data-active-filters hidden={!activeQuery}>
+      <span>Active filter</span>
+      <span class="filter-chip"><span data-filter-value>{query}</span><a class="clear-filter" href="/help" aria-label="Clear guide search">Clear</a></span>
+    </div>
+    <p class="result-count" role="status" aria-live="polite" data-help-search-status>{activeQuery ? matchLabel(visibleSectionCount) : ''}</p>
   </section>
 
   <div class="help-layout">
   <nav class="toc" aria-labelledby="help-toc">
     <h2 id="help-toc">On this page</h2>
-    <form method="get" action="/help" role="search">
-      <label for="help-query">Search this guide</label>
-      <input id="help-query" name="q" type="search" value={query} maxlength="200" data-help-query />
-      <button type="submit" aria-label="Search this guide" title="Search this guide"><Icon name="search" /></button>
-    </form>
-    <p data-help-search-status role="status" aria-live="polite">{query && !Object.keys(sectionText).some(showSection) ? 'No matching sections' : ''}</p>
     <ul>
       <li hidden={!showSection('start-of-day')}><a href="#start-of-day">Start of day by role</a></li>
       <li hidden={!showSection('quick-links')}><a href="#quick-links">Everyday routes</a></li>
@@ -133,23 +145,25 @@ const showSection = (id: string) => navigationMatches(sectionText[id] ?? '', que
       guidance.map((matrix) => (
         <div class="matrix-block">
           <h3>{matrix.screen}</h3>
-          <table>
-            <caption>{`States and next actions on ${matrix.screen}`}</caption>
-            <thead>
-              <tr>
-                {HELP_SECTIONS['guidance-matrix'].columns.map((column) => <th scope="col">{column}</th>)}
-              </tr>
-            </thead>
-            <tbody>
-              {matrix.entries.map((entry) => (
+          <div class="table-wrap" role="region" aria-label={`States and next actions on ${matrix.screen}`} tabindex="0">
+            <table>
+              <caption>{`States and next actions on ${matrix.screen}`}</caption>
+              <thead>
                 <tr>
-                  <th scope="row">{entry.state}</th>
-                  <td>{entry.meaning}</td>
-                  <td>{entry.nextAction}</td>
+                  {guidanceColumns.map((column) => <th scope="col">{column}</th>)}
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {matrix.entries.map((entry) => (
+                  <tr>
+                    <th scope="row">{entry.state}</th>
+                    <td>{entry.meaning}</td>
+                    <td>{entry.nextAction}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       ))
     }
@@ -158,25 +172,27 @@ const showSection = (id: string) => navigationMatches(sectionText[id] ?? '', que
 
   <section class="panel" id="troubleshooting" data-help-section data-help-search-text={sectionText.troubleshooting} hidden={!showSection('troubleshooting')} aria-labelledby="troubleshooting-h">
     <h2 id="troubleshooting-h">{HELP_SECTIONS.troubleshooting.title}</h2>
-    <table>
-      <caption>{HELP_SECTIONS.troubleshooting.caption}</caption>
-      <thead>
-        <tr>
-          {HELP_SECTIONS.troubleshooting.columns.map((column) => <th scope="col">{column}</th>)}
-        </tr>
-      </thead>
-      <tbody>
-        {
-          HELP_STATE_NOTES.map((note) => (
-            <tr>
-              <th scope="row">{note.situation}</th>
-              <td>{note.meaning}</td>
-            </tr>
-          ))
-        }
-        {HELP_SECTIONS.troubleshooting.notes.map((note) => <tr><th scope="row">{note.situation}</th><td>{note.meaning}</td></tr>)}
-      </tbody>
-    </table>
+    <div class="table-wrap" role="region" aria-label={HELP_SECTIONS.troubleshooting.caption} tabindex="0">
+      <table>
+        <caption>{HELP_SECTIONS.troubleshooting.caption}</caption>
+        <thead>
+          <tr>
+            {troubleshootingColumns.map((column) => <th scope="col">{column}</th>)}
+          </tr>
+        </thead>
+        <tbody>
+          {
+            HELP_STATE_NOTES.map((note) => (
+              <tr>
+                <th scope="row">{note.situation}</th>
+                <td>{note.meaning}</td>
+              </tr>
+            ))
+          }
+          {HELP_SECTIONS.troubleshooting.notes.map((note) => <tr><th scope="row">{note.situation}</th><td>{note.meaning}</td></tr>)}
+        </tbody>
+      </table>
+    </div>
   </section>
 
   <section class="panel" id="escalation" data-help-section data-help-search-text={sectionText.escalation} hidden={!showSection('escalation')} aria-labelledby="escalation-h">
@@ -203,6 +219,7 @@ const showSection = (id: string) => navigationMatches(sectionText[id] ?? '', que
       <strong>PASS ≠ RELEASED.</strong>
     </p>
   </section>
+  {/* READ + FILTER only: six static guide sections, no paged read or data-export contract. Print is the existing affordance. */}
   </div>
   </div>
 </AppLayout>
@@ -212,6 +229,8 @@ const showSection = (id: string) => navigationMatches(sectionText[id] ?? '', que
   const printButton = document.querySelector<HTMLButtonElement>('[data-print-guide]');
   printButton?.addEventListener('click', () => window.print());
   const query = document.querySelector<HTMLInputElement>('[data-help-query]');
+  const activeFilters = document.querySelector<HTMLElement>('[data-active-filters]');
+  const filterValue = document.querySelector<HTMLElement>('[data-filter-value]');
   const filterGuide = () => {
     let visible = 0;
     document.querySelectorAll<HTMLElement>('[data-help-section]').forEach((section) => {
@@ -219,38 +238,30 @@ const showSection = (id: string) => navigationMatches(sectionText[id] ?? '', que
       document.querySelector<HTMLAnchorElement>(`.toc a[href="#${section.id}"]`)?.closest('li')?.toggleAttribute('hidden', section.hidden);
       if (!section.hidden) visible++;
     });
+    const term = query?.value.trim() ?? '';
     const status = document.querySelector<HTMLElement>('[data-help-search-status]');
-    if (status) status.textContent = query?.value.trim() ? `${visible} matching sections` : '';
+    if (status) status.textContent = term ? `${visible} matching section${visible === 1 ? '' : 's'}` : '';
+    if (activeFilters) activeFilters.hidden = !term;
+    if (filterValue) filterValue.textContent = term;
   };
   query?.addEventListener('input', filterGuide);
   filterGuide();
 </script>
 
 <style>
-  .help-layout { display:grid; grid-template-columns:minmax(12rem,16rem) minmax(0,1fr); gap:var(--space-6); align-items:start; }
-  .help-content { min-inline-size:0; }
-  .toc { position:sticky; top:var(--space-4); padding:var(--space-3); border-inline-end:1px solid var(--border-default); }
-  .toc h2 { font-size:.95rem; margin-block-start:0; }
-  .toc form { display:grid; grid-template-columns:minmax(0,1fr) 44px; gap:var(--space-2); margin-block-end:var(--space-4); }
-  .toc label { grid-column:1/-1; font-size:.8rem; }
-  .toc input { inline-size:100%; min-inline-size:0; min-block-size:44px; padding:var(--space-2); border:1px solid var(--border-default); border-radius:4px; background:var(--surface-raised); color:var(--text-primary); }
-  .toc button { inline-size:44px; block-size:44px; display:grid; place-items:center; border:1px solid var(--border-default); border-radius:4px; background:var(--surface-raised); color:var(--text-primary); cursor:pointer; }
-  .toc a { display:block; min-block-size:44px; padding-block:var(--space-2); }
-  [data-help-section][hidden], .toc li[hidden] { display:none; }
-  [data-help-search-status] { font-size:.8rem; color:var(--text-muted); }
-  @media(max-width:1000px) { .help-layout { grid-template-columns:minmax(0,1fr); } .toc { position:static; border-inline-end:0; border-block-end:1px solid var(--border-default); } }
   .page-head {
     display: flex;
     flex-wrap: wrap;
     align-items: flex-start;
     justify-content: space-between;
     gap: var(--space-4);
-    margin-bottom: var(--space-6);
+    margin-block-end: var(--space-5);
   }
+  .page-heading { min-inline-size: 0; }
   .eyebrow {
     margin: 0;
     color: var(--text-muted);
-    font-size: 0.75rem;
+    font-size: var(--font-size-xs);
     letter-spacing: 0.12em;
     font-weight: 700;
     text-transform: uppercase;
@@ -263,16 +274,17 @@ const showSection = (id: string) => navigationMatches(sectionText[id] ?? '', que
   .focus,
   .purpose {
     color: var(--text-muted);
-    font-size: 0.85rem;
+    font-size: var(--font-size-sm);
+    max-inline-size: 80ch;
   }
   .print-button {
-    display:grid;
-    place-items:center;
-    inline-size:44px;
-    block-size:44px;
-    min-height: var(--control-height);
+    display: grid;
+    place-items: center;
+    inline-size: 44px;
+    block-size: 44px;
+    min-block-size: 44px;
     padding: 0;
-    border: 1px solid var(--border-default);
+    border: 1px solid var(--control-border, var(--color-border-subtle));
     border-radius: var(--radius-sm);
     background: var(--surface-raised);
     color: var(--text-primary);
@@ -280,35 +292,126 @@ const showSection = (id: string) => navigationMatches(sectionText[id] ?? '', que
     font-weight: 600;
     cursor: pointer;
   }
-  .panel {
-    padding: var(--space-5);
-    margin-bottom: var(--space-5);
-    border-block-end: 1px solid var(--color-border-subtle);
-    max-width: 960px;
+  .guide-filters {
+    padding: var(--space-4);
+    margin-block-end: var(--space-5);
+    background: var(--surface-panel);
+    border: 1px solid var(--color-border-subtle);
+    border-radius: var(--radius-lg);
   }
-  .panel h2 {
-    margin-top: 0;
-    font-size: 1.05rem;
+  .filter-form {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 44px;
+    gap: var(--space-2) var(--space-3);
+    align-items: end;
+    max-inline-size: 52rem;
   }
-  .matrix-block {
-    margin-top: var(--space-4);
+  .filter-form label {
+    grid-column: 1 / -1;
+    font-size: var(--font-size-sm);
+    font-weight: 600;
   }
-  .matrix-block h3 {
-    margin-bottom: 0.5rem;
-    font-size: 0.95rem;
+  .filter-form input {
+    inline-size: 100%;
+    min-inline-size: 0;
+    min-block-size: 44px;
+    padding: 0.625rem 0.75rem;
+    border: 1px solid var(--control-border, var(--color-border-subtle));
+    border-radius: var(--radius-sm);
+    background: var(--surface-inset, var(--surface-page));
+    color: var(--text-primary);
+    font: inherit;
   }
+  .filter-form button {
+    inline-size: 44px;
+    block-size: 44px;
+    min-inline-size: 44px;
+    min-block-size: 44px;
+    display: grid;
+    place-items: center;
+    border: 1px solid var(--control-border, var(--color-border-subtle));
+    border-radius: var(--radius-sm);
+    background: var(--surface-raised);
+    color: var(--text-primary);
+    cursor: pointer;
+  }
+  .filter-form button:hover { border-color: var(--color-accent-primary); }
+  .result-count {
+    margin: var(--space-3) 0 0;
+    color: var(--text-secondary);
+    font-size: var(--font-size-xs);
+  }
+  .result-count:empty { margin: 0; }
+  .active-filters {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-2);
+    margin-block-start: var(--space-3);
+    color: var(--text-secondary);
+    font-size: var(--font-size-xs);
+  }
+  .filter-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-1);
+    max-inline-size: 100%;
+    min-block-size: 44px;
+    padding-inline-start: var(--space-3);
+    border: 1px solid var(--color-border-subtle);
+    border-radius: 999px;
+    overflow-wrap: anywhere;
+  }
+  .clear-filter {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-block-size: 44px;
+    min-inline-size: 44px;
+    padding-inline: var(--space-2);
+    color: var(--color-accent-primary-hover);
+  }
+  .help-layout { display:grid; grid-template-columns:minmax(12rem,16rem) minmax(0,1fr); gap:var(--space-6); align-items:start; }
+  .help-content { min-inline-size:0; }
+  .toc { position:sticky; top:var(--space-4); padding:var(--space-3); border-inline-end:1px solid var(--border-default); }
+  .toc h2 { font-size:var(--font-size-md); margin-block-start:0; }
   .toc ul {
     margin: 0;
     padding-inline-start: 1.1rem;
     display: grid;
     gap: 0.35rem;
-    font-size: 0.85rem;
+    font-size: var(--font-size-sm);
+  }
+  .toc a { display:flex; align-items:center; min-block-size:44px; padding-block:var(--space-2); }
+  [data-help-section][hidden], .toc li[hidden], [data-active-filters][hidden] { display:none; }
+  :where(.filter-form input, .filter-form button, .toc a, .clear-filter, .print-button, .table-wrap):focus-visible {
+    outline: 2px solid var(--focus-ring);
+    outline-offset: 2px;
+  }
+  .panel {
+    padding: var(--space-5);
+    margin-block-end: var(--space-5);
+    border: 1px solid var(--color-border-subtle);
+    border-radius: var(--radius-lg);
+    background: var(--surface-panel);
+    max-inline-size: none;
+  }
+  .panel h2 {
+    margin-block-start: 0;
+    font-size: var(--font-size-lg);
+  }
+  .matrix-block {
+    margin-block-start: var(--space-4);
+  }
+  .matrix-block h3 {
+    margin-block-end: 0.5rem;
+    font-size: var(--font-size-md);
   }
   .role-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
     gap: var(--space-4);
-    margin-top: var(--space-3);
+    margin-block-start: var(--space-3);
   }
   .role-card {
     padding: var(--space-4);
@@ -317,19 +420,19 @@ const showSection = (id: string) => navigationMatches(sectionText[id] ?? '', que
     border-radius: var(--radius-md);
   }
   .role-card h3 {
-    margin-top: 0;
-    font-size: 0.95rem;
+    margin-block-start: 0;
+    font-size: var(--font-size-md);
   }
   .role-card ol {
     margin: 0 0 var(--space-3);
     padding-inline-start: 1.1rem;
-    font-size: 0.85rem;
+    font-size: var(--font-size-sm);
     display: grid;
     gap: 0.3rem;
   }
   .escalate {
     margin: 0;
-    font-size: 0.8rem;
+    font-size: var(--font-size-xs);
     color: var(--text-muted);
   }
   .tag {
@@ -338,7 +441,7 @@ const showSection = (id: string) => navigationMatches(sectionText[id] ?? '', que
     border-radius: 999px;
     background: var(--color-surface-selected);
     color: var(--text-primary);
-    font-size: 12px;
+    font-size: var(--font-size-xs);
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.06em;
@@ -350,7 +453,7 @@ const showSection = (id: string) => navigationMatches(sectionText[id] ?? '', que
     padding-inline-start: 1.1rem;
     display: grid;
     gap: 0.45rem;
-    font-size: 0.85rem;
+    font-size: var(--font-size-sm);
   }
   .link-list {
     list-style: none;
@@ -360,57 +463,82 @@ const showSection = (id: string) => navigationMatches(sectionText[id] ?? '', que
     display: grid;
     gap: 0.15rem;
     padding-block: 0.4rem;
-    border-bottom: 1px solid var(--color-border-subtle);
+    border-block-end: 1px solid var(--color-border-subtle);
   }
   .link-list li:last-child {
-    border-bottom: 0;
+    border-block-end: 0;
   }
   .purpose {
     display: block;
   }
+  .link-list li > a,
+  .role-card ol a {
+    display: inline-flex;
+    align-items: center;
+    min-block-size: 44px;
+  }
+  .table-wrap {
+    overflow-x: auto;
+    margin-block-start: var(--space-3);
+    border: 1px solid var(--color-border-subtle);
+    border-radius: var(--radius-md);
+    scrollbar-width: auto;
+  }
+  .table-wrap:focus-visible {
+    outline: 2px solid var(--focus-ring);
+    outline-offset: 2px;
+  }
   table {
-    width: 100%;
+    inline-size: 100%;
+    min-inline-size: 44rem;
     border-collapse: collapse;
-    font-size: 0.85rem;
+    font-size: var(--font-size-sm);
+    background: var(--surface-panel);
   }
   caption {
     text-align: start;
     color: var(--text-muted);
-    font-size: 0.8rem;
-    padding-bottom: var(--space-2);
+    font-size: var(--font-size-xs);
+    padding: var(--space-2) var(--space-3);
   }
   th,
   td {
     text-align: start;
     vertical-align: top;
-    padding: 0.55rem 0.6rem;
-    border-bottom: 1px solid var(--color-border-subtle);
+    padding: 0.65rem 0.75rem;
+    border-block-end: 1px solid var(--color-border-subtle);
+    overflow-wrap: break-word;
   }
+  thead th { font-weight: 700; }
   tbody th {
     font-weight: 600;
-    inline-size: 38%;
+    inline-size: 30%;
   }
   .muted-panel p {
     margin: 0;
   }
-  @media (max-width: 640px) {
-    tbody th {
-      inline-size: auto;
+  @media (max-width: 1000px) {
+    .help-layout { grid-template-columns: minmax(0, 1fr); }
+    .toc { position: static; border-inline-end: 0; border-block-end: 1px solid var(--border-default); }
+  }
+  @media (max-width: 520px) {
+    .filter-form { grid-template-columns: minmax(0, 1fr); }
+    .filter-form label { grid-column: auto; }
+    .filter-form button { inline-size: 100%; }
+  }
+  @media (forced-colors: active) {
+    :where(.filter-form input, .filter-form button, .toc a, .clear-filter, .print-button, .table-wrap):focus-visible {
+      outline: 2px solid Highlight;
     }
-    th,
-    td {
-      display: block;
-      border-bottom: 0;
-    }
-    tbody tr {
-      display: block;
-      border-bottom: 1px solid var(--color-border-subtle);
-      padding-block: var(--space-2);
-    }
+    .filter-form button, .filter-chip, .print-button { border: 1px solid ButtonText; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .table-wrap { scroll-behavior: auto; }
   }
   @media print {
     :global(.app-sidebar),
     :global(.app-topbar),
+    .guide-filters,
     .toc,
     .print-button {
       display: none !important;
@@ -424,6 +552,11 @@ const showSection = (id: string) => navigationMatches(sectionText[id] ?? '', que
       border-color: #999;
       max-width: none;
     }
+    .table-wrap {
+      overflow: visible;
+      border: 0;
+    }
+    table { min-inline-size: 0; }
     a[href]::after {
       content: ' (' attr(href) ')';
       font-size: 0.75em;

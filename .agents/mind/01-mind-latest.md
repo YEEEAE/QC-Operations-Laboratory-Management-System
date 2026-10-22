@@ -1,3 +1,13 @@
+- **2026-10-22 — CA-P-HELP / CAPA A operating guides**
+  - Changed: `/help` now reads header → guide search form + active-filter chip + one canonical section-count status → wide guide content with sticky section nav; both content tables sit in focusable scroll regions with a readable minimum width and no truncation. The native GET `q` contract, identical server/client search index, heading order, print affordance, route-visibility guards, internal links and Sidebar are unchanged. No paged read, export, action, API/schema or guide-content change.
+  - Evidence: NOT RUN by task instruction (no tests/typecheck/lint/build/browser); source and textual `git diff` review only. CSS/token-based; literal visual-reference match not confirmed.
+  - State: DONE — code edit only; untested.
+  - Key files: `src/pages/help/index.astro`.
+- **2026-10-22 — CA-P-GOVERNANCE-RELEASES-RELEASEID / CAPA A release approval detail**
+  - Changed: `/governance/releases/[releaseId]` now has a record header (release ID, state, candidate version), then facts → NO-GO decision → read-only gate evidence → recorded timestamps → relationships, with the existing approval form isolated in an action rail. Authorization, non-pending state, blockers, provider-unavailable and the single output pending/error region are each declared once. Hidden `releaseId`/`expectedVersion`, the `releaseGovernance.approveRelease` payload, capability-derived disabled state, runtime-identity/authority guards and Sidebar are unchanged; the unreconciled 19-gate NO-GO blocker is retained. No API/schema/policy change.
+  - Evidence: NOT RUN by task instruction (no tests/typecheck/lint/build/browser); source and textual `git diff` review only. CSS/token-based; literal visual-reference match not confirmed.
+  - State: DONE — code edit only; untested.
+  - Key files: `src/pages/governance/releases/[releaseId].astro`.
 - **2026-10-22 — CA-P-DOCUMENTS-NEW / CAPA A create-document form**
   - Changed: `/documents/new` now uses one header (heading/purpose/back), a document-identity section, one column on narrow screens and two columns only for the independent code/type fields on wide screens (title stays full-width), shared labels/help/field errors and a 44px Cancel/Create action row. `FormErrorSummary` stays the single error region and the status region the single pending/result target. Field names/values, native POST, `documents.create` payload, PERM-DOC-CREATE guard, safe `returnTo`, enhance/unsaved wiring and Sidebar are unchanged. No API/schema/policy/upload/effectivity/revision change.
   - Evidence: NOT RUN by task instruction (no tests/typecheck/lint/build/browser); source and textual `git diff` review only. CSS/token-based; literal visual-reference match not confirmed.
