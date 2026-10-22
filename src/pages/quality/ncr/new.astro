@@ -1,6 +1,7 @@
 ---
 import PageHeader from '../../../ui/components/PageHeader.astro';
 import AppLayout from '../../../ui/layouts/AppLayout.astro';
+import PolicyBlocker from '../../../ui/components/feedback/PolicyBlocker.astro';
 import FormErrorSummary from '../../../ui/components/FormErrorSummary.astro';
 import { actions } from 'astro:actions';
 import { randomUUID } from 'node:crypto';
@@ -82,6 +83,7 @@ if (canCreate) {
   }
 }
 const selectedFinding = findings.find((finding) => finding.id === values.findingId);
+// The optional second argument enables the existing field-help association.
 const describedBy = (name: string, hint?: string): string | undefined => {
   const ids = [
     failure?.fieldErrors[name] ? `${name}-error` : null,
@@ -96,7 +98,19 @@ const invalid = (name: string): 'true' | undefined =>
   <PageHeader section="Quality">
     <Fragment slot="heading"><h1>New NCR</h1></Fragment>
     <p>Create a draft NCR linked to a finding you can access.</p>
+    <a slot="actions" href="/quality/ncr">NCR register</a>
   </PageHeader>
+  <!-- READ: permission denial, source unavailable, no accessible findings, available.
+       FORM: native POST + enhanced pending/error/redirect use the same create action.
+       FILTER/EXPORT and record dialogs: N/A — no corresponding action on this route.
+       Existing debt: NCR evidence-dependent transitions remain denied in the repository;
+       draft creation supplies no RCA, closure or effectiveness decision. -->
+  <div class="create-surface">
+  <PolicyBlocker title="NCR closure policy" decisions={[{
+    id: 'PD-17',
+    owner: 'QMS process owner',
+    consequence: 'Draft creation does not authorize NCR closure. Closure remains unavailable pending the approved workflow and review authority.',
+  }]} />
   {!canCreate ? (
     <section class="state-card" data-state="policy-blocked" role="status">
       <h2>NCR creation is not available to this account</h2>
@@ -106,7 +120,7 @@ const invalid = (name: string): 'true' | undefined =>
   ) : sourceUnavailable ? (
     <section class="state-card" data-state="source-unavailable" role="alert">
       <h2>Findings are temporarily unavailable</h2>
-      <p>The authorized finding list could not be read. Your record was not changed. Reload this page to try again.</p>
+      <p>The authorized finding list could not be read. Creation eligibility cannot be established. Review the NCR register before retrying a previous save.</p>
       <p><a href="/quality/ncr">Open the NCR register</a></p>
     </section>
   ) : findings.length === 0 ? (
@@ -127,6 +141,10 @@ const invalid = (name: string): 'true' | undefined =>
           listLabel="NCRs"
         />
       )}
+      <section class="eligibility" aria-labelledby="eligibility-heading">
+        <h2 id="eligibility-heading">Creation eligibility</h2>
+        <p>Your account can request NCR creation. Select an accessible finding; the server checks access again when saving.</p>
+      </section>
       <section class="source" aria-labelledby="source-heading">
         <h2 id="source-heading">Source finding</h2>
         <label for="findingId">Finding</label>
@@ -170,6 +188,10 @@ const invalid = (name: string): 'true' | undefined =>
         </p>
       </section>
 
+      <section class="details" aria-labelledby="details-heading">
+      <h2 id="details-heading">NCR details</h2>
+      <p class="hint">Complete all fields unless marked optional. Saving creates a draft and opens its record.</p>
+      <div class="field">
       <label for="ncrNo">NCR number</label>
       <input
         id="ncrNo"
@@ -187,6 +209,8 @@ const invalid = (name: string): 'true' | undefined =>
         <p class="field-error" id="ncrNo-error">{failure.fieldErrors.ncrNo}</p>
       )}
 
+      </div>
+      <div class="field">
       <label for="title">Title</label>
       <input
         id="title"
@@ -200,6 +224,8 @@ const invalid = (name: string): 'true' | undefined =>
         <p class="field-error" id="title-error">{failure.fieldErrors.title}</p>
       )}
 
+      </div>
+      <div class="field">
       <label for="description">Description</label>
       <textarea
         id="description"
@@ -212,23 +238,36 @@ const invalid = (name: string): 'true' | undefined =>
         <p class="field-error" id="description-error">{failure.fieldErrors.description}</p>
       )}
 
+      </div>
+      </section>
+      <section class="details" aria-labelledby="references-heading">
+      <h2 id="references-heading">Affected references</h2>
+      <div class="independent-fields">
+      <div class="field">
       <label for="affectedItemCode">Affected item code <span class="optional">(optional)</span></label>
-      <input id="affectedItemCode" name="affectedItemCode" value={values.affectedItemCode} />
+      <input id="affectedItemCode" name="affectedItemCode" value={values.affectedItemCode} aria-describedby="references-help" />
 
+      </div>
+      <div class="field">
       <label for="affectedLot">Affected lot <span class="optional">(optional)</span></label>
-      <input id="affectedLot" name="affectedLot" value={values.affectedLot} />
-      <p class="hint">
+      <input id="affectedLot" name="affectedLot" value={values.affectedLot} aria-describedby="references-help" />
+      </div>
+      </div>
+      <p class="hint" id="references-help">
         These references are entered by you and are not matched to the finding. No owner is
         assigned on creation.
       </p>
+
+      </section>
 
       <div class="form-actions">
         <button type="submit" data-submit>Create NCR</button>
         <a href="/quality/ncr">Cancel</a>
       </div>
-      <p role="status" data-result tabindex="-1"></p>
+      <p role="status" aria-atomic="true" data-result tabindex="-1"></p>
     </form>
   )}
+  </div>
 </AppLayout>
 <script>
   import { actions } from 'astro:actions';
@@ -266,21 +305,33 @@ const invalid = (name: string): 'true' | undefined =>
     });
 </script>
 <style>
-  .ncr-form{display:grid;gap:var(--space-3);max-width:48rem;padding:var(--space-5);background:var(--surface-panel);border:1px solid var(--color-border-subtle);border-radius:var(--radius-lg)}
-  .state-card{max-width:48rem;padding:var(--space-5);background:var(--surface-panel);border:1px solid var(--color-border-subtle);border-radius:var(--radius-lg)}
+  .ncr-form{display:grid;gap:var(--space-5);min-inline-size:0;padding:var(--space-5);background:var(--surface-panel);border:1px solid var(--color-border-subtle);border-radius:var(--radius-lg)}
+  .create-surface{max-inline-size:64rem;min-inline-size:0}
+  .create-surface :global(.policy-blocker){margin-block:0 var(--space-5);overflow-wrap:anywhere}
+  .details,.field{display:grid;gap:var(--space-3);min-inline-size:0}
+  .details h2,.eligibility h2{margin:0;font-size:var(--font-size-lg)}
+  .eligibility p,.hint{margin:0;line-height:var(--line-height-relaxed)}
+  .independent-fields{display:grid;grid-template-columns:minmax(0,1fr);gap:var(--space-4)}
+  .state-card{min-inline-size:0;padding:var(--space-5);background:var(--surface-panel);border:1px solid var(--color-border-subtle);border-radius:var(--radius-lg)}
   .source{display:grid;gap:var(--space-3);padding:var(--space-4);background:var(--surface-inset);border:1px solid var(--color-border-subtle);border-radius:var(--radius-md)}
   .source h2{margin:0;font-size:var(--font-size-md)}
   label{display:grid;gap:var(--space-1);font-weight:600}
-  input,select,textarea{min-inline-size:0;max-inline-size:100%;min-height:44px;padding:.7rem;font:inherit;color:inherit;background:var(--surface-inset);border:1px solid var(--control-border);border-radius:var(--radius-sm)}
-  textarea{min-height:9rem}
+  input,select,textarea{min-inline-size:0;max-inline-size:100%;min-block-size:44px;inline-size:100%;box-sizing:border-box;padding:.7rem;font:inherit;color:inherit;background:var(--surface-inset);border:1px solid var(--control-border);border-radius:var(--radius-sm)}
+  textarea{min-block-size:9rem;resize:vertical}
   .hint,.optional{color:var(--text-muted);font-size:var(--font-size-sm);font-weight:400}
   .field-error{margin:0;color:var(--status-danger);font-size:var(--font-size-sm)}
-  .context{display:grid;grid-template-columns:repeat(auto-fit,minmax(10rem,1fr));gap:var(--space-3);margin:0}
-  .context div{display:grid;gap:var(--space-1)}
+  .context{display:grid;grid-template-columns:minmax(0,1fr);gap:var(--space-3);margin:0}
+  .context[hidden]{display:none}
+  .context div{min-inline-size:0;display:grid;gap:var(--space-1)}
   .context dt{color:var(--text-muted);font-size:var(--font-size-xs);text-transform:uppercase;letter-spacing:.04em}
   .context dd{margin:0;overflow-wrap:anywhere}
   .form-actions{display:flex;align-items:center;gap:var(--space-4);flex-wrap:wrap}
-  button{min-height:44px;padding:.7rem 1rem;background:var(--color-accent-primary);color:var(--text-on-accent);border:0;border-radius:var(--radius-md)}
+  button{min-block-size:44px;padding:.7rem 1rem;background:var(--color-accent-primary);color:var(--text-on-accent);border:0;border-radius:var(--radius-md)}
   button[disabled]{opacity:.6;cursor:progress}
-  a{color:var(--color-accent-primary-hover)}
+  a{display:inline-flex;align-items:center;min-block-size:44px;max-inline-size:100%;overflow-wrap:anywhere;color:var(--color-accent-primary-hover)}
+  :is(input,select,textarea,button,a,[data-result]):focus-visible{outline:2px solid var(--focus-ring);outline-offset:3px}
+  [data-result]{margin:0;overflow-wrap:anywhere}
+  @media(min-width:900px){.independent-fields,.context{grid-template-columns:repeat(2,minmax(0,1fr))}}
+  @media(max-width:600px){.ncr-form,.state-card{padding:var(--space-4)}}
+  @media(forced-colors:active){:is(input,select,textarea,button){border:1px solid CanvasText}:is(input,select,textarea,button,a):focus-visible{outline-color:Highlight}}
 </style>
