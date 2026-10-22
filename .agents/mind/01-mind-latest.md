@@ -1,3 +1,8 @@
+- **2026-10-22 — CA-P-ASSETS / CAPA A assets overview**
+  - Changed: `/assets` now visually prioritizes its existing Equipment register link and uses responsive graphite cards; source counts, labels/copy, scope display, three existing links, AppLayout/Sidebar, and read guards remain unchanged. No new status roll-up, action, filter, export, API, schema, or policy.
+  - Evidence: focused UI contract 3/3, Astro build PASS; authenticated browser measured 320/390/768/1024/1440 with overflow 0, keyboard reached all 3 links with 2px focus, axe color-contrast 0 violations, links returned 200, reduced-motion/forced-colors emulated. Same-record before/after, real populated asset record (source returned 0/0/0), denied account (`verify-least` could read), native 200/400% zoom NOT VERIFIED. `astro check` still reports the 2 unrelated CA-P-500 missing BaseLayout imports. Details/screens: `audit/CA-P-ASSETS/`.
+  - State: PARTIAL.
+  - Key files: `src/pages/assets/index.astro`, `tests/unit/ui/assets-overview-surface.test.ts`.
 - **2026-10-22 — CA-P-APPROVALS / CAPA A approvals register**
   - Changed: register presentation now separates recorded work-item state from server-resolved decision availability; source reads, owner policy, detail actions, Sidebar and domain authority unchanged.
   - Evidence: focused surface/owner-policy tests 22/22 and Astro build PASS; `astro check` remains blocked by 2 unrelated CA-P-500 imports. Populated authenticated comparison and responsive/keyboard/zoom/contrast browser acceptance NOT RUN because disposable DB contains no approval records. Graph refresh BLOCKED (CLI unavailable); details `audit/CA-P-APPROVALS/execution-status.md`.

@@ -12,10 +12,12 @@ import {
   OWNER_APPROVAL_DEFERRAL,
   isOwnerApprovalPath,
 } from '../../modules/approvals/application/owner-approval-policy.js';
+import { classifyReadFailure, providerUnavailableResponse } from '../../shared/errors/read-failure.js';
+import { stateLabel } from '../../shared/copy/ux-vocabulary.js';
+
 const actor = Astro.locals.actor;
 if (!actor) return Astro.redirect(`/login?returnTo=${encodeURIComponent(Astro.url.pathname)}`);
 const ownerPath = isOwnerApprovalPath(actor);
-import { classifyReadFailure, providerUnavailableResponse } from '../../shared/errors/read-failure.js';
 let approval: Awaited<ReturnType<ReturnType<typeof approvalsReadDependencies>['get']['execute']>> | undefined;
 let readDenied = false;
 if (isUuid(Astro.params.approvalId)) {
@@ -73,23 +75,97 @@ const approvalEvents = approval ? [
   ...(approval.workItem.startedAt ? [{ label: 'Review started', detail: approval.workItem.startedAt.toLocaleString('en-SA', { timeZone: 'Asia/Riyadh' }), kind: 'approval' as const }] : []),
   { label: 'Source transition', detail: 'The owning domain applies the business transition after approval verification.', kind: 'business' as const },
 ] : [];
+const auditHref = approval
+  ? `/audit?subjectType=${encodeURIComponent(approval.approvalCase.subjectType)}&subjectId=${encodeURIComponent(approval.approvalCase.subjectId)}`
+  : '/audit';
+const workItemState = stateLabel(approval?.workItem.state);
+const caseState = stateLabel(approval?.approvalCase.state);
+const subjectState = stateLabel(approval?.subject.state);
+const requestedAt = approval?.approvalCase.requestedAt.toLocaleString('en-SA', { timeZone: 'Asia/Riyadh' });
+const workItemCompletedAt = approval?.workItem.completedAt?.toLocaleString('en-SA', { timeZone: 'Asia/Riyadh' });
+const workflowLabel = approval ? humanize(approval.approvalCase.workflowType) : '';
 ---
 <AppLayout title={`Approval · ${subjectLabel}`} locale="en" direction="ltr">
-  {!approval ? <OperationalState state={readState === 'denied' ? 'denied' : 'empty'} title={readState === 'denied' ? 'Approval is not available to this account' : 'Approval case not found'} description={readState === 'denied' ? 'Your account cannot read this assigned approval. Return to My approvals or check your approved assignment and permission.' : 'No approval case matches this request. Return to My approvals to choose a current item.'} actionLabel="Return to My approvals" actionHref="/approvals" /> : <div class="evidence-record">
-  <nav class="crumb"><a href="/approvals">My approvals</a><span>/</span><span>{subjectLabel}</span></nav>
-  <section class="head workspace-header"><div><p class="eyebrow">Approval review</p><h1>{subjectLabel}</h1><p>{humanSubjectType[approval.approvalCase.subjectType] ?? 'Controlled record'} · Current version {approval.subject.version.toString()}</p></div><StatusBadge status="REVIEW" label={approval.workItem.state} /></section>
-  <JourneyContextPanel ownerDomain={approval.subject.domain ?? 'Reviews & Approvals'} currentState={`${approval.approvalCase.state} · Work item ${approval.workItem.state}`} nextAction={approvalNextAction} nextActionHref={subjectHref} nextOwner={approvalNextOwner} whyUnavailable={!approvalActionable ? policyBlockedDecisions.length ? 'policy: the required decision signature policy has no approved action-specific source' : 'authority or state: no supported decision is available to this actor for the current work item' : undefined} waitingOn={approvalActionable ? approvalNextOwner : policyBlockedDecisions.length ? 'QMS signature-policy owner' : 'Owning domain'} expectedEvent={approvalActionable ? 'Controlled decision' : 'Approved policy source or current owning-domain state'} controlledContext={`${humanSubjectType[approval.approvalCase.subjectType] ?? approval.approvalCase.subjectType} · version ${approval.subject.version.toString()}`} evidenceSummary={approval.subject.snapshotHash ? 'Controlled snapshot hash available' : 'Snapshot hash not available from owning domain'} auditHref={`/audit?subjectType=${encodeURIComponent(approval.approvalCase.subjectType)}&subjectId=${encodeURIComponent(approval.approvalCase.subjectId)}`} relatedLinks={subjectHref ? [{ label: subjectLabel, href: subjectHref, detail: 'Open owning-domain record' }] : [{ label: 'My approvals', href: '/approvals', detail: 'Approval queue' }]} />
-  <HandoffTimeline events={approvalEvents} />
-  <div class="grid"><section class="panel"><h2>Controlled subject snapshot</h2><dl><dt>Workflow</dt><dd>{humanize(approval.approvalCase.workflowType)}</dd><dt>Version under review</dt><dd>{approval.subject.version.toString()}</dd><dt>Requester</dt><dd>Recorded in the controlled audit trail</dd><dt>State</dt><dd>{humanize(approval.subject.state)}</dd><dt>Integrity reference</dt><dd>{approval.subject.snapshotHash ? 'Available in the controlled record' : 'Not available from the owning domain'}</dd></dl></section><section class="panel"><h2>Review context</h2><dl>{Object.entries(context).map(([key, value]) => <><dt>{contextLabel(key)}</dt><dd>{typeof value === 'string' || typeof value === 'number' ? String(value).match(/^[0-9a-f]{8}-[0-9a-f-]{27,}$/i) ? 'Available in the controlled record' : String(value) : value ? 'Available' : 'Not available'}</dd></>)}</dl></section></div>
-  {approvalActionable ? <section class="panel decision"><h2>Controlled decision</h2><p>Only decisions supported by this subject's wired handler and currently authorized for your assignment, scope, state, version, and SoD are listed. A successful signature alone never changes the subject.</p><form method="post" data-approval-decision><input type="hidden" name="approvalId" value={approval.approvalCase.id} /><input type="hidden" name="workItemId" value={approval.workItem.id} /><input type="hidden" name="subjectVersion" value={approval.subject.version.toString()} /><label for="decision">Decision<select id="decision" name="decision">{availableDecisions.map((capability) => <option value={capability.decision}>{decisionLabel[capability.decision] ?? capability.decision}</option>)}</select></label><label for="reason">Reason / comments<span id="reason-help" class="hint">Required for Return or Reject when offered.</span><span id="reason-error" role="alert" hidden>Enter a reason before returning or rejecting.</span><textarea id="reason" name="reason" rows="4" maxlength="4000" aria-describedby="reason-help reason-error"></textarea></label>{ownerPath && <p class="owner-decision-note" role="note">Owner-Controlled Internal Approval: your decision is recorded once, under your authenticated account, with its exact authority, resulting state and audit event. The electronic-signature ceremony is deferred by owner decision <code>{OWNER_APPROVAL_DEFERRAL.decisionId}</code> dated {OWNER_APPROVAL_DEFERRAL.decidedOn}; this record is not an electronic signature, no intermediate Supervisor or QCM approval is created, and an internal release decision never authorizes physical product release.</p>}{hasRequiredSignature && !ownerPath && <><p class="signing-meaning">{availableDecisions.filter((capability) => capability.signature === 'REQUIRED').map((capability) => capability.meaning).filter(Boolean).join(' ')}</p><label for="reauthenticationSecret">Re-enter your password to sign this decision<input id="reauthenticationSecret" name="reauthenticationSecret" type="password" autocomplete="current-password" aria-describedby="signature-help" /></label><span id="signature-help" class="hint">The password is used only to reauthenticate this signing action and is not retained.</span></>}{ownerPath && ownerSignatureDeferred && <span id="owner-help" class="hint">Signature ceremony deferred — no password re-entry is required for this internal owner decision.</span>}<button type="submit" data-submit>{ownerPath ? 'Approve as System Owner' : 'Submit controlled decision'}</button><output data-result aria-live="polite" tabindex="-1"></output><a data-recovery hidden href={Astro.url.pathname}>Reload the current approval before retrying</a></form></section> : approval.workItem.state === 'PENDING' || approval.workItem.state === 'IN_PROGRESS' ? <section class="panel decision" role="status"><h2>{policyBlockedDecisions.length ? 'Decision unavailable' : 'Review only'}</h2>{policyBlockedDecisions.length ? <p>The action-specific electronic-signature policy has not been approved. This decision is blocked before reauthentication. Contact the QMS signature-policy owner. You can review the subject and its current version here; no password field or decision control is available.</p> : <p>No supported decision is currently authorized for your assignment and the subject's scope, state, version, and separation-of-duties rules. Review the subject or return to My approvals; do not retry with a password.</p>}</section> : null}
-  <div data-loading-state hidden><LoadingState label="Checking authorization and controlled evidence" rows={3} /></div>
-  <div data-stale-state hidden><StaleVersionState version={approval.subject.version.toString()} /></div>
-  </div>
-  }
+  {!approval ? <OperationalState state={readState === 'denied' ? 'denied' : 'empty'} title={readState === 'denied' ? 'Approval is not available to this account' : 'Approval case not found'} description={readState === 'denied' ? 'Your account cannot read this assigned approval. Return to My approvals or check your approved assignment and permission.' : 'No approval case matches this request. Return to My approvals to choose a current item.'} actionLabel="Return to My approvals" actionHref="/approvals" /> : (
+    <article class="evidence-record approval-record" data-record-id={approval.approvalCase.id} data-version={approval.subject.version.toString()}>
+      <nav class="crumb" aria-label="Breadcrumb">
+        <a href="/approvals">My approvals</a>
+        <span aria-hidden="true">/</span>
+        <span aria-current="page">{subjectLabel}</span>
+      </nav>
+
+      <header class="record-head">
+        <div class="record-identity">
+          <p class="eyebrow">Approval review</p>
+          <h1>{subjectLabel}</h1>
+          <p class="record-lede">{humanSubjectType[approval.approvalCase.subjectType] ?? 'Controlled record'} · {humanize(approval.approvalCase.workflowType)}</p>
+          <div class="record-meta">
+            <StatusBadge status="REVIEW" label={`Work item: ${workItemState}`} />
+            <span class="version-chip">Version <strong>{approval.subject.version.toString()}</strong></span>
+          </div>
+        </div>
+      </header>
+
+      <JourneyContextPanel recordReference={`${subjectLabel} · version ${approval.subject.version.toString()}`} ownerDomain={approval.subject.domain ?? 'Reviews & Approvals'} currentState={`${approval.approvalCase.state} · Work item ${approval.workItem.state}`} nextAction={approvalNextAction} nextActionHref={subjectHref} nextOwner={approvalNextOwner} whyUnavailable={!approvalActionable ? policyBlockedDecisions.length ? 'policy: the required decision signature policy has no approved action-specific source' : 'authority or state: no supported decision is available to this actor for the current work item' : undefined} waitingOn={approvalActionable ? approvalNextOwner : policyBlockedDecisions.length ? 'QMS signature-policy owner' : 'Owning domain'} expectedEvent={approvalActionable ? 'Controlled decision' : 'Approved policy source or current owning-domain state'} controlledContext={`${humanSubjectType[approval.approvalCase.subjectType] ?? approval.approvalCase.subjectType} · version ${approval.subject.version.toString()}`} evidenceSummary={approval.subject.snapshotHash ? 'Controlled snapshot hash available' : 'Snapshot hash not available from owning domain'} auditHref={auditHref} relatedLinks={subjectHref ? [{ label: subjectLabel, href: subjectHref, detail: 'Open owning-domain record' }] : [{ label: 'My approvals', href: '/approvals', detail: 'Approval queue' }]} />
+
+      <div class="approval-layout">
+        <div class="approval-main">
+          <section class="panel" aria-labelledby="facts-title">
+            <h2 id="facts-title">Recorded facts</h2>
+            <p class="panel-note">Read-only values recorded by the owning domain and the approval case.</p>
+            <dl class="facts-grid">
+              <div><dt>Workflow</dt><dd class="long-value">{humanize(approval.approvalCase.workflowType)}</dd></div>
+              <div><dt>Version under review</dt><dd class="numeric-value">{approval.subject.version.toString()}</dd></div>
+              <div><dt>Requester</dt><dd>Recorded in the controlled audit trail</dd></div>
+              <div><dt>Subject state</dt><dd>{subjectState}</dd></div>
+              <div><dt>Work item</dt><dd>{workItemState} · Step {approval.workItem.stepNo.toString()}</dd></div>
+              <div><dt>Approval case</dt><dd>{caseState}</dd></div>
+              <div><dt>Requested</dt><dd class="numeric-value">{requestedAt}</dd></div>
+              <div><dt>Work item completed</dt><dd class="numeric-value">{workItemCompletedAt ?? 'Not recorded'}</dd></div>
+            </dl>
+          </section>
+
+          <section class="panel" aria-labelledby="context-title">
+            <h2 id="context-title">Review context</h2>
+            {Object.keys(context).length ? (
+              <dl class="context-grid">
+                {Object.entries(context).map(([key, value]) => (
+                  <div>
+                    <dt>{contextLabel(key)}</dt>
+                    <dd>{typeof value === 'string' || typeof value === 'number' ? String(value).match(/^[0-9a-f]{8}-[0-9a-f-]{27,}$/i) ? 'Available in the controlled record' : String(value) : value ? 'Available' : 'Not available'}</dd>
+                  </div>
+                ))}
+              </dl>
+            ) : <p class="muted">No additional review context was supplied by the owning domain.</p>}
+          </section>
+
+          <section class="panel evidence" aria-labelledby="evidence-title">
+            <h2 id="evidence-title">Evidence</h2>
+            <p class="panel-note">Integrity and trace references recorded for this subject. This view does not create evidence.</p>
+            <dl class="evidence-grid">
+              <div><dt>Integrity reference</dt><dd>{approval.subject.snapshotHash ? 'Available in the controlled record' : 'Not available from the owning domain'}</dd></div>
+              <div><dt>Evidence scope</dt><dd>{humanSubjectType[approval.approvalCase.subjectType] ?? 'Controlled record'} · version {approval.subject.version.toString()}</dd></div>
+            </dl>
+            <ul class="evidence-links">
+              <li><a href={auditHref}>View audit history for this record</a></li>
+              {subjectHref ? <li><a href={subjectHref}>Open the owning-domain record</a></li> : null}
+            </ul>
+          </section>
+
+          <HandoffTimeline events={approvalEvents} />
+        </div>
+
+        <aside class="approval-rail" aria-label="Current action">
+          <section class="panel decision" aria-labelledby="action-title">
+            <h2 id="action-title">Current action</h2>
+            <p class="panel-note">Recorded facts are read-only. A decision is offered only when the server resolves it for your account, assignment, scope, current version, and separation of duties.</p>
+            {approvalActionable ? <><p class="decision-explain">Only decisions supported by this subject's wired handler and currently authorized for your assignment, scope, state, version, and SoD are listed. A successful signature alone never changes the subject.</p><form method="post" data-approval-decision><input type="hidden" name="approvalId" value={approval.approvalCase.id} /><input type="hidden" name="workItemId" value={approval.workItem.id} /><input type="hidden" name="subjectVersion" value={approval.subject.version.toString()} /><label for="decision">Decision<select id="decision" name="decision">{availableDecisions.map((capability) => <option value={capability.decision}>{decisionLabel[capability.decision] ?? capability.decision}</option>)}</select></label><label for="reason">Reason / comments<span id="reason-help" class="hint">Required for Return or Reject when offered.</span><span id="reason-error" role="alert" hidden>Enter a reason before returning or rejecting.</span><textarea id="reason" name="reason" rows="4" maxlength="4000" aria-describedby="reason-help reason-error"></textarea></label>{ownerPath && <p class="owner-decision-note" role="note">Owner-Controlled Internal Approval: your decision is recorded once, under your authenticated account, with its exact authority, resulting state and audit event. The electronic-signature ceremony is deferred by owner decision <code>{OWNER_APPROVAL_DEFERRAL.decisionId}</code> dated {OWNER_APPROVAL_DEFERRAL.decidedOn}; this record is not an electronic signature, no intermediate Supervisor or QCM approval is created, and an internal release decision never authorizes physical product release.</p>}{hasRequiredSignature && !ownerPath && <><p class="signing-meaning">{availableDecisions.filter((capability) => capability.signature === 'REQUIRED').map((capability) => capability.meaning).filter(Boolean).join(' ')}</p><label for="reauthenticationSecret">Re-enter your password to sign this decision<input id="reauthenticationSecret" name="reauthenticationSecret" type="password" autocomplete="current-password" aria-describedby="signature-help" /></label><span id="signature-help" class="hint">The password is used only to reauthenticate this signing action and is not retained.</span></>}{ownerPath && ownerSignatureDeferred && <span id="owner-help" class="hint">Signature ceremony deferred — no password re-entry is required for this internal owner decision.</span>}<button type="submit" data-submit>{ownerPath ? 'Approve as System Owner' : 'Submit controlled decision'}</button><div class="action-feedback"><div data-loading-state hidden><LoadingState label="Checking authorization and controlled evidence" rows={3} /></div><div data-stale-state hidden><StaleVersionState version={approval.subject.version.toString()} /></div><output data-result aria-live="polite" tabindex="-1"></output></div><a data-recovery hidden href={Astro.url.pathname}>Reload the current approval before retrying</a></form></> : approval.workItem.state === 'PENDING' || approval.workItem.state === 'IN_PROGRESS' ? <div class="blocked-action" role="status"><h3>{policyBlockedDecisions.length ? 'Decision unavailable' : 'Review only'}</h3>{policyBlockedDecisions.length ? <p>The action-specific electronic-signature policy has not been approved. This decision is blocked before reauthentication. Contact the QMS signature-policy owner. You can review the subject and its current version here; no password field or decision control is available.</p> : <p>No supported decision is currently authorized for your assignment and the subject's scope, state, version, and separation-of-duties rules. Review the subject or return to My approvals; do not retry with a password.</p>}</div> : <div class="blocked-action" role="status"><h3>No current action</h3><p>The work item is recorded as {workItemState}. No decision is available now; any further transition belongs to the owning domain.</p></div>}
+          </section>
+        </aside>
+      </div>
+    </article>
+  )}
 </AppLayout>
-<style>
-  .evidence-record{max-width:1120px;margin-inline:auto}.grid{margin-top:var(--space-5)}.panel{border:0;border-block-start:1px solid var(--color-border-subtle);border-radius:0;background:transparent;padding-inline:0}.decision{border-block-start:3px solid var(--color-accent-primary);padding:var(--space-5);background:var(--surface-panel)}.decision h2{margin-bottom:var(--space-3)}.owner-decision-note{border-inline-start:3px solid var(--color-accent-primary);padding:var(--space-3);background:var(--surface-page);font-size:.82rem}.owner-decision-note code{font-size:.78rem}.decision form{max-width:none;grid-template-columns:1fr 1fr}.decision form>label,.decision form>p,.decision form>span,.decision form>button,.decision form>output,.decision form>a{grid-column:1 / -1}.decision form>label:first-of-type{max-width:360px}.hint{color:var(--text-muted);font-size:.75rem}.signing-meaning{border-inline-start:3px solid var(--status-warning);padding:var(--space-3);background:var(--surface-page)}.eyebrow{letter-spacing:0}.head h1{overflow-wrap:anywhere}.head>div{min-width:0}.decision button{max-width:100%;white-space:normal}.crumb{flex-wrap:wrap}@media(max-width:700px){.decision form{grid-template-columns:1fr}.decision{padding:var(--space-4)}}
-</style>
 <script>
   import { actions } from 'astro:actions';
   import { classifyActionResult } from '../../ui/forms/mutation-interaction.js';
@@ -157,5 +233,82 @@ const approvalEvents = approval ? [
   });
 </script>
 <style>
-  .crumb{display:flex;gap:.5rem;margin-bottom:var(--space-5);color:var(--text-muted);font-size:.8rem}.crumb a,a{color:var(--color-accent-primary-hover)}.head{display:flex;justify-content:space-between;gap:var(--space-5);align-items:flex-start;margin-bottom:var(--space-5)}h1{margin:.25rem 0 .4rem}.eyebrow{margin:0;color:var(--text-muted);font-size:.7rem;letter-spacing:.13em;font-weight:700}.head p:not(.eyebrow),.decision p{color:var(--text-muted);font-size:.85rem}.grid{display:grid;grid-template-columns:1fr 1fr;gap:var(--space-4)}.panel{padding:var(--space-5);background:var(--surface-panel);border:1px solid var(--color-border-subtle);border-radius:var(--radius-lg)}.panel h2{margin:0 0 var(--space-4);font-size:1rem}dl{display:grid;grid-template-columns:minmax(150px,.6fr) 1fr;gap:.75rem;font-size:.82rem}dt{color:var(--text-muted)}dd{margin:0;overflow-wrap:anywhere;font-weight:600}.decision{margin-top:var(--space-4)}form{display:grid;gap:var(--space-4);max-width:720px}label{display:grid;gap:.4rem;color:var(--text-secondary);font-size:.8rem}#reason-error{color:var(--text-danger)}select,textarea,input{padding:.65rem;border:1px solid var(--border-default);border-radius:var(--radius-sm);background:var(--surface-page);color:inherit;font:inherit}button{width:max-content;min-height:var(--control-height);padding:.65rem 1rem;border:1px solid var(--color-accent-primary);border-radius:var(--radius-sm);background:var(--color-accent-primary);color:var(--text-on-accent);font:inherit;font-weight:700}output{color:var(--text-muted);font-size:.8rem}@media(max-width:700px){.head{display:grid}.grid{grid-template-columns:1fr}dl{grid-template-columns:1fr}.panel{padding:var(--space-4)}}
+  .approval-record { max-inline-size: 1120px; margin-inline: auto; min-inline-size: 0; }
+  .crumb { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); margin-block-end: var(--space-4); color: var(--text-muted); font-size: var(--font-size-xs); }
+  .crumb a { display: inline-flex; align-items: center; min-block-size: 44px; color: var(--color-accent-primary-hover); font-weight: 600; }
+  .crumb span[aria-current='page'] { min-inline-size: 0; overflow-wrap: anywhere; }
+  .record-head { margin-block-end: var(--space-5); padding: var(--space-5); border: 1px solid var(--border-default); border-radius: var(--radius-lg); background: var(--surface-panel); }
+  .record-identity { min-inline-size: 0; }
+  .record-head h1 { margin: var(--space-1) 0 var(--space-2); overflow-wrap: anywhere; font-variant-numeric: tabular-nums; }
+  .eyebrow { margin: 0; color: var(--text-muted); font-size: var(--font-size-xs); font-weight: 700; letter-spacing: 0; text-transform: none; }
+  .record-lede { margin: 0; color: var(--text-secondary); font-size: var(--font-size-sm); line-height: 1.5; overflow-wrap: anywhere; }
+  .record-meta { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-3); margin-block-start: var(--space-4); }
+  .version-chip { display: inline-flex; align-items: baseline; gap: var(--space-2); padding: var(--space-1) var(--space-3); border: 1px solid var(--color-border-default); border-radius: 999px; color: var(--text-muted); font-size: var(--font-size-xs); font-variant-numeric: tabular-nums; }
+  .version-chip strong { color: var(--text-primary); font-size: var(--font-size-sm); }
+  .approval-layout { display: grid; grid-template-columns: minmax(0, 1fr) minmax(260px, 22rem); gap: var(--space-5); align-items: start; }
+  .approval-main, .approval-rail { display: grid; gap: var(--space-5); align-content: start; min-inline-size: 0; }
+  .panel { min-inline-size: 0; padding: var(--space-5); border: 1px solid var(--color-border-default); border-radius: var(--radius-lg); background: var(--surface-panel); }
+  .panel h2 { margin: 0; font-size: var(--font-size-lg); }
+  .panel-note { margin: var(--space-2) 0 0; max-inline-size: 65ch; color: var(--text-muted); font-size: var(--font-size-xs); line-height: 1.55; }
+  .facts-grid, .context-grid, .evidence-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-3) var(--space-4); margin: var(--space-4) 0 0; }
+  .facts-grid > div, .context-grid > div, .evidence-grid > div { min-inline-size: 0; padding-block-start: var(--space-3); border-block-start: 1px solid var(--color-border-subtle); }
+  dt { color: var(--text-muted); font-size: var(--font-size-xs); line-height: 1.4; }
+  dd { margin: var(--space-1) 0 0; color: var(--text-primary); font-size: var(--font-size-sm); font-weight: 600; line-height: 1.5; overflow-wrap: anywhere; }
+  .long-value, .context-grid dd { word-break: normal; }
+  .numeric-value { font-variant-numeric: tabular-nums; }
+  .muted { margin: var(--space-3) 0 0; color: var(--text-muted); font-size: var(--font-size-sm); line-height: 1.5; }
+  .evidence-links { display: grid; gap: var(--space-2); margin: var(--space-4) 0 0; padding: 0; list-style: none; }
+  .evidence-links a { display: inline-flex; align-items: center; min-block-size: 44px; color: var(--color-accent-primary-hover); font-size: var(--font-size-sm); font-weight: 600; overflow-wrap: anywhere; }
+  /* The shared journey strip inherits `overflow-wrap: anywhere` from the
+     workspace; on narrow screens that breaks words such as PENDING mid-word.
+     Break-word keeps whole words and still wraps unbreakable identifiers. */
+  .approval-record [data-record-header] .record-state,
+  .approval-record .journey-panel :where(.state-value, p, li, a) { overflow-wrap: break-word; word-break: normal; }
+  .decision { border-block-start: 3px solid var(--color-accent-primary); }
+  .decision-explain { margin: var(--space-3) 0 0; color: var(--text-secondary); font-size: var(--font-size-xs); line-height: 1.55; }
+  .decision form { display: grid; gap: var(--space-4); margin-block-start: var(--space-4); }
+  .decision label { display: grid; gap: var(--space-2); color: var(--text-secondary); font-size: var(--font-size-sm); }
+  .decision select, .decision textarea, .decision input { inline-size: 100%; min-inline-size: 0; padding: var(--space-2) var(--space-3); border: 1px solid var(--control-border); border-radius: var(--radius-sm); background: var(--input-background); color: var(--text-primary); font: inherit; font-size: var(--font-size-sm); }
+  .decision textarea { min-block-size: 6rem; resize: vertical; }
+  .decision select, .decision input { min-block-size: 44px; }
+  .decision :where(select, textarea, input):focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
+  .decision input[aria-invalid='true'], .decision textarea[aria-invalid='true'], .decision select[aria-invalid='true'] { border-color: var(--border-invalid); }
+  .hint { color: var(--text-muted); font-size: var(--font-size-xs); line-height: 1.45; }
+  #reason-error { color: var(--text-danger); font-size: var(--font-size-xs); }
+  .signing-meaning { margin: 0; padding: var(--space-3); border-inline-start: 3px solid var(--status-warning); background: var(--surface-inset); color: var(--text-secondary); font-size: var(--font-size-xs); line-height: 1.55; }
+  .owner-decision-note { margin: 0; padding: var(--space-3); border-inline-start: 3px solid var(--color-accent-primary); background: var(--surface-inset); color: var(--text-secondary); font-size: var(--font-size-xs); line-height: 1.55; overflow-wrap: anywhere; }
+  .owner-decision-note code { font-size: var(--font-size-xs); overflow-wrap: anywhere; }
+  .decision button { inline-size: 100%; min-block-size: 44px; padding: var(--space-2) var(--space-4); border: 1px solid var(--color-accent-primary); border-radius: var(--radius-sm); background: var(--color-accent-primary); color: var(--text-on-accent); font: inherit; font-weight: 700; white-space: normal; cursor: pointer; }
+  .decision button:hover:not(:disabled) { background: var(--color-accent-primary-hover); border-color: var(--color-accent-primary-hover); }
+  .decision button:active:not(:disabled) { background: var(--color-accent-primary-active); border-color: var(--color-accent-primary-active); }
+  .decision button:disabled { opacity: var(--disabled-opacity); cursor: not-allowed; }
+  .decision button:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
+  .action-feedback { display: grid; gap: var(--space-3); }
+  .action-feedback output { min-block-size: 1.25rem; color: var(--text-secondary); font-size: var(--font-size-xs); line-height: 1.5; overflow-wrap: anywhere; }
+  .action-feedback output:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
+  [data-recovery] { display: inline-flex; align-items: center; min-block-size: 44px; color: var(--color-accent-primary-hover); font-size: var(--font-size-sm); font-weight: 600; overflow-wrap: anywhere; }
+  .blocked-action { margin-block-start: var(--space-4); padding: var(--space-4); border-inline-start: 3px solid var(--status-warning); background: var(--surface-inset); border-radius: var(--radius-sm); }
+  .blocked-action h3 { margin: 0; color: var(--text-primary); font-size: var(--font-size-sm); }
+  .blocked-action p { margin: var(--space-2) 0 0; color: var(--text-secondary); font-size: var(--font-size-xs); line-height: 1.55; overflow-wrap: anywhere; }
+  :where(.crumb a, .evidence-links a, [data-recovery]):focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
+  @media (max-width: 820px) { .approval-layout { grid-template-columns: minmax(0, 1fr); } }
+  @media (max-width: 560px) {
+    .record-head, .panel { padding: var(--space-4); }
+    .facts-grid, .context-grid, .evidence-grid { grid-template-columns: minmax(0, 1fr); }
+    .record-meta { align-items: flex-start; }
+  }
+  @media (forced-colors: active) {
+    .record-head, .panel, .version-chip, .blocked-action { border-color: CanvasText; }
+    .decision { border-block-start-color: Highlight; }
+    :where(.crumb a, .evidence-links a, [data-recovery], .decision button):focus-visible { outline: 2px solid Highlight; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .decision button { transition: none; }
+  }
+  @media print {
+    .approval-layout { display: block; }
+    .approval-rail { margin-block-start: var(--space-5); }
+    .record-head, .panel { border-color: var(--color-border-default); background: transparent; break-inside: avoid; }
+    .decision button, [data-recovery] { display: none; }
+  }
 </style>
