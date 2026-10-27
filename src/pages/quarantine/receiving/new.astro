@@ -13,6 +13,7 @@ import {
 import {
   RECEIVING_QUANTITY_UNITS,
 } from '../../../modules/quarantine/receiving/application/presentation.js';
+import { stateLabel } from '../../../shared/copy/ux-vocabulary.js';
 
 const actor = Astro.locals.actor;
 if (!actor) return Astro.redirect('/login?returnTo=%2Fquarantine%2Freceiving%2Fnew');
@@ -93,14 +94,232 @@ if (Astro.request.method === 'POST' && canCreate) {
   }
 }
 
-const describedBy = (name: keyof typeof values): string | undefined =>
-  failure?.fieldErrors[name] ? `${name}-error` : undefined;
+const describedBy = (name: keyof typeof values, ...helpIds: string[]): string | undefined => {
+  const ids = [...(failure?.fieldErrors[name] ? [`${name}-error`] : []), ...helpIds];
+  return ids.length > 0 ? ids.join(' ') : undefined;
+};
 const invalid = (name: keyof typeof values): 'true' | undefined =>
   failure?.fieldErrors[name] ? 'true' : undefined;
 ---
 <AppLayout title="Create receiving item · Quarantine" locale="en" direction="ltr">
-  <PageHeader><Fragment slot="heading"><h1>Create receiving item</h1></Fragment><p class="lede">Register the material identity. New items start as Pending.</p><Fragment slot="actions"><a href="/quarantine/receiving">Back to register</a></Fragment></PageHeader>
-  {canCreate ? <form class="form" method="post" data-action="quarantine.createReceiving">{failure && <FormErrorSummary summary={failure.summary} recovery={failure.recovery} errors={Object.entries(failure.fieldErrors).map(([fieldId, message]) => ({ fieldId, message }))} listHref={LIST_HREF} listLabel="receiving register" />}<fieldset><legend>Receiving identification</legend><div class="fields"><div><label for="receivingNo">Receiving number<span class="hint" id="receivingNo-help">Use the receiving number from your approved source. Reference numbers are assigned automatically.</span><input id="receivingNo" name="receivingNo" required value={values.receivingNo} aria-invalid={invalid('receivingNo')} aria-describedby={failure?.fieldErrors.receivingNo ? 'receivingNo-error receivingNo-help' : 'receivingNo-help'} /></label>{failure?.fieldErrors.receivingNo && <p class="field-error" id="receivingNo-error">{failure.fieldErrors.receivingNo}</p>}</div><div><label for="supplier">Supplier<input id="supplier" name="supplier" required value={values.supplier} aria-invalid={invalid('supplier')} aria-describedby={describedBy('supplier')} /></label>{failure?.fieldErrors.supplier && <p class="field-error" id="supplier-error">{failure.fieldErrors.supplier}</p>}</div><div><label for="docNo">Document number<input id="docNo" name="docNo" required value={values.docNo} aria-invalid={invalid('docNo')} aria-describedby={describedBy('docNo')} /></label>{failure?.fieldErrors.docNo && <p class="field-error" id="docNo-error">{failure.fieldErrors.docNo}</p>}</div></div></fieldset><fieldset><legend>Item and lot</legend><div class="fields"><div><label for="itemCode">Item code<input id="itemCode" name="itemCode" required value={values.itemCode} aria-invalid={invalid('itemCode')} aria-describedby={describedBy('itemCode')} /></label>{failure?.fieldErrors.itemCode && <p class="field-error" id="itemCode-error">{failure.fieldErrors.itemCode}</p>}</div><div><label for="lot">Lot / batch<input id="lot" name="lot" required value={values.lot} aria-invalid={invalid('lot')} aria-describedby={describedBy('lot')} /></label>{failure?.fieldErrors.lot && <p class="field-error" id="lot-error">{failure.fieldErrors.lot}</p>}</div><div class="wide"><label for="description">Description<textarea id="description" name="description" required aria-invalid={invalid('description')} aria-describedby={describedBy('description')}>{values.description}</textarea></label>{failure?.fieldErrors.description && <p class="field-error" id="description-error">{failure.fieldErrors.description}</p>}</div></div></fieldset><fieldset><legend>Quantity and context</legend><div class="fields"><div><label for="qty">Quantity<input id="qty" name="qty" type="number" min="0" step="any" required value={values.qty} aria-invalid={invalid('qty')} aria-describedby={describedBy('qty')} /></label>{failure?.fieldErrors.qty && <p class="field-error" id="qty-error">{failure.fieldErrors.qty}</p>}<div><label for="quantityUnit">Quantity unit<select id="quantityUnit" name="quantityUnit" required aria-describedby="quantityUnit-help"><option value="" disabled selected={!values.quantityUnit}>Select a unit</option>{RECEIVING_QUANTITY_UNITS.map((unit) => (<option value={unit} selected={values.quantityUnit === unit}>{unit}</option>))}</select><span class="hint" id="quantityUnit-help">The unit the received quantity is counted in — never merged into the quantity.</span></label></div><div><label for="purchaseOrderNo">Purchase order<span class="hint" id="purchaseOrderNo-help">Optional — record it when the delivery names one.</span><input id="purchaseOrderNo" name="purchaseOrderNo" value={values.purchaseOrderNo} aria-invalid={invalid('purchaseOrderNo')} aria-describedby={describedBy('purchaseOrderNo')} /></label>{failure?.fieldErrors.purchaseOrderNo && <p class="field-error" id="purchaseOrderNo-error">{failure.fieldErrors.purchaseOrderNo}</p>}</div></div><div><label for="receivingDate">Receiving date<input id="receivingDate" name="receivingDate" type="date" required value={values.receivingDate} aria-invalid={invalid('receivingDate')} aria-describedby={describedBy('receivingDate')} /></label>{failure?.fieldErrors.receivingDate && <p class="field-error" id="receivingDate-error">{failure.fieldErrors.receivingDate}</p>}</div><div><label for="expiryDate">Expiry date<input id="expiryDate" name="expiryDate" type="date" value={values.expiryDate} /></label></div></div></fieldset><div class="actions"><a class="secondary" href="/quarantine/receiving">Cancel</a><button type="submit" data-submit>Create receiving item</button></div><p role="status" data-result tabindex="-1"></p></form> : <section class="denied" role="alert"><h2>Creation is not available</h2><p>Your account does not have the explicit Quarantine create permission.</p></section>}
+  <div class="new-receiving">
+    <PageHeader purpose="Register the material identity. New items start as Pending.">
+      <Fragment slot="heading"><h1>Create receiving item</h1></Fragment>
+      <Fragment slot="actions"><a href={LIST_HREF}>Back to register</a></Fragment>
+    </PageHeader>
+
+    <section class="starting-state" aria-labelledby="starting-state-title">
+      <h2 id="starting-state-title">Starting state</h2>
+      <p class="section-note">
+        Every new item starts here. Inspection result and release are separate facts: creating
+        this item does not perform an inspection and does not release material.
+      </p>
+      <dl class="state-facts">
+        <div>
+          <dt>Receiving state</dt>
+          <dd>{stateLabel('PENDING')}</dd>
+        </div>
+        <div>
+          <dt>Inspection result</dt>
+          <dd>{stateLabel('NOT_STARTED')}</dd>
+        </div>
+        <div>
+          <dt>Release System State</dt>
+          <dd class="not-released">NOT_RELEASED</dd>
+        </div>
+      </dl>
+    </section>
+
+    {canCreate ? (
+      <form class="form" method="post" data-action="quarantine.createReceiving">
+        {failure && (
+          <FormErrorSummary
+            summary={failure.summary}
+            recovery={failure.recovery}
+            errors={Object.entries(failure.fieldErrors).map(([fieldId, message]) => ({ fieldId, message }))}
+            listHref={LIST_HREF}
+            listLabel="receiving register"
+          />
+        )}
+
+        <fieldset>
+          <legend>Receiving identification</legend>
+          <div class="field-grid">
+            <div class="field field-wide">
+              <label for="receivingNo">Receiving number</label>
+              <p class="hint" id="receivingNo-help">Use the receiving number from your approved source. Reference numbers are assigned automatically.</p>
+              <input
+                id="receivingNo"
+                name="receivingNo"
+                required
+                value={values.receivingNo}
+                aria-invalid={invalid('receivingNo')}
+                aria-describedby={describedBy('receivingNo', 'receivingNo-help')}
+              />
+              {failure?.fieldErrors.receivingNo && <p class="field-error" id="receivingNo-error">{failure.fieldErrors.receivingNo}</p>}
+            </div>
+
+            <div class="field">
+              <label for="supplier">Supplier</label>
+              <input
+                id="supplier"
+                name="supplier"
+                required
+                value={values.supplier}
+                aria-invalid={invalid('supplier')}
+                aria-describedby={describedBy('supplier')}
+              />
+              {failure?.fieldErrors.supplier && <p class="field-error" id="supplier-error">{failure.fieldErrors.supplier}</p>}
+            </div>
+
+            <div class="field">
+              <label for="docNo">Document number</label>
+              <input
+                id="docNo"
+                name="docNo"
+                required
+                value={values.docNo}
+                aria-invalid={invalid('docNo')}
+                aria-describedby={describedBy('docNo')}
+              />
+              {failure?.fieldErrors.docNo && <p class="field-error" id="docNo-error">{failure.fieldErrors.docNo}</p>}
+            </div>
+          </div>
+        </fieldset>
+
+        <fieldset>
+          <legend>Item and lot</legend>
+          <div class="field-grid">
+            <div class="field">
+              <label for="itemCode">Item code</label>
+              <input
+                id="itemCode"
+                name="itemCode"
+                required
+                value={values.itemCode}
+                aria-invalid={invalid('itemCode')}
+                aria-describedby={describedBy('itemCode')}
+              />
+              {failure?.fieldErrors.itemCode && <p class="field-error" id="itemCode-error">{failure.fieldErrors.itemCode}</p>}
+            </div>
+
+            <div class="field">
+              <label for="lot">Lot / batch</label>
+              <input
+                id="lot"
+                name="lot"
+                required
+                value={values.lot}
+                aria-invalid={invalid('lot')}
+                aria-describedby={describedBy('lot')}
+              />
+              {failure?.fieldErrors.lot && <p class="field-error" id="lot-error">{failure.fieldErrors.lot}</p>}
+            </div>
+
+            <div class="field field-wide">
+              <label for="description">Description</label>
+              <textarea
+                id="description"
+                name="description"
+                required
+                aria-invalid={invalid('description')}
+                aria-describedby={describedBy('description')}
+              >{values.description}</textarea>
+              {failure?.fieldErrors.description && <p class="field-error" id="description-error">{failure.fieldErrors.description}</p>}
+            </div>
+          </div>
+        </fieldset>
+
+        <fieldset>
+          <legend>Quantity and context</legend>
+          <div class="field-grid">
+            <div class="field">
+              <label for="qty">Quantity</label>
+              <input
+                id="qty"
+                name="qty"
+                type="number"
+                min="0"
+                step="any"
+                required
+                value={values.qty}
+                aria-invalid={invalid('qty')}
+                aria-describedby={describedBy('qty')}
+              />
+              {failure?.fieldErrors.qty && <p class="field-error" id="qty-error">{failure.fieldErrors.qty}</p>}
+            </div>
+
+            <div class="field">
+              <label for="quantityUnit">Quantity unit</label>
+              <select
+                id="quantityUnit"
+                name="quantityUnit"
+                required
+                aria-invalid={invalid('quantityUnit')}
+                aria-describedby={describedBy('quantityUnit', 'quantityUnit-help')}
+              >
+                <option value="" disabled selected={!values.quantityUnit}>Select a unit</option>
+                {RECEIVING_QUANTITY_UNITS.map((unit) => (<option value={unit} selected={values.quantityUnit === unit}>{unit}</option>))}
+              </select>
+              <p class="hint" id="quantityUnit-help">The unit the received quantity is counted in — never merged into the quantity.</p>
+              {failure?.fieldErrors.quantityUnit && <p class="field-error" id="quantityUnit-error">{failure.fieldErrors.quantityUnit}</p>}
+            </div>
+
+            <div class="field field-wide">
+              <label for="purchaseOrderNo">Purchase order</label>
+              <p class="hint" id="purchaseOrderNo-help">Optional — record it when the delivery names one.</p>
+              <input
+                id="purchaseOrderNo"
+                name="purchaseOrderNo"
+                value={values.purchaseOrderNo}
+                aria-invalid={invalid('purchaseOrderNo')}
+                aria-describedby={describedBy('purchaseOrderNo', 'purchaseOrderNo-help')}
+              />
+              {failure?.fieldErrors.purchaseOrderNo && <p class="field-error" id="purchaseOrderNo-error">{failure.fieldErrors.purchaseOrderNo}</p>}
+            </div>
+
+            <div class="field">
+              <label for="receivingDate">Receiving date</label>
+              <input
+                id="receivingDate"
+                name="receivingDate"
+                type="date"
+                required
+                value={values.receivingDate}
+                aria-invalid={invalid('receivingDate')}
+                aria-describedby={describedBy('receivingDate')}
+              />
+              {failure?.fieldErrors.receivingDate && <p class="field-error" id="receivingDate-error">{failure.fieldErrors.receivingDate}</p>}
+            </div>
+
+            <div class="field">
+              <label for="expiryDate">Expiry date</label>
+              <input
+                id="expiryDate"
+                name="expiryDate"
+                type="date"
+                value={values.expiryDate}
+                aria-invalid={invalid('expiryDate')}
+                aria-describedby={describedBy('expiryDate')}
+              />
+              {failure?.fieldErrors.expiryDate && <p class="field-error" id="expiryDate-error">{failure.fieldErrors.expiryDate}</p>}
+            </div>
+          </div>
+        </fieldset>
+
+        <div class="actions">
+          <a class="secondary" href={LIST_HREF}>Cancel</a>
+          <button type="submit" data-submit>Create receiving item</button>
+        </div>
+        <p class="result-status" role="status" aria-live="polite" data-result tabindex="-1"></p>
+      </form>
+    ) : (
+      <section class="denied" role="alert">
+        <h2>Creation is not available</h2>
+        <p>Your account does not have the explicit Quarantine create permission.</p>
+      </section>
+    )}
+  </div>
 </AppLayout>
 <script>
   import { actions } from 'astro:actions';
@@ -132,5 +351,220 @@ const invalid = (name: keyof typeof values): 'true' | undefined =>
   }
 </script>
 <style>
-  .page-head{display:flex;justify-content:space-between;gap:var(--space-5);align-items:flex-start;margin-bottom:var(--space-6)}h1{margin:.25rem 0 .4rem}.eyebrow{margin:0;color:var(--text-muted);font-size:.75rem;letter-spacing:.12em;font-weight:700}.lede,.denied p,.hint{color:var(--text-muted);font-size:.85rem}.hint{font-size:.78rem}.page-head a{color:var(--color-accent-primary-hover)}.form{max-width:900px;display:grid;gap:var(--space-5)}fieldset{display:grid;gap:var(--space-4);padding:var(--space-5);border:1px solid var(--color-border-subtle);border-radius:var(--radius-lg);background:var(--surface-panel)}legend{padding-inline:.5rem;color:var(--text-primary);font-weight:700}.fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--space-4)}.fields>div{display:grid;gap:.4rem;color:var(--text-secondary);font-size:.82rem}.wide{grid-column:1/-1}label{display:grid;gap:.4rem}input,textarea{width:100%;min-height:var(--control-height);padding:.65rem;background:var(--surface-raised);border:1px solid var(--border-default);border-radius:var(--radius-sm);color:inherit;font:inherit}input[aria-invalid="true"],textarea[aria-invalid="true"]{border-color:var(--status-danger)}.field-error{margin:0;color:var(--status-danger);font-size:.8rem}textarea{min-height:7rem;resize:vertical}.actions{display:flex;justify-content:flex-end;gap:var(--space-3)}button{min-height:var(--control-height);padding-inline:1rem;border:1px solid var(--color-accent-primary);border-radius:var(--radius-sm);background:var(--color-accent-primary);color:var(--text-on-accent);font-weight:700}button[disabled]{opacity:.6}.secondary{border-color:var(--border-default);background:var(--surface-raised);color:var(--text-primary);text-decoration:none;padding:.65rem 1rem;border:1px solid var(--border-default);border-radius:var(--radius-sm)}.denied{padding:var(--space-6);border-inline-start:3px solid var(--status-warning);background:var(--surface-panel)}@media(max-width:650px){.page-head{display:grid}.fields{grid-template-columns:1fr}.wide{grid-column:auto}.actions{justify-content:stretch;display:grid}}
+  .new-receiving { min-inline-size: 0; }
+
+  .starting-state {
+    inline-size: min(100%, 56rem);
+    margin-block-end: var(--space-5);
+    padding: var(--space-4) var(--space-5);
+    border: 1px solid var(--color-border-subtle);
+    border-inline-start: 3px solid var(--color-accent-primary);
+    border-radius: var(--radius-lg);
+    background: var(--surface-panel);
+  }
+  .starting-state h2 {
+    margin: 0;
+    color: var(--text-primary);
+    font-size: var(--font-size-lg);
+    line-height: var(--line-height-tight);
+  }
+  .section-note {
+    margin: var(--space-2) 0 var(--space-4);
+    max-inline-size: 70ch;
+    color: var(--text-secondary);
+    font-size: var(--font-size-sm);
+    line-height: var(--line-height-relaxed);
+    overflow-wrap: anywhere;
+  }
+  .state-facts {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--space-3);
+    margin: 0;
+  }
+  .state-facts > div {
+    min-inline-size: 0;
+    display: grid;
+    gap: var(--space-1);
+  }
+  .state-facts dt {
+    color: var(--text-muted);
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-semibold);
+    overflow-wrap: anywhere;
+  }
+  .state-facts dd {
+    margin: 0;
+    color: var(--text-primary);
+    font-size: var(--font-size-sm);
+    font-weight: 700;
+    overflow-wrap: anywhere;
+  }
+  .state-facts .not-released { font-variant-numeric: tabular-nums; letter-spacing: 0.02em; }
+
+  .form {
+    inline-size: min(100%, 56rem);
+    display: grid;
+    gap: var(--space-5);
+    margin: 0;
+    min-inline-size: 0;
+  }
+  fieldset {
+    min-inline-size: 0;
+    margin: 0;
+    padding: clamp(var(--space-4), 3vw, var(--space-6));
+    border: 1px solid var(--color-border-subtle);
+    border-radius: var(--radius-lg);
+    background: var(--surface-panel);
+  }
+  legend {
+    padding-inline: 0.5rem;
+    color: var(--text-primary);
+    font-size: var(--font-size-lg);
+    font-weight: 700;
+  }
+
+  .field-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--space-5);
+    align-items: start;
+  }
+  .field { min-inline-size: 0; }
+  .field-wide { grid-column: 1 / -1; }
+
+  label {
+    display: block;
+    color: var(--text-primary);
+    font-size: var(--font-size-sm);
+    font-weight: 600;
+  }
+  .hint {
+    margin: var(--space-1) 0 var(--space-2);
+    color: var(--text-secondary);
+    font-size: var(--font-size-xs);
+    line-height: var(--line-height-normal);
+    overflow-wrap: anywhere;
+  }
+  input,
+  select,
+  textarea {
+    box-sizing: border-box;
+    inline-size: 100%;
+    min-block-size: max(var(--control-height), 44px);
+    padding: 0.65rem;
+    background: var(--surface-raised);
+    border: 1px solid var(--border-default);
+    border-radius: var(--radius-sm);
+    color: var(--text-primary);
+    font: inherit;
+    min-inline-size: 0;
+  }
+  textarea { min-block-size: 7rem; resize: vertical; }
+  input[aria-invalid='true'],
+  select[aria-invalid='true'],
+  textarea[aria-invalid='true'] { border-color: var(--status-danger); }
+  .field-error {
+    margin: var(--space-2) 0 0;
+    color: var(--status-danger);
+    font-size: var(--font-size-sm);
+    line-height: var(--line-height-normal);
+  }
+
+  .actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: flex-end;
+    gap: var(--space-3);
+  }
+  .actions .secondary,
+  .actions button {
+    box-sizing: border-box;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-block-size: max(var(--control-height), 44px);
+    padding: 0.65rem 1rem;
+    border: 1px solid var(--border-default);
+    border-radius: var(--radius-sm);
+    font: inherit;
+    font-weight: 700;
+    text-align: center;
+    text-decoration: none;
+  }
+  .actions .secondary {
+    background: var(--surface-raised);
+    color: var(--text-primary);
+  }
+  .actions button {
+    border-color: var(--color-accent-primary);
+    background: var(--color-accent-primary);
+    color: var(--text-on-accent);
+  }
+  button[disabled] { opacity: 0.6; cursor: not-allowed; }
+
+  .result-status {
+    margin: 0;
+    color: var(--text-secondary);
+    font-size: var(--font-size-sm);
+    line-height: var(--line-height-normal);
+    overflow-wrap: anywhere;
+  }
+  .result-status:empty { min-block-size: 0; }
+  .result-status:focus-visible {
+    outline: 2px solid var(--focus-ring);
+    outline-offset: 2px;
+  }
+
+  a:focus-visible,
+  button:focus-visible,
+  input:focus-visible,
+  select:focus-visible,
+  textarea:focus-visible {
+    outline: 2px solid var(--focus-ring);
+    outline-offset: 2px;
+  }
+
+  .denied {
+    padding: var(--space-6);
+    border: 1px solid var(--color-border-subtle);
+    border-inline-start: 3px solid var(--status-warning);
+    border-radius: var(--radius-lg);
+    background: var(--surface-panel);
+  }
+  .denied h2 {
+    margin: 0 0 var(--space-2);
+    color: var(--text-primary);
+    font-size: var(--font-size-lg);
+    line-height: var(--line-height-tight);
+  }
+  .denied p {
+    margin: 0;
+    color: var(--text-secondary);
+    font-size: var(--font-size-sm);
+    line-height: var(--line-height-relaxed);
+  }
+
+  @media (min-width: 40rem) {
+    .state-facts { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  }
+  @media (min-width: 64rem) {
+    .field-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  }
+  @media (max-width: 40rem) {
+    .actions { display: grid; grid-template-columns: 1fr; }
+    .actions > * { inline-size: 100%; }
+  }
+  @media (forced-colors: active) {
+    fieldset,
+    .starting-state,
+    .denied,
+    input,
+    select,
+    textarea,
+    .actions .secondary,
+    .actions button { border: 1px solid ButtonText; }
+    .field-error { color: CanvasText; }
+  }
 </style>

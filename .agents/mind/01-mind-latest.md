@@ -1,3 +1,12 @@
+- **2026-10-23 — CA-P-QUARANTINE-RECEIVING-NEW / CAPA A create-receiving form**
+  - Changed: `/quarantine/receiving/new` now has one header/purpose, a read-only starting-state panel that keeps Inspection result separate from Release System State, three grouped fieldsets, one column on narrow screens and two only for independent fields on wide screens, shared label/help/error wiring (expiry date and quantity unit now surface their existing server field errors), and a 44px Cancel/Create action row; the single `data-result` status region stays canonical. Field names/values, native POST, `quarantine.createReceiving` payload, `PERM-QUAR-CREATE` gate, enhance/unsaved wiring and Sidebar are unchanged. No API/schema/policy/inspection-release change.
+  - Evidence: NOT RUN by task instruction (no tests/typecheck/lint/build/browser/QA); source and textual `git diff` review only. Literal visual-reference match not confirmed.
+  - State: DONE — code edit only; untested.
+  - Key files: `src/pages/quarantine/receiving/new.astro`.
+- **2026-10-23 — CODEX-MCP-REPAIR / إصلاح اتصالات MCP**
+  - Changed: OAuth لـ21st وNeon اكتمل؛ `.codex/config.toml` يربط caveman-shrink بـPlaywright، يضبط Chrome/Playwright بـ`npx -y` ومهلة 60 ثانية، ويثبت PostgreSQL MCP على Node 24.20.0 ويمرر متغيري DataForSEO المسموحين.
+  - Evidence: Neon `describe_project` PASS؛ 21st `get_profile` و`get_usage` PASS، بينما `search` أخفق من catalog؛ إعدادات MCP تُقرأ بصيغة TOML. الجلسة الحالية تُظهر أدوات 21st/Neon بعد تسجيل الدخول.
+  - State: PARTIAL — لم تُعد جلسة Codex للتحقق من خوادم stdio. DataForSEO بلا بيانات دخول، وOpen Design وcomputer-use binaries غير موجودة محليًا؛ Code Review وcodex_app معطلان في مضيف MCP رغم تفعيل إضافاتهما.
 - **2026-10-23 — CA-P-QUARANTINE-RECEIVING / CAPA A receiving register**
   - Changed: `/quarantine/receiving` now reads header → server filter panel (same native GET fields) + applied chips → one canonical count → focusable wide register → offset pager; long receiving numbers/item codes/lots wrap instead of truncating, row links meet 44px, and `Receiving state`, `Inspection result`, `Quarantine status` and `Release system state` stay separate columns (workflow state is the existing list projection). Filters, read use case, guards, create/open links and Sidebar unchanged; no export, mutation, measurement, limit or policy added.
   - Evidence: NOT RUN by task instruction (no tests/typecheck/lint/build/browser/QA); source and textual `git diff` review only. Literal visual-reference match not confirmed.

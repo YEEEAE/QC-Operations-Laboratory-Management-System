@@ -132,6 +132,7 @@ const FILTER_CHIP_SURFACES = [
   'src/pages/laboratory/tests/index.astro',
   'src/pages/quarantine/inspections/index.astro',
   'src/pages/quarantine/receiving/index.astro',
+  'src/pages/reject-reports/index.astro',
   'src/pages/tasks/index.astro',
 ];
 

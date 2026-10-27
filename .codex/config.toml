@@ -15,7 +15,22 @@ command = "npx"
 args = [
     "-y",
     "caveman-shrink",
+    "npx",
+    "-y",
+    "@playwright/mcp@latest",
 ]
+startup_timeout_sec = 60
+
+# Install the official browser MCP launchers non-interactively on first run.
+[mcp_servers.chrome-devtools]
+command = "npx"
+args = ["-y", "chrome-devtools-mcp@1.8.0"]
+startup_timeout_sec = 60
+
+[mcp_servers.playwright]
+command = "npx"
+args = ["-y", "@playwright/mcp@latest"]
+startup_timeout_sec = 60
 
 # Official DataForSEO MCP server. Credentials must be supplied in the
 # parent environment as DATAFORSEO_LOGIN and DATAFORSEO_PASSWORD.
@@ -25,12 +40,13 @@ args = [
     "-y",
     "dataforseo-mcp-server@latest",
 ]
+env_vars = ["DATAFORSEO_LOGIN", "DATAFORSEO_PASSWORD"]
 
 # Read-only PostgreSQL inspection and performance analysis.
 # The launcher loads the allowlisted DATABASE_URL from the ignored .env file
 # and maps it to the DATABASE_URI expected by postgres-mcp.
 [mcp_servers.postgres]
-command = "node"
+command = "/Users/yzydalshmry/.nvm/versions/node/v24.20.0/bin/node"
 args = [
     "--experimental-strip-types",
     "scripts/mcp/postgres-mcp.ts",
@@ -38,7 +54,7 @@ args = [
 cwd = "."
 env_vars = ["DATABASE_URL"]
 default_tools_approval_mode = "prompt"
-startup_timeout_sec = 30
+startup_timeout_sec = 60
 tool_timeout_sec = 60
 
 [mcp_servers.Neon]
