@@ -2,10 +2,10 @@
  * QC-100-FINAL-019 — Guarded local master-data import/preflight CLI.
  *
  * Usage:
- *   tsx scripts/data/run-master-data-import.ts --entity equipment --dataset <file.json>
- *   tsx scripts/data/run-master-data-import.ts --entity equipment --dataset <file.json> --apply --report <new-report.json>
+ *   tsx scripts/data/run-master-data-import.ts --entity equipment --dataset <source.csv> --mapping '{"Equipment No":"equipment_no"}'
+ *   tsx scripts/data/run-master-data-import.ts --entity equipment --dataset <approved-source.csv> --mapping '<reviewed-json>' --apply --approval-revision <uuid> --actor-id <uuid> --request-id <uuid>
  *
- * Default mode is a READ-ONLY dry run (preflight + reconciliation preview).
+ * Default mode is a READ-ONLY local preflight (validation + duplicate/conflict preview).
  * `--apply` writes inside one atomic transaction and is gated by:
  *   NODE_ENV in {development,test}
  *   QC_SEED_ALLOW_NON_PRODUCTION=true
@@ -27,8 +27,11 @@ import type { ImportRow } from './import-preflight.js';
 import {
   applyImport,
   createReferenceChecker,
+  mapImportHeaders,
   loadExistingKeys,
+  parseCsvRecords,
   preflightImport,
+  type HeaderMapping,
 } from './import-preflight.js';
 import { getRegisteredDataset } from './registered-datasets.js';
 
@@ -60,6 +63,10 @@ export interface ImportCliOptions {
   datasetPath: string;
   reportPath?: string;
   apply: boolean;
+  approvalRevisionId?: string;
+  actorId?: string;
+  mapping?: HeaderMapping;
+  requestId?: string;
 }
 
 export function parseArgs(argv: readonly string[]): ImportCliOptions {
@@ -67,17 +74,29 @@ export function parseArgs(argv: readonly string[]): ImportCliOptions {
   let datasetPath: string | undefined;
   let reportPath: string | undefined;
   let apply = false;
+  let approvalRevisionId: string | undefined;
+  let actorId: string | undefined;
+  let mapping: HeaderMapping | undefined;
+  let requestId: string | undefined;
   for (let i = 0; i < argv.length; i += 1) {
     const arg = argv[i];
     if (arg === '--entity') entityKey = argv[++i];
     else if (arg === '--dataset') datasetPath = argv[++i];
     else if (arg === '--report') reportPath = argv[++i];
     else if (arg === '--apply') apply = true;
+    else if (arg === '--approval-revision') approvalRevisionId = argv[++i];
+    else if (arg === '--actor-id') actorId = argv[++i];
+    else if (arg === '--mapping') {
+      try { mapping = JSON.parse(argv[++i] ?? '') as HeaderMapping; }
+      catch { fail('--mapping must be a JSON object mapping CSV headers to governed fields.'); }
+    }
+    else if (arg === '--request-id') requestId = argv[++i];
     else fail(`Unknown argument: ${arg}`);
   }
   if (!entityKey) fail('--entity is required.');
   if (!datasetPath) fail('--dataset is required.');
-  return { entityKey, datasetPath, reportPath, apply };
+  if (apply && (!approvalRevisionId || !actorId || !requestId)) fail('--apply requires --approval-revision, --actor-id, and --request-id.');
+  return { entityKey, datasetPath, reportPath, apply, approvalRevisionId, actorId, mapping, requestId };
 }
 
 function assertReadGuard(env: NodeJS.ProcessEnv): void {
@@ -124,16 +143,42 @@ export async function runImportCli(
     fail(`Refusing to overwrite existing report: ${options.reportPath}`);
   }
   const rawDataset = readFileSync(options.datasetPath, 'utf8');
-  const rows = parseDatasetFile(rawDataset, options.entityKey);
+  let rows: ImportRow[];
+  if (/^\s*[\[{]/.test(rawDataset)) rows = parseDatasetFile(rawDataset, options.entityKey);
+  else {
+    const csv = parseCsvRecords(rawDataset);
+    if (!options.mapping) fail('CSV imports require a reviewed --mapping JSON object.');
+    rows = mapImportHeaders(csv.headers, csv.records, options.mapping);
+  }
 
   const pool = createPool({
     ...getDatabaseConnectionConfig(env.DATABASE_URL),
     application_name: 'qc-master-data-import',
   });
   try {
+    if (options.apply) {
+      const priorReceipt = await pool.query<{ import_state: string }>(
+        `SELECT import_state FROM qc.master_data_import_revisions WHERE id = $1 AND dataset_key = $2`,
+        [options.approvalRevisionId, options.entityKey],
+      );
+      if (priorReceipt.rows[0]?.import_state === 'IMPORTED') {
+        const client = await pool.connect();
+        try {
+          const applied = await applyImport({
+            client, spec, rows, actorId: options.actorId!, approvalRevisionId: options.approvalRevisionId!,
+            sourceBytes: rawDataset, mapping: options.mapping ?? {}, requestId: options.requestId!,
+          });
+          return { mode: 'APPLY', entity: entity.key, approvalRevisionId: options.approvalRevisionId,
+            counts: { total: rows.length }, apply: applied, replayed: true };
+        } finally { client.release(); }
+      }
+    }
     const existingKeys = await loadExistingKeys(pool, spec);
     const referenceExists = createReferenceChecker((sql, params) => pool.query(sql, params));
     const report = await preflightImport(spec, rows, { existingKeys, referenceExists });
+    if (options.apply && (report.issues.length > 0 || report.counts.alreadyPresent > 0)) {
+      fail('Import is blocked: resolve every line-level validation issue and existing-record conflict before applying.');
+    }
     const rejectionExamples = report.issues.slice(0, 5);
     if (!options.apply) {
       const result = {
@@ -149,6 +194,7 @@ export async function runImportCli(
           datasetSha256: createHash('sha256').update(rawDataset).digest('hex'),
         },
         counts: report.counts,
+        issues: report.issues,
         rejectionExamples,
         reconciliation: {
           existingMatches: report.counts.alreadyPresent,
@@ -167,7 +213,11 @@ export async function runImportCli(
         client,
         spec,
         rows: report.readyRows,
-        actorId: '',
+        actorId: options.actorId!,
+        approvalRevisionId: options.approvalRevisionId!,
+        sourceBytes: rawDataset,
+        mapping: options.mapping ?? {},
+        requestId: options.requestId!,
       });
       const result = {
         mode: 'APPLY',
@@ -180,6 +230,7 @@ export async function runImportCli(
           datasetSha256: createHash('sha256').update(rawDataset).digest('hex'),
         },
         counts: report.counts,
+        issues: report.issues,
         rejectionExamples,
         apply: applied,
       };

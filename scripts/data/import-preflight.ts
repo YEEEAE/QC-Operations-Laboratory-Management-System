@@ -18,7 +18,9 @@
  * lives in the same module but is only reached when a caller opts in.
  */
 
+import { createHash } from 'node:crypto';
 import type { Pool, PoolClient } from 'pg';
+import { uuidv7 } from '../../src/shared/id/uuid.js';
 
 export type IssueCode =
   | 'MISSING_REQUIRED_FIELD'
@@ -40,6 +42,62 @@ export interface ReferenceRule {
   parentTable: string;
   parentColumn: string;
   required: boolean;
+}
+
+export interface HeaderMapping {
+  /** Source CSV header -> governed field name. */
+  readonly [sourceHeader: string]: string;
+}
+
+/** Parse RFC4180-style quoted cells without accepting executable file formats. */
+export function parseCsvRecords(source: string): { headers: string[]; records: ImportRow[] } {
+  const rows: string[][] = [];
+  let row: string[] = [];
+  let cell = '';
+  let quoted = false;
+  for (let index = 0; index < source.length; index += 1) {
+    const char = source[index]!;
+    if (quoted) {
+      if (char === '"' && source[index + 1] === '"') { cell += '"'; index += 1; }
+      else if (char === '"') quoted = false;
+      else cell += char;
+    } else if (char === '"' && cell.length === 0) quoted = true;
+    else if (char === ',') { row.push(cell); cell = ''; }
+    else if (char === '\n' || char === '\r') {
+      if (char === '\r' && source[index + 1] === '\n') index += 1;
+      row.push(cell); cell = '';
+      if (row.some((value) => value.length > 0)) rows.push(row);
+      row = [];
+    } else cell += char;
+  }
+  if (quoted) throw new Error('CSV contains an unterminated quoted field.');
+  row.push(cell);
+  if (row.some((value) => value.length > 0)) rows.push(row);
+  const headers = (rows.shift() ?? []).map((header) => header.trim());
+  if (!headers.length || headers.some((header) => !header)) throw new Error('CSV requires non-empty headers.');
+  if (new Set(headers).size !== headers.length) throw new Error('CSV contains duplicate headers.');
+  return { headers, records: rows.map((cells) => Object.fromEntries(headers.map((header, index) => [header, cells[index] ?? '']))) };
+}
+
+/** Map caller-reviewed headers to the registered source contract; unmapped cells are ignored. */
+export function mapImportHeaders(
+  headers: readonly string[],
+  records: readonly ImportRow[],
+  mapping: HeaderMapping,
+): ImportRow[] {
+  const knownHeaders = new Set(headers);
+  const targets = Object.values(mapping).filter(Boolean);
+  if (Object.keys(mapping).some((header) => !knownHeaders.has(header))) {
+    throw new Error('Header mapping refers to a source header that is not present.');
+  }
+  if (new Set(targets).size !== targets.length) throw new Error('Two source headers cannot map to the same governed field.');
+  return records.map((record) => Object.fromEntries(Object.entries(mapping).filter(([, target]) => target).map(([header, target]) => [target, record[header]])));
+}
+
+/** SHA-256 of the exact uploaded source bytes; mapping is stored separately in the intent. */
+export function importIntentSha256(source: string, mapping: HeaderMapping): string {
+  const canonicalMapping = Object.entries(mapping).sort(([a], [b]) => a.localeCompare(b));
+  return createHash('sha256').update(`${source.length}:${source}\n${JSON.stringify(canonicalMapping)}`).digest('hex');
 }
 
 export interface ImportDatasetSpec {
@@ -225,6 +283,12 @@ export async function preflightImport(
       seenKeys.add(tuple);
       if (context.existingKeys.has(tuple)) {
         alreadyPresent = true;
+        issues.push({
+          rowNumber,
+          code: 'DUPLICATE_EXISTING',
+          field: spec.conflictTarget.join(','),
+          detail: `Business key '${tuple.split(TUPLE_SEPARATOR).join('/')}' already exists; verify for conflict before import.`,
+        });
       }
     }
 
@@ -321,6 +385,10 @@ export interface ApplyImportOptions {
   spec: ImportDatasetSpec;
   rows: readonly ImportRow[];
   actorId: string;
+  approvalRevisionId: string;
+  sourceBytes: string;
+  mapping: HeaderMapping;
+  requestId: string;
   /** Progress hook; used by the CLI. Tests use it to inject an interruption. */
   onAfterRow?: (rowNumber: number) => void | Promise<void>;
 }
@@ -336,7 +404,9 @@ export interface ApplyImportOptions {
  * rerun of the same dataset inserts nothing new.
  */
 export async function applyImport(options: ApplyImportOptions): Promise<ApplyResult> {
-  const { client, spec, rows, actorId, onAfterRow } = options;
+  const { client, spec, rows, actorId, approvalRevisionId, sourceBytes, mapping, requestId, onAfterRow } = options;
+  const sourceSha256 = importIntentSha256(sourceBytes, mapping);
+  const fingerprint = createHash('sha256').update(JSON.stringify({ approvalRevisionId, sourceSha256, rows })).digest('hex');
   const columns = [
     ...new Set([
       ...spec.fields.map((field) => field.column),
@@ -354,6 +424,25 @@ export async function applyImport(options: ApplyImportOptions): Promise<ApplyRes
 
   await client.query('BEGIN');
   try {
+    const approvedRevision = await client.query(
+      `SELECT id, approval_state, import_state, import_request_id, import_fingerprint, import_result
+       FROM qc.master_data_import_revisions
+       WHERE id = $1 AND dataset_key = $2 AND content_sha256 = $3
+       FOR UPDATE`,
+      [approvalRevisionId, spec.entityKey, sourceSha256],
+    );
+    if (approvedRevision.rows.length !== 1) {
+      throw new Error('Import requires a matching owner-approved source revision that has not been imported.');
+    }
+    const approvalRow = approvedRevision.rows[0] as { approval_state: string; import_state: string; import_request_id: string | null; import_fingerprint: string | null; import_result: ApplyResult | null };
+    if (approvalRow.approval_state !== 'APPROVED') throw new Error('Import requires an owner-approved source revision.');
+    if (approvalRow.import_state === 'IMPORTED') {
+      if (approvalRow.import_request_id !== requestId || approvalRow.import_fingerprint !== fingerprint || !approvalRow.import_result) {
+        throw new Error('This approved revision was already imported with a different command.');
+      }
+      await client.query('COMMIT');
+      return approvalRow.import_result;
+    }
     let inserted = 0;
     for (let index = 0; index < rows.length; index += 1) {
       const row = rows[index];
@@ -387,6 +476,34 @@ export async function applyImport(options: ApplyImportOptions): Promise<ApplyRes
         `Master-data reconciliation failed for '${spec.entityKey}': expected ${keys.length}, observed ${observed}.`,
       );
     }
+
+    await client.query(
+      `UPDATE qc.master_data_import_revisions SET import_state = 'IMPORTED', import_request_id = $2,
+       import_fingerprint = $3, import_result = $4::jsonb, version = version + 1 WHERE id = $1`,
+      [approvalRevisionId, requestId, fingerprint, JSON.stringify({
+        entityKey: spec.entityKey, inserted, skippedExisting: rows.length - inserted,
+        expected: keys.length, observed, reconciled: observed === keys.length,
+      })],
+    );
+    const auditEventId = uuidv7();
+    await client.query(
+      `INSERT INTO qc.audit_events
+       (id, actor_type, actor_id, subject_type, subject_id, action, old_state, new_state, reason, request_id, payload)
+       VALUES ($1, 'USER', $2, 'MASTER_DATA_REVISION', $3, 'IMPORT_MASTER_DATA', 'APPROVED', 'IMPORTED',
+         'Registered adapter imported an owner-approved revision', $4, $5::jsonb)`,
+      [auditEventId, actorId, approvalRevisionId, requestId, JSON.stringify({
+        datasetKey: spec.entityKey, contentSha256: sourceSha256,
+        inserted, skippedExisting: rows.length - inserted,
+      })],
+    );
+    await client.query(
+      `INSERT INTO qc.master_data_approval_events
+       (revision_id, event_type, actor_id, owner_authority, owner_login_identity, content_sha256, request_id, audit_event_id, reason, signature_deferred)
+       SELECT id, 'IMPORT_COMPLETED', $3, NULL, NULL, content_sha256, $2, $4,
+         'Approved revision imported through its registered adapter', FALSE
+       FROM qc.master_data_import_revisions WHERE id = $1`,
+      [approvalRevisionId, requestId, actorId, auditEventId],
+    );
 
     await client.query('COMMIT');
     return {

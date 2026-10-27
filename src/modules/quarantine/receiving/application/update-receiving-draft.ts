@@ -3,6 +3,7 @@ import { AppError } from '../../../../shared/errors/app-error.js';
 import type { ActorContext } from '../../../../shared/authorization/types.js';
 import { assertExpiryNotBeforeReceiving } from '../domain/receiving-item.js';
 import type { ReceivingRepository } from '../ports/repository.js';
+import { assertReceivingMasterDataAvailable } from './require-master-data.js';
 export class UpdateReceivingDraftUseCase {
   constructor(private repo: ReceivingRepository) {}
   async execute(i: {
@@ -23,6 +24,7 @@ export class UpdateReceivingDraftUseCase {
   }) {
     const x = await this.repo.get(i.id, i.actor);
     if (!x) throw new AppError('RESOURCE_NOT_FOUND', { userSafe: true });
+    assertReceivingMasterDataAvailable();
     assertExpiryNotBeforeReceiving(i.receivingDate, i.expiryDate);
     authorize(
       {

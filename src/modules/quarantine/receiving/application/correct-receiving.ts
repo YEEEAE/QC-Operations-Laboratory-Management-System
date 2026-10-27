@@ -8,6 +8,7 @@ import {
 } from '../domain/receiving-item.js';
 import { assertReceivingCorrectable } from '../domain/receiving-state.js';
 import type { ReceivingRepository } from '../ports/repository.js';
+import { assertReceivingMasterDataAvailable } from './require-master-data.js';
 
 /**
  * QC-DATA-001 — controlled correction of a received record.
@@ -40,6 +41,7 @@ export class CorrectReceivingUseCase {
     const item: ReceivingItem | undefined = await this.repo.get(i.id, i.actor);
     if (!item) throw new AppError('RESOURCE_NOT_FOUND', { userSafe: true });
     assertReceivingCorrectable(item.workflowState);
+    assertReceivingMasterDataAvailable();
     assertReceivingQuantity(i.qty);
     assertExpiryNotBeforeReceiving(i.receivingDate, i.expiryDate);
     authorize(

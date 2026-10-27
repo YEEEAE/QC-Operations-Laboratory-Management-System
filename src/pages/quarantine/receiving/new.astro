@@ -3,6 +3,7 @@ import PageHeader from "../../../ui/components/PageHeader.astro";
 import AppLayout from '../../../ui/layouts/AppLayout.astro';
 import FormErrorSummary from '../../../ui/components/FormErrorSummary.astro';
 import { actions } from 'astro:actions';
+import { getMasterDataEntity } from '../../../../scripts/data/master-data-catalog.js';
 import {
   detailHref,
   extractDetailId,
@@ -18,6 +19,10 @@ import { stateLabel } from '../../../shared/copy/ux-vocabulary.js';
 const actor = Astro.locals.actor;
 if (!actor) return Astro.redirect('/login?returnTo=%2Fquarantine%2Freceiving%2Fnew');
 const canCreate = actor.permissions.some((permission) => permission.code === 'PERM-QUAR-CREATE');
+const masterDataUnavailable = ['item', 'supplier'].some((key) => {
+  const source = getMasterDataEntity(key);
+  return source.sourceApprovalState !== 'APPROVED' || !source.effectiveRevision || source.importAdapter === null;
+});
 
 const LIST_HREF = '/quarantine/receiving';
 const REQUIRED_FIELDS = [
@@ -132,6 +137,11 @@ const invalid = (name: keyof typeof values): 'true' | undefined =>
 
     {canCreate ? (
       <form class="form" method="post" data-action="quarantine.createReceiving">
+      {masterDataUnavailable && <section class="denied" role="alert" aria-labelledby="master-data-unavailable-title">
+        <h2 id="master-data-unavailable-title">MASTER_DATA_UNAVAILABLE</h2>
+        <p>Approved, effective item and supplier records are not available. Receiving creation is blocked until the source register is approved and governed choices are available.</p>
+        <a href="/admin/master-data">Review master data sources</a>
+      </section>}
         {failure && (
           <FormErrorSummary
             summary={failure.summary}
@@ -161,14 +171,14 @@ const invalid = (name: keyof typeof values): 'true' | undefined =>
 
             <div class="field">
               <label for="supplier">Supplier</label>
-              <input
+              <select
                 id="supplier"
                 name="supplier"
                 required
-                value={values.supplier}
+                disabled={masterDataUnavailable}
                 aria-invalid={invalid('supplier')}
                 aria-describedby={describedBy('supplier')}
-              />
+              ><option value="">MASTER_DATA_UNAVAILABLE</option></select>
               {failure?.fieldErrors.supplier && <p class="field-error" id="supplier-error">{failure.fieldErrors.supplier}</p>}
             </div>
 
@@ -192,14 +202,14 @@ const invalid = (name: keyof typeof values): 'true' | undefined =>
           <div class="field-grid">
             <div class="field">
               <label for="itemCode">Item code</label>
-              <input
+              <select
                 id="itemCode"
                 name="itemCode"
                 required
-                value={values.itemCode}
+                disabled={masterDataUnavailable}
                 aria-invalid={invalid('itemCode')}
                 aria-describedby={describedBy('itemCode')}
-              />
+              ><option value="">MASTER_DATA_UNAVAILABLE</option></select>
               {failure?.fieldErrors.itemCode && <p class="field-error" id="itemCode-error">{failure.fieldErrors.itemCode}</p>}
             </div>
 
@@ -309,7 +319,7 @@ const invalid = (name: keyof typeof values): 'true' | undefined =>
 
         <div class="actions">
           <a class="secondary" href={LIST_HREF}>Cancel</a>
-          <button type="submit" data-submit>Create receiving item</button>
+          <button type="submit" data-submit disabled={masterDataUnavailable}>Create receiving item</button>
         </div>
         <p class="result-status" role="status" aria-live="polite" data-result tabindex="-1"></p>
       </form>
@@ -358,7 +368,6 @@ const invalid = (name: keyof typeof values): 'true' | undefined =>
     margin-block-end: var(--space-5);
     padding: var(--space-4) var(--space-5);
     border: 1px solid var(--color-border-subtle);
-    border-inline-start: 3px solid var(--color-accent-primary);
     border-radius: var(--radius-lg);
     background: var(--surface-panel);
   }
@@ -529,7 +538,6 @@ const invalid = (name: keyof typeof values): 'true' | undefined =>
   .denied {
     padding: var(--space-6);
     border: 1px solid var(--color-border-subtle);
-    border-inline-start: 3px solid var(--status-warning);
     border-radius: var(--radius-lg);
     background: var(--surface-panel);
   }

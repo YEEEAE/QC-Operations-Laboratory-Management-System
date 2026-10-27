@@ -299,4 +299,39 @@ export const admin = {
         return { ok: true };
       }, context.locals.requestContext?.requestId),
   }),
+  previewMasterDataRevision: defineAction({
+    accept: 'json',
+    input: z.object({ datasetKey: z.string(), source: z.string().max(2_000_000), mapping: z.record(z.string(), z.string()) }).strict(),
+    handler: (input, context) => withErrors(async () => {
+      requireActor(context.locals.actor);
+      return repo().previewMasterDataRevision.execute(input);
+    }, context.locals.requestContext?.requestId),
+  }),
+  submitMasterDataRevision: defineAction({
+    accept: 'json',
+    input: z.object({
+      datasetKey: z.string(), source: z.string().max(2_000_000), mapping: z.record(z.string(), z.string()),
+      sourceOwner: z.string().min(1).max(200), sourceReference: z.string().min(1).max(500), requestId: z.string().uuid(),
+    }).strict(),
+    handler: (input, context) => withErrors(async () => {
+      requireActor(context.locals.actor);
+      return repo().submitMasterDataRevision.execute({
+        ...input, actor: context.locals.actor!, requestId: context.locals.requestContext?.requestId ?? 'unknown',
+      });
+    }, context.locals.requestContext?.requestId),
+  }),
+  approveMasterDataRevision: defineAction({
+    accept: 'json',
+    input: z.object({
+      revisionId: z.string().uuid(), expectedVersion: z.number().int().positive(),
+      effectiveRevision: z.string().min(1).max(100), sourceApprovalReference: z.string().min(1).max(500),
+      sourceLastUpdated: z.string().date(), reason: z.string().min(1).max(500), requestId: z.string().uuid(),
+    }).strict(),
+    handler: (input, context) => withErrors(async () => {
+      requireActor(context.locals.actor);
+      return repo().approveMasterDataRevision.execute({
+        ...input, actor: context.locals.actor!, requestId: context.locals.requestContext?.requestId ?? 'unknown',
+      });
+    }, context.locals.requestContext?.requestId),
+  }),
 };

@@ -12,6 +12,7 @@ import { extractDetailId, field } from '../../../ui/forms/mutation-post.js';
 import ReceivingCorrectionForm from '../../../ui/components/workflow/ReceivingCorrectionForm.astro';
 import { actions } from 'astro:actions';
 import { getServerEnv } from '../../../config/env.js';
+import { getMasterDataEntity } from '../../../../scripts/data/master-data-catalog.js';
 const actor = Astro.locals.actor;
 if (!actor) return Astro.redirect(`/login?returnTo=${encodeURIComponent(Astro.url.pathname)}`);
 let item: Awaited<ReturnType<ReturnType<typeof receivingReadDependencies>['get']['execute']>> | undefined;
@@ -23,6 +24,10 @@ const releaseProfile = getServerEnv().APP_ENVIRONMENT_PROFILE;
 const canEdit = actor.permissions.some((permission) => permission.code === 'PERM-QUAR-EDIT');
 const canCreateInspection = actor.permissions.some((permission) => permission.code === 'PERM-INSP-CREATE');
 const correctable = isReceivingCorrectable(item.workflowState);
+const masterDataUnavailable = ['item', 'supplier'].some((key) => {
+  const source = getMasterDataEntity(key);
+  return source.sourceApprovalState !== 'APPROVED' || !source.effectiveRevision || source.importAdapter === null;
+});
 const inspectionStartable = ['READY_FOR_INSPECTION', 'UNDER_INSPECTION'].includes(item.workflowState);
 const inFlightInspection = item.linkedInspections?.some((report) =>
   ['DRAFT', 'SUBMITTED', 'UNDER_REVIEW', 'PENDING_QCM_APPROVAL'].includes(report.state),

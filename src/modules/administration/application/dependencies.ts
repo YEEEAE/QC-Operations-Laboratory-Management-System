@@ -12,6 +12,8 @@ import { ListUserRolesUseCase } from './list-user-roles.js';
 import { ManageUserRoleUseCase } from './manage-user-role.js';
 import { AssignUserScopeUseCase } from './assign-user-scope.js';
 import { RemoveUserScopeUseCase } from './remove-user-scope.js';
+import { ApproveMasterDataRevisionUseCase, ListMasterDataRevisionsUseCase, PreviewMasterDataRevisionUseCase, SubmitMasterDataRevisionUseCase } from './master-data.js';
+import { PostgresMasterDataRepository } from '../infrastructure/postgres-master-data-repository.js';
 
 export function administrationDependencies() {
   const database = getDatabase();
@@ -19,6 +21,7 @@ export function administrationDependencies() {
     database,
     new PostgresAuditRepository(database),
   );
+  const masterData = new PostgresMasterDataRepository(database);
   return {
     listRoles: new ListRolesUseCase(repository),
     getRole: new GetRoleUseCase(repository),
@@ -31,5 +34,9 @@ export function administrationDependencies() {
     manageUserRole: new ManageUserRoleUseCase(repository),
     assignUserScope: new AssignUserScopeUseCase(repository),
     removeUserScope: new RemoveUserScopeUseCase(repository),
+    listMasterDataRevisions: new ListMasterDataRevisionsUseCase(masterData),
+    previewMasterDataRevision: new PreviewMasterDataRevisionUseCase(),
+    submitMasterDataRevision: new SubmitMasterDataRevisionUseCase(masterData),
+    approveMasterDataRevision: new ApproveMasterDataRevisionUseCase(masterData),
   };
 }

@@ -4,6 +4,7 @@ import type { ActorContext } from '../../../../shared/authorization/types.js';
 import { createReceivingItem } from '../domain/receiving-item.js';
 import { assertExpiryNotBeforeReceiving } from '../domain/receiving-item.js';
 import type { ReceivingRepository } from '../ports/repository.js';
+import { assertReceivingMasterDataAvailable } from './require-master-data.js';
 export class CreateReceivingUseCase {
   constructor(
     private repo: ReceivingRepository,
@@ -37,6 +38,7 @@ export class CreateReceivingUseCase {
       },
       { throwOnDeny: true },
     );
+    assertReceivingMasterDataAvailable();
     // Date rules are enforced before persistence so the operator sees the field
     // that must change (PostgreSQL enforces the same rule for every new row).
     assertExpiryNotBeforeReceiving(i.receivingDate, i.expiryDate);

@@ -45,6 +45,12 @@ const canAudit = hasAdminCapability(actor, 'viewAudit');
           </p>
           <div class="links"><a class="button" href="/admin/scopes">Open scopes</a></div>
         </section>
+        <section class="panel">
+          <p class="eyebrow">DATA-01</p>
+          <h2>Master data</h2>
+          <p>Review source ownership, pending revisions, and controlled import approval.</p>
+          <div class="links"><a class="button" href="/admin/master-data">Open master data</a></div>
+        </section>
         {canAudit && (
           <section class="panel">
             <p class="eyebrow">AUDIT</p>
@@ -110,9 +116,6 @@ const canAudit = hasAdminCapability(actor, 'viewAudit');
     grid-row: 1 / span 3;
     justify-content: flex-end;
     margin-block-start: 0;
-  }
-  .denied {
-    border-inline-start: 3px solid var(--status-warning);
   }
   .denied p {
     color: var(--text-muted);

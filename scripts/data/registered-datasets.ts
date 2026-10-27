@@ -11,9 +11,8 @@
  * tolerance, or code list is introduced here.
  */
 
-import { getMasterDataEntity } from './master-data-catalog.js';
 import type { ImportDatasetSpec } from './import-preflight.js';
-import { assertImportable } from './master-data-catalog.js';
+import { getMasterDataEntity } from './master-data-catalog.js';
 
 /** `qc.equipment` — db/migrations/0010_assets.sql. */
 export const EQUIPMENT_DATASET: ImportDatasetSpec = {
@@ -41,8 +40,9 @@ export const REGISTERED_DATASETS: Record<string, ImportDatasetSpec> = {
 };
 
 export function getRegisteredDataset(entityKey: string): ImportDatasetSpec {
-  // The catalog gate must pass before any spec is used.
-  assertImportable(getMasterDataEntity(entityKey));
+  // A registered adapter may be used for a non-writing preview. Any write is
+  // separately gated by a durable approval event for the exact content hash.
+  getMasterDataEntity(entityKey);
   const spec = REGISTERED_DATASETS[entityKey];
   if (!spec) {
     throw new Error(

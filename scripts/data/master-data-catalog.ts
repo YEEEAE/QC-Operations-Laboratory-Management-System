@@ -55,6 +55,12 @@ export interface MasterDataEntity {
   dependsOn: readonly string[];
   dataClass: MasterDataClass;
   notes: string;
+  /** Per-dataset intake register; source authority is never inferred from the file name. */
+  sourceOwner: string;
+  effectiveRevision: string | null;
+  sourceApprovalState: 'PENDING_SOURCE_APPROVAL' | 'APPROVED';
+  importAdapter: string | null;
+  lastUpdated: string;
 }
 
 /**
@@ -82,6 +88,11 @@ export const MASTER_DATA_ENTITIES: readonly MasterDataEntity[] = [
     notes:
       '`SITE` exists only as an authorization `scope_kind`. No site master table is approved; ' +
       'no code list may be invented. Tracked as an external authority dependency.',
+    sourceOwner: 'UNRESOLVED — organizational structure owner',
+    effectiveRevision: null,
+    sourceApprovalState: 'PENDING_SOURCE_APPROVAL',
+    importAdapter: null,
+    lastUpdated: '2026-10-28',
   },
   {
     key: 'organization-department',
@@ -101,6 +112,11 @@ export const MASTER_DATA_ENTITIES: readonly MasterDataEntity[] = [
     notes:
       '`DEPARTMENT` exists as an authorization `scope_kind` and as free text on ' +
       '`qc.reject_reports.department` (0026, non-empty CHECK). No governed department catalog.',
+    sourceOwner: 'UNRESOLVED — organizational structure owner',
+    effectiveRevision: null,
+    sourceApprovalState: 'PENDING_SOURCE_APPROVAL',
+    importAdapter: null,
+    lastUpdated: '2026-10-28',
   },
   {
     key: 'item',
@@ -122,6 +138,11 @@ export const MASTER_DATA_ENTITIES: readonly MasterDataEntity[] = [
     notes:
       'Items are free-text codes carried on operational records, not a governed catalog. ' +
       'Importing an item list would create unapproved master data — withheld.',
+    sourceOwner: 'UNRESOLVED — controlled reference-data owner',
+    effectiveRevision: null,
+    sourceApprovalState: 'PENDING_SOURCE_APPROVAL',
+    importAdapter: null,
+    lastUpdated: '2026-10-28',
   },
   {
     key: 'supplier',
@@ -142,6 +163,11 @@ export const MASTER_DATA_ENTITIES: readonly MasterDataEntity[] = [
     notes:
       'Supplier appears as descriptive text (receiving) and `provider`/`performed_by` (assets). ' +
       'No governed supplier master exists; none invented.',
+    sourceOwner: 'UNRESOLVED — controlled reference-data owner',
+    effectiveRevision: null,
+    sourceApprovalState: 'PENDING_SOURCE_APPROVAL',
+    importAdapter: null,
+    lastUpdated: '2026-10-28',
   },
   {
     key: 'equipment',
@@ -166,6 +192,11 @@ export const MASTER_DATA_ENTITIES: readonly MasterDataEntity[] = [
       'This is the first governed entity with a real unique business key and a registered adapter. ' +
       'No concrete value set is approved; the adapter remains closed until an owner approval reference ' +
       'is recorded. It also requires an existing actor (`created_by`).',
+    sourceOwner: 'UNRESOLVED — equipment data owner',
+    effectiveRevision: null,
+    sourceApprovalState: 'PENDING_SOURCE_APPROVAL',
+    importAdapter: 'equipment-v1 (registered; approval-gated)',
+    lastUpdated: '2026-10-28',
   },
   {
     key: 'method',
@@ -189,6 +220,11 @@ export const MASTER_DATA_ENTITIES: readonly MasterDataEntity[] = [
     notes:
       'Method is a free-text reference on template versions and RCA records. It is intentionally not ' +
       'importable because its values are controlled-source dependent.',
+    sourceOwner: 'UNRESOLVED — laboratory controlled-source owner',
+    effectiveRevision: null,
+    sourceApprovalState: 'PENDING_SOURCE_APPROVAL',
+    importAdapter: null,
+    lastUpdated: '2026-10-28',
   },
   {
     key: 'controlled-template',
@@ -215,6 +251,11 @@ export const MASTER_DATA_ENTITIES: readonly MasterDataEntity[] = [
       'Governed but multi-level (template → version → sections → points/parameters). A safe import of ' +
       'approved template content requires an owner decision on the approved template source; only the ' +
       'single-level equipment dataset is wired end-to-end here.',
+    sourceOwner: 'UNRESOLVED — controlled-template owner',
+    effectiveRevision: null,
+    sourceApprovalState: 'PENDING_SOURCE_APPROVAL',
+    importAdapter: null,
+    lastUpdated: '2026-10-28',
   },
 ] as const;
 

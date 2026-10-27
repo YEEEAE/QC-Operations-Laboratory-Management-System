@@ -1,0 +1,143 @@
+import { uuidv7 } from '../../shared/id/uuid.js';
+import PageHeader from '../../ui/components/PageHeader.astro';
+import AppLayout from '../../ui/layouts/AppLayout.astro';
+import { actions } from 'astro:actions';
+import { administrationDependencies } from '../../modules/administration/application/dependencies.js';
+import { isNamedSystemOwner } from '../../shared/authorization/p05-authority.js';
+import { MASTER_DATA_ENTITIES } from '../../../scripts/data/master-data-catalog.js';
+
+const actor = Astro.locals.actor;
+if (!actor) return Astro.redirect(`/login?returnTo=${encodeURIComponent(Astro.url.pathname)}`);
+const isOwner = isNamedSystemOwner(actor);
+let pageError = '';
+let preview: Awaited<ReturnType<ReturnType<typeof administrationDependencies>['previewMasterDataRevision']['execute']>> | undefined;
+let revisions: Awaited<ReturnType<ReturnType<typeof administrationDependencies>['listMasterDataRevisions']['execute']>>['revisions'] = [];
+let catalog = MASTER_DATA_ENTITIES;
+const formRequestId = uuidv7();
+
+if (Astro.request.method === 'POST' && isOwner) {
+  const form = await Astro.request.formData();
+  const mode = String(form.get('mode') ?? '');
+  try {
+    if (mode === 'preview' || mode === 'submit') {
+      const datasetKey = String(form.get('datasetKey') ?? '');
+      const source = String(form.get('source') ?? '');
+      const mapping = JSON.parse(String(form.get('mapping') ?? '{}')) as Record<string, string>;
+      if (mode === 'preview') {
+        preview = await Astro.callAction(actions.admin.previewMasterDataRevision, { datasetKey, source, mapping });
+      } else {
+        await Astro.callAction(actions.admin.submitMasterDataRevision, {
+          datasetKey, source, mapping,
+          sourceOwner: String(form.get('sourceOwner') ?? ''),
+          sourceReference: String(form.get('sourceReference') ?? ''),
+          requestId: String(form.get('requestId') ?? ''),
+        });
+        return Astro.redirect('/admin/master-data?submitted=1', 303);
+      }
+    } else if (mode === 'approve') {
+      await Astro.callAction(actions.admin.approveMasterDataRevision, {
+        revisionId: String(form.get('revisionId') ?? ''),
+        expectedVersion: Number(form.get('expectedVersion') ?? 0),
+        effectiveRevision: String(form.get('effectiveRevision') ?? ''),
+        sourceApprovalReference: String(form.get('sourceApprovalReference') ?? ''),
+        sourceLastUpdated: String(form.get('sourceLastUpdated') ?? ''),
+        reason: String(form.get('reason') ?? ''),
+        requestId: String(form.get('requestId') ?? ''),
+      });
+      return Astro.redirect('/admin/master-data?approved=1', 303);
+    }
+  } catch {
+    pageError = 'The request could not be completed. Review the source details and current revision, then retry.';
+  }
+}
+
+if (isOwner) {
+  try {
+    const result = await administrationDependencies().listMasterDataRevisions.execute({ actor });
+    revisions = result.revisions;
+    catalog = result.catalog.map((entry) => {
+      const approved = revisions.find((revision) => revision.datasetKey === entry.key && revision.approvalState === 'APPROVED');
+      return approved ? {
+        ...entry,
+        sourceOwner: approved.sourceOwner,
+        effectiveRevision: approved.effectiveRevision,
+        sourceApprovalState: 'APPROVED' as const,
+        importAdapter: approved.adapterKey,
+        lastUpdated: approved.sourceLastUpdated ?? entry.lastUpdated,
+      } : entry;
+    });
+  } catch {
+    pageError ||= 'MASTER_DATA_UNAVAILABLE: The source register and revision queue could not be loaded.';
+  }
+}
+const success = Astro.url.searchParams.has('submitted') ? 'Revision saved as PENDING_SOURCE_APPROVAL.' : Astro.url.searchParams.has('approved') ? 'Owner approval recorded. Import remains a separate, approval-gated operation.' : '';
+---
+<AppLayout title="Master data · Administration" locale="en" direction="ltr">
+  <PageHeader>
+    <Fragment slot="heading"><h1>Master data onboarding</h1></Fragment>
+    <p>Review source ownership, revisions and approval state before any registered import.</p>
+    <Fragment slot="actions"><a href="/admin">Back to administration</a></Fragment>
+  </PageHeader>
+  {!isOwner ? <section class="notice" role="alert"><h2>Restricted workspace</h2><p>Only the named System Owner can review master-data source approvals.</p></section> : <>
+    {pageError && <section class="notice" role="alert"><h2>Master data unavailable</h2><p>{pageError}</p></section>}
+    {success && <p class="success" role="status">{success}</p>}
+    <section class="panel" aria-labelledby="source-register-title">
+      <h2 id="source-register-title">Dataset source register</h2>
+      <div class="table-wrap" role="region" aria-label="Master data source register" tabindex="0">
+        <table><caption>Source owners, effective revisions, approval state and import adapters</caption>
+          <thead><tr><th scope="col">Dataset</th><th scope="col">Source owner</th><th scope="col">Effective revision</th><th scope="col">Approval</th><th scope="col">Import adapter</th><th scope="col">Last updated</th></tr></thead>
+          <tbody>{catalog.map((entry) => <tr><th scope="row">{entry.label}</th><td>{entry.sourceOwner}</td><td>{entry.effectiveRevision ?? 'Not recorded'}</td><td>{entry.sourceApprovalState}</td><td>{entry.importAdapter ?? 'Unavailable'}</td><td>{entry.lastUpdated}</td></tr>)}</tbody>
+        </table>
+      </div>
+    </section>
+    <section class="panel" aria-labelledby="preview-title">
+      <h2 id="preview-title">Preview a source file</h2>
+      <p>CSV only. This preview does not query a company database or activate records. Import is blocked while source approval is pending.</p>
+      <form method="post" class="form">
+        <input type="hidden" name="requestId" value={formRequestId} />
+        <label for="datasetKey">Dataset</label>
+        <select id="datasetKey" name="datasetKey" required>{catalog.map((entry) => <option value={entry.key}>{entry.label}</option>)}</select>
+        <label for="source">CSV source content</label>
+        <textarea id="source" name="source" rows="8" required maxlength="2000000"></textarea>
+        <label for="mapping">Header mapping (JSON object: source header to governed field)</label>
+        <textarea id="mapping" name="mapping" rows="3" required placeholder={'{"Equipment No":"equipment_no"}'}></textarea>
+        <label for="sourceOwner">Source owner</label><input id="sourceOwner" name="sourceOwner" maxlength="200" />
+        <label for="sourceReference">Controlled source reference</label><input id="sourceReference" name="sourceReference" maxlength="500" />
+        <div class="actions"><button name="mode" value="preview">Preview mapping and validation</button><button name="mode" value="submit">Save pending source revision</button></div>
+      </form>
+    </section>
+    {preview && <section class="panel" aria-labelledby="preview-result-title">
+      <h2 id="preview-result-title">Preview result — {preview.status}</h2>
+      <p>Content SHA-256: <code>{preview.contentSha256}</code></p>
+      <p>Rows: {preview.records.length}. Existing-record conflict check: deferred until an authorized isolated import preflight.</p>
+      {preview.issues.length ? <ul>{preview.issues.map((issue) => <li>Row {issue.rowNumber || '—'} · {issue.code}{issue.field ? ` (${issue.field})` : ''}: {issue.detail}</li>)}</ul> : <p>No source-level mapping errors found. Source approval is still required.</p>}
+      <p>Importable: No</p>
+    </section>}
+    <section class="panel" aria-labelledby="revision-queue-title">
+      <h2 id="revision-queue-title">Pending revisions</h2>
+      {!revisions.length ? <p>No staged revisions are available.</p> : revisions.map((revision) => <article class="revision">
+        <h3>{revision.datasetKey} · {revision.approvalState}</h3>
+        <p>Revision ID: <code>{revision.id}</code> · Version {revision.version}</p>
+        <p>Source owner: {revision.sourceOwner} · Source: {revision.sourceReference}</p>
+        <p>Content SHA-256: <code>{revision.contentSha256}</code></p>
+        <details><summary>Staged records and validation</summary><pre>{JSON.stringify({ mapping: revision.headerMapping, records: revision.records, preview: revision.preview }, null, 2)}</pre></details>
+        {revision.approvalState === 'PENDING_SOURCE_APPROVAL' && <form method="post" class="form approve-form">
+          <input type="hidden" name="requestId" value={formRequestId} /><input type="hidden" name="mode" value="approve" /><input type="hidden" name="revisionId" value={revision.id} /><input type="hidden" name="expectedVersion" value={revision.version} />
+          <p>Approval is a scoped internal owner decision, not an electronic signature. Confirm the actual source evidence before completing these fields.</p>
+          <label for={`effective-${revision.id}`}>Effective source revision</label><input id={`effective-${revision.id}`} name="effectiveRevision" required maxlength="100" />
+          <label for={`approval-${revision.id}`}>Source approval reference</label><input id={`approval-${revision.id}`} name="sourceApprovalReference" required maxlength="500" />
+          <label for={`updated-${revision.id}`}>Source last updated</label><input id={`updated-${revision.id}`} name="sourceLastUpdated" type="date" required />
+          <label for={`reason-${revision.id}`}>Owner decision reason</label><input id={`reason-${revision.id}`} name="reason" required maxlength="500" />
+          <button type="submit">Record internal owner approval</button>
+        </form>}
+        {revision.approvalState === 'APPROVED' && <p>Internal approval recorded. Import state: {revision.importState}. Approval is not a formal signature.</p>}
+      </article>)}
+    </section>
+  </>}
+</AppLayout>
+<style>
+  .panel,.notice{padding:var(--space-5);margin-block:var(--space-5);background:var(--surface-panel);border:1px solid var(--color-border-subtle);border-radius:var(--radius-lg)}
+  .success{padding:var(--space-3);background:var(--surface-panel);color:var(--status-success)}
+  .table-wrap{overflow:auto}table{width:100%;border-collapse:collapse;min-width:760px}th,td{text-align:start;padding:var(--space-3);border-bottom:1px solid var(--color-border-subtle);vertical-align:top;overflow-wrap:anywhere}caption{text-align:start;padding:var(--space-3);color:var(--text-muted)}
+  .form{display:grid;gap:var(--space-3);max-width:60rem}.form input,.form select,.form textarea{width:100%;padding:var(--space-3);border:1px solid var(--color-border-subtle);border-radius:var(--radius-md);background:var(--surface-page);color:var(--text-primary);font:inherit}.form button{min-height:44px;padding-inline:var(--space-4)}.actions{display:flex;gap:var(--space-3);flex-wrap:wrap}.revision{padding-block:var(--space-4);border-block-start:1px solid var(--color-border-subtle)}.approve-form{margin-block:var(--space-4)}pre{overflow:auto;max-height:28rem;padding:var(--space-3);background:var(--surface-page);white-space:pre-wrap;overflow-wrap:anywhere}code{overflow-wrap:anywhere}
+</style>
