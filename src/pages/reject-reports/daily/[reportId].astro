@@ -42,7 +42,15 @@ const creatorLabel = record?.createdBy === actor.id ? 'You' : 'Another authorize
 const hasPermission = (code: string) =>
   actor.permissions.some((grant) => grant.code === code && grant.active !== false);
 const isCreator = record?.createdBy === actor.id;
-const canManage = isCreator && record?.status === 'DRAFT' && hasPermission('PERM-RREJ-EDIT');
+const canEditDraft = isCreator && record?.status === 'DRAFT';
+const canAppend = canEditDraft && hasPermission('PERM-RREJ-EDIT');
+const canFinalize = canEditDraft && hasPermission('PERM-RREJ-FINALIZE');
+const canVoid =
+  !!record &&
+  record.status !== 'VOID' &&
+  record.status !== 'COMPLETED' &&
+  isCreator &&
+  hasPermission('PERM-RREJ-VOID');
 let postError = '';
 let postedValues: Record<string, string> = {};
 if (Astro.request.method === 'POST' && record && !printMode) {
@@ -52,7 +60,7 @@ if (Astro.request.method === 'POST' && record && !printMode) {
   try {
     const expectedVersion = parseExpectedVersionField(field(form, 'expectedVersion'));
     let result;
-    if (intent === 'append' && canManage) {
+    if (intent === 'append' && canAppend) {
       const value = (name: string) => field(form, name);
       const optional = (name: string) => value(name) || undefined;
       result = await Astro.callAction(actions.rejectReports.appendDailyRejectEntry, {
@@ -67,9 +75,9 @@ if (Astro.request.method === 'POST' && record && !printMode) {
           rejectReason: value('rejectReason'), analysis: optional('analysis'),
         },
       });
-    } else if (intent === 'finalize' && canManage) {
+    } else if (intent === 'finalize' && canFinalize && record.entries.length > 0) {
       result = await Astro.callAction(actions.rejectReports.finalizeDailyReject, { reportId, expectedVersion });
-    } else if (intent === 'void' && isCreator && hasPermission('PERM-RREJ-VOID')) {
+    } else if (intent === 'void' && canVoid) {
       result = await Astro.callAction(actions.rejectReports.voidReport, { reportId, expectedVersion, reason: field(form, 'reason') });
     } else {
       postError = 'This action is not available. Refresh the record and review its current state.';
@@ -104,13 +112,14 @@ const fmtDateTime = (d?: Date) =>
     />
   ) : (
   <>
-  <section class="page-head">
+  <section class="page-head record-header" aria-labelledby="record-title">
     <div>
-      <p class="eyebrow">Daily production and rejection record</p>
-      <h1>{record.reportNo}</h1>
+      <h1 id="record-title">{record.reportNo}</h1>
       <p class="lede">
-        Status: <strong class={`status status-${record.status.toLowerCase()}`}>{stateLabel(record.status)}</strong>
-        · No approval confirmation is needed for this record type.
+        <span>Status</span>
+        <strong class={`status status-${record.status.toLowerCase()}`}>{stateLabel(record.status)}</strong>
+        <span>Version</span>
+        <strong class="version">{record.version.toString()}</strong>
       </p>
     </div>
     <div class="head-actions">
@@ -120,22 +129,19 @@ const fmtDateTime = (d?: Date) =>
   </section>
 
   {printMode && <p class="print-copy-watermark">UNAPPROVED INFORMATIONAL COPY — NOT A CONTROLLED RECORD</p>}
-  {postError && <p role="alert" tabindex="-1" data-post-error>{postError} <a href={`${Astro.url.pathname}#entries`}>Review this report</a></p>}
+  <p class="mutation-feedback" role={postError ? 'alert' : 'status'} aria-live={postError ? 'assertive' : 'polite'} tabindex="-1" data-result>{postError}{postError && <> <a href={`${Astro.url.pathname}#entries`}>Review this report</a></>}</p>
   <div class="grid">
-    <section class="panel">
-      <h2>Header</h2>
+    <section class="panel" aria-labelledby="facts-title">
+      <h2 id="facts-title">Record facts</h2>
       <dl>
         <dt>Record date</dt><dd>{fmtDate(record.reportDate)}</dd>
         <dt>Department / section</dt><dd>{record.department}</dd>
         <dt>Shift</dt><dd>{record.shift ?? '—'}</dd>
         <dt>Recorded by</dt><dd>{creatorLabel}</dd>
-        <dt>Created at</dt><dd>{fmtDateTime(record.createdAt)}</dd>
-        <dt>Finalized at</dt><dd>{fmtDateTime(record.finalizedAt)}</dd>
-        {record.voidedAt && (<><dt>Voided</dt><dd>{fmtDateTime(record.voidedAt)} · {record.voidReason}</dd></>)}
       </dl>
     </section>
-    <section class="panel">
-      <h2>Totals</h2>
+    <section class="panel" aria-labelledby="totals-title">
+      <h2 id="totals-title">Calculated totals</h2>
       {totals.byRecordedUnit.length ? (
         <>
           {totals.byRecordedUnit.map((group) => (
@@ -153,10 +159,11 @@ const fmtDateTime = (d?: Date) =>
     </section>
   </div>
 
-  <section class="panel" id="entries">
-    <h2>Entries</h2>
+  <section class="panel evidence-panel" id="entries" aria-labelledby="entries-title">
+    <h2 id="entries-title">Recorded evidence</h2>
+    <p class="hint">No controlled/effective Reject Reports source, approver e-signature, or QMS linkage is supplied by this daily-report record.</p>
     {record.entries.length ? (
-      <div class="table-wrap">
+      <div class="table-wrap" role="region" aria-label="Production and rejection entries" tabindex="0">
         <table>
           <caption>Production and rejection entries</caption>
           <thead>
@@ -206,9 +213,38 @@ const fmtDateTime = (d?: Date) =>
     ) : <p class="empty">No entries yet. Add at least one entry before finalizing.</p>}
   </section>
 
-  {canManage && !printMode && (
-    <section class="panel">
-      <h2>Add entry</h2>
+  <div class="detail-support-grid">
+    <section class="panel" aria-labelledby="history-title">
+      <h2 id="history-title">Recorded history</h2>
+      <dl>
+        <dt>Created</dt><dd>{fmtDateTime(record.createdAt)}</dd>
+        <dt>Last updated</dt><dd>{fmtDateTime(record.updatedAt)}</dd>
+        <dt>Finalized</dt><dd>{fmtDateTime(record.finalizedAt)}</dd>
+        <dt>Voided</dt><dd>{record.voidedAt ? fmtDateTime(record.voidedAt) : '—'}</dd>
+        {record.voidedAt && <><dt>Void reason</dt><dd class="long-value">{record.voidReason ?? '—'}</dd></>}
+      </dl>
+      <p class="hint">Event-by-event audit history is not included in this read model.</p>
+    </section>
+
+    <section class="panel" aria-labelledby="relationships-title">
+      <h2 id="relationships-title">Relationships</h2>
+      <ul class="relationship-list">
+        <li><a href="/reject-reports">Reject reports register</a></li>
+        {record.correctionOf ? (
+          <li><a href={`/reject-reports/daily/${encodeURIComponent(record.correctionOf)}`}>Correction of {record.correctionOf}</a></li>
+        ) : (
+          <li><span>Correction predecessor</span><span class="not-provided">N/A — no predecessor is recorded for this report.</span></li>
+        )}
+      </ul>
+    </section>
+  </div>
+
+  {!printMode && (canAppend || canFinalize || canVoid) && (
+    <section class="action-rail" aria-labelledby="actions-title">
+      <h2 id="actions-title">Available actions</h2>
+      {canAppend && (
+      <section class="panel" aria-labelledby="add-entry-title">
+        <h3 id="add-entry-title">Add entry</h3>
       <form
         class="form"
         method="post"
@@ -237,29 +273,34 @@ const fmtDateTime = (d?: Date) =>
         </div>
         <div class="actions">
           <button type="submit" data-submit>Add entry</button>
-          {record.entries.length > 0 && (
-            <button type="submit" name="intent" value="finalize" form="finalize-daily" class="secondary" data-finalize data-version={record.version.toString()}>
-              Finalize record
-            </button>
-          )}
         </div>
-        <p role="status" data-result tabindex="-1"></p>
       </form>
-      {record.entries.length > 0 && <form id="finalize-daily" method="post"><input type="hidden" name="intent" value="finalize" /><input type="hidden" name="expectedVersion" value={record.version.toString()} /></form>}
-    </section>
-  )}
-
-  {record.status !== 'VOID' && record.status !== 'DRAFT' ? null : null}
-  {!printMode && record.status !== 'VOID' && isCreator && hasPermission('PERM-RREJ-VOID') && (
-    <section class="panel actions">
-      <h2>Correction</h2>
-      <form class="inline-form" method="post" data-void-form data-version={record.version.toString()}>
-        <input type="hidden" name="intent" value="void" /><input type="hidden" name="expectedVersion" value={record.version.toString()} />
-        <label class="sr-only" for="voidReason">Void reason</label>
-        <input id="voidReason" name="reason" required maxlength="2000" placeholder="Void reason (required)" value={postedValues.reason ?? ''} />
-        <button type="submit" class="danger">Void record</button>
-      </form>
-      <p class="hint">Voiding never deletes history; the record stays visible as VOID with its reason and audit trail.</p>
+      </section>
+      )}
+      {canFinalize && record.entries.length > 0 && (
+        <section class="panel" aria-labelledby="finalize-title">
+          <h3 id="finalize-title">Finalize record</h3>
+          <p class="hint">The server rechecks the record state, version, and finalization permission when you submit.</p>
+          <form id="finalize-daily" method="post">
+            <input type="hidden" name="intent" value="finalize" />
+            <input type="hidden" name="expectedVersion" value={record.version.toString()} />
+            <button type="submit" data-finalize data-version={record.version.toString()}>Finalize record</button>
+          </form>
+        </section>
+      )}
+      {canVoid && (
+      <section class="panel" aria-labelledby="void-title">
+        <h3 id="void-title">Void record</h3>
+        <p class="hint">Voiding never deletes history; the record stays visible as VOID with its reason and audit trail.</p>
+        <form class="inline-form" method="post" data-void-form data-version={record.version.toString()}>
+          <input type="hidden" name="intent" value="void" />
+          <input type="hidden" name="expectedVersion" value={record.version.toString()} />
+          <label class="sr-only" for="voidReason">Void reason</label>
+          <input id="voidReason" name="reason" required maxlength="2000" placeholder="Void reason (required)" value={postedValues.reason ?? ''} />
+          <button type="submit" class="danger">Void record</button>
+        </form>
+      </section>
+      )}
     </section>
   )}
   </>
@@ -271,9 +312,19 @@ const fmtDateTime = (d?: Date) =>
   const reportId = location.pathname.split('/').filter(Boolean).pop() ?? '';
   const output = document.querySelector<HTMLElement>('[data-result]');
   const fail = (message: string) => {
-    if (output) { output.textContent = message; output.focus?.(); }
+    if (output) {
+      output.setAttribute('role', 'alert');
+      output.setAttribute('aria-live', 'assertive');
+      output.textContent = message;
+      output.focus();
+    }
   };
   const run = async (work: Promise<{ error?: unknown }>) => {
+    if (output) {
+      output.setAttribute('role', 'status');
+      output.setAttribute('aria-live', 'polite');
+      output.textContent = 'Submitting action…';
+    }
     try {
       const result = await work;
       if (result.error) fail('The action was not accepted. Refresh the record and check its current state and your permissions before trying again.');
@@ -313,6 +364,8 @@ const fmtDateTime = (d?: Date) =>
   };
   const showRecovery = (message: string) => {
     if (!output) return;
+    output.setAttribute('role', 'alert');
+    output.setAttribute('aria-live', 'assertive');
     output.replaceChildren(document.createTextNode(`${message} `));
     const link = document.createElement('a');
     link.href = location.pathname;
@@ -326,6 +379,11 @@ const fmtDateTime = (d?: Date) =>
     if (addForm.dataset.pending === 'true' || addForm.dataset.unresolved === 'true') return;
     addForm.dataset.pending = 'true';
     addForm.setAttribute('aria-busy', 'true');
+    if (output) {
+      output.setAttribute('role', 'status');
+      output.setAttribute('aria-live', 'polite');
+      output.textContent = 'Adding entry…';
+    }
     const submit = addForm.querySelector<HTMLButtonElement>('[data-submit]');
     if (submit) submit.disabled = true;
     document.querySelectorAll('.field-error').forEach((error) => error.remove());
@@ -397,43 +455,63 @@ const fmtDateTime = (d?: Date) =>
 </script>
 
 <style>
-  .page-head{display:flex;justify-content:space-between;gap:var(--space-5);margin-bottom:var(--space-6)}
-  h1{margin:.25rem 0}.eyebrow{margin:0;color:var(--text-muted);font-size:.7rem;letter-spacing:.12em;font-weight:700}
-  .lede,.hint,.empty{color:var(--text-muted);font-size:.86rem}
+  .page-head{display:flex;justify-content:space-between;align-items:flex-start;gap:var(--space-5);margin-bottom:var(--space-6)}
+  h1{margin:0;overflow-wrap:anywhere}
+  h2{font-size:1rem;margin-block:0 var(--space-4)}
+  h3{font-size:.95rem;margin-block:0 var(--space-3)}
+  .lede{display:flex;align-items:center;gap:var(--space-2);flex-wrap:wrap;margin-block:var(--space-3) 0;color:var(--text-muted);font-size:.86rem}
+  .lede strong{color:var(--text-primary)}
+  .version{font-variant-numeric:tabular-nums}
   .head-actions{display:flex;gap:var(--space-3);flex-wrap:wrap}
-  .grid{display:grid;grid-template-columns:1fr 1fr;gap:var(--space-5)}
-  .panel{padding:var(--space-5);background:var(--surface-panel);border:1px solid var(--color-border-subtle);border-radius:var(--radius-lg);margin-bottom:var(--space-5)}
-  h2{font-size:1rem;margin-top:0}
-  dl{display:grid;grid-template-columns:auto 1fr;gap:.6rem 1.5rem}dt{color:var(--text-muted)}dd{margin:0;font-weight:600}
-  .table-wrap{overflow-x:auto}table{width:100%;border-collapse:collapse;font-size:.82rem}
-  caption{text-align:start;padding-bottom:var(--space-3);color:var(--text-muted)}
-  th,td{padding:.6rem;text-align:start;border-top:1px solid var(--color-border-subtle);vertical-align:top}
+  .grid,.detail-support-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--space-5)}
+  .panel{min-width:0;padding:var(--space-5);background:var(--surface-panel);border:1px solid var(--color-border-subtle);border-radius:var(--radius-lg);margin-bottom:var(--space-5)}
+  dl{display:grid;grid-template-columns:minmax(8rem,auto) minmax(0,1fr);gap:.6rem 1.5rem;margin:0}
+  dt{color:var(--text-muted)}
+  dd{min-width:0;margin:0;font-weight:600;overflow-wrap:anywhere}
+  .long-value{white-space:pre-wrap}
+  .hint,.empty{color:var(--text-muted);font-size:.86rem;line-height:1.5}
+  .hint:last-child{margin-block-end:0}
+  .table-wrap{max-width:100%;min-width:0;overflow:auto;overscroll-behavior-inline:contain}
+  table{width:100%;min-width:74rem;border-collapse:collapse;font-size:.82rem}
+  caption{text-align:start;padding-block-end:var(--space-3);color:var(--text-muted)}
+  th,td{padding:.6rem;text-align:start;border-block-start:1px solid var(--color-border-subtle);vertical-align:top;overflow-wrap:anywhere}
   th{font-weight:700}
-  tr.over-limit td{background:color-mix(in srgb, var(--status-danger) 8%, transparent)}
+  tr.over-limit td{background:color-mix(in srgb,var(--status-danger) 8%,transparent)}
   .form{display:grid;gap:var(--space-4)}
-  .fields{display:grid;grid-template-columns:1fr 1fr;gap:var(--space-4)}
+  .fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--space-4)}
   .fields .wide{grid-column:1/-1}
   label{display:grid;gap:.4rem;font-size:.85rem}
-  input,textarea{font:inherit;padding:.7rem;background:var(--surface-page);color:inherit;border:1px solid var(--color-border-subtle);border-radius:var(--radius-sm)}
+  input,textarea{min-width:0;min-height:44px;font:inherit;padding:.7rem;background:var(--surface-page);color:inherit;border:1px solid var(--color-border-subtle);border-radius:var(--radius-sm)}
   textarea{min-height:5rem}
   .actions{display:flex;gap:var(--space-3);align-items:center;flex-wrap:wrap}
   .inline-form{display:flex;gap:.5rem;align-items:center;flex-wrap:wrap}
-  .inline-form input{padding:.5rem;background:var(--surface-page);color:inherit;border:1px solid var(--color-border-subtle);border-radius:var(--radius-sm);min-width:12rem}
+  .inline-form input{min-width:min(12rem,100%)}
+  .relationship-list{display:grid;gap:var(--space-3);margin:0;padding-inline-start:1.25rem}
+  .relationship-list li{min-width:0;overflow-wrap:anywhere}
+  .not-provided{display:block;color:var(--text-muted);font-size:.86rem}
+  .mutation-feedback{padding:var(--space-3) var(--space-4);border:1px solid var(--color-border-subtle);border-radius:var(--radius-md);background:var(--surface-panel);overflow-wrap:anywhere}
+  .mutation-feedback:empty{display:none}
+  .mutation-feedback[role='alert']{border-color:var(--status-danger);color:var(--status-danger)}
+  .action-rail{min-width:0}
+  .action-rail > h2{margin-block:var(--space-6) var(--space-4)}
   .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
-  button{padding:.6rem 1rem;background:var(--color-accent-primary);border:0;border-radius:var(--radius-md);color:var(--text-on-accent);font-weight:700}
+  button{min-height:44px;padding:.6rem 1rem;background:var(--color-accent-primary);border:0;border-radius:var(--radius-md);color:var(--text-on-accent);font:inherit;font-weight:700;cursor:pointer}
   button.secondary{background:transparent;color:var(--color-accent-primary-hover);border:1px solid var(--color-accent-primary)}
   button.danger{background:var(--status-danger)}
-  .status{font-size:.72rem;padding:.15rem .5rem;border-radius:999px;background:var(--surface-page);border:1px solid var(--color-border-subtle)}
-  .status-finalized{color:var(--status-success,#047857)}
+  button:disabled{cursor:not-allowed;opacity:.6}
+  button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,.table-wrap:focus-visible{outline:2px solid var(--focus-ring);outline-offset:2px}
+  .status{font-size:.78rem;padding:.15rem .5rem;border-radius:999px;background:var(--surface-page);border:1px solid var(--color-border-subtle)}
+  .status-finalized{color:var(--status-success)}
   .status-void{color:var(--status-danger)}
-  a{color:var(--color-accent-primary-hover)}
-  @media(max-width:768px){.page-head,.grid,.fields{display:block}.fields > div{margin-bottom:var(--space-3)}}
+  a{color:var(--color-accent-primary-hover);text-underline-offset:3px}
+  @media(max-width:768px){.page-head{display:grid}.grid,.detail-support-grid,.fields{grid-template-columns:minmax(0,1fr)}.fields .wide{grid-column:auto}}
   .print-copy-watermark{border-block:2px solid #111;padding:4px;text-align:center;font-weight:700}
   @media print{
     @page{size:A4 portrait;margin:12mm}
-    .head-actions,form,.actions{display:none!important}
+    .head-actions,form,.actions,.action-rail{display:none!important}
     body{background:#fff}
     .panel{border-color:#999;break-inside:avoid}
-    table{font-size:.75rem}
+    .table-wrap{overflow:visible}
+    table{min-width:0;font-size:.75rem}
   }
 </style>

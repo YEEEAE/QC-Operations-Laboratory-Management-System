@@ -1,3 +1,8 @@
+- **2026-10-27 — CA-P-SEARCH / CAPA A search overview**
+  - Changed: `/search` now groups the existing server-backed search form, source-aware states, and authorized result links into flexible graphite cards; URL query/cursor, permissions, pagination, destinations, and AppLayout/Sidebar are retained.
+  - Evidence: NOT RUN by instruction; textual source and `git diff` review only. Literal reference match not confirmed.
+  - State: DONE — code edit only; untested.
+  - Key files: `src/pages/search.astro`.
 - **2026-10-23 — CA-P-QUARANTINE-RECEIVING-NEW / CAPA A create-receiving form**
   - Changed: `/quarantine/receiving/new` now has one header/purpose, a read-only starting-state panel that keeps Inspection result separate from Release System State, three grouped fieldsets, one column on narrow screens and two only for independent fields on wide screens, shared label/help/error wiring (expiry date and quantity unit now surface their existing server field errors), and a 44px Cancel/Create action row; the single `data-result` status region stays canonical. Field names/values, native POST, `quarantine.createReceiving` payload, `PERM-QUAR-CREATE` gate, enhance/unsaved wiring and Sidebar are unchanged. No API/schema/policy/inspection-release change.
   - Evidence: NOT RUN by task instruction (no tests/typecheck/lint/build/browser/QA); source and textual `git diff` review only. Literal visual-reference match not confirmed.

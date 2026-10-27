@@ -190,16 +190,15 @@ const filterNotice = invalidDateRange
 ---
 
 <AppLayout title="Reject reports · QC Operations" locale="en" direction="ltr">
+  <PageHeader purpose="Issue slips record approval confirmations. Daily rejects need no approval.">
+    <Fragment slot="heading"><h1>Reject reports</h1></Fragment>
+    <Fragment slot="actions">{availability.available && canCreate && <a class="button" href="/reject-reports/new">Create report</a>}</Fragment>
+  </PageHeader>
   {
     !availability.available ? (
       <ErrorState title={availabilityError.title} description={availabilityError.description} retryHref="/reject-reports" />
     ) : (
       <div class="reject-register">
-        <PageHeader purpose="Issue slips record approval confirmations. Daily rejects need no approval.">
-          <Fragment slot="heading"><h1>Reject reports</h1></Fragment>
-          <Fragment slot="actions">{canCreate && <a class="button" href="/reject-reports/new">Create report</a>}</Fragment>
-        </PageHeader>
-
         {/* READ and FILTER use the existing server reads and the native GET
             contract. EXPORT is N/A: this register exposes no export action.
             AUTH is the login redirect above; approvals, void, and daily-record
@@ -631,11 +630,15 @@ const filterNotice = invalidDateRange
     text-decoration: underline;
   }
   .date,
-  .entries,
-  .quantity {
+  .entries {
     min-inline-size: 8rem;
     font-variant-numeric: var(--numeric-figures);
     white-space: nowrap;
+  }
+  .quantity {
+    min-inline-size: 8rem;
+    font-variant-numeric: var(--numeric-figures);
+    overflow-wrap: anywhere;
   }
   .item {
     min-inline-size: 15rem;

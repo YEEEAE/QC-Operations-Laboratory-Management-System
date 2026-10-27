@@ -95,81 +95,110 @@ const fmtDateTime = (d?: Date) =>
     />
   ) : (
   <>
-  <section class="page-head">
-    <div>
+  <header class="record-head">
+    <div class="record-identity">
       <p class="eyebrow">Rejected material/product issue slip</p>
       <h1>{slip.reportNo}</h1>
-      <p class="lede">
-        Status: <strong class={`status status-${slip.status.toLowerCase()}`}>{stateLabel(slip.status)}</strong>
-      </p>
+      <div class="record-meta">
+        <span>Status <strong class={`status status-${slip.status.toLowerCase()}`}>{stateLabel(slip.status)}</strong></span>
+        <span>Version <strong class="version">{slip.version.toString()}</strong></span>
+      </div>
     </div>
-    <div class="head-actions">
+    <nav class="head-actions" aria-label="Issue slip links">
       <a href="/reject-reports">Back to reject reports</a>
       <a href={`${Astro.url.pathname}?print=1`} target="_blank" rel="noopener">Print view</a>
-    </div>
-  </section>
+    </nav>
+  </header>
 
   {printMode && <p class="print-copy-watermark">UNAPPROVED INFORMATIONAL COPY — NOT A CONTROLLED RECORD</p>}
-  {postError && <p role="alert" tabindex="-1" data-post-error>{postError} <a href={`${Astro.url.pathname}#approval-confirmations`}>Review approval history</a></p>}
-  <div class="grid">
-    <section class="panel">
-      <h2>Report</h2>
-      <dl>
-        <dt>Report date</dt><dd>{fmtDate(slip.reportDate)}</dd>
-        <dt>Department / section</dt><dd>{slip.department}</dd>
-        <dt>Recorded by</dt><dd>{creatorLabel}</dd>
-        <dt>Created at</dt><dd>{fmtDateTime(slip.createdAt)}</dd>
-        <dt>Issued at</dt><dd>{fmtDateTime(slip.issuedAt)}</dd>
-        <dt>Completed at</dt><dd>{fmtDateTime(slip.completedAt)}</dd>
-        {slip.voidedAt && (<><dt>Voided</dt><dd>{fmtDateTime(slip.voidedAt)} · {slip.voidReason}</dd></>)}
-      </dl>
-    </section>
-    <section class="panel">
-      <h2>Item &amp; quantity</h2>
-      <dl>
-        <dt>Item code</dt><dd>{slip.fields.itemCode}</dd>
-        <dt>Item name</dt><dd>{slip.fields.itemName}</dd>
-        <dt>Goods description</dt><dd>{slip.fields.goodsDescription ?? '—'}</dd>
-        <dt>Lot / batch</dt><dd>{slip.fields.lotNo ?? '—'}</dd>
-        <dt>Rejected quantity</dt><dd>{slip.fields.rejectedQty} {slip.fields.unit}</dd>
-        <dt>Unit cost</dt><dd>{slip.fields.unitCost ?? '—'}</dd>
-        <dt>Total value</dt><dd>{slip.fields.totalValue ?? '—'}</dd>
-      </dl>
-    </section>
-    <section class="panel wide">
-      <h2>Reject reason &amp; remarks</h2>
-      <dl>
-        <dt>Reject reason</dt><dd>{slip.fields.rejectReason}</dd>
-        <dt>Remarks</dt><dd>{slip.fields.remarks ?? '—'}</dd>
-      </dl>
-    </section>
-  </div>
+  <p class:list={['feedback', { 'feedback-active': Boolean(postError) }]} role={postError ? 'alert' : 'status'} tabindex="-1" data-result>
+    {postError && <>{postError} <a href={`${Astro.url.pathname}#approval-confirmations`}>Review approval history</a></>}
+  </p>
 
-  <section class="panel approvals" id="approval-confirmations">
-    <h2>Approval confirmations</h2>
-    <p class="hint">
-      The report creator records that each real-world approval was obtained. These are
-      confirmations recorded by the creator — not electronic signatures by the approvers.
-    </p>
-    <ol class="tracker">
-      {ISSUE_SLIP_APPROVAL_ROLES.map((role) => {
-        const confirmation = slip.approvals.find((a) => a.role === role);
-        const state = confirmation?.status ?? 'PENDING';
-        return (
-          <li class={`step step-${state.toLowerCase()}`}>
-            <span class={`dot dot-${state.toLowerCase()}`} aria-hidden="true"></span>
-            <div class="step-body">
-              <strong>{approvalLabel[role]}</strong>
-              <span class="state">
-                {state === 'CONFIRMED'
-                  ? `Confirmed (recorded ${fmtDateTime(confirmation?.confirmedAt)}${confirmation?.approverName ? ` · approver: ${confirmation.approverName}` : ''})`
-                  : state === 'REVERSED'
-                    ? `Reversed ${fmtDateTime(confirmation?.reversedAt)} — ${confirmation?.reversalReason}`
-                    : 'Pending'}
-              </span>
-              {confirmation?.note && <span class="note">{confirmation.note}</span>}
-            </div>
-            {!printMode && <div class="step-actions">
+  <div class="detail-layout">
+    <div class="record-content">
+      <section class="panel facts" aria-labelledby="report-facts-title">
+        <h2 id="report-facts-title">Report facts</h2>
+        <dl>
+          <dt>Report date</dt><dd>{fmtDate(slip.reportDate)}</dd>
+          <dt>Department / section</dt><dd>{slip.department}</dd>
+          <dt>Recorded by</dt><dd>{creatorLabel}</dd>
+          <dt>Created at</dt><dd>{fmtDateTime(slip.createdAt)}</dd>
+          <dt>Issued at</dt><dd>{fmtDateTime(slip.issuedAt)}</dd>
+          <dt>Completed at</dt><dd>{fmtDateTime(slip.completedAt)}</dd>
+          {slip.voidedAt && (<><dt>Voided</dt><dd>{fmtDateTime(slip.voidedAt)} · {slip.voidReason}</dd></>)}
+        </dl>
+      </section>
+
+      <section class="panel facts" aria-labelledby="item-facts-title">
+        <h2 id="item-facts-title">Item &amp; quantity</h2>
+        <dl>
+          <dt>Item code</dt><dd>{slip.fields.itemCode}</dd>
+          <dt>Item name</dt><dd>{slip.fields.itemName}</dd>
+          <dt>Goods description</dt><dd>{slip.fields.goodsDescription ?? '—'}</dd>
+          <dt>Lot / batch</dt><dd>{slip.fields.lotNo ?? '—'}</dd>
+          <dt>Rejected quantity</dt><dd>{slip.fields.rejectedQty} {slip.fields.unit}</dd>
+          <dt>Unit cost</dt><dd>{slip.fields.unitCost ?? '—'}</dd>
+          <dt>Total value</dt><dd>{slip.fields.totalValue ?? '—'}</dd>
+        </dl>
+      </section>
+
+      <section class="panel facts" aria-labelledby="reason-facts-title">
+        <h2 id="reason-facts-title">Reject reason &amp; remarks</h2>
+        <dl>
+          <dt>Reject reason</dt><dd>{slip.fields.rejectReason}</dd>
+          <dt>Remarks</dt><dd>{slip.fields.remarks ?? '—'}</dd>
+        </dl>
+      </section>
+
+      <section class="panel evidence" id="approval-confirmations" aria-labelledby="approval-history-title">
+        <h2 id="approval-history-title">Approval confirmation history</h2>
+        <p class="hint">
+          The report creator records that each real-world approval was obtained. These are
+          confirmations recorded by the creator — not electronic signatures by the approvers.
+        </p>
+        <ol class="tracker">
+          {ISSUE_SLIP_APPROVAL_ROLES.map((role) => {
+            const confirmation = slip.approvals.find((a) => a.role === role);
+            const state = confirmation?.status ?? 'PENDING';
+            return (
+              <li class={`step step-${state.toLowerCase()}`}>
+                <span class={`dot dot-${state.toLowerCase()}`} aria-hidden="true"></span>
+                <div class="step-body">
+                  <strong>{approvalLabel[role]}</strong>
+                  <span class="state">
+                    {state === 'CONFIRMED'
+                      ? `Confirmed (recorded ${fmtDateTime(confirmation?.confirmedAt)}${confirmation?.approverName ? ` · approver: ${confirmation.approverName}` : ''})`
+                      : state === 'REVERSED'
+                        ? `Reversed ${fmtDateTime(confirmation?.reversedAt)} — ${confirmation?.reversalReason}`
+                        : 'Pending'}
+                  </span>
+                  {confirmation?.note && <span class="note">{confirmation.note}</span>}
+                </div>
+              </li>
+            );
+          })}
+        </ol>
+      </section>
+
+      <section class="panel relationships" aria-labelledby="related-records-title">
+        <h2 id="related-records-title">Related records</h2>
+        {slip.correctionOf
+          ? <p>Correction reference is recorded, but this view does not provide a related-record label or route.</p>
+          : <p>No correction reference is recorded for this issue slip.</p>}
+        <a href="/reject-reports">Reject Reports register</a>
+      </section>
+    </div>
+
+    {!printMode && <aside class="action-rail" aria-labelledby="actions-title">
+      <section class="panel actions">
+        <h2 id="actions-title">Available actions</h2>
+        {ISSUE_SLIP_APPROVAL_ROLES.map((role) => {
+          const confirmation = slip.approvals.find((a) => a.role === role);
+          const state = confirmation?.status ?? 'PENDING';
+          return (
+            <div class="checkpoint-action" data-checkpoint={role}>
+              <h3>{approvalLabel[role]}</h3>
               {state === 'PENDING' && canConfirm && slip.status === 'APPROVAL_TRACKING' && role === nextApprovalRole && (
                 <form class="inline-form" method="post" data-confirm-form={role} data-version={slip.version.toString()}>
                   <input type="hidden" name="intent" value="confirm" /><input type="hidden" name="role" value={role} /><input type="hidden" name="expectedVersion" value={slip.version.toString()} />
@@ -179,7 +208,7 @@ const fmtDateTime = (d?: Date) =>
                 </form>
               )}
               {state === 'PENDING' && canConfirm && slip.status === 'APPROVAL_TRACKING' && role !== nextApprovalRole && (
-                <span class="hint">Confirm the earlier checkpoint first.</span>
+                <p class="hint">Confirm the earlier checkpoint first.</p>
               )}
               {state === 'CONFIRMED' && (canConfirm || hasPermission('PERM-RREJ-ADMIN-CORRECT')) && (
                 <form class="inline-form" method="post" data-reverse-form={role} data-version={slip.version.toString()}>
@@ -189,29 +218,24 @@ const fmtDateTime = (d?: Date) =>
                   <button type="submit" class="secondary">Reverse confirmation</button>
                 </form>
               )}
-            </div>}
-          </li>
-        );
-      })}
-    </ol>
-    <p role="status" data-result tabindex="-1"></p>
-  </section>
-
-  {!printMode && <section class="panel actions">
-    <h2>Actions</h2>
-    {slip.status === 'DRAFT' && canManage && (
-      <form method="post" data-issue-form><input type="hidden" name="intent" value="issue" /><input type="hidden" name="expectedVersion" value={slip.version.toString()} /><button type="submit" data-issue data-version={slip.version.toString()}>Issue slip (start approval tracking)</button></form>
-    )}
-    {slip.status !== 'VOID' && slip.status !== 'COMPLETED' && isCreator && hasPermission('PERM-RREJ-VOID') && (
-      <form class="inline-form" method="post" data-void-form data-version={slip.version.toString()}>
-        <input type="hidden" name="intent" value="void" /><input type="hidden" name="expectedVersion" value={slip.version.toString()} />
-        <label class="sr-only" for="voidReason">Void reason</label>
-        <input id="voidReason" name="reason" required maxlength="2000" placeholder="Void reason (required)" value={postedValues.reason ?? ''} />
-        <button type="submit" class="danger">Void report</button>
-      </form>
-    )}
-    {slip.status === 'DRAFT' && !canManage && <p class="hint">Only the creator can issue or edit this draft.</p>}
-  </section>}
+            </div>
+          );
+        })}
+        {slip.status === 'DRAFT' && canManage && (
+          <form method="post" data-issue-form><input type="hidden" name="intent" value="issue" /><input type="hidden" name="expectedVersion" value={slip.version.toString()} /><button type="submit" data-issue data-version={slip.version.toString()}>Issue slip (start approval tracking)</button></form>
+        )}
+        {slip.status !== 'VOID' && slip.status !== 'COMPLETED' && isCreator && hasPermission('PERM-RREJ-VOID') && (
+          <form class="inline-form" method="post" data-void-form data-version={slip.version.toString()}>
+            <input type="hidden" name="intent" value="void" /><input type="hidden" name="expectedVersion" value={slip.version.toString()} />
+            <label class="sr-only" for="voidReason">Void reason</label>
+            <input id="voidReason" name="reason" required maxlength="2000" placeholder="Void reason (required)" value={postedValues.reason ?? ''} />
+            <button type="submit" class="danger">Void report</button>
+          </form>
+        )}
+        {slip.status === 'DRAFT' && !canManage && <p class="hint">Only the creator can issue or edit this draft.</p>}
+      </section>
+    </aside>}
+  </div>
   </>
   )}
 </AppLayout>
@@ -221,7 +245,7 @@ const fmtDateTime = (d?: Date) =>
   const reportId = location.pathname.split('/').filter(Boolean).pop() ?? '';
   const output = document.querySelector<HTMLElement>('[data-result]');
   const fail = (message: string) => {
-    if (output) { output.textContent = message; output.focus?.(); }
+    if (output) { output.textContent = message; output.setAttribute('role', 'alert'); output.classList.add('feedback-active'); output.focus?.(); }
   };
   const run = async (work: Promise<{ error?: unknown }>) => {
     try {
@@ -280,39 +304,40 @@ const fmtDateTime = (d?: Date) =>
 </script>
 
 <style>
-  .page-head{display:flex;justify-content:space-between;gap:var(--space-5);margin-bottom:var(--space-6)}
-  h1{margin:.25rem 0}.eyebrow{margin:0;color:var(--text-muted);font-size:.7rem;letter-spacing:.12em;font-weight:700}
-  .lede,.hint{color:var(--text-muted);font-size:.86rem}
-  .head-actions{display:flex;gap:var(--space-3);flex-wrap:wrap}
-  .grid{display:grid;grid-template-columns:1fr 1fr;gap:var(--space-5)}
-  .grid .wide{grid-column:1/-1}
-  .panel{padding:var(--space-5);background:var(--surface-panel);border:1px solid var(--color-border-subtle);border-radius:var(--radius-lg);margin-bottom:var(--space-5)}
-  h2{font-size:1rem;margin-top:0}
-  dl{display:grid;grid-template-columns:auto 1fr;gap:.6rem 1.5rem}dt{color:var(--text-muted)}dd{margin:0;font-weight:600}
+  .record-head{display:flex;justify-content:space-between;align-items:flex-start;gap:var(--space-5);margin-bottom:var(--space-6)}
+  .record-identity{min-inline-size:0}.record-head h1{margin:.25rem 0;overflow-wrap:anywhere}.eyebrow{margin:0;color:var(--text-muted);font-size:.75rem;letter-spacing:.08em;font-weight:700}
+  .record-meta{display:flex;gap:var(--space-4);flex-wrap:wrap;color:var(--text-muted);font-size:.85rem}.record-meta strong{color:var(--text-primary)}
+  .head-actions{display:flex;gap:var(--space-3);flex-wrap:wrap;align-items:center}.head-actions a{display:inline-flex;align-items:center;min-block-size:max(var(--control-height),44px)}
+  .feedback:not(.feedback-active){display:none}.feedback-active{margin-block:0 var(--space-5);padding:var(--space-3);border:1px solid var(--status-danger-bg);border-radius:var(--radius-md);color:var(--text-primary);background:color-mix(in srgb,var(--status-danger-bg) 35%,transparent)}
+  .detail-layout{display:grid;grid-template-columns:minmax(0,1fr) minmax(18rem,.38fr);align-items:start;gap:var(--space-5)}.record-content{min-inline-size:0}.action-rail{min-inline-size:0;position:sticky;inset-block-start:var(--space-4)}
+  .panel{min-inline-size:0;padding:var(--space-5);background:var(--surface-panel);border:1px solid var(--color-border-subtle);border-radius:var(--radius-lg);margin-block-end:var(--space-5)}
+  h2{font-size:1rem;margin-block:0 var(--space-3)}h3{font-size:.9rem;margin:0}
+  .facts dl{display:grid;grid-template-columns:minmax(8rem,.45fr) minmax(0,1fr);gap:.65rem 1.5rem;margin:0}dt{color:var(--text-muted)}dd{margin:0;font-weight:600;min-inline-size:0;overflow-wrap:anywhere}
+  .hint{color:var(--text-muted);font-size:.86rem}
   .tracker{list-style:none;margin:0;padding:0;display:grid;gap:var(--space-3)}
-  .step{display:flex;gap:var(--space-3);align-items:center;padding:var(--space-3);border:1px solid var(--color-border-subtle);border-radius:var(--radius-md)}
+  .step{display:flex;gap:var(--space-3);align-items:flex-start;padding:var(--space-3);border:1px solid var(--color-border-subtle);border-radius:var(--radius-md);min-inline-size:0}
   .dot{width:.8rem;height:.8rem;flex:0 0 .8rem;border-radius:50%;background:var(--text-muted)}
   .dot-confirmed{background:var(--status-success,#047857)}
   .dot-reversed{background:var(--status-warning,#b45309)}
-  .step-body{display:grid;gap:.15rem;flex:1}
-  .step-body .state{font-size:.8rem;color:var(--text-muted)}
-  .step-body .note{font-size:.78rem}
-  button{padding:.6rem 1rem;background:var(--color-accent-primary);border:0;border-radius:var(--radius-md);color:var(--text-on-accent);font-weight:700}
+  .step-body{display:grid;gap:.25rem;flex:1;min-inline-size:0;overflow-wrap:anywhere}
+  .step-body .state{font-size:.85rem;color:var(--text-secondary)}
+  .step-body .note{font-size:.82rem;overflow-wrap:anywhere}
+  .actions{display:grid;gap:var(--space-4)}.checkpoint-action{display:grid;gap:var(--space-2);padding-block-end:var(--space-3);border-block-end:1px solid var(--color-border-subtle)}
+  button{min-block-size:max(var(--control-height),44px);padding:.6rem 1rem;background:var(--color-accent-primary);border:0;border-radius:var(--radius-md);color:var(--text-on-accent);font-weight:700;cursor:pointer}
   button.secondary{background:transparent;color:var(--color-accent-primary-hover);border:1px solid var(--color-accent-primary)}
   button.danger{background:var(--status-danger)}
-  .inline-form{display:flex;gap:.5rem;align-items:center;flex-wrap:wrap}
-  .inline-form input{padding:.5rem;background:var(--surface-page);color:inherit;border:1px solid var(--color-border-subtle);border-radius:var(--radius-sm);min-width:12rem}
+  .inline-form{display:flex;gap:.5rem;align-items:stretch;flex-wrap:wrap;min-inline-size:0}
+  .inline-form input{min-block-size:max(var(--control-height),44px);min-inline-size:min(12rem,100%);max-inline-size:100%;flex:1 1 12rem;padding:.5rem;background:var(--surface-page);color:inherit;border:1px solid var(--color-border-subtle);border-radius:var(--radius-sm)}
   .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
-  .actions{display:flex;gap:var(--space-3);align-items:center;flex-wrap:wrap}
-  .actions h2{width:100%}
   .status{font-size:.72rem;padding:.15rem .5rem;border-radius:999px;background:var(--surface-page);border:1px solid var(--color-border-subtle)}
-  a{color:var(--color-accent-primary-hover)}
-  @media(max-width:768px){.page-head,.grid{display:block}.step{flex-wrap:wrap}}
-  .print-copy-watermark{border-block:2px solid #111;padding:4px;text-align:center;font-weight:700}
+  .version{font-variant-numeric:tabular-nums}.head-actions a,.relationships a{color:var(--color-accent-primary-hover);overflow-wrap:anywhere}
+  .print-copy-watermark{border-block:2px solid currentColor;padding:4px;text-align:center;font-weight:700}
+  @media(max-width:900px){.detail-layout{grid-template-columns:minmax(0,1fr)}.action-rail{position:static}}
+  @media(max-width:640px){.record-head{display:grid}.facts dl{grid-template-columns:minmax(0,1fr);gap:.2rem}.facts dd{margin-block-end:.65rem}.head-actions{align-items:stretch}.head-actions a{padding-inline:var(--space-2)}}
   @media print{
     @page{size:A4 portrait;margin:12mm}
-    .head-actions,.step-actions,.actions,.tabs{display:none!important}
-    body{background:#fff}
-    .panel{border-color:#999;break-inside:avoid}
+    .head-actions,.action-rail{display:none!important}
+    body{background:#fff;color:#111}
+    .detail-layout{display:block}.panel{border-color:#999;break-inside:avoid;background:#fff;color:#111}.print-copy-watermark{color:#111}
   }
 </style>

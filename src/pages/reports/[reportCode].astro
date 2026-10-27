@@ -29,7 +29,81 @@ const exportQuery = new URLSearchParams(
 const pinnedExportQuery = [exportQuery, `snapshot=${snapshotRef}`].filter(Boolean).join('&');
 ---
 <AppLayout title={`${definition?.title ?? 'Report'} · QC Operations`} locale="en" direction="ltr">
-  {Astro.response.status === 404 ? <section class="empty"><h1>Report not found</h1><p>This report code is not registered.</p><a href="/reports">Back to reports</a></section> : accessDenied ? <section class="empty" role="alert"><h1>Not authorized</h1><p>Your account cannot view this report. No report rows or counts were returned.</p><a href="/reports">Back to reports</a></section> : invalidFilters ? <section class="empty" role="alert"><h1>Filters need attention</h1><p>One or more filter values are invalid. No report was generated.</p><a href={`/reports/${code}`}>Clear filters</a></section> : providerUnavailable ? <section class="empty" role="status"><h1>Report unavailable</h1><p>The report source did not confirm a result. No empty state or row count is shown.</p><a href={`/reports/${code}`}>Retry</a></section> : <><PageHeader><Fragment slot="heading"><h1>{definition.title}</h1></Fragment><p>{definition.description}</p><Fragment slot="actions"><a href="/reports">All reports</a></Fragment></PageHeader><section class="report-provenance" aria-label="Report provenance"><strong>Report provenance</strong><dl><div><dt>Source</dt><dd>{provenance.source}</dd></div><div><dt>Prepared by</dt><dd>{provenance.generatedBy}</dd></div><div><dt>Actor scope</dt><dd>{provenance.scope}</dd></div><div><dt>Period</dt><dd>{provenance.period}</dd></div><div><dt>Filters</dt><dd>{provenance.filters}</dd></div><div><dt>Sort</dt><dd>{provenance.sort}</dd></div><div><dt>Dataset snapshot</dt><dd>{provenance.datasetSnapshot}</dd></div><div><dt>Status</dt><dd>{provenance.status}</dd></div><div><dt>Generated at</dt><dd><time datetime={provenance.generatedAt}>{provenance.generatedAt}</time> (UTC)</dd></div><div><dt>Rows</dt><dd>{provenance.count} records</dd></div></dl></section><p class="print-copy-watermark">UNAPPROVED INFORMATIONAL COPY — NOT A CONTROLLED RECORD</p><section class="toolbar"><span>{report.rows.length} authorized records</span><span role="status">{report.rows.length === 0 ? hasReportFilters ? 'No records match the applied filters. Clear filters to broaden the view.' : 'No records are available in your permitted scope.' : 'Filters applied on the server.'}</span><span class="export-links"><a href={`/reports/${definition.code}/export?format=csv&${pinnedExportQuery}`}>Export CSV</a><a href={`/reports/${definition.code}/export?format=xlsx&${pinnedExportQuery}`}>Export XLSX</a></span></section><p class="privacy-note" role="note">Export files contain the report data shown here and download through your browser. Keep exported copies in an approved secure location; copies outside the app are not covered by its access or correction controls.</p><div class="report-table-panel"><div class="table-controls"><label class="density-control">Row density<select aria-label="Row density" id="report-density"><option value="comfortable">Comfortable</option><option value="standard" selected>Standard</option><option value="compact">Compact</option></select></label><p class="bulk-note" role="note">No bulk actions are available. Report rows cannot be changed here.</p></div><div class="table-scroll" role="region" tabindex="0" aria-label={`${definition.title} table — ${report.columns.length} columns, scroll horizontally to see them all`}><table id="report-table" data-density="standard"><caption>{definition.title} — {report.rows.length} authorized records</caption><thead><tr>{report.columns.map((column) => <th scope="col">{column.label}</th>)}</tr></thead><tbody>{report.rows.map((row) => <tr><th scope="row">{row[report.columns[0]?.key ?? ''] === null ? '' : String(row[report.columns[0]?.key ?? ''])}</th>{report.columns.slice(1).map((column) => <td>{row[column.key] === null ? '' : String(row[column.key])}</td>)}</tr>)}</tbody></table></div></div></>}
+  {Astro.response.status === 404 ? <section class="empty"><h1>Report not found</h1><p>This report code is not registered.</p><a href="/reports">Back to reports</a></section> : accessDenied ? <section class="empty" role="alert"><h1>Not authorized</h1><p>Your account cannot view this report. No report rows or counts were returned.</p><a href="/reports">Back to reports</a></section> : invalidFilters ? <section class="empty" role="alert"><h1>Filters need attention</h1><p>One or more filter values are invalid. No report was generated.</p><a href={`/reports/${code}`}>Clear filters</a></section> : providerUnavailable ? <section class="empty" role="status"><h1>Report unavailable</h1><p>The report source did not confirm a result. No empty state or row count is shown.</p><a href={`/reports/${code}`}>Retry</a></section> : <>
+    <PageHeader purpose={definition.description}>
+      <Fragment slot="heading">
+        <p class="record-code">{definition.code}</p>
+        <h1>{definition.title}</h1>
+      </Fragment>
+      <Fragment slot="actions"><a href="/reports">All reports</a></Fragment>
+    </PageHeader>
+
+    <div class="report-detail">
+      <section class="record-summary" aria-label="Report identity and state">
+        <dl>
+          <div><dt>State</dt><dd><span class="record-state">{provenance.status}</span></dd></div>
+          <div><dt>Dataset version (SHA-256)</dt><dd><code>{snapshotRef}</code></dd></div>
+        </dl>
+        <p class="snapshot-note">This is a request-time snapshot, not a live feed. CSV and XLSX exports are bound to this dataset digest; if the source data changes, the export is rejected and the report must be refreshed.</p>
+      </section>
+
+      <section class="report-section" aria-labelledby="report-facts-heading">
+        <h2 id="report-facts-heading">Report facts</h2>
+        <dl class="report-facts">
+          <div><dt>Source</dt><dd>{provenance.source}</dd></div>
+          <div><dt>Prepared by</dt><dd>{provenance.generatedBy}</dd></div>
+          <div><dt>Actor scope</dt><dd>{provenance.scope}</dd></div>
+          <div><dt>Period</dt><dd>{provenance.period}</dd></div>
+          <div><dt>Filters</dt><dd>{provenance.filters}</dd></div>
+          <div><dt>Sort</dt><dd>{provenance.sort}</dd></div>
+          <div><dt>Generated at</dt><dd><time datetime={provenance.generatedAt}>{provenance.generatedAt}</time> (UTC)</dd></div>
+          <div><dt>Rows</dt><dd>{provenance.count} records</dd></div>
+        </dl>
+      </section>
+
+      <section class="report-section" aria-labelledby="report-evidence-heading">
+        <h2 id="report-evidence-heading">Report evidence</h2>
+        <div class="report-result" role="status">
+          <strong>{report.rows.length} authorized records</strong>
+          <span>{report.rows.length === 0 ? hasReportFilters ? 'No records match the applied filters. Clear filters to broaden the view.' : 'No records are available in your permitted scope.' : 'Filters applied on the server.'}</span>
+        </div>
+        <p class="print-copy-watermark">UNAPPROVED INFORMATIONAL COPY — NOT A CONTROLLED RECORD</p>
+        <div class="report-table-panel">
+          <div class="table-controls">
+            <label class="density-control">Row density<select aria-label="Row density" id="report-density"><option value="comfortable">Comfortable</option><option value="standard" selected>Standard</option><option value="compact">Compact</option></select></label>
+            <p class="bulk-note" role="note">No bulk actions are available. Report rows cannot be changed here.</p>
+          </div>
+          <div class="table-scroll" role="region" tabindex="0" aria-label={`${definition.title} table — ${report.columns.length} columns, scroll horizontally to see them all`}>
+            <table id="report-table" data-density="standard">
+              <caption>{definition.title} — {report.rows.length} authorized records</caption>
+              <thead><tr>{report.columns.map((column) => <th scope="col">{column.label}</th>)}</tr></thead>
+              <tbody>{report.rows.map((row) => <tr><th scope="row">{row[report.columns[0]?.key ?? ''] === null ? '' : String(row[report.columns[0]?.key ?? ''])}</th>{report.columns.slice(1).map((column) => <td>{row[column.key] === null ? '' : String(row[column.key])}</td>)}</tr>)}</tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <div class="detail-context">
+        <section class="report-section" aria-labelledby="report-history-heading">
+          <h2 id="report-history-heading">Run history</h2>
+          <p class="not-available"><strong>N/A</strong> — No saved run history is returned. This snapshot is request-local; no retention is implied.</p>
+        </section>
+        <section class="report-section" aria-labelledby="report-relationships-heading">
+          <h2 id="report-relationships-heading">Relationships</h2>
+          <p class="not-available"><strong>N/A</strong> — The report projection does not provide related-record links.</p>
+        </section>
+      </div>
+
+      <section class="report-section report-actions" aria-labelledby="report-actions-heading">
+        <h2 id="report-actions-heading">Available actions</h2>
+        <div class="export-links">
+          <a href={`/reports/${definition.code}/export?format=csv&${pinnedExportQuery}`}>Export CSV</a>
+          <a href={`/reports/${definition.code}/export?format=xlsx&${pinnedExportQuery}`}>Export XLSX</a>
+        </div>
+        <p class="privacy-note" role="note">Export files contain the report data shown here and download through your browser. Keep exported copies in an approved secure location; copies outside the app are not covered by its access or correction controls.</p>
+      </section>
+    </div>
+  </>}
 </AppLayout>
 <script>
   const preferenceKey = 'qc.register-density';
@@ -48,25 +122,45 @@ const pinnedExportQuery = [exportQuery, `snapshot=${snapshotRef}`].filter(Boolea
     });
   }
 </script>
-<style>.page-head,.toolbar{display:flex;justify-content:space-between;gap:var(--space-5);align-items:flex-start}.page-head{margin-bottom:var(--space-5)}h1{margin:.25rem 0}.eyebrow{margin:0;color:var(--text-muted);font-size:.7rem;letter-spacing:.12em;font-weight:700}.page-head p,.toolbar{color:var(--text-muted);font-size:.85rem}.toolbar{padding:var(--space-3) var(--space-4);background:var(--surface-raised);border:1px solid var(--color-border-subtle);border-radius:var(--radius-md);margin-bottom:var(--space-4)}.report-table-panel{overflow:hidden;border:1px solid var(--color-border-subtle);border-radius:var(--radius-lg);background:var(--surface-panel)}.table-controls{display:flex;align-items:center;justify-content:space-between;gap:var(--space-3);padding:var(--space-3) var(--space-4)}.density-control{display:inline-flex;align-items:center;gap:var(--space-2);font-size:var(--font-size-xs);color:var(--text-muted)}.density-control select{min-height:var(--control-height)}.bulk-note{margin:0;color:var(--text-muted);font-size:var(--font-size-xs)}.table-scroll{overflow:auto}table{width:100%;min-width:980px;border-collapse:collapse;font-size:.8rem}table[data-density="comfortable"] th,table[data-density="comfortable"] td{padding:1rem}table[data-density="standard"] th,table[data-density="standard"] td{padding:.75rem}table[data-density="compact"] th,table[data-density="compact"] td{padding:.4rem .6rem}th{color:var(--text-primary);background:var(--surface-raised)}td{color:var(--text-secondary)}.empty{padding:var(--space-8);text-align:center}.visually-hidden{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}@media(max-width:600px){.page-head{display:block}.toolbar{display:grid;gap:var(--space-2)}}
-.export-links{display:inline-flex;gap:var(--space-3)}
-.export-links a{color:var(--color-accent-primary-hover);font-size:.8rem;font-weight:600}
-.privacy-note{margin:0 0 var(--space-4);padding:var(--space-3) var(--space-4);border-inline-start:3px solid var(--color-accent-primary);background:var(--surface-raised);color:var(--text-muted);font-size:.82rem}
-.report-provenance{margin-block:var(--space-4);padding:var(--space-4);border:1px solid var(--color-border-subtle);background:var(--surface-raised);font-size:var(--font-size-xs)}.report-provenance>strong{color:var(--status-warning)}.report-provenance dl{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:var(--space-3);margin:var(--space-3) 0 0}.report-provenance dl div{min-width:0}.report-provenance dt{font-weight:700;color:var(--text-muted)}.report-provenance dd{margin:.15rem 0 0;overflow-wrap:anywhere}
+<style>
+.record-code{margin:0 0 var(--space-2);color:var(--text-muted);font-size:var(--font-size-xs);font-weight:var(--font-weight-semibold);letter-spacing:.06em}
+.report-detail{display:grid;gap:var(--space-5)}
+.record-summary,.report-section{min-inline-size:0;padding:var(--space-5);border:1px solid var(--color-border-subtle);border-radius:var(--radius-lg);background:var(--surface-panel)}
+.record-summary{background:var(--surface-raised)}
+.record-summary dl,.report-facts{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,15rem),1fr));gap:var(--space-4);margin:0}
+.record-summary dt,.report-facts dt{color:var(--text-muted);font-size:var(--font-size-xs);font-weight:var(--font-weight-semibold)}
+.record-summary dd,.report-facts dd{margin-block-start:var(--space-1);color:var(--text-primary);overflow-wrap:anywhere}
+.record-summary code{font-size:var(--font-size-xs);overflow-wrap:anywhere}
+.record-state{display:inline-block;color:var(--status-warning);font-weight:var(--font-weight-semibold);line-height:var(--line-height-normal)}
+.snapshot-note{margin:var(--space-4) 0 0;color:var(--text-secondary);font-size:var(--font-size-sm);line-height:var(--line-height-normal)}
+.report-section h2{margin:0 0 var(--space-4);font-size:var(--font-size-lg);line-height:var(--line-height-tight)}
+.report-result{display:flex;flex-wrap:wrap;align-items:baseline;gap:var(--space-2) var(--space-4);margin-block-end:var(--space-4);color:var(--text-secondary);font-size:var(--font-size-sm)}
+.report-result strong{color:var(--text-primary)}
+.report-result span{overflow-wrap:anywhere}
+.detail-context{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--space-5)}
+.not-available{margin:0;color:var(--text-secondary);font-size:var(--font-size-sm);line-height:var(--line-height-normal)}
+.not-available strong{color:var(--text-primary)}
+.report-actions .export-links{margin-block-end:var(--space-3)}
+.export-links{display:flex;flex-wrap:wrap;gap:var(--space-3)}
+.export-links a{display:inline-flex;min-block-size:44px;align-items:center;padding-inline:var(--space-3);border:1px solid var(--color-border-subtle);border-radius:var(--radius-md);color:var(--color-accent-primary-hover);font-size:var(--font-size-sm);font-weight:var(--font-weight-semibold)}
+.export-links a:focus-visible{outline:2px solid var(--focus-ring);outline-offset:3px}
+.privacy-note{margin:0;padding:var(--space-3) var(--space-4);background:var(--surface-raised);color:var(--text-muted);font-size:var(--font-size-sm);line-height:var(--line-height-normal)}
+.report-table-panel{overflow:hidden;border:1px solid var(--color-border-subtle);border-radius:var(--radius-lg);background:var(--surface-panel)}
+.table-controls{display:flex;align-items:center;justify-content:space-between;gap:var(--space-3);padding:var(--space-3) var(--space-4)}
+.density-control{display:inline-flex;align-items:center;gap:var(--space-2);flex:0 0 auto;white-space:nowrap;color:var(--text-muted);font-size:var(--font-size-xs)}
+.density-control select{min-block-size:var(--control-height);min-inline-size:9.5rem;flex:0 0 auto}
+.bulk-note{margin:0;color:var(--text-muted);font-size:var(--font-size-xs)}
+.table-scroll{overflow:auto}
+table{width:100%;min-width:980px;border-collapse:collapse;font-size:.8rem}
+table[data-density="comfortable"] th,table[data-density="comfortable"] td{padding:1rem}
+table[data-density="standard"] th,table[data-density="standard"] td{padding:.75rem}
+table[data-density="compact"] th,table[data-density="compact"] td{padding:.4rem .6rem}
+th{color:var(--text-primary);background:var(--surface-raised);overflow-wrap:break-word;vertical-align:bottom}
+td{color:var(--text-secondary);overflow-wrap:anywhere}
+.table-scroll:focus-visible{outline:2px solid var(--focus-ring);outline-offset:-2px}
+.empty{padding:var(--space-8);text-align:center}
 .print-copy-watermark{display:none}
-@media print{@page{size:A4 portrait;margin:12mm}.page-head a,.toolbar,.export-links,.privacy-note,.density-control,.bulk-note{display:none!important}body{background:#fff}.print-copy-watermark{display:block;border-block:2px solid #111;padding:4px;text-align:center;font-size:9pt;font-weight:700;break-inside:avoid}.report-provenance{break-inside:avoid;color:#000;background:#fff;border:1px solid #777}.report-provenance>strong{color:#000}.report-provenance dt{color:#333}.report-provenance dd{color:#000}.density-control,.bulk-note{display:none!important}.report-table-panel{border:0;overflow:visible}.table-scroll{border:0;overflow:visible}table{min-width:0;font-size:8pt;page-break-inside:auto}thead{display:table-header-group}tr{break-inside:avoid;page-break-inside:avoid}th,td{border:1px solid #999;padding:4px 6px;overflow-wrap:anywhere}th{background:#eee;color:#000}}
-/* UX-005: column headers wrap only on word boundaries. `.app-main` sets
-   `overflow-wrap: anywhere`, which lets a column shrink to a single character
-   and broke "Description", "Lot" and "Quantity" inside the word; the longest
-   header word now stays the column's meaningful minimum width while long data
-   values in body cells still wrap. */
-th { overflow-wrap: break-word; vertical-align: bottom; }
-/* UX-005: the row-density control must not shrink below its selected label. The
-   global `select { min-inline-size: 0 }` let the flex row clip "Comfortable". */
-.density-control { flex: 0 0 auto; white-space: nowrap; }
-.density-control select { flex: 0 0 auto; min-inline-size: 9.5rem; }
-.table-controls { flex-wrap: wrap; row-gap: var(--space-2); }
-/* UX-005: the wide-report scroll container is keyboard reachable and named, so
-   it is not a mouse-only region and the scroll direction is announced. */
-.table-scroll:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: -2px; }
-@media (max-width: 600px) { .table-controls { flex-direction: column; align-items: flex-start; } }
+@media(max-width:760px){.detail-context{grid-template-columns:minmax(0,1fr)}}
+@media(max-width:600px){.table-controls{flex-direction:column;align-items:flex-start;flex-wrap:wrap;row-gap:var(--space-2)}}
+@media print{@page{size:A4 portrait;margin:12mm}.page-header-actions,.report-actions,.privacy-note,.density-control,.bulk-note{display:none!important}body{background:#fff}.print-copy-watermark{display:block;border-block:2px solid #111;padding:4px;text-align:center;font-size:9pt;font-weight:700;break-inside:avoid}.record-summary,.report-section{break-inside:avoid;color:#000;background:#fff;border:1px solid #777}.record-state,.record-summary dt,.report-facts dt{color:#000}.record-summary dd,.report-facts dd,.snapshot-note,.not-available{color:#000}.report-table-panel{border:0;overflow:visible}.table-scroll{border:0;overflow:visible}table{min-width:0;font-size:8pt;page-break-inside:auto}thead{display:table-header-group}tr{break-inside:avoid;page-break-inside:avoid}th,td{border:1px solid #999;padding:4px 6px;overflow-wrap:anywhere}th{background:#eee;color:#000}}
+</style>

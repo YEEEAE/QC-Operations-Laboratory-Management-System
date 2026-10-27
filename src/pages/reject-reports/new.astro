@@ -153,31 +153,33 @@ const describedBy = (name: string): string | undefined => (err(name) ? `${name}-
     />
   ) : (
     <>
-  <section class="page-head">
+  <header class="page-head">
+    <p class="eyebrow">Reject reports</p>
     <h1>New reject report</h1>
     <p class="lede">Choose a report type. Report numbers are generated automatically.</p>
-  </section>
+  </header>
 
-  <div class="type-select" role="tablist" aria-label="Report type">
-    <a role="tab" aria-selected={type === 'slip'} href="/reject-reports/new?type=slip">
+  <nav class="type-select" aria-label="Report type">
+    <a aria-current={type === 'slip' ? 'page' : undefined} href="/reject-reports/new?type=slip">
       <strong>Rejected Material/Product Issue Slip</strong>
       <span
         >Tracks three real-world approval checkpoints. Those titles — Supervisor, QC Manager,
         Factory Director — name the people who approve in the plant, not system accounts.</span
       >
     </a>
-    <a role="tab" aria-selected={type === 'daily'} href="/reject-reports/new?type=daily">
+    <a aria-current={type === 'daily' ? 'page' : undefined} href="/reject-reports/new?type=daily">
       <strong>Daily Production &amp; Rejection Record</strong>
       <span>No approval confirmation required</span>
     </a>
-  </div>
+  </nav>
 
   {canCreate ? (
     failure && <FormErrorSummary summary={failure.summary} recovery={failure.recovery} errors={Object.entries(failure.fieldErrors).map(([fieldId, message]) => ({ fieldId, message }))} listHref={LIST_HREF} listLabel="reject reports" />
     <form class="form" method="post" data-reject-create data-kind={type}>
       <input type="hidden" name="reportType" value={type} />
-      <fieldset>
+      <fieldset class="form-section" aria-describedby="report-header-help">
         <legend>{type === 'slip' ? 'Issue Slip header' : 'Daily record header'}</legend>
+        <p class="section-help" id="report-header-help">Identify the date and department for this report. Shift is optional.</p>
         <div class="fields">
           <div><label for="reportDate">{type === 'slip' ? 'Report date' : 'Record date'}<input id="reportDate" name="reportDate" type="date" required value={type === 'slip' ? slipValues.reportDate : dailyValues.reportDate} aria-invalid={invalid('reportDate')} aria-describedby={describedBy('reportDate')} /></label>{err('reportDate') && <p class="field-error" id="reportDate-error">{err('reportDate')}</p>}</div>
           <div><label for="department">Department / section<input id="department" name="department" required maxlength="200" value={type === 'slip' ? slipValues.department : dailyValues.department} aria-invalid={invalid('department')} aria-describedby={describedBy('department')} /></label>{err('department') && <p class="field-error" id="department-error">{err('department')}</p>}</div>
@@ -186,8 +188,9 @@ const describedBy = (name: string): string | undefined => (err(name) ? `${name}-
       </fieldset>
 
       {type === 'slip' ? (
-        <fieldset>
+        <fieldset class="form-section" aria-describedby="issue-slip-help">
           <legend>Rejected material / product</legend>
+          <p class="section-help" id="issue-slip-help">Enter the item, lot, quantity, and reason details for the rejected material or product. Unit cost and total value are optional.</p>
           <div class="fields">
             <div><label for="itemCode">Item code<input id="itemCode" name="itemCode" required maxlength="100" value={slipValues.itemCode} aria-invalid={invalid('itemCode')} aria-describedby={describedBy('itemCode')} /></label>{err('itemCode') && <p class="field-error" id="itemCode-error">{err('itemCode')}</p>}</div>
             <div><label for="itemName">Item name<input id="itemName" name="itemName" required maxlength="500" value={slipValues.itemName} aria-invalid={invalid('itemName')} aria-describedby={describedBy('itemName')} /></label>{err('itemName') && <p class="field-error" id="itemName-error">{err('itemName')}</p>}</div>
@@ -203,8 +206,9 @@ const describedBy = (name: string): string | undefined => (err(name) ? `${name}-
           <p class="hint">After creation, issue the slip to start approval tracking. You record each real-world approval as a confirmation — it is not an electronic signature by the approver and it never changes what the system records as PASS or RELEASED.</p>
         </fieldset>
       ) : (
-        <fieldset>
+        <fieldset class="form-section" aria-describedby="daily-record-help">
           <legend>Production / rejection entry</legend>
+          <p class="section-help" id="daily-record-help">Enter the production and rejection details for this record. Reject percentage is calculated by the server from the quantities below.</p>
           <div class="fields">
             <div><label for="machineName">Machine name<input id="machineName" name="machineName" maxlength="200" value={dailyValues.machineName} /></label></div>
             <div><label for="itemCode">FG / Small FG item code<input id="itemCode" name="itemCode" maxlength="100" value={dailyValues.itemCode} /></label></div>
@@ -307,27 +311,36 @@ const describedBy = (name: string): string | undefined => (err(name) ? `${name}-
 </script>
 
 <style>
-  .page-head{margin-bottom:var(--space-6)}
-  .eyebrow{margin:0;color:var(--text-muted);font-size:.7rem;letter-spacing:.12em;font-weight:700}
-  h1{margin:.25rem 0}.lede,.hint{color:var(--text-muted)}
-  .type-select{display:grid;grid-template-columns:1fr 1fr;gap:var(--space-4);margin-bottom:var(--space-5)}
-  .type-select a{display:grid;gap:.4rem;padding:var(--space-4);border:2px solid var(--color-border-subtle);border-radius:var(--radius-lg);text-decoration:none;color:inherit}
-  .type-select a[aria-selected='true']{border-color:var(--color-accent-primary);background:var(--surface-panel)}
-  .type-select span{font-size:.8rem;color:var(--text-muted)}
-  .form{display:grid;gap:var(--space-4);max-width:860px;padding:var(--space-5);background:var(--surface-panel);border:1px solid var(--color-border-subtle);border-radius:var(--radius-lg)}
-  fieldset{border:1px solid var(--color-border-subtle);border-radius:var(--radius-md);padding:var(--space-4);margin:0}
-  legend{font-size:.85rem;font-weight:700;padding:0 .4rem}
-  .fields{display:grid;grid-template-columns:1fr 1fr;gap:var(--space-4)}
+  .page-head{margin-bottom:var(--space-5)}
+  .eyebrow{margin:0;color:var(--text-muted);font-size:var(--font-size-xs);font-weight:700;letter-spacing:.08em;text-transform:uppercase}
+  h1{margin:.25rem 0}.lede,.hint,.section-help{color:var(--text-secondary)}
+  .lede{max-width:65ch;margin:.5rem 0 0}
+  .type-select{display:grid;grid-template-columns:minmax(0,1fr);gap:var(--space-3);margin-bottom:var(--space-5)}
+  .type-select a{display:grid;align-content:start;gap:.5rem;min-width:0;min-height:var(--control-height);padding:var(--space-4);border:1px solid var(--control-border,var(--color-border-subtle));border-radius:var(--radius-lg);text-decoration:none;color:var(--text-primary);background:var(--surface-panel)}
+  .type-select a[aria-current='page']{border-color:var(--color-accent-primary)}
+  .type-select span{font-size:var(--font-size-xs);line-height:1.5;color:var(--text-secondary)}
+  .form{display:grid;gap:var(--space-4);width:100%;max-width:860px;padding:clamp(var(--space-3),3vw,var(--space-5));background:var(--surface-panel);border:1px solid var(--control-border,var(--color-border-subtle));border-radius:var(--radius-lg)}
+  fieldset{min-width:0;border:1px solid var(--control-border,var(--color-border-subtle));border-radius:var(--radius-md);padding:var(--space-4);margin:0}
+  legend{font-size:.9rem;font-weight:700;padding:0 .4rem}
+  .section-help{margin:0 0 var(--space-4);font-size:var(--font-size-xs);line-height:1.5;max-width:72ch}
+  .fields{display:grid;grid-template-columns:minmax(0,1fr);gap:var(--space-4)}
+  .fields>div{min-width:0}
   .fields .wide{grid-column:1/-1}
-  label{display:grid;gap:.4rem;font-size:.85rem}
-  input,textarea{font:inherit;padding:.7rem;background:var(--surface-page);color:inherit;border:1px solid var(--color-border-subtle);border-radius:var(--radius-sm)}
-  input[aria-invalid='true'],textarea[aria-invalid='true']{border-color:var(--status-danger)}
-  .field-error{margin:0;color:var(--status-danger);font-size:.8rem}
-  textarea{min-height:6rem}
+  label{display:grid;gap:.45rem;font-size:.875rem;font-weight:600;line-height:1.4}
+  input,textarea{box-sizing:border-box;width:100%;min-width:0;min-height:var(--control-height);font:inherit;font-weight:400;padding:.65rem .75rem;background:var(--surface-page);color:var(--text-primary);border:1px solid var(--control-border,var(--color-border-subtle));border-radius:var(--radius-sm)}
+  input[aria-invalid='true'],textarea[aria-invalid='true']{border-color:var(--status-danger);border-width:2px}
+  .field-error{margin:.35rem 0 0;color:var(--status-danger);font-size:var(--font-size-xs);line-height:1.45}
+  textarea{min-height:7rem;resize:vertical}
+  .hint{margin:var(--space-4) 0 0;max-width:72ch;font-size:var(--font-size-xs);line-height:1.55}
   .actions{display:flex;gap:var(--space-3);align-items:center;flex-wrap:wrap}
-  button{border:0;padding:.7rem 1rem;background:var(--color-accent-primary);color:var(--text-on-accent);border-radius:var(--radius-md);font-weight:700}
-  button[disabled]{opacity:.6}
-  a{color:var(--color-accent-primary-hover)}
-  .denied{padding:var(--space-5);background:var(--surface-panel);border:1px solid var(--color-border-subtle);border-radius:var(--radius-lg)}
-  @media(max-width:768px){.type-select,.fields{grid-template-columns:1fr}}
+  .actions a,.actions button{box-sizing:border-box;display:inline-flex;align-items:center;justify-content:center;min-height:max(var(--control-height),44px);padding:.65rem 1rem;border-radius:var(--radius-md);font:inherit;font-weight:700}
+  .actions .secondary{border:1px solid var(--control-border,var(--color-border-subtle));background:var(--surface-panel);color:var(--text-primary);text-decoration:none}
+  .actions button{border:0;background:var(--color-accent-primary);color:var(--text-on-accent);cursor:pointer}
+  .actions button[disabled]{opacity:.6;cursor:wait}
+  .type-select a:focus-visible,.actions a:focus-visible,.actions button:focus-visible,input:focus-visible,textarea:focus-visible{outline:2px solid var(--color-accent-primary);outline-offset:2px}
+  [data-result]:empty{display:none}
+  [data-result]:not(:empty){margin:0;padding:var(--space-3);border:1px solid var(--control-border,var(--color-border-subtle));border-radius:var(--radius-sm);background:var(--surface-page);color:var(--text-primary)}
+  @media (min-width:640px){.type-select{grid-template-columns:repeat(2,minmax(0,1fr))}}
+  @media (min-width:760px){.fields{grid-template-columns:repeat(2,minmax(0,1fr))}}
+  @media (max-width:420px){fieldset{padding:var(--space-3)}.actions{align-items:stretch}.actions a,.actions button{flex:1 1 100%}}
 </style>
