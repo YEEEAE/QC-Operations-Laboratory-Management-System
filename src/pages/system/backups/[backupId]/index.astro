@@ -38,28 +38,147 @@ const knownGaps = [
 ];
 ---
 <AppLayout title={`Backup set · ${riyadh(backup.requestedAt)} · QC Operations`} locale="en" direction="ltr">
-  <PageHeader><Fragment slot="heading"><h1>Backup set</h1></Fragment><p class="lede">Backup details. No restore runs from this page.</p><Fragment slot="actions"><div class="head-actions"><span class={`pill ${backup.state === 'CREATED' || backup.state === 'VERIFIED' ? 'ok' : backup.state === 'FAILED' ? 'bad' : 'unknown'}`}>Job: {stateLabel(backup.state)}</span><span class={`pill ${restoreVerification === 'VERIFIED' ? 'ok' : restoreVerification === 'VERIFICATION_FAILED' ? 'bad' : 'unknown'}`}>{restoreLabel}</span>{restorable && canRequestDrill && <a class="button" href={`/system/backups/${backup.id}/restore`}>Request restore</a>}</div></Fragment></PageHeader>
-  <div class="grid">
-    <section class="panel"><h2>Backup metadata</h2><p class="record-name">Backup requested {riyadh(backup.requestedAt)} (Asia/Riyadh)</p><dl>
-      <div><dt>Backup job state</dt><dd>{stateLabel(backup.state)} — execution result only</dd></div>
-      <div><dt>Artifact verified</dt><dd>{backup.state === 'VERIFIED' ? 'Yes' : 'No'}</dd></div>
-      <div><dt>Requested</dt><dd>{riyadh(backup.requestedAt)} · Asia/Riyadh</dd></div>
-      {backup.artifactCreatedAt && <div><dt>Artifact created</dt><dd>{riyadh(backup.artifactCreatedAt)} · Asia/Riyadh</dd></div>}
-      {backup.verifiedAt && <div><dt>Artifact verified at</dt><dd>{riyadh(backup.verifiedAt)} · Asia/Riyadh</dd></div>}
-      {backup.sizeBytes !== undefined && <div><dt>Size</dt><dd>{backup.sizeBytes.toString()} bytes</dd></div>}
-      <div><dt>Integrity checksum</dt><dd>{backup.hasChecksum ? 'Recorded (value withheld)' : 'Not recorded'}</dd></div>
-      <div><dt>Catalog record checked</dt><dd><time datetime={catalogCheckedAt.toISOString()}>{riyadh(catalogCheckedAt)} · Asia/Riyadh</time></dd></div>
-      <div><dt>Database schema version</dt><dd>{backup.databaseSchemaVersion ?? 'Not recorded'}</dd></div>
-      {backup.errorCode && <div><dt>Job result</dt><dd>The backup job did not complete. Contact your system administrator for help.</dd></div>}
-    </dl></section>
-    <section class="panel"><h2>Restore verification</h2><p class="muted">A completed backup job is not restore evidence. Verification status comes only from recorded restore operations for this set.</p><dl>
-      <div><dt>Restore verification</dt><dd class={restoreVerification === 'VERIFIED' ? 'good' : 'warn'}>{restoreLabel}</dd></div>
-      <div><dt>Recorded restore operations</dt><dd>{restoreRuns.length}</dd></div>
-    </dl>
-    {restoreRuns.length ? <div class="table-wrap"><table><caption>Restore operations recorded for this backup set</caption><thead><tr><th scope="col">Operation</th><th scope="col">Type</th><th scope="col">State</th><th scope="col">Target environment</th><th scope="col">Requested</th></tr></thead><tbody>{restoreRuns.map((run) => <tr><th scope="row">Restore request · {riyadh(run.requestedAt)}</th><td>{run.restoreType === 'DRILL' ? 'Isolated drill' : 'Production restore'}</td><td>{stateLabel(run.state)}</td><td>{run.targetEnvironment}</td><td>{riyadh(run.requestedAt)}</td></tr>)}</tbody></table></div> : <p class="muted">No restore operations are recorded for this backup set.</p>}</section>
+  <PageHeader>
+    <Fragment slot="heading"><h1>Backup set</h1></Fragment>
+    <p class="lede">Backup details. No restore runs from this page.</p>
+    <Fragment slot="actions">
+      <div class="head-actions" aria-label="Record status">
+        <span class={`pill ${backup.state === 'CREATED' || backup.state === 'VERIFIED' ? 'ok' : backup.state === 'FAILED' ? 'bad' : 'unknown'}`}>Job: {stateLabel(backup.state)}</span>
+        <span class={`pill ${restoreVerification === 'VERIFIED' ? 'ok' : restoreVerification === 'VERIFICATION_FAILED' ? 'bad' : 'unknown'}`}>{restoreLabel}</span>
+      </div>
+    </Fragment>
+  </PageHeader>
+
+  <section class="record-identity" aria-label="Backup record identity">
+    <p class="eyebrow">Backup record</p>
+    <code>{backup.id}</code>
+    <p class="version-note"><strong>Catalog record version:</strong> Not provided. This read model has no record-version field; the restore form uses an eligibility snapshot to recheck the backup.</p>
+  </section>
+
+  <div class="detail-grid">
+    <section class="panel" aria-labelledby="backup-facts">
+      <h2 id="backup-facts">Backup facts</h2>
+      <p class="record-name">Backup requested {riyadh(backup.requestedAt)} (Asia/Riyadh)</p>
+      <dl>
+        <div><dt>Backup job state</dt><dd>{stateLabel(backup.state)} — execution result only</dd></div>
+        <div><dt>Artifact verified</dt><dd>{backup.state === 'VERIFIED' ? 'Yes' : 'No'}</dd></div>
+        <div><dt>Requested</dt><dd><time datetime={backup.requestedAt.toISOString()}>{riyadh(backup.requestedAt)} · Asia/Riyadh</time></dd></div>
+        {backup.startedAt && <div><dt>Job started</dt><dd><time datetime={backup.startedAt.toISOString()}>{riyadh(backup.startedAt)} · Asia/Riyadh</time></dd></div>}
+        {backup.artifactCreatedAt && <div><dt>Artifact created</dt><dd><time datetime={backup.artifactCreatedAt.toISOString()}>{riyadh(backup.artifactCreatedAt)} · Asia/Riyadh</time></dd></div>}
+        {backup.verifiedAt && <div><dt>Artifact verified at</dt><dd><time datetime={backup.verifiedAt.toISOString()}>{riyadh(backup.verifiedAt)} · Asia/Riyadh</time></dd></div>}
+        {backup.completedAt && <div><dt>Job completed</dt><dd><time datetime={backup.completedAt.toISOString()}>{riyadh(backup.completedAt)} · Asia/Riyadh</time></dd></div>}
+        {backup.sizeBytes !== undefined && <div><dt>Size</dt><dd>{backup.sizeBytes.toString()} bytes</dd></div>}
+        <div><dt>Integrity checksum</dt><dd>{backup.hasChecksum ? 'Recorded (value withheld)' : 'Not recorded'}</dd></div>
+        <div><dt>Database schema version</dt><dd>{backup.databaseSchemaVersion ?? 'Not recorded'}</dd></div>
+        {backup.errorCode && <div><dt>Job result</dt><dd>The backup job did not complete. Contact your system administrator for help.</dd></div>}
+      </dl>
+    </section>
+
+    <section class="panel" aria-labelledby="backup-evidence">
+      <h2 id="backup-evidence">Artifact and release evidence</h2>
+      <p class="muted">The values below are catalog metadata. They identify the recorded artifact context; they do not establish system readiness or a release decision.</p>
+      <dl>
+        <div><dt>Evidence source</dt><dd>Application backup catalog</dd></div>
+        <div><dt>Catalog record checked</dt><dd><time datetime={catalogCheckedAt.toISOString()}>{riyadh(catalogCheckedAt)} · Asia/Riyadh</time></dd></div>
+        <div><dt>Artifact type</dt><dd>{backup.artifactType ?? 'Not recorded'}</dd></div>
+        <div><dt>Release ID</dt><dd>{backup.releaseId ?? 'Not recorded'}</dd></div>
+        <div><dt>Source commit</dt><dd>{backup.gitSha ?? 'Not recorded'}</dd></div>
+        <div><dt>Build ID</dt><dd>{backup.buildId ?? 'Not recorded'}</dd></div>
+        <div><dt>Migration head</dt><dd>{backup.migrationHead ?? 'Not recorded'}</dd></div>
+        <div><dt>PostgreSQL version</dt><dd>{backup.postgresVersion ?? 'Not recorded'}</dd></div>
+        <div><dt>Manifest digest</dt><dd>{backup.manifestSha256 ? 'Recorded (value withheld)' : 'Not recorded'}</dd></div>
+      </dl>
+    </section>
   </div>
-  <details class="technical"><summary>Technical record details</summary><dl><div><dt>Internal reference</dt><dd><code>{backup.id}</code></dd></div><div><dt>Request ID</dt><dd><code>{backup.requestId}</code></dd></div></dl></details>
-  <section class="panel"><h2>Known gaps</h2>{knownGaps.length ? <ul class="gaps">{knownGaps.map((gap) => <li>{gap}</li>)}</ul> : <p class="muted">No catalog-level gaps are recorded for this backup set. Catalog completeness is not restore evidence.</p>}</section>
+
+  <section class="panel" aria-labelledby="restore-history">
+    <h2 id="restore-history">Restore operation history</h2>
+    <p class="muted">A completed backup job is not restore evidence. Restore verification is derived only from recorded restore operations for this set. A PLANNED request records intent only.</p>
+    {restoreRuns.length ? <div class="table-wrap" role="region" aria-label="Restore operation history" tabindex="0"><table>
+      <caption>Restore operations recorded for this backup set</caption>
+      <thead><tr><th scope="col">Operation</th><th scope="col">Type</th><th scope="col">State</th><th scope="col">Target environment</th><th scope="col">Requested</th><th scope="col">Execution and verification times</th></tr></thead>
+      <tbody>{restoreRuns.map((run) => <tr>
+        <th scope="row"><code>{run.id}</code></th>
+        <td>{run.restoreType === 'DRILL' ? 'Isolated drill' : 'Production restore'}</td>
+        <td>{stateLabel(run.state)}{run.state === 'PLANNED' && <span class="state-note"> — intent only</span>}</td>
+        <td>{run.targetEnvironment}</td>
+        <td><time datetime={run.requestedAt.toISOString()}>{riyadh(run.requestedAt)} · Asia/Riyadh</time></td>
+        <td class="timestamps">
+          {run.startedAt && <span>Started: <time datetime={run.startedAt.toISOString()}>{riyadh(run.startedAt)} · Asia/Riyadh</time></span>}
+          {run.completedAt && <span>Completed: <time datetime={run.completedAt.toISOString()}>{riyadh(run.completedAt)} · Asia/Riyadh</time></span>}
+          {run.verifiedAt && <span>Verified: <time datetime={run.verifiedAt.toISOString()}>{riyadh(run.verifiedAt)} · Asia/Riyadh</time></span>}
+          {!run.startedAt && !run.completedAt && !run.verifiedAt && <span>Not recorded</span>}
+        </td>
+      </tr>)}</tbody>
+    </table></div> : <p class="muted">No restore operations are recorded for this backup set.</p>}
+  </section>
+
+  <section class="panel relationships" aria-labelledby="related-records">
+    <h2 id="related-records">Relationships</h2>
+    <dl>
+      <div><dt>Related restore operations</dt><dd>{restoreRuns.length} recorded</dd></div>
+      <div><dt>Restore operation detail route</dt><dd>Not available in the current page routes; operation history is listed above.</dd></div>
+    </dl>
+  </section>
+
+  <section class="panel gaps" aria-labelledby="known-gaps">
+    <h2 id="known-gaps">Known gaps</h2>
+    {knownGaps.length ? <ul>{knownGaps.map((gap) => <li>{gap}</li>)}</ul> : <p class="muted">No catalog-level gaps are recorded for this backup set. Catalog completeness is not restore evidence.</p>}
+  </section>
+
+  <section class="action-panel" aria-labelledby="backup-actions">
+    <h2 id="backup-actions">Actions</h2>
+    {restorable && canRequestDrill
+      ? <a class="button" href={`/system/backups/${backup.id}/restore`}>Request restore</a>
+      : <p class="muted">The restore request form is not available from this page under the returned backup state and explicit drill permission. The server remains responsible for final eligibility and authorization.</p>}
+    <p class="action-note">No inline form or dialog is used here. Request restore opens the existing dedicated form; this detail view only reads the backup record.</p>
+  </section>
+
+  <details class="technical-record">
+    <summary>Technical record details</summary>
+    <dl><div><dt>Internal reference</dt><dd><code>{backup.id}</code></dd></div><div><dt>Request ID</dt><dd><code>{backup.requestId}</code></dd></div></dl>
+  </details>
+
   <section class="notice" role="note"><strong>Restore boundary</strong><span>Restore requests are recorded through an explicit POST action with server-side authorization, a required reason, and confirmation. A recorded request stays planned: no restore provider or production authority is approved in this baseline, so nothing is executed and nothing is claimed verified.</span></section>
 </AppLayout>
-<style>.page-head{display:flex;justify-content:space-between;gap:var(--space-5);align-items:start;margin-bottom:var(--space-6)}h1{margin:.25rem 0}.eyebrow{margin:0;color:var(--text-muted);font-size:.7rem;letter-spacing:.12em;font-weight:700}.lede,.muted{color:var(--text-muted);font-size:.86rem}.record-name{font-weight:700}.technical-record{margin-block:var(--space-4);padding:var(--space-4);border:1px solid var(--color-border-subtle);border-radius:var(--radius-md)}.technical-record summary{cursor:pointer;font-weight:700}.technical-record dl{margin-top:var(--space-4)}.head-actions{display:flex;gap:var(--space-3);align-items:center;flex-wrap:wrap}.head-actions a{color:var(--color-accent-primary-hover)}.button{border:1px solid var(--color-accent-primary);background:var(--color-accent-primary);color:var(--text-on-accent)!important;padding:.65rem 1rem;border-radius:var(--radius-md);text-decoration:none;font-weight:700}.pill{padding:.3rem .65rem;border-radius:999px;font-size:.72rem;font-weight:700;white-space:nowrap}.pill.ok{color:var(--status-success);border:1px solid var(--status-success)}.pill.bad{color:var(--status-error);border:1px solid var(--status-error)}.pill.unknown{color:var(--text-muted);border:1px solid var(--color-border-strong)}.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--space-5);margin-bottom:var(--space-5)}.panel{padding:var(--space-5);margin-bottom:var(--space-5);border:1px solid var(--color-border-subtle);border-radius:var(--radius-lg);background:var(--surface-panel)}.panel h2{margin-top:0;font-size:1rem}dl{display:grid;gap:var(--space-3);margin:0}dl div{display:flex;justify-content:space-between;gap:var(--space-4);border-bottom:1px solid var(--color-border-subtle);padding-bottom:.55rem}dt{color:var(--text-muted);font-size:.8rem}dd{margin:0;text-align:end;font-size:.8rem;overflow-wrap:anywhere}.good{color:var(--status-success)}.warn{color:var(--status-warning)}.table-wrap{overflow-x:auto}table{width:100%;border-collapse:collapse}caption{text-align:start;padding-bottom:var(--space-3);color:var(--text-muted);font-size:.8rem}th,td{padding:.6rem;text-align:start;border-top:1px solid var(--color-border-subtle);font-size:.78rem}th{font-weight:700}code{overflow-wrap:anywhere;font-size:.72rem}.gaps{display:grid;gap:.4rem;padding-inline-start:1.1rem;font-size:.85rem}.notice{padding:var(--space-5);border:1px solid var(--color-border-subtle);border-inline-start:3px solid var(--status-warning);border-radius:var(--radius-lg);background:var(--surface-panel);display:grid;gap:.35rem}.notice span{color:var(--text-muted);font-size:.85rem}@media(max-width:700px){.page-head,.grid{display:grid}dl div{display:grid;gap:.2rem}dd{text-align:start}}</style>
+<style>
+  .lede,.muted{color:var(--text-muted);font-size:.86rem}
+  .head-actions{display:flex;gap:var(--space-3);align-items:center;flex-wrap:wrap}
+  .pill{padding:.3rem .65rem;border-radius:999px;font-size:var(--font-size-xs);font-weight:700;white-space:nowrap}
+  .pill.ok{color:var(--status-success);border:1px solid var(--status-success)}
+  .pill.bad{color:var(--status-error);border:1px solid var(--status-error)}
+  .pill.unknown{color:var(--text-muted);border:1px solid var(--color-border-strong)}
+  .record-identity,.panel,.action-panel,.technical-record{padding:var(--space-5);border:1px solid var(--color-border-subtle);border-radius:var(--radius-lg);background:var(--surface-panel);margin-block-end:var(--space-5)}
+  .record-identity{display:grid;gap:var(--space-2);border-inline-start:3px solid var(--color-accent-primary)}
+  .record-identity code,.technical-record code{overflow-wrap:anywhere;font-size:.78rem}
+  .eyebrow{margin:0;color:var(--text-muted);font-size:var(--font-size-xs);font-weight:700}
+  .version-note{margin:0;color:var(--text-secondary);font-size:.82rem}
+  .version-note strong{color:var(--text-primary)}
+  .detail-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--space-5)}
+  .panel h2,.action-panel h2{margin:0 0 var(--space-4);font-size:1rem}
+  .record-name{margin:0 0 var(--space-4);font-weight:700}
+  dl{display:grid;gap:var(--space-3);margin:0}
+  dl div{display:flex;justify-content:space-between;align-items:start;gap:var(--space-4);border-bottom:1px solid var(--color-border-subtle);padding-block-end:.55rem;min-inline-size:0}
+  dt{color:var(--text-muted);font-size:var(--font-size-xs);flex:0 1 45%}
+  dd{margin:0;text-align:end;font-size:.8rem;flex:1 1 55%;min-inline-size:0;overflow-wrap:anywhere}
+  .table-wrap{max-inline-size:100%;overflow-x:auto;border:1px solid var(--color-border-subtle);border-radius:var(--radius-md)}
+  table{width:100%;min-width:940px;border-collapse:collapse;background:var(--surface-panel)}
+  caption{text-align:start;padding:var(--space-4);color:var(--text-muted);font-size:var(--font-size-xs)}
+  th,td{padding:.7rem;text-align:start;vertical-align:top;border-top:1px solid var(--color-border-subtle);font-size:.78rem;overflow-wrap:anywhere}
+  th{font-weight:700}
+  td code{font-size:.72rem;overflow-wrap:anywhere}
+  .timestamps{display:grid;gap:var(--space-2);min-inline-size:15rem}
+  .state-note,.action-note{color:var(--text-muted);font-size:var(--font-size-xs)}
+  .action-panel{display:grid;justify-items:start;gap:var(--space-3)}
+  .action-panel h2{margin-block-end:0}
+  .button{display:inline-flex;align-items:center;justify-content:center;min-block-size:44px;padding:.65rem 1rem;border:1px solid var(--color-accent-primary);border-radius:var(--radius-md);background:var(--color-accent-primary);color:var(--text-on-accent);text-decoration:none;font-weight:700}
+  .button:focus-visible{outline:2px solid var(--color-focus);outline-offset:2px}
+  .action-panel p{margin:0;max-inline-size:75ch}
+  .gaps ul{display:grid;gap:var(--space-2);padding-inline-start:1.2rem;margin:0;font-size:.85rem}
+  .gaps>p{margin:0}
+  .technical-record summary{cursor:pointer;font-weight:700;min-block-size:44px;display:flex;align-items:center}
+  .technical-record dl{margin-block-start:var(--space-3)}
+  .notice{padding:var(--space-5);border:1px solid var(--color-border-subtle);border-inline-start:3px solid var(--status-warning);border-radius:var(--radius-lg);background:var(--surface-panel);display:grid;gap:.35rem}
+  .notice span{color:var(--text-muted);font-size:.85rem}
+  @media(max-width:760px){.detail-grid{grid-template-columns:minmax(0,1fr)}dl div{display:grid;gap:var(--space-2)}dd{text-align:start}}
+</style>

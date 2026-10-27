@@ -1,3 +1,8 @@
+- **2026-10-27 — CA-P-SYSTEM-BACKUPS-BACKUPID-RESTORE / CAPA A restore-intent form**
+  - Changed: restore form now separates backup context from catalog/source evidence, presents the request as PLANNED intent only, and groups independent fields responsively while preserving server eligibility, POST action, expectedVersion and idempotency key.
+  - Evidence: NOT RUN by instruction; source and textual `git diff` review only. Literal reference match not confirmed; graphify CLI unavailable.
+  - State: DONE — code edit only; untested.
+  - Key files: `src/pages/system/backups/[backupId]/restore.astro`.
 - **2026-10-27 — CA-P-SEARCH / CAPA A search overview**
   - Changed: `/search` now groups the existing server-backed search form, source-aware states, and authorized result links into flexible graphite cards; URL query/cursor, permissions, pagination, destinations, and AppLayout/Sidebar are retained.
   - Evidence: NOT RUN by instruction; textual source and `git diff` review only. Literal reference match not confirmed.
@@ -428,3 +433,8 @@
   - Evidence: focused tests 22/22 and Astro build PASS; `astro check` has 2 missing imports in CA-P-500 audit pages. Populated-record browser comparison, authorization personas, viewport/keyboard/contrast/zoom acceptance NOT VERIFIED because local PG18 could not start; `audit/CA-P-ASSETS-CALIBRATIONS-CALIBRATIONID/execution-status.md`.
   - State: PARTIAL.
   - Key files: `src/pages/assets/calibrations/[calibrationId].astro`, `audit/CA-P-ASSETS-CALIBRATIONS-CALIBRATIONID/execution-status.md`.
+- **2026-10-27 — CA-P-SYSTEM-BACKUPS-BACKUPID / CAPA A backup detail**
+  - Changed: backup detail now separates record identity, facts, artifact/release metadata and source time, restore history, relationships, and the existing request action; restore intent remains distinct from execution or recovery proof.
+  - Evidence: NOT RUN by instruction; source and textual `git diff` review only. Graphify CLI unavailable; literal reference match not confirmed.
+  - State: DONE — code edit only; untested.
+  - Key files: `src/pages/system/backups/[backupId]/index.astro`.

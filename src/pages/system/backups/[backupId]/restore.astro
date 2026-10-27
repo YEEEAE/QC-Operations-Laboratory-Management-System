@@ -62,60 +62,96 @@ if (Astro.request.method === 'POST' && (canRequestDrill || canRequestProduction)
     });
     if (!result.error) return Astro.redirect(`/system/backups/${backupId}`, 303);
     failure = toFormFailure(result.error, {
-      entity: 'restore request', requiredFields: [], values,
+      entity: 'restore request', requiredFields: [{ name: 'reason', label: 'reason' }], values,
       listHref: `/system/backups/${backupId}`, listLabel: 'backup details',
     });
   } catch (error) {
     failure = toFormFailure(error, {
-      entity: 'restore request', requiredFields: [], values,
+      entity: 'restore request', requiredFields: [{ name: 'reason', label: 'reason' }], values,
       listHref: `/system/backups/${backupId}`, listLabel: 'backup details',
     });
   }
 }
 ---
 <AppLayout title={`Restore request · ${riyadh(backup.requestedAt)} · QC Operations`} locale="en" direction="ltr">
-  <PageHeader><Fragment slot="heading"><h1>Restore request</h1></Fragment><p class="lede">Record a restore request. Requests remain planned; no restore is executed.</p><Fragment slot="actions"><a href={`/system/backups/${backup.id}`}>Back to backup</a></Fragment></PageHeader>
-  <section class="panel"><h2>Backup and recovery context</h2><dl>
-    <div><dt>Internal backup reference</dt><dd><code>{backup.id}</code></dd></div>
-    <div><dt>Backup job state</dt><dd>{stateLabel(backup.state)} — job result only, never restore evidence</dd></div>
-    <div><dt>Backup artifact verified</dt><dd>{backup.state === 'VERIFIED' ? 'Yes' : 'No'}</dd></div>
-    <div><dt>Integrity checksum</dt><dd>{backup.hasChecksum ? 'Recorded (value withheld)' : 'Not recorded'}</dd></div>
-    <div><dt>Backup requested at</dt><dd>{riyadh(backup.requestedAt)} · Asia/Riyadh (UTC internally)</dd></div>
-    <div><dt>Catalog record checked</dt><dd><time datetime={catalogCheckedAt.toISOString()}>{riyadh(catalogCheckedAt)} · Asia/Riyadh</time></dd></div>
-    <div><dt>Restore verification</dt><dd class={restoreVerification === 'VERIFIED' ? 'good' : 'warn'}>{verificationLabel}</dd></div>
-    <div><dt>Database schema version</dt><dd>{backup.databaseSchemaVersion ?? 'UNKNOWN'}</dd></div>
-    <div><dt>Application version / Git SHA binding</dt><dd>Not recorded in catalog</dd></div>
-    <div><dt>Known gaps</dt><dd>{restoreVerification !== 'VERIFIED' ? 'No verified restore exists for this backup set' : 'None recorded'}</dd></div>
-    <div><dt>Display timezone</dt><dd>Asia/Riyadh — all recovery timestamps are shown with explicit timezone to prevent target ambiguity</dd></div>
-  </dl></section>
-  <section class="panel"><h2>Restore verification requirements</h2><p class="muted">This page can record a restore intent only. It has no provider executor or restore report, so these checks are not represented by evidence in this view. A real isolated drill must record each result:</p><dl><div><dt>Artifact bytes and checksum comparison</dt><dd class="warn">NOT RECORDED IN THIS VIEW</dd></div><div><dt>Restored schema and migration ledger</dt><dd class="warn">NOT RECORDED IN THIS VIEW</dd></div><div><dt>QC, audit, and business history</dt><dd class="warn">NOT RECORDED IN THIS VIEW</dd></div><div><dt>Linked evidence files and restored hashes</dt><dd class="warn">NOT RECORDED IN THIS VIEW</dd></div><div><dt>Application and authorization checks</dt><dd class="warn">NOT RECORDED IN THIS VIEW</dd></div><div><dt>RPO / RTO targets</dt><dd class="warn">NOT APPROVED</dd></div></dl><p>Next permitted step: request a DRILL and execute the approved procedure against an explicitly isolated disposable target. Production restore remains DENIED until its authority and recovery evidence are approved.</p></section>
-  {!restorable && <section class="denied" role="alert"><h2>Restore request unavailable</h2><p>Only backup sets whose artifact exists and is verified can be selected as a recovery set candidate. This set is {stateLabel(backup.state)}.</p></section>}
+  <PageHeader>
+    <Fragment slot="heading"><h1>Restore request</h1></Fragment>
+    <p class="lede">Record a restore intent for this backup set. The request remains planned; this page does not execute a restore.</p>
+    <Fragment slot="actions"><a class="back-link" href={`/system/backups/${backup.id}`}>Back to backup</a></Fragment>
+  </PageHeader>
+
+  <section class="panel context" aria-labelledby="backup-context-heading">
+    <h2 id="backup-context-heading">Backup context</h2>
+    <dl>
+      <div><dt>Backup set</dt><dd><code>{backup.id}</code></dd></div>
+      <div><dt>Backup job state</dt><dd>{stateLabel(backup.state)} — job result only</dd></div>
+      <div><dt>Artifact verification</dt><dd>{backup.state === 'VERIFIED' ? 'Verified' : 'Not verified'}</dd></div>
+      <div><dt>Integrity checksum</dt><dd>{backup.hasChecksum ? 'Recorded (value withheld)' : 'Not recorded'}</dd></div>
+      <div><dt>Backup requested</dt><dd><time datetime={backup.requestedAt.toISOString()}>{riyadh(backup.requestedAt)} · Asia/Riyadh</time></dd></div>
+      <div><dt>Restore verification</dt><dd>{verificationLabel} — derived from recorded restore operations</dd></div>
+    </dl>
+  </section>
+
+  <section class="panel evidence" aria-labelledby="source-evidence-heading">
+    <h2 id="source-evidence-heading">Recorded source evidence</h2>
+    <p class="muted">Catalog metadata identifies the recorded backup context. It does not establish system readiness or a release decision.</p>
+    <dl>
+      <div><dt>Evidence source</dt><dd>Application backup catalog</dd></div>
+      <div><dt>Catalog checked</dt><dd><time datetime={catalogCheckedAt.toISOString()}>{riyadh(catalogCheckedAt)} · Asia/Riyadh</time></dd></div>
+      <div><dt>Release ID</dt><dd>{backup.releaseId ?? 'Not recorded'}</dd></div>
+      <div><dt>Source commit</dt><dd>{backup.gitSha ?? 'Not recorded'}</dd></div>
+      <div><dt>Build ID</dt><dd>{backup.buildId ?? 'Not recorded'}</dd></div>
+      <div><dt>Database schema version</dt><dd>{backup.databaseSchemaVersion ?? 'Not recorded'}</dd></div>
+    </dl>
+  </section>
+
+  <section class="panel boundary" aria-labelledby="restore-boundary-heading">
+    <h2 id="restore-boundary-heading">Restore boundary</h2>
+    <p>This action records a planned restore intent only. It does not run a restore, contact a recovery provider, or prove recovery. A verified backup job is not restore evidence.</p>
+    <p class="muted">Restore execution and recovery evidence are not available in this view. Production restore remains unavailable pending approved authority and policy.</p>
+  </section>
+
+  {!restorable && <section class="denied" role="alert"><h2>Restore request unavailable</h2><p>The source marks this backup set as ineligible for a restore request. Its current job state is {stateLabel(backup.state)}.</p></section>}
   {restorable && !canRequestDrill && !canRequestProduction && <section class="denied" role="alert"><h2>Restore request unavailable</h2><p>Your account lacks an explicit restore permission. Role alone is not authorization, and Admin is not an automatic restore authority.</p></section>}
   {restorable && (canRequestDrill || canRequestProduction) && (
-    <form class="decision" method="post" data-backup-id={backup.id}>
+    <form class="decision" method="post" data-backup-id={backup.id} aria-labelledby="request-heading">
+      <div class="form-heading">
+        <h2 id="request-heading">Request a restore</h2>
+        <p class="muted">The server makes the final eligibility and authorization decision when you submit.</p>
+      </div>
       <input type="hidden" name="expectedVersion" value={eligibilityVersion} />
       <input type="hidden" name="idempotencyKey" value={values.idempotencyKey} />
-      {failure && <FormErrorSummary summary={failure.summary} recovery={failure.recovery ?? ''} errors={[]} listHref={`/system/backups/${backup.id}`} listLabel="backup details" />}
-      <label for="restoreType">Restore type
-        <select id="restoreType" name="restoreType">
+      {failure && <FormErrorSummary summary={failure.summary} recovery={failure.recovery ?? ''} errors={Object.entries(failure.fieldErrors).map(([name, message]) => ({ fieldId: name, message }))} listHref={`/system/backups/${backup.id}`} listLabel="backup details" />}
+      <div class="independent-fields">
+        <label for="restoreType">Restore type
+          <span class="help" id="restore-type-help">Choose an isolated drill. Production restore is not approved.</span>
+          <select id="restoreType" name="restoreType" aria-describedby="restore-type-help">
           {canRequestDrill && <option value="DRILL" selected={values.restoreType === 'DRILL'}>Isolated drill — non-production target</option>}
           <option value="PRODUCTION" selected={values.restoreType === 'PRODUCTION'} disabled={productionBlocked}>Production restore — unavailable pending approval (RD-020)</option>
-        </select>
-      </label>
-      <label for="targetEnvironment">Target environment
-        <select id="targetEnvironment" name="targetEnvironment">
+          </select>
+        </label>
+        <label for="targetEnvironment">Target environment
+          <span class="help" id="target-environment-help">Select the intended isolated target for the recorded request.</span>
+          <select id="targetEnvironment" name="targetEnvironment" aria-describedby="target-environment-help">
           <option value="test" selected={values.targetEnvironment === 'test'}>test</option>
           <option value="local" selected={values.targetEnvironment === 'local'}>local</option>
           <option value="staging" selected={values.targetEnvironment === 'staging'}>staging</option>
           <option value="production" disabled>production — isolated drill targets only</option>
-        </select>
+          </select>
+        </label>
+      </div>
+      <label for="reason">Reason <span class="optional">Required</span>
+        <span class="help" id="reason-help">Explain why this restore intent is needed. This text is stored with the request.</span>
+        <textarea id="reason" name="reason" rows="4" required minlength="3" maxlength="2000" aria-describedby={`reason-help${failure?.fieldErrors.reason ? ' reason-error' : ''}`} aria-invalid={failure?.fieldErrors.reason ? 'true' : undefined}>{values.reason}</textarea>
+        {failure?.fieldErrors.reason && <span class="field-error" id="reason-error">{failure.fieldErrors.reason}</span>}
       </label>
-      <label for="reason">Reason (required; saved as recovery evidence)
-        <textarea id="reason" name="reason" rows="3" required minlength="3" maxlength="2000">{values.reason}</textarea>
-      </label>
-      <label class="confirm" for="confirmRestore"><input id="confirmRestore" name="confirmRestore" type="checkbox" required /> I understand this records a restore intent only, that no restore is executed by this system, and that the backup job state is not restore evidence.</label>
-      <button type="submit" data-submit>Record restore request</button>
-      <p class="muted">Each request must meet permission, scope, environment, backup-state, and policy requirements.</p>
+      <label class="confirm" for="confirmRestore"><input id="confirmRestore" name="confirmRestore" type="checkbox" required /> <span>I understand this records a restore intent only, that no restore is executed by this system, and that the backup job state is not restore evidence.</span></label>
+      <div class="form-actions">
+        <button type="submit" data-submit>Record restore intent</button>
+        <a href={`/system/backups/${backup.id}`}>Cancel</a>
+      </div>
+      <p class="muted guard-note">The server checks permission, scope, target environment, backup eligibility, policy, and the eligibility snapshot.</p>
+      <p class="result" data-result role="status" tabindex="-1"></p>
     </form>
   )}
 </AppLayout>
@@ -124,14 +160,6 @@ if (Astro.request.method === 'POST' && (canRequestDrill || canRequestProduction)
   import { enhanceMutationForm } from '../../../../ui/forms/mutation-interaction.js';
   const form = document.querySelector<HTMLFormElement>('.decision');
   if (form) {
-    if (!form.querySelector('[data-result]')) {
-      const status = document.createElement('p');
-      status.setAttribute('data-result', '');
-      status.setAttribute('role', 'status');
-      status.setAttribute('tabindex', '-1');
-      status.className = 'muted';
-      form.appendChild(status);
-    }
     const submit = form.querySelector<HTMLButtonElement>('button[type="submit"]');
     if (submit && !submit.hasAttribute('data-submit')) submit.setAttribute('data-submit', '');
     enhanceMutationForm({
@@ -165,4 +193,35 @@ if (Astro.request.method === 'POST' && (canRequestDrill || canRequestProduction)
     });
   }
 </script>
-<style>.page-head{display:flex;justify-content:space-between;gap:var(--space-5);align-items:start;margin-bottom:var(--space-6)}h1{margin:.25rem 0}.eyebrow{margin:0;color:var(--text-muted);font-size:.7rem;letter-spacing:.12em;font-weight:700}.lede,.muted{color:var(--text-muted);font-size:.86rem}.page-head a{color:var(--color-accent-primary-hover)}.panel,.decision,.denied{padding:var(--space-5);margin-bottom:var(--space-5);border:1px solid var(--color-border-subtle);border-radius:var(--radius-lg);background:var(--surface-panel)}.panel h2,.denied h2{margin-top:0;font-size:1rem}dl{display:grid;gap:var(--space-3);margin:0}dl div{display:flex;justify-content:space-between;gap:var(--space-4);border-bottom:1px solid var(--color-border-subtle);padding-bottom:.55rem}dt{color:var(--text-muted);font-size:.8rem}dd{margin:0;text-align:end;font-size:.8rem;max-width:55%;overflow-wrap:anywhere}.good{color:var(--status-success)}.warn{color:var(--status-warning)}code{overflow-wrap:anywhere;font-size:.72rem}.denied{border-inline-start:3px solid var(--status-error)}.decision{display:grid;gap:var(--space-4)}label{display:grid;gap:.4rem;color:var(--text-secondary);font-size:.82rem}select,textarea{width:100%;padding:.65rem;background:var(--surface-raised);border:1px solid var(--border-default);border-radius:var(--radius-sm);color:inherit;font:inherit}.confirm{display:flex;gap:.6rem;align-items:start;line-height:1.5}.confirm input{margin-top:.2rem}button{justify-self:start;min-height:var(--control-height);padding:.65rem 1.2rem;border:1px solid var(--color-accent-primary);border-radius:var(--radius-sm);background:var(--color-accent-primary);color:var(--text-on-accent);font:inherit;font-weight:700}button:disabled{opacity:.6}@media(max-width:650px){.page-head{display:grid}dl div{display:grid;gap:.2rem}dd{text-align:start;max-width:none}}</style>
+<style>
+  .lede,.muted{color:var(--text-muted);font-size:.86rem}
+  .back-link{color:var(--color-accent-primary-hover)}
+  .panel,.decision,.denied{padding:var(--space-5);margin-block-end:var(--space-5);border:1px solid var(--color-border-subtle);border-radius:var(--radius-lg);background:var(--surface-panel)}
+  .panel h2,.denied h2{margin:0 0 var(--space-3);font-size:1rem}
+  .panel>p{margin:0 0 var(--space-3);max-inline-size:75ch}
+  dl{display:grid;gap:var(--space-3);margin:0}
+  dl div{display:flex;justify-content:space-between;align-items:start;gap:var(--space-4);border-block-end:1px solid var(--color-border-subtle);padding-block-end:.55rem;min-inline-size:0}
+  dt{color:var(--text-muted);font-size:var(--font-size-xs);flex:0 1 45%}
+  dd{margin:0;text-align:end;font-size:.8rem;flex:1 1 55%;min-inline-size:0;overflow-wrap:anywhere}
+  code{overflow-wrap:anywhere;font-size:.75rem}
+  .decision{display:grid;gap:var(--space-4)}
+  .form-heading h2{margin:0;font-size:1.05rem}
+  .form-heading p{margin:var(--space-2) 0 0;max-inline-size:75ch}
+  .independent-fields{display:grid;gap:var(--space-4);min-inline-size:0}
+  label{display:grid;gap:.4rem;color:var(--text-secondary);font-size:.85rem;min-inline-size:0}
+  .help,.optional{color:var(--text-muted);font-size:var(--font-size-xs);line-height:1.5}
+  select,textarea{width:100%;min-height:44px;padding:.65rem;background:var(--surface-raised);border:1px solid var(--border-default);border-radius:var(--radius-sm);color:inherit;font:inherit}
+  textarea{resize:vertical}
+  .field-error{color:var(--status-error);font-size:var(--font-size-xs)}
+  .confirm{display:flex;gap:.65rem;align-items:start;line-height:1.5;max-inline-size:90ch}
+  .confirm input{inline-size:1.1rem;block-size:1.1rem;flex:0 0 auto;margin:.15rem 0 0}
+  .form-actions{display:flex;align-items:center;flex-wrap:wrap;gap:var(--space-3)}
+  button,.form-actions a{min-height:44px;display:inline-flex;align-items:center;justify-content:center;padding:.65rem 1.2rem;border:1px solid var(--color-accent-primary);border-radius:var(--radius-sm);font:inherit;font-weight:700}
+  button{background:var(--color-accent-primary);color:var(--text-on-accent)}
+  .form-actions a{border-color:var(--color-border-strong);color:var(--text-primary);text-decoration:none}
+  button:disabled{opacity:.6}
+  button:focus-visible,.form-actions a:focus-visible,.back-link:focus-visible{outline:2px solid var(--color-focus);outline-offset:2px}
+  .guard-note,.result{margin:0}
+  @media(min-width:900px){.independent-fields{grid-template-columns:repeat(2,minmax(0,1fr))}}
+  @media(max-width:650px){dl div{display:grid;gap:.2rem}dd{text-align:start}}
+</style>
