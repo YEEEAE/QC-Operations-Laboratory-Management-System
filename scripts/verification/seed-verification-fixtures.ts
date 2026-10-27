@@ -19,6 +19,8 @@ import { randomUUID } from 'node:crypto';
 import { stableSeedUuid } from '../../db/seeds/common.js';
 import { hashSessionToken } from '../../src/modules/identity/application/session-service.js';
 import { VERIFICATION_PERSONAS } from '../../tests/fixtures/verification-personas.js';
+import { loadLocalEnv, loadLocalOperatorEnv } from '../db/load-local-env.js';
+import { assertSafeLocalDatabaseCommand } from '../db/local-target-guard.js';
 
 const MIN_PASSWORD_LENGTH = 16;
 
@@ -126,6 +128,9 @@ async function ensureScope(
 }
 
 async function main(): Promise<void> {
+  loadLocalEnv();
+  loadLocalOperatorEnv();
+  assertSafeLocalDatabaseCommand();
   requireGuard(process.env);
   const pool = new Pool({
     connectionString: process.env.DATABASE_URL,

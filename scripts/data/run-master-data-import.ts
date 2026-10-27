@@ -22,6 +22,7 @@ import { fileURLToPath } from 'node:url';
 
 import { createPool, getDatabaseConnectionConfig } from '../../src/shared/database/pool.js';
 import { loadLocalEnv, loadLocalOperatorEnv } from '../db/load-local-env.js';
+import { assertSafeLocalDatabaseCommand } from '../db/local-target-guard.js';
 import { getMasterDataEntity } from './master-data-catalog.js';
 import type { ImportRow } from './import-preflight.js';
 import {
@@ -104,6 +105,9 @@ function assertReadGuard(env: NodeJS.ProcessEnv): void {
   if (nodeEnv !== 'development' && nodeEnv !== 'test') {
     fail('Refusing master-data preflight: NODE_ENV must be development or test.');
   }
+  if (env.APP_ENVIRONMENT_PROFILE !== nodeEnv) {
+    fail('Refusing master-data preflight: APP_ENVIRONMENT_PROFILE must explicitly match NODE_ENV.');
+  }
   const databaseUrl = env.DATABASE_URL ?? '';
   if (!databaseUrl) fail('Refusing master-data preflight: DATABASE_URL is required.');
   const lowered = databaseUrl.toLowerCase();
@@ -134,6 +138,7 @@ export async function runImportCli(
 ): Promise<Record<string, unknown>> {
   loadLocalEnv(env);
   loadLocalOperatorEnv(env);
+  assertSafeLocalDatabaseCommand(env);
   if (options.apply) assertApplyGuard(env);
   else assertReadGuard(env);
 

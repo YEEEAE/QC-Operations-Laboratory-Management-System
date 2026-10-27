@@ -28,6 +28,7 @@ import { randomBytes, randomUUID } from 'node:crypto';
 import { createPool, getDatabaseConnectionConfig } from '../../src/shared/database/pool.js';
 import { UAT_PERSONAS, UAT_PASSWORD_ENV_VARS } from '../../tests/fixtures/uat-personas.js';
 import { loadLocalEnv, loadLocalOperatorEnv } from '../db/load-local-env.js';
+import { assertSafeLocalDatabaseCommand } from '../db/local-target-guard.js';
 import {
   ADMIN_CREATE_ROUTE,
   CREATE_ROUTES,
@@ -251,8 +252,14 @@ async function unauthenticatedAction(
 async function main(): Promise<void> {
   loadLocalEnv();
   loadLocalOperatorEnv();
+  assertSafeLocalDatabaseCommand();
   requireGuard(process.env);
-  const env: NodeJS.ProcessEnv = { ...process.env, NODE_ENV: process.env.NODE_ENV ?? 'test' };
+  const env: NodeJS.ProcessEnv = {
+    ...process.env,
+    NODE_ENV: 'test',
+    APP_ENVIRONMENT_PROFILE: 'test',
+    NEON_BRANCH: 'test',
+  };
   oneTimePasswords(env);
   const passwordFor = (name: string): string => env[name] ?? fail(`${name} is required.`);
   const candidate = resolveCandidateIdentity(env);

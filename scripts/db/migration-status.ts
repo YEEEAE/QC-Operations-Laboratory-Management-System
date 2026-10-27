@@ -3,6 +3,7 @@ import { fileURLToPath } from 'node:url';
 import { createOperatorMigrationPool, formatMigrationError, migrate } from './migrate.js';
 
 import { loadLocalEnv, loadLocalMigrationEnv, loadLocalOperatorEnv } from './load-local-env.js';
+import { assertSafeLocalDatabaseCommand } from './local-target-guard.js';
 
 export async function migrationStatus(args: readonly string[] = process.argv): Promise<void> {
   const pool = createOperatorMigrationPool(args, process.env);
@@ -20,6 +21,7 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
   loadLocalEnv();
   loadLocalOperatorEnv();
   loadLocalMigrationEnv();
+  assertSafeLocalDatabaseCommand(process.env, process.env.DATABASE_URL_UNPOOLED ?? process.env.MIGRATION_DATABASE_URL ?? process.env.DATABASE_URL);
   migrationStatus().catch((error: unknown) => {
     console.error(formatMigrationError(error));
     process.exitCode = 1;

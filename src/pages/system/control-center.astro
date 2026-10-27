@@ -185,6 +185,10 @@ const releaseBanner = {
     <p class="muted">Read-only configuration summary. These stages are independent; configuration does not prove verification or approval.</p>
     <dl class="readiness-facts">
       <div><dt>Runtime profile</dt><dd>{pilotEnvironment.profile.toUpperCase()} · {Astro.url.hostname}</dd></div>
+      {pilotEnvironment.isNonProductionProfile && <div><dt>Neon branch label</dt><dd>{pilotEnvironment.branchLabel}</dd></div>}
+      {pilotEnvironment.isNonProductionProfile && <div><dt>Expected database identity allowlist</dt><dd>{pilotEnvironment.databaseIdentity}</dd></div>}
+      {pilotEnvironment.isNonProductionProfile && <div><dt>Database identity verification</dt><dd>{pilotEnvironment.identityVerification}</dd></div>}
+      {pilotEnvironment.isNonProductionProfile && <div><dt>Environment approval</dt><dd>{pilotEnvironment.identityApproval}</dd></div>}
       <div><dt>Implementation</dt><dd>{pilotEnvironment.stages.implementation}</dd></div>
       <div><dt>Configuration</dt><dd>{pilotEnvironment.stages.configuration}</dd></div>
       <div><dt>Verification</dt><dd>{pilotEnvironment.stages.verification}</dd></div>
@@ -195,6 +199,7 @@ const releaseBanner = {
       <div><dt>Real company master data</dt><dd>{pilotEnvironment.realMasterData}</dd></div>
       <div><dt>Scope</dt><dd>Site: {pilotEnvironment.scope.site ?? 'Not configured'} · Department: {pilotEnvironment.scope.department ?? 'Not configured'} · Line: {pilotEnvironment.scope.line ?? 'Not configured'} · Shift: {pilotEnvironment.scope.shift ?? 'Not configured'}</dd></div>
     </dl>
+    <p class="muted">Configured identity is not verified identity, and neither state is approval. Connection hosts, database names, and credentials are intentionally hidden.</p>
     <p class="muted">Release simulations never update Receiving release state or issue ERP/warehouse commands. Scope-linked master data onboarding is not implemented; follow the controlled PILOT-STAGING-OPERATIONS runbook before requesting approval.</p>
   </section>
 

@@ -6,6 +6,8 @@
  * history is preserved; accounts become DISABLED). Never touches `yazeed`.
  */
 import { Pool } from 'pg';
+import { loadLocalEnv } from '../db/load-local-env.js';
+import { assertSafeLocalDatabaseCommand } from '../db/local-target-guard.js';
 
 function fail(message: string): never {
   throw new Error(message);
@@ -37,6 +39,8 @@ function requireGuard(env: NodeJS.ProcessEnv): void {
 }
 
 async function main(): Promise<void> {
+  loadLocalEnv();
+  assertSafeLocalDatabaseCommand();
   requireGuard(process.env);
   const pool = new Pool({
     connectionString: process.env.DATABASE_URL,

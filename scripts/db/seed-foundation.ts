@@ -4,6 +4,7 @@ import { resolve } from 'node:path';
 import { createPool, getDatabaseConnectionConfig } from '../../src/shared/database/pool.js';
 import { seedFoundationData } from '../../db/seeds/common.js';
 import { loadLocalEnv } from './load-local-env.js';
+import { assertSafeLocalDatabaseCommand } from './local-target-guard.js';
 
 export async function runFoundationSeed(environment = process.env): Promise<void> {
   loadLocalEnv(environment);
@@ -27,6 +28,8 @@ export function isFoundationSeedEntrypoint(
 }
 
 if (isFoundationSeedEntrypoint(process.argv[1], import.meta.url)) {
+  loadLocalEnv();
+  assertSafeLocalDatabaseCommand();
   runFoundationSeed().catch((error: unknown) => {
     console.error(error instanceof Error ? error.message : 'Foundation seed failed.');
     process.exitCode = 1;

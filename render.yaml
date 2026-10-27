@@ -35,6 +35,16 @@ services:
         sync: false
       - key: PRODUCTION_DATABASE_HOST
         sync: false
+      - key: PRODUCTION_DATABASE_NAME
+        sync: false
+      - key: STAGING_DATABASE_HOST
+        sync: false
+      - key: STAGING_DATABASE_NAME
+        sync: false
+      - key: PILOT_DATABASE_HOST
+        sync: false
+      - key: PILOT_DATABASE_NAME
+        sync: false
       - key: NEON_BRANCH
         value: production
       - key: NEON_AUTH_JWKS_URL
@@ -94,19 +104,27 @@ services:
         sync: false
       - key: STAGING_DATABASE_HOST
         sync: false
-      - key: NEON_BRANCH
+      - key: STAGING_DATABASE_NAME
         sync: false
       - key: PRODUCTION_DATABASE_HOST
         sync: false
-      - key: NEON_AUTH_JWKS_URL
+      - key: PRODUCTION_DATABASE_NAME
         sync: false
-      - key: NEON_AUTH_ISSUER
+      - key: PILOT_DATABASE_HOST
         sync: false
-      - key: NEON_AUTH_AUDIENCE
+      - key: PILOT_DATABASE_NAME
         sync: false
-      - key: EXPLABS_API_KEY
+      - key: NEON_BRANCH
+        value: staging
+      - key: STAGING_NEON_AUTH_JWKS_URL
         sync: false
-      - key: SESSION_SECRET
+      - key: STAGING_NEON_AUTH_ISSUER
+        sync: false
+      - key: STAGING_NEON_AUTH_AUDIENCE
+        sync: false
+      - key: STAGING_EXPLABS_API_KEY
+        sync: false
+      - key: STAGING_SESSION_SECRET
         sync: false
       - key: RATE_LIMIT_LOGIN_MAX
         sync: false
@@ -148,19 +166,27 @@ services:
         sync: false
       - key: PILOT_DATABASE_HOST
         sync: false
-      - key: NEON_BRANCH
+      - key: PILOT_DATABASE_NAME
         sync: false
       - key: PRODUCTION_DATABASE_HOST
         sync: false
-      - key: NEON_AUTH_JWKS_URL
+      - key: PRODUCTION_DATABASE_NAME
         sync: false
-      - key: NEON_AUTH_ISSUER
+      - key: STAGING_DATABASE_HOST
         sync: false
-      - key: NEON_AUTH_AUDIENCE
+      - key: STAGING_DATABASE_NAME
         sync: false
-      - key: EXPLABS_API_KEY
+      - key: NEON_BRANCH
+        value: pilot
+      - key: PILOT_NEON_AUTH_JWKS_URL
         sync: false
-      - key: SESSION_SECRET
+      - key: PILOT_NEON_AUTH_ISSUER
+        sync: false
+      - key: PILOT_NEON_AUTH_AUDIENCE
+        sync: false
+      - key: PILOT_EXPLABS_API_KEY
+        sync: false
+      - key: PILOT_SESSION_SECRET
         sync: false
       - key: RATE_LIMIT_LOGIN_MAX
         sync: false

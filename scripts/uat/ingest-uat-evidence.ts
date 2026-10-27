@@ -31,6 +31,7 @@
 import { readFileSync } from 'node:fs';
 
 import { loadLocalEnv, loadLocalOperatorEnv } from '../db/load-local-env.js';
+import { assertSafeLocalDatabaseCommand } from '../db/local-target-guard.js';
 import { uatEvidenceActionDependencies } from '../../src/modules/uat-evidence/application/dependencies.js';
 import {
   AUTOMATED_PARTICIPANT_CODE,
@@ -344,6 +345,7 @@ function valueAfter(args: string[], flag: string): string | undefined {
 async function main(): Promise<void> {
   loadLocalEnv();
   loadLocalOperatorEnv();
+  assertSafeLocalDatabaseCommand();
   requireGuard();
   const [command, ...rest] = process.argv.slice(2);
   const dependencies = uatEvidenceActionDependencies();

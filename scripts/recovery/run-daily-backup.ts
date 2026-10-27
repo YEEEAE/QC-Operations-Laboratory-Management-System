@@ -5,6 +5,9 @@ import {
 } from '../../src/modules/backup-recovery/infrastructure/cloudflare-r2-artifact-store.js';
 import { PostgresLogicalBackupExecutor } from '../../src/modules/backup-recovery/infrastructure/postgres-logical-backup-executor.js';
 import { runLogicalBackupJob } from '../../src/modules/backup-recovery/application/run-backup-job.js';
+import { loadLocalEnv } from '../db/load-local-env.js';
+import { assertSafeLocalDatabaseCommand } from '../db/local-target-guard.js';
+import { parseServerEnv } from '../../src/config/env.js';
 
 function required(name: string): string {
   const value = process.env[name]?.trim();
@@ -13,7 +16,10 @@ function required(name: string): string {
 }
 
 try {
-  const databaseUrl = required('DATABASE_URL');
+  loadLocalEnv();
+  assertSafeLocalDatabaseCommand();
+  const databaseUrl = parseServerEnv(process.env).DATABASE_URL;
+  if (!databaseUrl) throw new Error('No profile-bound runtime database is configured.');
   const release = {
     gitSha: required('BACKUP_GIT_SHA'),
     buildId: required('BACKUP_BUILD_ID'),

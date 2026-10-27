@@ -4,6 +4,7 @@ import { getPool } from '../../src/shared/database/pool.js';
 import { loadMigrations, verifyMigrationIntegrity } from './migrate.js';
 
 import { loadLocalEnv } from './load-local-env.js';
+import { assertSafeLocalDatabaseCommand } from './local-target-guard.js';
 
 export async function checkMigrationIntegrity(): Promise<void> {
   const pool = getPool();
@@ -20,6 +21,7 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
   // Load the ignored local `.env` through the allowlisted parser before the
   // canonical pool resolves `DATABASE_URL`.
   loadLocalEnv();
+  assertSafeLocalDatabaseCommand();
   checkMigrationIntegrity().catch((error: unknown) => {
     console.error(error instanceof Error ? error.message : 'Migration integrity check failed.');
     process.exitCode = 1;

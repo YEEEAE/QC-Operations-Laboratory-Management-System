@@ -6,6 +6,7 @@ import {
 } from '../../db/seeds/common.js';
 import { createPool, getDatabaseConnectionConfig } from '../../src/shared/database/pool.js';
 import { loadLocalEnv } from './load-local-env.js';
+import { assertSafeLocalDatabaseCommand } from './local-target-guard.js';
 
 export async function runFoundationCheck(environment = process.env): Promise<void> {
   loadLocalEnv(environment);
@@ -26,6 +27,8 @@ export async function runFoundationCheck(environment = process.env): Promise<voi
 }
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
+  loadLocalEnv();
+  assertSafeLocalDatabaseCommand();
   runFoundationCheck().catch((error: unknown) => {
     console.error(error instanceof Error ? error.message : 'Foundation check failed.');
     process.exitCode = 1;

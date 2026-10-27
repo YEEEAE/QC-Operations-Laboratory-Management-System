@@ -1,3 +1,8 @@
+- **2026-10-28 — NDB-03 / Neon production, staging, and pilot isolation**
+  - Changed: Server config now binds each profile to an allowlisted branch label, exact host/database identity, isolated URL/session/Auth/storage keys, and guarded local database commands; owner provisioning remains outstanding.
+  - Evidence: Source review only by task instruction; no tests, build, lint, database connection, migration, branch operation, or deployment.
+  - State: PARTIAL — code contract implemented; runtime identity, protected settings, sanitization, and approval are NOT VERIFIED.
+  - Key files: `src/config/env.ts`, `src/config/pilot.ts`, `scripts/db/local-target-guard.ts`, `render.yaml`, `Documents/PILOT-STAGING-OPERATIONS.md`.
 - **2026-10-28 — BUILD-01 / إصلاح بناء صفحة البيانات الأساسية**
   - Changed: أُضيف سياج Astro الافتتاحي المفقود في `/admin/master-data`؛ كان كود الخادم يُفسر كـmarkup.
   - Evidence: تسلسل verification begin + build انتهى exit 0 محليًا؛ التشغيل كان على Node 22.22.3 لا عقد المشروع 24.20.0. لم يُنشأ PDF ضمن `dist`.
@@ -355,7 +360,7 @@
 ## 9) Health / Audit / Data truthfulness
 
 ### Database readiness
-- NDB-01 source configuration requires profile-matched pooled Neon host metadata and rejects a direct migration URL in the web runtime. `NEON_BRANCH` is only a label. The configuration request disclosed a database password and `EXPLABS_API_KEY`; owner-led rotation remains outstanding, and Neon Auth/ExLabs provider setup is not verified.
+- NDB-01/03 source configuration now requires explicit production/staging/pilot profile binding, exact branch labels, owner-supplied allowlisted host/database identity, profile-specific pooled URLs and session/Auth/storage settings; production/staging/pilot hosts must be distinct. Local CLI database targets require explicit non-production classification (dev/test are loopback-only) and production is refused. `NEON_BRANCH` remains a label checked against the profile, not provider attestation. The configuration request disclosed a database password and `EXPLABS_API_KEY`; owner-led rotation remains outstanding, and Neon Auth/ExLabs provider setup is not verified. NDB-03 source/diff evidence is current; configured branch identities, sanitized snapshots, approval, and runtime behavior remain NOT VERIFIED.
 - `/api/health/ready` و`/system/health` يستخدمان فحص قاعدة بيانات canonical واحد ونفس TLS config. `/system/health` يفصل connectivity عن required-workflow readiness وعن QC acceptance، ويعرض وقت فحص المصدر؛ لا تعني healthy connectivity جاهزية أو قبول QC. Outbox diagnostics تقيس صفوف/عمر backlog من DB read-only؛ worker heartbeat غير مسجل وتسليم القنوات غير ممثلين، لذلك لا تدّعي القيم تشغيل العامل أو تسليم الإشعار. Alert receiver/budget/policy تبقى غير معتمدة.
 - `/system/health` يميز `CONFIGURATION_MISSING` و`CONFIGURATION_INVALID` (DEGRADED) عن `PROVIDER_UNAVAILABLE` (UNAVAILABLE) دون إظهار تفاصيل الاتصال؛ عقد `/api/health/ready` يبقى `healthy|unhealthy`. AI health يميز الآن `POLICY_DISABLED` و`POLICY_NOT_VALID` و`CONFIGURATION_MISSING/INVALID` عن `PROVIDER_UNAVAILABLE` دون طلب خارجي عند الحالات الأولى. PostgreSQL18 local audit run on2026-10-08 completed with failures; see current audit reality. Production parity remains45/46.
 - OTEL remains optional and no-op: the endpoint/header pair is validated but has no exporter; do not interpret unset fields or successful parsing as telemetry delivery.

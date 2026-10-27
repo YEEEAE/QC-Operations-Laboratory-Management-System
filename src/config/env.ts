@@ -23,6 +23,15 @@ const optionalEnv = <T extends z.ZodTypeAny>(schema: T) =>
     schema.optional(),
   );
 
+/** Server-side allowlist: profiles may only bind to their named Neon branch and identity keys. */
+const APPROVED_DATABASE_IDENTITIES = {
+  production: { branch: 'production', urlKey: 'DATABASE_URL', hostKey: 'PRODUCTION_DATABASE_HOST', databaseKey: 'PRODUCTION_DATABASE_NAME' },
+  staging: { branch: 'staging', urlKey: 'STAGING_DATABASE_URL', hostKey: 'STAGING_DATABASE_HOST', databaseKey: 'STAGING_DATABASE_NAME' },
+  pilot: { branch: 'pilot', urlKey: 'PILOT_DATABASE_URL', hostKey: 'PILOT_DATABASE_HOST', databaseKey: 'PILOT_DATABASE_NAME' },
+} as const;
+
+const NEON_PROFILE_KEYS = Object.keys(APPROVED_DATABASE_IDENTITIES) as (keyof typeof APPROVED_DATABASE_IDENTITIES)[];
+
 function databaseIdentityFingerprint(value: string): string {
   const url = new URL(value);
   // Hash only the URL identity fields. The digest is used for equality checks,
@@ -52,6 +61,9 @@ const envSchema = z.object({
   DATABASE_URL: optionalEnv(postgresUrlSchema),
   STAGING_DATABASE_URL: optionalEnv(postgresUrlSchema),
   PILOT_DATABASE_URL: optionalEnv(postgresUrlSchema),
+  PRODUCTION_DATABASE_NAME: optionalEnv(z.string().trim().min(1)),
+  STAGING_DATABASE_NAME: optionalEnv(z.string().trim().min(1)),
+  PILOT_DATABASE_NAME: optionalEnv(z.string().trim().min(1)),
   // These are server-side metadata/credentials only. DATABASE_URL_UNPOOLED is
   // deliberately rejected by the runtime parser below and belongs in operator
   // tooling, never in the web service process.
@@ -60,10 +72,20 @@ const envSchema = z.object({
   NEON_AUTH_JWKS_URL: optionalEnv(z.string().trim().url().refine((value) => new URL(value).protocol === 'https:', 'must use HTTPS')),
   NEON_AUTH_ISSUER: optionalEnv(z.string().trim().url().refine((value) => new URL(value).protocol === 'https:', 'must use HTTPS')),
   NEON_AUTH_AUDIENCE: optionalEnv(z.string().trim().min(1)),
+  STAGING_NEON_AUTH_JWKS_URL: optionalEnv(z.string().trim().url().refine((value) => new URL(value).protocol === 'https:', 'must use HTTPS')),
+  STAGING_NEON_AUTH_ISSUER: optionalEnv(z.string().trim().url().refine((value) => new URL(value).protocol === 'https:', 'must use HTTPS')),
+  STAGING_NEON_AUTH_AUDIENCE: optionalEnv(z.string().trim().min(1)),
+  PILOT_NEON_AUTH_JWKS_URL: optionalEnv(z.string().trim().url().refine((value) => new URL(value).protocol === 'https:', 'must use HTTPS')),
+  PILOT_NEON_AUTH_ISSUER: optionalEnv(z.string().trim().url().refine((value) => new URL(value).protocol === 'https:', 'must use HTTPS')),
+  PILOT_NEON_AUTH_AUDIENCE: optionalEnv(z.string().trim().min(1)),
   EXPLABS_API_KEY: optionalEnv(z.string().trim().min(1)),
+  STAGING_EXPLABS_API_KEY: optionalEnv(z.string().trim().min(1)),
+  PILOT_EXPLABS_API_KEY: optionalEnv(z.string().trim().min(1)),
   STAGING_DATABASE_HOST: optionalEnv(z.string().trim()),
   PILOT_DATABASE_HOST: optionalEnv(z.string().trim()),
   PRODUCTION_DATABASE_HOST: optionalEnv(z.string().trim()),
+  STAGING_SESSION_SECRET: optionalEnv(z.string().min(32)),
+  PILOT_SESSION_SECRET: optionalEnv(z.string().min(32)),
   PILOT_ENABLED: z.enum(['true', 'false']).default('false'),
   PILOT_SHADOW_MODE: z.enum(['true', 'false']).default('true'),
   PILOT_SCOPE_SITE: optionalEnv(z.string().trim()),
@@ -116,15 +138,50 @@ export class InvalidEnvironmentError extends Error {
 export function parseServerEnv(input: Record<string, string | undefined>): ServerEnv {
   const result = envSchema.safeParse(input);
   if (result.success) {
+    if (result.data.NODE_ENV === 'production' && !result.data.APP_ENVIRONMENT_PROFILE) {
+      throw new InvalidEnvironmentError([ENV_KEYS.appEnvironmentProfile], []);
+    }
     const profile = result.data.APP_ENVIRONMENT_PROFILE ?? result.data.NODE_ENV;
-    const profileDatabaseUrl = profile === 'staging' ? result.data.STAGING_DATABASE_URL : profile === 'pilot' ? result.data.PILOT_DATABASE_URL : result.data.DATABASE_URL;
+    if ((profile === 'development' || profile === 'test') && profile !== result.data.NODE_ENV) {
+      throw new InvalidEnvironmentError([], [ENV_KEYS.appEnvironmentProfile]);
+    }
+    if ((profile === 'staging' || profile === 'pilot') && result.data.NODE_ENV !== 'production') {
+      throw new InvalidEnvironmentError([], [ENV_KEYS.appEnvironmentProfile, ENV_KEYS.nodeEnv]);
+    }
+    if (profile === 'production' && result.data.NODE_ENV !== 'production') {
+      throw new InvalidEnvironmentError([], [ENV_KEYS.appEnvironmentProfile, ENV_KEYS.nodeEnv]);
+    }
+    if (result.data.NODE_ENV === 'production' && !NEON_PROFILE_KEYS.includes(profile as keyof typeof APPROVED_DATABASE_IDENTITIES)) {
+      throw new InvalidEnvironmentError([], [ENV_KEYS.appEnvironmentProfile]);
+    }
+    if (profile !== 'production' && input.NEON_BRANCH?.trim().toLowerCase() === 'production') {
+      throw new InvalidEnvironmentError([], [ENV_KEYS.neonBranch]);
+    }
+    if ((profile === 'development' || profile === 'test') && input.NEON_BRANCH?.trim() && input.NEON_BRANCH.trim() !== profile) {
+      throw new InvalidEnvironmentError([], [ENV_KEYS.neonBranch]);
+    }
+    const profileBinding = profile in APPROVED_DATABASE_IDENTITIES
+      ? APPROVED_DATABASE_IDENTITIES[profile as keyof typeof APPROVED_DATABASE_IDENTITIES]
+      : undefined;
+    const profileDatabaseUrl = profileBinding
+      ? result.data[profileBinding.urlKey]
+      : result.data.DATABASE_URL;
+    const profileSessionSecret = profile === 'staging'
+      ? result.data.STAGING_SESSION_SECRET
+      : profile === 'pilot'
+        ? result.data.PILOT_SESSION_SECRET
+        : result.data.SESSION_SECRET;
     const invalid: string[] = [];
     const missing: string[] = [];
     if (input.DATABASE_URL_UNPOOLED?.trim()) invalid.push(ENV_KEYS.databaseUrlUnpooled);
     if (input.MIGRATION_DATABASE_URL?.trim()) invalid.push(ENV_KEYS.migrationDatabaseUrl);
-    const neonAuthValues = [result.data.NEON_AUTH_JWKS_URL, result.data.NEON_AUTH_ISSUER, result.data.NEON_AUTH_AUDIENCE];
+    const neonAuthValues = profile === 'staging'
+      ? [result.data.STAGING_NEON_AUTH_JWKS_URL, result.data.STAGING_NEON_AUTH_ISSUER, result.data.STAGING_NEON_AUTH_AUDIENCE]
+      : profile === 'pilot'
+        ? [result.data.PILOT_NEON_AUTH_JWKS_URL, result.data.PILOT_NEON_AUTH_ISSUER, result.data.PILOT_NEON_AUTH_AUDIENCE]
+        : [result.data.NEON_AUTH_JWKS_URL, result.data.NEON_AUTH_ISSUER, result.data.NEON_AUTH_AUDIENCE];
     if (neonAuthValues.some(Boolean) && neonAuthValues.some((value) => !value)) {
-      invalid.push(ENV_KEYS.neonAuthJwksUrl, ENV_KEYS.neonAuthIssuer, ENV_KEYS.neonAuthAudience);
+      invalid.push('profile-specific Neon Auth settings');
     }
 
     const configuredProfileUrls = [
@@ -140,22 +197,53 @@ export function parseServerEnv(input: Record<string, string | undefined>): Serve
       if (previousKey) invalid.push(previousKey, key);
       else fingerprints.set(fingerprint, key);
     }
-    if (profile === 'staging' || profile === 'pilot') {
-      if (result.data.DATABASE_URL) invalid.push(ENV_KEYS.databaseUrl);
-      if (!profileDatabaseUrl) missing.push(profile === 'staging' ? ENV_KEYS.stagingDatabaseUrl : ENV_KEYS.pilotDatabaseUrl);
-      const expectedHost = profile === 'staging' ? result.data.STAGING_DATABASE_HOST : result.data.PILOT_DATABASE_HOST;
-      if (!expectedHost) missing.push(profile === 'staging' ? ENV_KEYS.stagingDatabaseHost : ENV_KEYS.pilotDatabaseHost);
-      if (!result.data.PRODUCTION_DATABASE_HOST) missing.push(ENV_KEYS.productionDatabaseHost);
-      if (expectedHost && result.data.PRODUCTION_DATABASE_HOST && expectedHost.toLowerCase() === result.data.PRODUCTION_DATABASE_HOST.toLowerCase()) invalid.push(profile === 'staging' ? ENV_KEYS.stagingDatabaseHost : ENV_KEYS.pilotDatabaseHost);
-      if (profile === 'staging' && (result.data.PILOT_DATABASE_URL || result.data.PILOT_DATABASE_HOST)) invalid.push(ENV_KEYS.pilotDatabaseUrl);
-      if (profile === 'pilot' && (result.data.STAGING_DATABASE_URL || result.data.STAGING_DATABASE_HOST)) invalid.push(ENV_KEYS.stagingDatabaseUrl);
+    if (profileBinding) {
+      if (!result.data.APP_ENVIRONMENT_PROFILE) missing.push(ENV_KEYS.appEnvironmentProfile);
+      if (input.NEON_BRANCH?.trim() !== profileBinding.branch) invalid.push(ENV_KEYS.neonBranch);
+      if (!profileDatabaseUrl) missing.push(profileBinding.urlKey);
+      for (const binding of Object.values(APPROVED_DATABASE_IDENTITIES)) {
+        if (!result.data[binding.hostKey]) missing.push(binding.hostKey);
+        if (!result.data[binding.databaseKey]) missing.push(binding.databaseKey);
+      }
+      const configuredHosts = NEON_PROFILE_KEYS.map((key) => ({ key, host: result.data[APPROVED_DATABASE_IDENTITIES[key].hostKey]?.toLowerCase() }));
+      for (let left = 0; left < configuredHosts.length; left += 1) {
+        for (let right = left + 1; right < configuredHosts.length; right += 1) {
+          if (configuredHosts[left]?.host && configuredHosts[left].host === configuredHosts[right]?.host) {
+            invalid.push(APPROVED_DATABASE_IDENTITIES[configuredHosts[left].key].hostKey, APPROVED_DATABASE_IDENTITIES[configuredHosts[right]!.key].hostKey);
+          }
+        }
+      }
+      if (profile !== 'production' && result.data.DATABASE_URL) invalid.push(ENV_KEYS.databaseUrl);
+      if (profile === 'staging' && result.data.PILOT_DATABASE_URL) invalid.push(ENV_KEYS.pilotDatabaseUrl);
+      if (profile === 'pilot' && result.data.STAGING_DATABASE_URL) invalid.push(ENV_KEYS.stagingDatabaseUrl);
+      if (profile !== 'staging' && result.data.STAGING_DATABASE_URL) invalid.push(ENV_KEYS.stagingDatabaseUrl);
+      if (profile !== 'pilot' && result.data.PILOT_DATABASE_URL) invalid.push(ENV_KEYS.pilotDatabaseUrl);
+      if (profile !== 'production' && result.data.SESSION_SECRET) invalid.push(ENV_KEYS.sessionSecret);
+      if (profile === 'production' && (result.data.STAGING_SESSION_SECRET || result.data.PILOT_SESSION_SECRET)) invalid.push('STAGING_SESSION_SECRET', 'PILOT_SESSION_SECRET');
+      if (profile === 'staging' && result.data.PILOT_SESSION_SECRET) invalid.push('PILOT_SESSION_SECRET');
+      if (profile === 'pilot' && result.data.STAGING_SESSION_SECRET) invalid.push('STAGING_SESSION_SECRET');
+      if (!profileSessionSecret) missing.push(profile === 'staging' ? 'STAGING_SESSION_SECRET' : profile === 'pilot' ? 'PILOT_SESSION_SECRET' : ENV_KEYS.sessionSecret);
+      const hasGenericAuth = Boolean(result.data.NEON_AUTH_JWKS_URL || result.data.NEON_AUTH_ISSUER || result.data.NEON_AUTH_AUDIENCE);
+      const hasOtherProfileAuth = profile === 'staging'
+        ? Boolean(result.data.PILOT_NEON_AUTH_JWKS_URL || result.data.PILOT_NEON_AUTH_ISSUER || result.data.PILOT_NEON_AUTH_AUDIENCE)
+        : profile === 'pilot'
+          ? Boolean(result.data.STAGING_NEON_AUTH_JWKS_URL || result.data.STAGING_NEON_AUTH_ISSUER || result.data.STAGING_NEON_AUTH_AUDIENCE)
+          : Boolean(result.data.STAGING_NEON_AUTH_JWKS_URL || result.data.STAGING_NEON_AUTH_ISSUER || result.data.STAGING_NEON_AUTH_AUDIENCE || result.data.PILOT_NEON_AUTH_JWKS_URL || result.data.PILOT_NEON_AUTH_ISSUER || result.data.PILOT_NEON_AUTH_AUDIENCE);
+      if (profile !== 'production' && hasGenericAuth) invalid.push('production Neon Auth settings are not valid for a non-production profile');
+      if (hasOtherProfileAuth) invalid.push('another profile Neon Auth settings');
+      if (profile !== 'production' && result.data.EXPLABS_API_KEY) invalid.push('EXPLABS_API_KEY');
+      if (profile === 'staging' && result.data.PILOT_EXPLABS_API_KEY) invalid.push('PILOT_EXPLABS_API_KEY');
+      if (profile === 'pilot' && result.data.STAGING_EXPLABS_API_KEY) invalid.push('STAGING_EXPLABS_API_KEY');
+      if (profile === 'production' && (result.data.STAGING_EXPLABS_API_KEY || result.data.PILOT_EXPLABS_API_KEY)) invalid.push('STAGING_EXPLABS_API_KEY', 'PILOT_EXPLABS_API_KEY');
+      if (profile === 'staging' && (result.data.PILOT_DATABASE_HOST && result.data.PILOT_DATABASE_HOST.toLowerCase() === result.data.STAGING_DATABASE_HOST?.toLowerCase())) invalid.push(ENV_KEYS.pilotDatabaseHost, ENV_KEYS.stagingDatabaseHost);
+      if (profile === 'pilot' && (result.data.STAGING_DATABASE_HOST && result.data.PILOT_DATABASE_HOST?.toLowerCase() === result.data.STAGING_DATABASE_HOST.toLowerCase())) invalid.push(ENV_KEYS.pilotDatabaseHost, ENV_KEYS.stagingDatabaseHost);
       if (profile === 'pilot' && result.data.PILOT_ENABLED === 'true') {
         if (result.data.PILOT_SHADOW_MODE !== 'true') invalid.push(ENV_KEYS.pilotShadowMode);
         for (const key of [ENV_KEYS.pilotSite, ENV_KEYS.pilotDepartment, ENV_KEYS.pilotLine, ENV_KEYS.pilotShift] as const) {
           if (!input[key]?.trim()) missing.push(key);
         }
       }
-    } else if (result.data.STAGING_DATABASE_URL || result.data.PILOT_DATABASE_URL || result.data.STAGING_DATABASE_HOST || result.data.PILOT_DATABASE_HOST) {
+    } else if (result.data.STAGING_DATABASE_URL || result.data.PILOT_DATABASE_URL || result.data.STAGING_DATABASE_HOST || result.data.PILOT_DATABASE_HOST || result.data.PRODUCTION_DATABASE_HOST || result.data.STAGING_DATABASE_NAME || result.data.PILOT_DATABASE_NAME || result.data.PRODUCTION_DATABASE_NAME || result.data.STAGING_SESSION_SECRET || result.data.PILOT_SESSION_SECRET || result.data.STAGING_NEON_AUTH_JWKS_URL || result.data.STAGING_NEON_AUTH_ISSUER || result.data.STAGING_NEON_AUTH_AUDIENCE || result.data.PILOT_NEON_AUTH_JWKS_URL || result.data.PILOT_NEON_AUTH_ISSUER || result.data.PILOT_NEON_AUTH_AUDIENCE || result.data.STAGING_EXPLABS_API_KEY || result.data.PILOT_EXPLABS_API_KEY) {
       invalid.push(result.data.STAGING_DATABASE_URL ? ENV_KEYS.stagingDatabaseUrl : ENV_KEYS.pilotDatabaseUrl);
     }
     if (result.data.PILOT_REAL_MASTER_DATA_ENABLED === 'true') {
@@ -175,10 +263,17 @@ export function parseServerEnv(input: Record<string, string | undefined>): Serve
           parsed.hostname.endsWith('.neon.tech') &&
           !parsed.hostname.split('.')[0]?.endsWith('-pooler')
         ) throw new Error();
-        const expectedHost = profile === 'staging' ? result.data.STAGING_DATABASE_HOST : profile === 'pilot' ? result.data.PILOT_DATABASE_HOST : undefined;
-        if (expectedHost && parsed.hostname.toLowerCase() !== expectedHost.toLowerCase()) throw new Error();
-        if (profile === 'production' && result.data.PRODUCTION_DATABASE_HOST && parsed.hostname.toLowerCase() !== result.data.PRODUCTION_DATABASE_HOST.toLowerCase()) throw new Error();
-        if ((profile === 'staging' || profile === 'pilot') && parsed.hostname.toLowerCase() === result.data.PRODUCTION_DATABASE_HOST?.toLowerCase()) throw new Error();
+        const actualDatabase = decodeURIComponent(parsed.pathname.replace(/^\//, ''));
+        const binding = APPROVED_DATABASE_IDENTITIES[profile as keyof typeof APPROVED_DATABASE_IDENTITIES];
+        if (binding) {
+          const expectedHost = result.data[binding.hostKey];
+          const expectedDatabase = result.data[binding.databaseKey];
+          if (!expectedHost || parsed.hostname.toLowerCase() !== expectedHost.toLowerCase()) throw new Error();
+          if (!expectedDatabase || actualDatabase !== expectedDatabase) throw new Error();
+        } else {
+          const hostname = parsed.hostname.toLowerCase();
+          if (!['development', 'test'].includes(profile) || !['localhost', '127.0.0.1', '::1', '[::1]'].includes(hostname)) throw new Error();
+        }
       } catch {
         throw new InvalidEnvironmentError([], [profile === 'staging' ? ENV_KEYS.stagingDatabaseUrl : profile === 'pilot' ? ENV_KEYS.pilotDatabaseUrl : ENV_KEYS.databaseUrl]);
       }
@@ -187,7 +282,7 @@ export function parseServerEnv(input: Record<string, string | undefined>): Serve
       result.data.NODE_ENV === 'production' || profile === 'production'
         ? [
             !selectedDatabase ? (profile === 'staging' ? ENV_KEYS.stagingDatabaseUrl : profile === 'pilot' ? ENV_KEYS.pilotDatabaseUrl : ENV_KEYS.databaseUrl) : '',
-            !result.data.SESSION_SECRET ? ENV_KEYS.sessionSecret : '',
+            !profileSessionSecret ? (profile === 'staging' ? 'STAGING_SESSION_SECRET' : profile === 'pilot' ? 'PILOT_SESSION_SECRET' : ENV_KEYS.sessionSecret) : '',
             !input.SERVICE_VERSION?.trim() ? ENV_KEYS.serviceVersion : '',
             profile === 'production' && !result.data.PRODUCTION_DATABASE_HOST ? ENV_KEYS.productionDatabaseHost : '',
             // SECURITY-ARCHITECTURE §142: no unlimited-abuse exposure on login.
@@ -213,7 +308,10 @@ export function parseServerEnv(input: Record<string, string | undefined>): Serve
         : [result.data.R2_ENDPOINT, result.data.R2_ACCESS_KEY_ID, result.data.R2_SECRET_ACCESS_KEY, result.data.R2_BUCKET];
     const genericR2 = [result.data.R2_ENDPOINT, result.data.R2_ACCESS_KEY_ID, result.data.R2_SECRET_ACCESS_KEY, result.data.R2_BUCKET].filter(Boolean).length;
     if ((profile === 'staging' || profile === 'pilot') && genericR2 > 0) invalid.push(...R2_ENV_KEYS);
+    if ((profile === 'development' || profile === 'test') && genericR2 > 0) invalid.push(...R2_ENV_KEYS);
     if ((profile === 'production' || profile === 'development' || profile === 'test') && ([...STAGING_R2_ENV_KEYS, ...PILOT_R2_ENV_KEYS].some((key) => input[key]))) invalid.push(...[...STAGING_R2_ENV_KEYS, ...PILOT_R2_ENV_KEYS]);
+    if (profile === 'staging' && PILOT_R2_ENV_KEYS.some((key) => input[key])) invalid.push(...PILOT_R2_ENV_KEYS);
+    if (profile === 'pilot' && STAGING_R2_ENV_KEYS.some((key) => input[key])) invalid.push(...STAGING_R2_ENV_KEYS);
     const configuredR2 = r2Values.filter(Boolean).length;
     if (profile === 'staging' || profile === 'pilot') {
       if (configuredR2 < r2Keys.length) missing.push(...r2Keys.filter((_, index) => !r2Values[index]));
@@ -226,7 +324,16 @@ export function parseServerEnv(input: Record<string, string | undefined>): Serve
     }
     if (missing.length || invalid.length) throw new InvalidEnvironmentError(missing, invalid);
     if (productionMissing.length) throw new InvalidEnvironmentError(productionMissing, []);
-    return { ...result.data, APP_ENVIRONMENT_PROFILE: profile, DATABASE_URL: selectedDatabase };
+    return {
+      ...result.data,
+      APP_ENVIRONMENT_PROFILE: profile,
+      DATABASE_URL: selectedDatabase,
+      SESSION_SECRET: profileSessionSecret,
+      NEON_AUTH_JWKS_URL: profile === 'staging' ? result.data.STAGING_NEON_AUTH_JWKS_URL : profile === 'pilot' ? result.data.PILOT_NEON_AUTH_JWKS_URL : result.data.NEON_AUTH_JWKS_URL,
+      NEON_AUTH_ISSUER: profile === 'staging' ? result.data.STAGING_NEON_AUTH_ISSUER : profile === 'pilot' ? result.data.PILOT_NEON_AUTH_ISSUER : result.data.NEON_AUTH_ISSUER,
+      NEON_AUTH_AUDIENCE: profile === 'staging' ? result.data.STAGING_NEON_AUTH_AUDIENCE : profile === 'pilot' ? result.data.PILOT_NEON_AUTH_AUDIENCE : result.data.NEON_AUTH_AUDIENCE,
+      EXPLABS_API_KEY: profile === 'staging' ? result.data.STAGING_EXPLABS_API_KEY : profile === 'pilot' ? result.data.PILOT_EXPLABS_API_KEY : result.data.EXPLABS_API_KEY,
+    };
   }
 
   const missing: string[] = [];

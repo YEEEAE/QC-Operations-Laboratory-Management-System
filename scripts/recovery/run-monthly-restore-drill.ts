@@ -203,6 +203,20 @@ export function runLocalRestoreDrill(input: {
   return evidence;
 }
 function main() {
+  const profile = process.env.APP_ENVIRONMENT_PROFILE;
+  const branch = process.env.NEON_BRANCH?.trim();
+  if (!profile || profile === 'production' || branch?.toLowerCase() === 'production') {
+    throw new Error('LOCAL_DRILL_REQUIRES_EXPLICIT_NON_PRODUCTION_PROFILE');
+  }
+  if ((profile === 'development' || profile === 'test') && (process.env.NODE_ENV ?? 'development') !== profile) {
+    throw new Error('LOCAL_DRILL_ENVIRONMENT_CLASSIFICATION_MISMATCH');
+  }
+  if ((profile === 'staging' || profile === 'pilot') && process.env.NODE_ENV !== 'production') {
+    throw new Error('LOCAL_DRILL_ENVIRONMENT_CLASSIFICATION_MISMATCH');
+  }
+  if ((profile === 'staging' || profile === 'pilot') && branch !== profile) {
+    throw new Error('LOCAL_DRILL_ENVIRONMENT_CLASSIFICATION_MISMATCH');
+  }
   const args = process.argv.slice(2);
   const option = (name: string) => {
     const index = args.indexOf(name);

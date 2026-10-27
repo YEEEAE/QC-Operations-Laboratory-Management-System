@@ -9,6 +9,7 @@ import {
 } from '../../src/shared/database/pool.js';
 
 import { loadLocalEnv } from './load-local-env.js';
+import { assertSafeLocalDatabaseCommand } from './local-target-guard.js';
 
 export interface DatabasePreflightReport {
   connectivity: 'PASS' | 'FAIL';
@@ -163,6 +164,7 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
   // This happens only at the CLI boundary so importing `runDatabasePreflight`
   // from a test can never mutate the test process environment.
   loadLocalEnv();
+  assertSafeLocalDatabaseCommand();
   runDatabasePreflight()
     .then((report) => {
       console.log(JSON.stringify(report));

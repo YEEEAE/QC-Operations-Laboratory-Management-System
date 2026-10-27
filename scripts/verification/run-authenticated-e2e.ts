@@ -10,6 +10,7 @@ import process from 'node:process';
 import type { Pool } from 'pg';
 
 import { loadLocalEnv, loadLocalOperatorEnv } from '../db/load-local-env.js';
+import { assertSafeLocalDatabaseCommand } from '../db/local-target-guard.js';
 import { createPool } from '../../src/shared/database/pool.js';
 import { loadMigrations, migrate } from '../db/migrate.js';
 import { seedFoundationData } from '../../db/seeds/common.js';
@@ -155,7 +156,14 @@ async function writeBlockedEvidence(reason: string, env: NodeJS.ProcessEnv): Pro
 async function main(): Promise<void> {
   loadLocalEnv();
   loadLocalOperatorEnv();
-  const env: NodeJS.ProcessEnv = { ...process.env, NODE_ENV: 'test', E2E_TEST_RUN_ID: runId };
+  assertSafeLocalDatabaseCommand();
+  const env: NodeJS.ProcessEnv = {
+    ...process.env,
+    NODE_ENV: 'test',
+    APP_ENVIRONMENT_PROFILE: 'test',
+    NEON_BRANCH: 'test',
+    E2E_TEST_RUN_ID: runId,
+  };
   // The direct Node+tsx loader is needed in this sandbox because the tsx CLI
   // IPC socket is restricted. Do not leak that loader into pnpm/preview child
   // processes; it makes pnpm try to reify node_modules.

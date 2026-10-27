@@ -2,6 +2,8 @@ import { fileURLToPath } from 'node:url';
 import { validateRestoredDatabase } from './validate-restored-database.js';
 import { validateRestoredFiles } from './validate-restored-files.js';
 import { readRecoveryManifest } from './verify-recovery-manifest.js';
+import { loadLocalEnv } from '../db/load-local-env.js';
+import { assertSafeLocalDatabaseCommand } from '../db/local-target-guard.js';
 
 export type RecoveryChecklistStatus = 'PASS' | 'FAIL' | 'BLOCKED' | 'UNVERIFIED';
 
@@ -116,6 +118,7 @@ export async function runRecoveryChecklist(input: {
 }
 
 async function main(): Promise<void> {
+  loadLocalEnv();
   const manifestPath = process.argv[process.argv.indexOf('--manifest') + 1];
   const databaseUrl = process.argv.includes('--database-url')
     ? process.argv[process.argv.indexOf('--database-url') + 1]
@@ -130,6 +133,7 @@ async function main(): Promise<void> {
     process.exitCode = 2;
     return;
   }
+  if (databaseUrl) assertSafeLocalDatabaseCommand(process.env, databaseUrl);
   const report = await runRecoveryChecklist({ manifestPath, databaseUrl, objectRoot });
   console.log(JSON.stringify(report, null, 2));
   if (report.items.some((item) => item.status !== 'PASS')) process.exitCode = 1;

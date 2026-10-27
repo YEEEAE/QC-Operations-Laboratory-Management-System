@@ -5,24 +5,30 @@ export type PilotReadiness = 'IMPLEMENTED' | 'CONFIGURED' | 'VERIFIED' | 'APPROV
 export function pilotEnvironmentView() {
   const env = getServerEnv();
   const profile = env.APP_ENVIRONMENT_PROFILE;
+  const isNonProductionProfile = profile === 'staging' || profile === 'pilot';
   const scope = {
     site: env.PILOT_SCOPE_SITE,
     department: env.PILOT_SCOPE_DEPARTMENT,
     line: env.PILOT_SCOPE_LINE,
     shift: env.PILOT_SCOPE_SHIFT,
   };
-  const prefix = profile === 'pilot' ? 'PILOT' : 'STAGING';
+  const prefix = profile === 'pilot' ? 'PILOT' : profile === 'staging' ? 'STAGING' : profile.toUpperCase();
   const fileStorageConfigured = profile === 'pilot'
     ? Boolean(env.PILOT_R2_ENDPOINT && env.PILOT_R2_ACCESS_KEY_ID && env.PILOT_R2_SECRET_ACCESS_KEY && env.PILOT_R2_BUCKET)
     : profile === 'staging'
       ? Boolean(env.STAGING_R2_ENDPOINT && env.STAGING_R2_ACCESS_KEY_ID && env.STAGING_R2_SECRET_ACCESS_KEY && env.STAGING_R2_BUCKET)
       : false;
-  const profileConfigured = (profile === 'pilot' || profile === 'staging') && Boolean(env.DATABASE_URL) && fileStorageConfigured;
+  const profileConfigured = isNonProductionProfile && Boolean(env.DATABASE_URL && env.NEON_BRANCH && env.SESSION_SECRET) && fileStorageConfigured;
   const scopeConfigured = Object.values(scope).every((value) => Boolean(value?.trim()));
   const fullyConfigured = profileConfigured && (profile === 'staging' || scopeConfigured);
   return {
     profile,
     hostnameLabel: prefix.toLowerCase(),
+    isNonProductionProfile,
+    branchLabel: env.NEON_BRANCH ?? 'NOT CONFIGURED',
+    databaseIdentity: profileConfigured ? 'CONFIGURED' as const : 'NOT CONFIGURED' as const,
+    identityVerification: 'NOT VERIFIED' as const,
+    identityApproval: 'NOT APPROVED' as const,
     fileStorageConfigured,
     enabled: profile === 'pilot' && env.PILOT_ENABLED === 'true',
     shadowMode: profile !== 'pilot' ? 'NOT APPLICABLE' as const : env.PILOT_SHADOW_MODE === 'true' ? 'ENABLED' as const : 'DISABLED' as const,

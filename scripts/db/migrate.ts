@@ -14,6 +14,7 @@ import {
 import { isSupportedMigrationChecksum } from '../../src/shared/database/migration-checksum-policy.js';
 
 import { loadLocalEnv, loadLocalMigrationEnv, loadLocalOperatorEnv } from './load-local-env.js';
+import { assertSafeLocalDatabaseCommand } from './local-target-guard.js';
 
 export interface MigrationFile {
   version: string;
@@ -310,6 +311,10 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
   loadLocalMigrationEnv();
   const check = process.argv.includes('--check');
   const runCli = async () => {
+    assertSafeLocalDatabaseCommand(
+      process.env,
+      process.env.DATABASE_URL_UNPOOLED ?? process.env.MIGRATION_DATABASE_URL,
+    );
     const cliPool = createOperatorMigrationPool(process.argv, process.env);
     try {
       return await migrate({ check, pool: cliPool });

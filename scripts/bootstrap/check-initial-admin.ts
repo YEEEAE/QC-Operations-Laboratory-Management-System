@@ -11,6 +11,7 @@ import {
 import type { DatabaseSchema } from '../../src/shared/database/db-types.js';
 import { getDatabaseConnectionConfig } from '../../src/shared/database/pool.js';
 import { loadLocalEnv, loadLocalOperatorEnv } from '../db/load-local-env.js';
+import { assertSafeLocalDatabaseCommand } from '../db/local-target-guard.js';
 
 export async function runBootstrapAdminCheck(environment = process.env): Promise<void> {
   loadLocalEnv(environment);
@@ -31,6 +32,8 @@ export async function runBootstrapAdminCheck(environment = process.env): Promise
 }
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
+  loadLocalEnv();
+  assertSafeLocalDatabaseCommand();
   runBootstrapAdminCheck().catch((error: unknown) => {
     console.error(redactBootstrapErrorMessage(error, process.env));
     process.exitCode = 1;

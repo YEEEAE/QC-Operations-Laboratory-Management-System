@@ -20,6 +20,8 @@
 import { Pool, type PoolClient } from 'pg';
 import { hash } from 'argon2';
 import { randomUUID } from 'node:crypto';
+import { loadLocalEnv } from '../db/load-local-env.js';
+import { assertSafeLocalDatabaseCommand } from '../db/local-target-guard.js';
 
 import { stableSeedUuid, FOUNDATION_ROLE_PERMISSIONS } from '../../db/seeds/common.js';
 import {
@@ -239,6 +241,8 @@ async function assertPersonaAuthorization(
 }
 
 async function main(): Promise<void> {
+  loadLocalEnv();
+  assertSafeLocalDatabaseCommand();
   requireGuard(process.env);
   const pool = new Pool({
     connectionString: process.env.DATABASE_URL,

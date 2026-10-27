@@ -3,6 +3,7 @@ import { fileURLToPath } from 'node:url';
 import { getDatabaseConnectionConfig } from '../../src/shared/database/pool.js';
 import { readRecoveryManifest, type RecoveryManifest } from './verify-recovery-manifest.js';
 import { loadLocalEnv } from '../db/load-local-env.js';
+import { assertSafeLocalDatabaseCommand } from '../db/local-target-guard.js';
 
 export interface RestoredDatabaseReport {
   status: 'PASS' | 'FAIL';
@@ -117,7 +118,7 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
     console.error('Usage: validate-restored-database.ts --manifest <path> [--database-url <url>]');
     process.exitCode = 2;
   } else
-    readRecoveryManifest(manifestPath)
+    Promise.resolve().then(() => assertSafeLocalDatabaseCommand(process.env, databaseUrl)).then(() => readRecoveryManifest(manifestPath))
       .then((manifest) => validateRestoredDatabase(manifest, databaseUrl))
       .then((report) => {
         console.log(JSON.stringify(report));

@@ -19,6 +19,7 @@ import {
 import { redactBootstrapErrorMessage } from '../../src/modules/identity/application/bootstrap-admin-check.js';
 
 import { loadLocalEnv, loadLocalOperatorEnv } from '../db/load-local-env.js';
+import { assertSafeLocalDatabaseCommand } from '../db/local-target-guard.js';
 
 async function assertMigrationsApplied(pool: Pool): Promise<void> {
   const client = await pool.connect();
@@ -71,6 +72,7 @@ export async function runBootstrap(environment = process.env): Promise<void> {
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
   loadLocalEnv();
   loadLocalOperatorEnv();
+  assertSafeLocalDatabaseCommand();
   runBootstrap().catch((error: unknown) => {
     console.error(redactBootstrapErrorMessage(error, process.env));
     process.exitCode = 1;

@@ -3,6 +3,7 @@ import { PERMISSION_CODES } from '../../src/shared/authorization/permissions.js'
 import { SYSTEM_OWNER_LOGIN_IDENTITY } from '../../src/shared/authorization/p05-authority.js';
 import { createPool, getDatabaseConnectionConfig } from '../../src/shared/database/pool.js';
 import { loadLocalEnv } from '../db/load-local-env.js';
+import { assertSafeLocalDatabaseCommand } from '../db/local-target-guard.js';
 
 export async function checkSystemOwner(environment: NodeJS.ProcessEnv = process.env) {
   loadLocalEnv(environment);
@@ -61,6 +62,8 @@ export async function checkSystemOwner(environment: NodeJS.ProcessEnv = process.
 }
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
+  loadLocalEnv();
+  assertSafeLocalDatabaseCommand();
   checkSystemOwner().catch((error: unknown) => {
     console.error(error instanceof Error ? error.message : 'SYSTEM_OWNER check failed.');
     process.exitCode = 1;

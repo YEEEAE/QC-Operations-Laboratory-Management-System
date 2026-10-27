@@ -4,6 +4,7 @@ import { getPool } from '../../src/shared/database/pool.js';
 import { loadMigrations, verifyMigrationIntegrity } from './migrate.js';
 
 import { loadLocalEnv } from './load-local-env.js';
+import { assertSafeLocalDatabaseCommand } from './local-target-guard.js';
 
 // Canonical actor-lineage column per table. DATA-DICTIONARY/DATA-MODEL define
 // `requested_by` (not `created_by`) as the actor lineage for change_requests.
@@ -149,6 +150,7 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
   // Load the ignored local `.env` through the allowlisted parser before the
   // canonical pool resolves `DATABASE_URL`.
   loadLocalEnv();
+  assertSafeLocalDatabaseCommand();
   checkSchemaIntegrity()
     .then((result) => console.log(JSON.stringify({ status: 'ok', ...result })))
     .catch((error: unknown) => {

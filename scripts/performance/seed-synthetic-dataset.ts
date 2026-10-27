@@ -21,6 +21,8 @@ import { dirname, resolve } from 'node:path';
 import { Pool } from 'pg';
 
 import { hash } from 'argon2';
+import { loadLocalEnv } from '../db/load-local-env.js';
+import { assertSafeLocalDatabaseCommand } from '../db/local-target-guard.js';
 
 /* ------------------------------------------------------------------ guards */
 
@@ -271,6 +273,8 @@ const inserted: Counts = {};
 /* ------------------------------------------------------------------ main */
 
 async function main(): Promise<void> {
+  loadLocalEnv();
+  assertSafeLocalDatabaseCommand();
   requireGuard(process.env);
   const pool = new Pool({
     connectionString: process.env.DATABASE_URL,
