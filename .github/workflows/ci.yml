@@ -19,29 +19,43 @@ jobs:
     name: Verify
     runs-on: ubuntu-24.04
     timeout-minutes: 30
+    permissions:
+      contents: read
+    env:
+      CI: 'true'
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+          clean: true
 
       - name: Assert exact release checkout
         env:
           EXPECTED_SHA: ${{ github.sha }}
         run: test "$(git rev-parse HEAD)" = "$EXPECTED_SHA"
 
-      - name: Enable Corepack
-        run: corepack enable
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .node-version
 
       - name: Set up pnpm
         uses: pnpm/action-setup@v4
         with:
           version: 11.25.0
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
+      - name: Resolve pnpm store path
+        id: pnpm-store
+        run: echo "path=$(pnpm store path)" >> "$GITHUB_OUTPUT"
+
+      - name: Cache pnpm store
+        uses: actions/cache@v4
         with:
-          node-version: 24.20.0
-          cache: pnpm
+          path: ${{ steps.pnpm-store.outputs.path }}
+          key: ${{ runner.os }}-pnpm-${{ hashFiles('pnpm-lock.yaml') }}
 
       - name: Frozen install
         run: pnpm install --frozen-lockfile
@@ -154,6 +168,8 @@ jobs:
           pnpm release:evidence:check --
           --require-release
           --fail-on-skip
+          --expected-environment ci
+          --expected-build-id "github-${GITHUB_RUN_ID}.${GITHUB_RUN_ATTEMPT}"
           --expect unit
           --expect integration
           --expect migrations
@@ -176,16 +192,6 @@ jobs:
           cd .ci-results/sealed
           sha256sum runtime-artifact.tar.gz build-manifest.json runtime-contract.json > SHA256SUMS
           sha256sum --check SHA256SUMS
-
-      - name: Attest complete verified runtime artifact
-        if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
-        uses: actions/attest@v4
-        with:
-          subject-path: |
-            .ci-results/sealed/runtime-artifact.tar.gz
-            .ci-results/sealed/build-manifest.json
-            .ci-results/sealed/runtime-contract.json
-            .ci-results/sealed/SHA256SUMS
 
       - name: Preserve immutable verified runtime artifact
         uses: actions/upload-artifact@v4
@@ -236,7 +242,8 @@ jobs:
     needs: verify
     if: >-
       needs.verify.result == 'success' &&
-      (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository)
+      github.ref == 'refs/heads/main' &&
+      github.event_name != 'pull_request'
     runs-on: ubuntu-24.04
     permissions:
       contents: read
@@ -256,6 +263,14 @@ jobs:
         with:
           name: verified-sbom-${{ github.sha }}-${{ github.run_id }}-${{ github.run_attempt }}
           path: .ci-results
+
+      - name: Verify downloaded candidate identity and checksums
+        env:
+          EXPECTED_SHA: ${{ github.sha }}
+          EXPECTED_BUILD_ID: github-${{ github.run_id }}.${{ github.run_attempt }}
+        run: |
+          sha256sum --check .ci-results/sealed/SHA256SUMS
+          node --input-type=module -e 'import fs from "node:fs"; const contract=JSON.parse(fs.readFileSync(".ci-results/sealed/runtime-contract.json","utf8")); if(contract.sourceSha!==process.env.EXPECTED_SHA || contract.buildId!==process.env.EXPECTED_BUILD_ID) { console.error("Downloaded candidate identity does not match this workflow run."); process.exit(1); }'
 
       - name: Attest verified runtime artifact and SBOM
         uses: actions/attest@v4

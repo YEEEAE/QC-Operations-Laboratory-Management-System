@@ -124,16 +124,27 @@ export function evaluateReports(reports, { failOnSkip = false, expectedCandidate
   return { failures, summaries };
 }
 
-export function evaluateReleaseEvidence(metadata, { expectedGitSha } = {}) {
+export function evaluateReleaseEvidence(
+  metadata,
+  { expectedGitSha, expectedBuildId, expectedEnvironment } = {},
+) {
   assertReleaseMetadataShape(metadata);
   if (expectedGitSha && metadata.gitSha !== expectedGitSha.toLowerCase())
     throw new Error(
       `Release evidence is not bound to the expected checkout: expected ${expectedGitSha}, actual ${metadata.gitSha}.`,
     );
+  if (expectedBuildId && metadata.buildId !== expectedBuildId)
+    throw new Error('Release evidence is not bound to the expected workflow build.');
+  if (expectedEnvironment && metadata.environment !== expectedEnvironment)
+    throw new Error('Release evidence environment does not match the expected environment.');
+  if (!/^[a-f0-9]{64}$/.test(metadata.artifactSha256 ?? ''))
+    throw new Error('Release evidence is missing the server artifact SHA-256.');
   return {
     releaseId: metadata.releaseId,
     gitSha: metadata.gitSha,
     environment: metadata.environment,
+    buildId: metadata.buildId,
+    artifactSha256: metadata.artifactSha256,
   };
 }
 
@@ -226,7 +237,16 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
             encoding: 'utf8',
           }).trim();
         try {
-          summary.release = evaluateReleaseEvidence(metadata, { expectedGitSha });
+          summary.release = evaluateReleaseEvidence(metadata, {
+            expectedGitSha,
+            expectedBuildId: valueAfter(args, '--expected-build-id'),
+            expectedEnvironment: valueAfter(args, '--expected-environment'),
+          });
+          const artifactDigest = createHash('sha256')
+            .update(await readFile(resolve(repositoryRoot, 'dist/server/entry.mjs')))
+            .digest('hex');
+          if (metadata.artifactSha256 !== artifactDigest)
+            failures.push('release evidence does not match the current server artifact bytes');
         } catch (error) {
           failures.push(error instanceof Error ? error.message : 'Invalid release evidence.');
         }

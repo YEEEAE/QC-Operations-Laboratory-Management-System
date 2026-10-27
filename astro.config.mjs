@@ -47,6 +47,8 @@ const deterministicServerManifest = {
 };
 
 export default defineConfig({
+  // This application requires request-time auth, Actions, and PostgreSQL.
+  // Keep it as a Node SSR server; GitHub Pages/Jekyll is not a build target.
   output: 'server',
   adapter: node({ mode: 'standalone' }),
   integrations: [deterministicServerManifest],

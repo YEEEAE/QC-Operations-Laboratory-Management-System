@@ -1,3 +1,8 @@
+- **2026-10-28 — REL-01 / Repair verification pipeline configuration**
+  - Changed: CI now pins Node via `.node-version`, installs/caches pinned pnpm after Node setup, checks exact checkout and downloaded artifact identity/checksums, and limits attestation to successful `main` runs. Release-evidence gate now checks environment, workflow build ID, and current server artifact SHA.
+  - Evidence: NOT RUN by instruction; source diff only. Historical QC-LAUNCH-019 reports local stale `dist`, unavailable registry DNS, and absent Docker; no GitHub Actions job logs/settings were available.
+  - State: PARTIAL — CI/runtime behavior unverified; no production deployment job exists in the inspected workflow.
+  - Key files: `.github/workflows/ci.yml`, `scripts/release/check-verification-evidence.mjs`.
 - **2026-10-27 — CA-P-SYSTEM-BACKUPS-BACKUPID-RESTORE / CAPA A restore-intent form**
   - Changed: restore form now separates backup context from catalog/source evidence, presents the request as PLANNED intent only, and groups independent fields responsively while preserving server eligibility, POST action, expectedVersion and idempotency key.
   - Evidence: NOT RUN by instruction; source and textual `git diff` review only. Literal reference match not confirmed; graphify CLI unavailable.

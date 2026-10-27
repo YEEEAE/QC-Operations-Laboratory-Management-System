@@ -1,4 +1,7 @@
 services:
+  # This repository currently defines the production SSR web service only.
+  # Staging requires its own explicitly reviewed service/environment; it is not
+  # implied by this production Blueprint or by GitHub Pages.
   - type: web
     name: qc-operations-laboratory-management-system
     runtime: node
@@ -8,7 +11,7 @@ services:
     # unless a fresh candidate-bound run exists; `.ci-results/` is gitignored,
     # so a clean checkout must begin one first (same contract as Verification CI).
     buildCommand: corepack pnpm install --frozen-lockfile && corepack pnpm verification:begin && corepack pnpm run build
-    startCommand: node dist/server/entry.mjs
+    startCommand: corepack pnpm start
     autoDeployTrigger: checksPass
     domains:
       - qclevel.top
