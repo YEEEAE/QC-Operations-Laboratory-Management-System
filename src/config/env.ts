@@ -1,57 +1,100 @@
+import { createHash } from 'node:crypto';
 import { z } from 'zod';
 import { ENV_KEYS, PILOT_R2_ENV_KEYS, R2_ENV_KEYS, SERVER_LOG_LEVELS, STAGING_R2_ENV_KEYS } from './constants';
+
+const postgresUrlSchema = z
+  .string()
+  .trim()
+  .refine((value) => {
+    try {
+      const url = new URL(value);
+      return (
+        (url.protocol === 'postgres:' || url.protocol === 'postgresql:') &&
+        Boolean(url.hostname) &&
+        Boolean(url.pathname && url.pathname !== '/')
+      );
+    } catch {
+      return false;
+    }
+  }, 'must be a PostgreSQL URL');
+const optionalEnv = <T extends z.ZodTypeAny>(schema: T) =>
+  z.preprocess(
+    (value) => (typeof value === 'string' && value.trim() === '' ? undefined : value),
+    schema.optional(),
+  );
+
+function databaseIdentityFingerprint(value: string): string {
+  const url = new URL(value);
+  // Hash only the URL identity fields. The digest is used for equality checks,
+  // never returned to the UI or logs; the raw URL remains in server memory only.
+  return createHash('sha256')
+    .update([
+      url.protocol,
+      url.hostname.toLowerCase(),
+      url.port,
+      url.pathname,
+      url.username,
+      url.password,
+      [...url.searchParams.entries()]
+        .filter(([key]) => /^(?:password|user|token|access[_-]?token|refresh[_-]?token|api[_-]?key|apikey|client[_-]?secret|secret)$/i.test(key))
+        .sort(([leftKey, leftValue], [rightKey, rightValue]) =>
+          leftKey.localeCompare(rightKey) || leftValue.localeCompare(rightValue),
+        )
+        .map(([key, value]) => `${key}=${value}`)
+        .join('&'),
+    ].join('\u0000'))
+    .digest('hex');
+}
 
 const envSchema = z.object({
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
   APP_ENVIRONMENT_PROFILE: z.enum(['development', 'test', 'production', 'staging', 'pilot']).optional(),
-  DATABASE_URL: z
-    .string()
-    .trim()
-    .refine((value) => {
-      try {
-        const protocol = new URL(value).protocol;
-        return protocol === 'postgres:' || protocol === 'postgresql:';
-      } catch {
-        return false;
-      }
-    }, 'must be a PostgreSQL URL')
-    .optional(),
-  STAGING_DATABASE_URL: z.string().trim().optional(),
-  PILOT_DATABASE_URL: z.string().trim().optional(),
-  STAGING_DATABASE_HOST: z.string().trim().optional(),
-  PILOT_DATABASE_HOST: z.string().trim().optional(),
-  PRODUCTION_DATABASE_HOST: z.string().trim().optional(),
+  DATABASE_URL: optionalEnv(postgresUrlSchema),
+  STAGING_DATABASE_URL: optionalEnv(postgresUrlSchema),
+  PILOT_DATABASE_URL: optionalEnv(postgresUrlSchema),
+  // These are server-side metadata/credentials only. DATABASE_URL_UNPOOLED is
+  // deliberately rejected by the runtime parser below and belongs in operator
+  // tooling, never in the web service process.
+  DATABASE_URL_UNPOOLED: optionalEnv(z.string().trim()),
+  NEON_BRANCH: optionalEnv(z.string().trim().min(1)),
+  NEON_AUTH_JWKS_URL: optionalEnv(z.string().trim().url().refine((value) => new URL(value).protocol === 'https:', 'must use HTTPS')),
+  NEON_AUTH_ISSUER: optionalEnv(z.string().trim().url().refine((value) => new URL(value).protocol === 'https:', 'must use HTTPS')),
+  NEON_AUTH_AUDIENCE: optionalEnv(z.string().trim().min(1)),
+  EXPLABS_API_KEY: optionalEnv(z.string().trim().min(1)),
+  STAGING_DATABASE_HOST: optionalEnv(z.string().trim()),
+  PILOT_DATABASE_HOST: optionalEnv(z.string().trim()),
+  PRODUCTION_DATABASE_HOST: optionalEnv(z.string().trim()),
   PILOT_ENABLED: z.enum(['true', 'false']).default('false'),
   PILOT_SHADOW_MODE: z.enum(['true', 'false']).default('true'),
-  PILOT_SCOPE_SITE: z.string().trim().optional(),
-  PILOT_SCOPE_DEPARTMENT: z.string().trim().optional(),
-  PILOT_SCOPE_LINE: z.string().trim().optional(),
-  PILOT_SCOPE_SHIFT: z.string().trim().optional(),
+  PILOT_SCOPE_SITE: optionalEnv(z.string().trim()),
+  PILOT_SCOPE_DEPARTMENT: optionalEnv(z.string().trim()),
+  PILOT_SCOPE_LINE: optionalEnv(z.string().trim()),
+  PILOT_SCOPE_SHIFT: optionalEnv(z.string().trim()),
   PILOT_REAL_MASTER_DATA_ENABLED: z.enum(['true', 'false']).default('false'),
-  PILOT_MASTER_DATA_APPROVAL_REFERENCE: z.string().trim().optional(),
-  SESSION_SECRET: z.string().min(32).optional(),
+  PILOT_MASTER_DATA_APPROVAL_REFERENCE: optionalEnv(z.string().trim()),
+  SESSION_SECRET: optionalEnv(z.string().min(32)),
   SERVICE_VERSION: z.string().trim().min(1).default('0.1.0'),
-  LOG_LEVEL: z.enum(SERVER_LOG_LEVELS).optional(),
+  LOG_LEVEL: optionalEnv(z.enum(SERVER_LOG_LEVELS)),
   // Render platform metadata is runtime-derived; never accept a browser copy.
-  RENDER: z.enum(['true', 'false']).optional(),
-  RENDER_GIT_COMMIT: z.string().trim().optional(),
-  RELEASE_EVIDENCE_SIGNERS_JSON: z.string().trim().min(1).optional(),
-  OTEL_EXPORTER_OTLP_ENDPOINT: z.string().trim().pipe(z.url()).optional(),
-  OTEL_EXPORTER_OTLP_HEADERS: z.string().trim().min(1).optional(),
-  RATE_LIMIT_LOGIN_MAX: z.string().regex(/^\d+$/).optional(),
-  RATE_LIMIT_LOGIN_WINDOW_SECONDS: z.string().regex(/^\d+$/).optional(),
-  R2_ENDPOINT: z.string().trim().pipe(z.url()).optional(),
-  R2_ACCESS_KEY_ID: z.string().trim().min(1).optional(),
-  R2_SECRET_ACCESS_KEY: z.string().min(1).optional(),
-  R2_BUCKET: z.string().trim().min(3).optional(),
-  STAGING_R2_ENDPOINT: z.string().trim().pipe(z.url()).optional(),
-  STAGING_R2_ACCESS_KEY_ID: z.string().trim().min(1).optional(),
-  STAGING_R2_SECRET_ACCESS_KEY: z.string().min(1).optional(),
-  STAGING_R2_BUCKET: z.string().trim().min(3).optional(),
-  PILOT_R2_ENDPOINT: z.string().trim().pipe(z.url()).optional(),
-  PILOT_R2_ACCESS_KEY_ID: z.string().trim().min(1).optional(),
-  PILOT_R2_SECRET_ACCESS_KEY: z.string().min(1).optional(),
-  PILOT_R2_BUCKET: z.string().trim().min(3).optional(),
+  RENDER: optionalEnv(z.enum(['true', 'false'])),
+  RENDER_GIT_COMMIT: optionalEnv(z.string().trim()),
+  RELEASE_EVIDENCE_SIGNERS_JSON: optionalEnv(z.string().trim().min(1)),
+  OTEL_EXPORTER_OTLP_ENDPOINT: optionalEnv(z.string().trim().pipe(z.url())),
+  OTEL_EXPORTER_OTLP_HEADERS: optionalEnv(z.string().trim().min(1)),
+  RATE_LIMIT_LOGIN_MAX: optionalEnv(z.string().regex(/^\d+$/)),
+  RATE_LIMIT_LOGIN_WINDOW_SECONDS: optionalEnv(z.string().regex(/^\d+$/)),
+  R2_ENDPOINT: optionalEnv(z.string().trim().pipe(z.url())),
+  R2_ACCESS_KEY_ID: optionalEnv(z.string().trim().min(1)),
+  R2_SECRET_ACCESS_KEY: optionalEnv(z.string().min(1)),
+  R2_BUCKET: optionalEnv(z.string().trim().min(3)),
+  STAGING_R2_ENDPOINT: optionalEnv(z.string().trim().pipe(z.url())),
+  STAGING_R2_ACCESS_KEY_ID: optionalEnv(z.string().trim().min(1)),
+  STAGING_R2_SECRET_ACCESS_KEY: optionalEnv(z.string().min(1)),
+  STAGING_R2_BUCKET: optionalEnv(z.string().trim().min(3)),
+  PILOT_R2_ENDPOINT: optionalEnv(z.string().trim().pipe(z.url())),
+  PILOT_R2_ACCESS_KEY_ID: optionalEnv(z.string().trim().min(1)),
+  PILOT_R2_SECRET_ACCESS_KEY: optionalEnv(z.string().min(1)),
+  PILOT_R2_BUCKET: optionalEnv(z.string().trim().min(3)),
 });
 
 export type ServerEnv = z.infer<typeof envSchema> & { APP_ENVIRONMENT_PROFILE: 'development' | 'test' | 'production' | 'staging' | 'pilot'; DATABASE_URL?: string };
@@ -77,6 +120,26 @@ export function parseServerEnv(input: Record<string, string | undefined>): Serve
     const profileDatabaseUrl = profile === 'staging' ? result.data.STAGING_DATABASE_URL : profile === 'pilot' ? result.data.PILOT_DATABASE_URL : result.data.DATABASE_URL;
     const invalid: string[] = [];
     const missing: string[] = [];
+    if (input.DATABASE_URL_UNPOOLED?.trim()) invalid.push(ENV_KEYS.databaseUrlUnpooled);
+    if (input.MIGRATION_DATABASE_URL?.trim()) invalid.push(ENV_KEYS.migrationDatabaseUrl);
+    const neonAuthValues = [result.data.NEON_AUTH_JWKS_URL, result.data.NEON_AUTH_ISSUER, result.data.NEON_AUTH_AUDIENCE];
+    if (neonAuthValues.some(Boolean) && neonAuthValues.some((value) => !value)) {
+      invalid.push(ENV_KEYS.neonAuthJwksUrl, ENV_KEYS.neonAuthIssuer, ENV_KEYS.neonAuthAudience);
+    }
+
+    const configuredProfileUrls = [
+      [ENV_KEYS.databaseUrl, result.data.DATABASE_URL],
+      [ENV_KEYS.stagingDatabaseUrl, result.data.STAGING_DATABASE_URL],
+      [ENV_KEYS.pilotDatabaseUrl, result.data.PILOT_DATABASE_URL],
+    ] as const;
+    const fingerprints = new Map<string, string>();
+    for (const [key, value] of configuredProfileUrls) {
+      if (!value) continue;
+      const fingerprint = databaseIdentityFingerprint(value);
+      const previousKey = fingerprints.get(fingerprint);
+      if (previousKey) invalid.push(previousKey, key);
+      else fingerprints.set(fingerprint, key);
+    }
     if (profile === 'staging' || profile === 'pilot') {
       if (result.data.DATABASE_URL) invalid.push(ENV_KEYS.databaseUrl);
       if (!profileDatabaseUrl) missing.push(profile === 'staging' ? ENV_KEYS.stagingDatabaseUrl : ENV_KEYS.pilotDatabaseUrl);
@@ -106,19 +169,27 @@ export function parseServerEnv(input: Record<string, string | undefined>): Serve
       try {
         const parsed = new URL(selectedDatabase);
         if (parsed.protocol !== 'postgres:' && parsed.protocol !== 'postgresql:') throw new Error();
+        // Neon runtime URLs use the pooled endpoint; the direct endpoint is
+        // reserved for operator migration tooling.
+        if (
+          parsed.hostname.endsWith('.neon.tech') &&
+          !parsed.hostname.split('.')[0]?.endsWith('-pooler')
+        ) throw new Error();
         const expectedHost = profile === 'staging' ? result.data.STAGING_DATABASE_HOST : profile === 'pilot' ? result.data.PILOT_DATABASE_HOST : undefined;
         if (expectedHost && parsed.hostname.toLowerCase() !== expectedHost.toLowerCase()) throw new Error();
+        if (profile === 'production' && result.data.PRODUCTION_DATABASE_HOST && parsed.hostname.toLowerCase() !== result.data.PRODUCTION_DATABASE_HOST.toLowerCase()) throw new Error();
         if ((profile === 'staging' || profile === 'pilot') && parsed.hostname.toLowerCase() === result.data.PRODUCTION_DATABASE_HOST?.toLowerCase()) throw new Error();
       } catch {
         throw new InvalidEnvironmentError([], [profile === 'staging' ? ENV_KEYS.stagingDatabaseUrl : profile === 'pilot' ? ENV_KEYS.pilotDatabaseUrl : ENV_KEYS.databaseUrl]);
       }
     }
     const productionMissing =
-      result.data.NODE_ENV === 'production'
+      result.data.NODE_ENV === 'production' || profile === 'production'
         ? [
             !selectedDatabase ? (profile === 'staging' ? ENV_KEYS.stagingDatabaseUrl : profile === 'pilot' ? ENV_KEYS.pilotDatabaseUrl : ENV_KEYS.databaseUrl) : '',
             !result.data.SESSION_SECRET ? ENV_KEYS.sessionSecret : '',
             !input.SERVICE_VERSION?.trim() ? ENV_KEYS.serviceVersion : '',
+            profile === 'production' && !result.data.PRODUCTION_DATABASE_HOST ? ENV_KEYS.productionDatabaseHost : '',
             // SECURITY-ARCHITECTURE §142: no unlimited-abuse exposure on login.
             !(result.data.RATE_LIMIT_LOGIN_MAX && result.data.RATE_LIMIT_LOGIN_WINDOW_SECONDS)
               ? `${ENV_KEYS.rateLimitLoginMax} + ${ENV_KEYS.rateLimitLoginWindowSeconds}`

@@ -1,6 +1,6 @@
 import { Pool, type PoolConfig } from 'pg';
 
-import { getRuntimeConfig } from '../../config/runtime.js';
+import { getRuntimeDatabaseUrl } from '../../config/runtime.js';
 import { AppError } from '../errors/app-error.js';
 import { reportDependencyFailure } from '../observability/dependency-failure.js';
 
@@ -77,7 +77,7 @@ export function createPool(config: PoolConfig): Pool {
 export function getPool(): Pool {
   if (sharedPool) return sharedPool;
 
-  const databaseUrl = validateDatabaseUrl(getRuntimeConfig().databaseUrl);
+  const databaseUrl = validateDatabaseUrl(getRuntimeDatabaseUrl());
 
   sharedPool = createPool(getDatabaseConnectionConfig(databaseUrl));
   attachPoolErrorTelemetry(sharedPool);

@@ -1,3 +1,8 @@
+- **2026-10-28 — NDB-01 / Server-side Neon runtime credentials**
+  - Changed: Added pooled runtime URL/profile-host checks, operator-only `DATABASE_URL_UNPOOLED` while retaining `MIGRATION_DATABASE_URL`, log/trace/user-error redaction, and configuration/rotation guidance.
+  - Evidence: NOT RUN by instruction; source/diff review only. No Neon/production connection or credential rotation.
+  - State: PARTIAL — owner-led credential rotation and protected profile configuration remain outstanding; Neon Auth and ExLabs integrations are not established.
+  - Key files: `src/config/env.ts`, `src/shared/observability/`, `Documents/CONFIGURATION-REFERENCE.md`, `Documents/NEON-CREDENTIAL-ROTATION-RUNBOOK.md`.
 - **2026-10-28 — SAFE-01 / Isolated staging and pilot source configuration**
   - Changed: Added separate staging/pilot profiles, fail-closed DB host separation, disabled-by-default pilot shadow decisions, readiness projection, environment banner, and onboarding/disable runbook.
   - Evidence: NOT RUN by instruction; source review only. File-store adapter is not wired to a runtime backup consumer; synthetic seeders remain development/test-only; approved master-data onboarding/scope binding is absent.
@@ -340,6 +345,7 @@
 ## 9) Health / Audit / Data truthfulness
 
 ### Database readiness
+- NDB-01 source configuration requires profile-matched pooled Neon host metadata and rejects a direct migration URL in the web runtime. `NEON_BRANCH` is only a label. The configuration request disclosed a database password and `EXPLABS_API_KEY`; owner-led rotation remains outstanding, and Neon Auth/ExLabs provider setup is not verified.
 - `/api/health/ready` و`/system/health` يستخدمان فحص قاعدة بيانات canonical واحد ونفس TLS config. `/system/health` يفصل connectivity عن required-workflow readiness وعن QC acceptance، ويعرض وقت فحص المصدر؛ لا تعني healthy connectivity جاهزية أو قبول QC. Outbox diagnostics تقيس صفوف/عمر backlog من DB read-only؛ worker heartbeat غير مسجل وتسليم القنوات غير ممثلين، لذلك لا تدّعي القيم تشغيل العامل أو تسليم الإشعار. Alert receiver/budget/policy تبقى غير معتمدة.
 - `/system/health` يميز `CONFIGURATION_MISSING` و`CONFIGURATION_INVALID` (DEGRADED) عن `PROVIDER_UNAVAILABLE` (UNAVAILABLE) دون إظهار تفاصيل الاتصال؛ عقد `/api/health/ready` يبقى `healthy|unhealthy`. AI health يميز الآن `POLICY_DISABLED` و`POLICY_NOT_VALID` و`CONFIGURATION_MISSING/INVALID` عن `PROVIDER_UNAVAILABLE` دون طلب خارجي عند الحالات الأولى. PostgreSQL18 local audit run on2026-10-08 completed with failures; see current audit reality. Production parity remains45/46.
 - OTEL remains optional and no-op: the endpoint/header pair is validated but has no exporter; do not interpret unset fields or successful parsing as telemetry delivery.

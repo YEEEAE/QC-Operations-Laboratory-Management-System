@@ -4,7 +4,7 @@
 
 Staging and pilot are separate runtime profiles. They use dedicated PostgreSQL URLs, session credentials, and file-storage credentials. The application rejects the generic `DATABASE_URL` alias when the staging or pilot profile is selected and rejects a non-production database URL whose host matches `PRODUCTION_DATABASE_HOST`. The explicitly configured `STAGING_DATABASE_HOST` or `PILOT_DATABASE_HOST` must match the selected URL. Do not reuse production credentials, hosts, databases, buckets, or access keys. A hostname in the environment banner is a label only; it is not evidence of isolation.
 
-The Render Blueprint contains a staging web-service definition with auto-deploy disabled. It does not provision a database or storage bucket. An operator must provision separate non-production resources and credentials through the approved company secret manager before configuration. No production database, file store, ERP, or warehouse endpoint is configured by this runbook.
+The Render Blueprint contains separate staging and pilot web-service definitions with auto-deploy disabled. It does not provision their databases or storage buckets. An operator must provision separate non-production resources and credentials through the approved company secret manager before configuration. No production database, file store, ERP, or warehouse endpoint is configured by this runbook.
 
 ## Initial state
 

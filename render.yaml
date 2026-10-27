@@ -33,6 +33,18 @@ services:
         # Canonical application connection only; provider export aliases and
         # operator/API credentials do not belong in the web-service runtime.
         sync: false
+      - key: PRODUCTION_DATABASE_HOST
+        sync: false
+      - key: NEON_BRANCH
+        value: production
+      - key: NEON_AUTH_JWKS_URL
+        sync: false
+      - key: NEON_AUTH_ISSUER
+        sync: false
+      - key: NEON_AUTH_AUDIENCE
+        sync: false
+      - key: EXPLABS_API_KEY
+        sync: false
       - key: SESSION_SECRET
         sync: false
       - key: RATE_LIMIT_LOGIN_MAX
@@ -82,7 +94,17 @@ services:
         sync: false
       - key: STAGING_DATABASE_HOST
         sync: false
+      - key: NEON_BRANCH
+        sync: false
       - key: PRODUCTION_DATABASE_HOST
+        sync: false
+      - key: NEON_AUTH_JWKS_URL
+        sync: false
+      - key: NEON_AUTH_ISSUER
+        sync: false
+      - key: NEON_AUTH_AUDIENCE
+        sync: false
+      - key: EXPLABS_API_KEY
         sync: false
       - key: SESSION_SECRET
         sync: false
@@ -126,7 +148,17 @@ services:
         sync: false
       - key: PILOT_DATABASE_HOST
         sync: false
+      - key: NEON_BRANCH
+        sync: false
       - key: PRODUCTION_DATABASE_HOST
+        sync: false
+      - key: NEON_AUTH_JWKS_URL
+        sync: false
+      - key: NEON_AUTH_ISSUER
+        sync: false
+      - key: NEON_AUTH_AUDIENCE
+        sync: false
+      - key: EXPLABS_API_KEY
         sync: false
       - key: SESSION_SECRET
         sync: false

@@ -125,7 +125,7 @@ export async function runDatabasePreflight(
       currentDatabase: row.database,
       currentUser: row.user,
       runtimePrincipal: 'DATABASE_URL',
-      migrationUrlConfigured: Boolean(process.env.MIGRATION_DATABASE_URL?.trim()),
+      migrationUrlConfigured: Boolean(process.env.DATABASE_URL_UNPOOLED?.trim() || process.env.MIGRATION_DATABASE_URL?.trim()),
       schemaQcExists: row.qc_exists,
       qcUsersExists: row.users_exists,
       schemaMigrationsExists: row.migrations_exists,

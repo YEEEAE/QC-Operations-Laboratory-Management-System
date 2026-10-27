@@ -4,6 +4,11 @@ import { resolve } from 'node:path';
 const LOCAL_RUNTIME_ENV_KEYS = new Set([
   'NODE_ENV',
   'DATABASE_URL',
+  'NEON_BRANCH',
+  'NEON_AUTH_JWKS_URL',
+  'NEON_AUTH_ISSUER',
+  'NEON_AUTH_AUDIENCE',
+  'EXPLABS_API_KEY',
   'SESSION_SECRET',
   'SERVICE_VERSION',
   'LOG_LEVEL',
@@ -69,6 +74,8 @@ const LOCAL_OPERATOR_ENV_KEYS = new Set([
   'QC_UAT_ACCEPT_SIGNER_IDENTITY',
 ]);
 
+const LOCAL_MIGRATION_ENV_KEYS = new Set(['DATABASE_URL_UNPOOLED']);
+
 function parseValue(value: string): string {
   const trimmed = value.trim();
   if (
@@ -105,6 +112,11 @@ export function parseLocalOperatorEnvFile(contents: string): Record<string, stri
   return parseAllowlistedEnvFile(contents, LOCAL_OPERATOR_ENV_KEYS);
 }
 
+/** Parse the direct URL only for the explicit migration CLI. */
+export function parseLocalMigrationEnvFile(contents: string): Record<string, string> {
+  return parseAllowlistedEnvFile(contents, LOCAL_MIGRATION_ENV_KEYS);
+}
+
 export function loadLocalEnv(
   environment: NodeJS.ProcessEnv = process.env,
   path = resolve(process.cwd(), '.env'),
@@ -137,6 +149,23 @@ export function loadLocalOperatorEnv(
   }
 
   for (const [key, value] of Object.entries(parseLocalOperatorEnvFile(contents))) {
+    if (environment[key] === undefined) environment[key] = value;
+  }
+}
+
+/** Load the direct database URL only in the explicit migration CLI. */
+export function loadLocalMigrationEnv(
+  environment: NodeJS.ProcessEnv = process.env,
+  path = resolve(process.cwd(), '.env'),
+): void {
+  let contents: string;
+  try {
+    contents = readFileSync(path, 'utf8');
+  } catch {
+    return;
+  }
+
+  for (const [key, value] of Object.entries(parseLocalMigrationEnvFile(contents))) {
     if (environment[key] === undefined) environment[key] = value;
   }
 }

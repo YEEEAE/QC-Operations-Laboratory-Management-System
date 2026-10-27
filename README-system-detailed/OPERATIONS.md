@@ -9,10 +9,12 @@ GitHub Actions in this repository currently contains verification CI only; there
 is no Pages/Jekyll workflow or static-site artifact. A Pages/Jekyll failure is
 therefore not an Astro SSR runtime result.
 
-The current Render Blueprint defines production only. It does not define a
-staging service or staging parameters. Keep any future staging service and its
-database/secrets isolated in an explicitly reviewed environment configuration;
-do not treat a Pages source as staging.
+The current Render Blueprint defines separate production, staging, and pilot
+web services. Staging and pilot have automatic deploy disabled and dedicated
+database/storage variable names; the Blueprint does not provision their
+database or storage resources. Keep their credentials isolated in each
+service's protected environment settings; do not treat a Pages source as
+staging.
 
 If GitHub Pages is enabled in repository settings, a repository administrator
 must disable its publishing source separately; editing this repository cannot
@@ -24,6 +26,7 @@ URL removes the current deployment but does not clear the source setting.
 
 - `workspace-map/OPERATIONS.md` — complete file-by-file inventory for configuration and operations.
 - `Documents/CONFIGURATION-REFERENCE.md` — environment variable names and approved defaults.
+- `Documents/NEON-CREDENTIAL-ROTATION-RUNBOOK.md` — manual owner-led credential revocation and rotation steps.
 - `Documents/ENVIRONMENT-DRIFT-REGISTER.md` — known environment differences and operator actions.
 - `Documents/RENDER-DEPLOYMENT.md` — application deployment instructions.
 - `Documents/RENDER-MIGRATION-RUNBOOK.md` — database migration procedure for Render.

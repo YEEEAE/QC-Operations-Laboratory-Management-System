@@ -85,6 +85,65 @@ const noopMeter = new NoopMeter();
 let activeTracer: TelemetryTracer = noopTracer;
 let activeMeter: TelemetryMeter = noopMeter;
 
+const SENSITIVE_ATTRIBUTE = /(?:password|secret|token|api[_-]?key|authorization|cookie|credential|connection[_-]?string|database[_-]?url|^dsn$)/i;
+const POSTGRES_URL = /\bpostgres(?:ql)?:\/\/[^\s"'`<>]+/gi;
+const URI_USERINFO = /\b(https?:\/\/)[^/@\s]+@/gi;
+const BEARER_TOKEN = /\bBearer\s+[A-Za-z0-9._~+/=-]+/gi;
+const JWT = /\beyJ[A-Za-z0-9_-]{4,}\.[A-Za-z0-9_-]{4,}\.[A-Za-z0-9_-]{4,}\b/g;
+const SECRET_QUERY_VALUE = /([?&][^=?&#\s]*(?:token|password|api[_-]?key|apikey|secret|credential|signature)[^=]*=)[^&#\s]*/gi;
+const SECRET_HEADER = /\b((?:authorization|proxy-authorization|cookie|set-cookie|x-api-key)\s*[:=]\s*)[^\s,;]+/gi;
+
+function redactTelemetryText(value: string): string {
+  // Header values can be embedded in exception/attribute text as well as
+  // structured fields, so sanitize them before forwarding to an exporter.
+  return value
+    .replace(POSTGRES_URL, '[REDACTED_DATABASE_URL]')
+    .replace(URI_USERINFO, '$1[REDACTED]@')
+    .replace(BEARER_TOKEN, 'Bearer [REDACTED]')
+    .replace(JWT, '[REDACTED]')
+    .replace(SECRET_QUERY_VALUE, '$1[REDACTED]')
+    .replace(SECRET_HEADER, '$1[REDACTED]');
+}
+
+function safeTelemetryAttributes(attributes: TelemetryAttributes | undefined): TelemetryAttributes {
+  const safe: TelemetryAttributes = {};
+  for (const [key, value] of Object.entries(attributes ?? {})) {
+    if (value === undefined || SENSITIVE_ATTRIBUTE.test(key)) continue;
+    safe[key] = typeof value === 'string' ? redactTelemetryText(value) : value;
+  }
+  return safe;
+}
+
+class SafeTelemetrySpan implements TelemetrySpan {
+  readonly traceId: string;
+  readonly spanId: string;
+
+  constructor(private readonly span: TelemetrySpan) {
+    this.traceId = span.traceId;
+    this.spanId = span.spanId;
+  }
+
+  setAttribute(name: string, value: string | number | boolean): void {
+    if (SENSITIVE_ATTRIBUTE.test(name)) return;
+    this.span.setAttribute(name, typeof value === 'string' ? redactTelemetryText(value) : value);
+  }
+
+  recordException(error: unknown): void {
+    if (error instanceof Error) {
+      const safe = new Error(redactTelemetryText(error.message));
+      safe.name = error.name;
+      if (error.stack) safe.stack = redactTelemetryText(error.stack);
+      this.span.recordException(safe);
+      return;
+    }
+    this.span.recordException(typeof error === 'string' ? redactTelemetryText(error) : '[REDACTED]');
+  }
+
+  end(): void {
+    this.span.end();
+  }
+}
+
 export function setTelemetryProviders(tracer?: TelemetryTracer, meter?: TelemetryMeter): void {
   activeTracer = tracer ?? noopTracer;
   activeMeter = meter ?? noopMeter;
@@ -96,7 +155,11 @@ export function resetTelemetryProviders(): void {
 }
 
 export function getTelemetryTracer(): TelemetryTracer {
-  return activeTracer;
+  return {
+    startSpan(name, attributes, parent) {
+      return new SafeTelemetrySpan(activeTracer.startSpan(redactTelemetryText(name), safeTelemetryAttributes(attributes), parent));
+    },
+  };
 }
 
 export function getTelemetryMeter(): TelemetryMeter {
@@ -126,7 +189,9 @@ export function safeMetricAttributes(
   for (const [key, value] of Object.entries(attributes ?? {})) {
     if (!(METRIC_LABEL_ALLOWLIST as readonly string[]).includes(key)) continue;
     if (value === undefined) continue;
-    safe[key] = typeof value === 'string' ? value.slice(0, MAX_LABEL_LENGTH) : value;
+    safe[key] = typeof value === 'string'
+      ? redactTelemetryText(value).slice(0, MAX_LABEL_LENGTH)
+      : value;
   }
   return safe;
 }
@@ -184,7 +249,7 @@ export async function withSpan<T>(
   const parent = correlationStorage.getStore();
   let span: TelemetrySpan;
   try {
-    span = activeTracer.startSpan(
+    span = getTelemetryTracer().startSpan(
       name,
       attributes,
       parent?.traceId ? { traceId: parent.traceId, spanId: parent.spanId } : undefined,

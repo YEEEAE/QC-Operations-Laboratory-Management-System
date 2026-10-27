@@ -71,7 +71,63 @@ const REDACT_PATHS = [
   '*.request',
   'response',
   '*.response',
+  'databaseUrl',
+  '*.databaseUrl',
+  'DATABASE_URL',
+  '*.DATABASE_URL',
+  'DATABASE_URL_UNPOOLED',
+  '*.DATABASE_URL_UNPOOLED',
+  'connectionString',
+  '*.connectionString',
+  'dsn',
+  '*.dsn',
+  'EXPLABS_API_KEY',
+  '*.EXPLABS_API_KEY',
+  'NEON_AUTH_JWKS_URL',
+  '*.NEON_AUTH_JWKS_URL',
 ];
+
+const REDACTED = '[REDACTED]';
+const SENSITIVE_KEY = /(?:password|secret|token|api[_-]?key|authorization|cookie|credential|connection[_-]?string|database[_-]?url|^dsn$)/i;
+const POSTGRES_URL = /\bpostgres(?:ql)?:\/\/[^\s"'`<>]+/gi;
+const URI_USERINFO = /\b(https?:\/\/)[^/@\s]+@/gi;
+const BEARER_TOKEN = /\bBearer\s+[A-Za-z0-9._~+/=-]+/gi;
+const JWT = /\beyJ[A-Za-z0-9_-]{4,}\.[A-Za-z0-9_-]{4,}\.[A-Za-z0-9_-]{4,}\b/g;
+const SECRET_QUERY_VALUE = /([?&][^=?&#\s]*(?:token|password|api[_-]?key|apikey|secret|credential|signature)[^=]*=)[^&#\s]*/gi;
+const SECRET_HEADER = /\b((?:authorization|proxy-authorization|cookie|set-cookie|x-api-key)\s*[:=]\s*)[^\s,;]+/gi;
+const INLINE_SECRET = /\b((?:EXPLABS_API_KEY|DATABASE_URL_UNPOOLED|MIGRATION_DATABASE_URL|password|secret|api[_-]?key)\s*[=:]\s*)[^\s,;]+/gi;
+
+function redactText(value: string): string {
+  return value
+    .replace(POSTGRES_URL, '[REDACTED_DATABASE_URL]')
+    .replace(URI_USERINFO, '$1[REDACTED]@')
+    .replace(BEARER_TOKEN, `Bearer ${REDACTED}`)
+    .replace(JWT, REDACTED)
+    .replace(SECRET_QUERY_VALUE, `$1${REDACTED}`)
+    .replace(SECRET_HEADER, `$1${REDACTED}`)
+    .replace(INLINE_SECRET, `$1${REDACTED}`);
+}
+
+function sanitizeLogValue(value: unknown, seen = new WeakSet<object>()): unknown {
+  if (typeof value === 'string') return redactText(value);
+  if (typeof value !== 'object' || value === null) return value;
+  if (seen.has(value)) return '[Circular]';
+  seen.add(value);
+  if (value instanceof Error) {
+    return {
+      name: value.name,
+      message: redactText(value.message),
+      ...(value.stack ? { stack: redactText(value.stack) } : {}),
+      ...(value.cause ? { cause: sanitizeLogValue(value.cause, seen) } : {}),
+    };
+  }
+  if (Array.isArray(value)) return value.map((entry) => sanitizeLogValue(entry, seen));
+  const sanitized: Record<string, unknown> = {};
+  for (const [key, entry] of Object.entries(value)) {
+    sanitized[key] = SENSITIVE_KEY.test(key) ? REDACTED : sanitizeLogValue(entry, seen);
+  }
+  return sanitized;
+}
 
 export interface StructuredLogger {
   debug(fields: Record<string, unknown>, message?: string): void;
@@ -122,7 +178,7 @@ function wrapSafe(logger: Logger): StructuredLogger {
     (level: 'debug' | 'info' | 'warn' | 'error') =>
     (fields: Record<string, unknown>, message?: string) => {
       try {
-        logger[level](fields, message ?? '');
+        logger[level](sanitizeLogValue(fields) as Record<string, unknown>, redactText(message ?? ''));
       } catch {
         // log sink failure must never break a request
       }

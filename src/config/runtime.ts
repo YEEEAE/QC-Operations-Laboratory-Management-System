@@ -15,8 +15,12 @@ export interface RuntimeConfig {
   serviceName: typeof SERVICE_NAME;
   serviceVersion: string;
   release: ConfiguredReleaseIdentity;
-  databaseUrl?: string;
   observability: { otelEndpoint?: string; otelHeadersConfigured: boolean };
+}
+
+/** Database connection material is exposed only to the database infrastructure boundary. */
+export function getRuntimeDatabaseUrl(env: ServerEnv = getServerEnv()): string | undefined {
+  return env.DATABASE_URL;
 }
 
 export function getRuntimeConfig(env = getServerEnv()): RuntimeConfig {
@@ -39,7 +43,6 @@ export function getRuntimeConfig(env = getServerEnv()): RuntimeConfig {
     serviceName: SERVICE_NAME,
     serviceVersion: getServiceVersion(env, '0.1.0'),
     release: getConfiguredReleaseIdentity(env, releaseArtifact, runtimeArtifactSha256),
-    databaseUrl: env.DATABASE_URL,
     observability: {
       otelEndpoint: env.OTEL_EXPORTER_OTLP_ENDPOINT,
       otelHeadersConfigured: Boolean(env.OTEL_EXPORTER_OTLP_HEADERS),

@@ -4,8 +4,7 @@ import { basename, dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import type { Pool, PoolClient } from 'pg';
 
-import { InvalidEnvironmentError } from '../../src/config/env.js';
-import { getRuntimeConfig } from '../../src/config/runtime.js';
+import { InvalidEnvironmentError, parseServerEnv } from '../../src/config/env.js';
 import {
   createPool,
   DatabaseConfigurationError,
@@ -14,7 +13,7 @@ import {
 } from '../../src/shared/database/pool.js';
 import { isSupportedMigrationChecksum } from '../../src/shared/database/migration-checksum-policy.js';
 
-import { loadLocalEnv } from './load-local-env.js';
+import { loadLocalEnv, loadLocalMigrationEnv, loadLocalOperatorEnv } from './load-local-env.js';
 
 export interface MigrationFile {
   version: string;
@@ -245,19 +244,35 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
   // `migrate()` is imported directly by the PostgreSQL integration suites and
   // must never mutate their process environment.
   loadLocalEnv();
+  loadLocalOperatorEnv();
+  loadLocalMigrationEnv();
   const check = process.argv.includes('--check');
   const runCli = async () => {
-    const migrationUrl = process.env.MIGRATION_DATABASE_URL?.trim();
+    const unpooledUrl = process.env.DATABASE_URL_UNPOOLED?.trim();
+    const legacyMigrationUrl = process.env.MIGRATION_DATABASE_URL?.trim();
+    if (unpooledUrl && legacyMigrationUrl && unpooledUrl !== legacyMigrationUrl) {
+      throw new DatabaseConfigurationError(
+        'DATABASE_URL_UNPOOLED and MIGRATION_DATABASE_URL disagree; configure one direct migration credential.',
+      );
+    }
+    const migrationUrl = unpooledUrl || legacyMigrationUrl;
     if (!migrationUrl) return migrate({ check });
 
     const connectionConfig = getDatabaseConnectionConfig(migrationUrl);
     const hostname = new URL(connectionConfig.connectionString!).hostname.toLowerCase();
     if (hostname.endsWith('-pooler')) {
       throw new DatabaseConfigurationError(
-        'MIGRATION_DATABASE_URL must use a direct PostgreSQL endpoint, not a pooled endpoint.',
+        'The migration URL must use a direct PostgreSQL endpoint, not a pooled endpoint.',
       );
     }
-    const runtimeUrl = getRuntimeConfig().databaseUrl;
+    // The direct migration URL is operator-only. Exclude it from the typed
+    // application runtime parse so it can never become the app's connection.
+    const runtimeEnv = {
+      ...process.env,
+      DATABASE_URL_UNPOOLED: undefined,
+      MIGRATION_DATABASE_URL: undefined,
+    };
+    const runtimeUrl = parseServerEnv(runtimeEnv).DATABASE_URL;
     if (!runtimeUrl) {
       throw new DatabaseConfigurationError(
         'DATABASE_URL must identify the active application database before a dedicated migration principal is used.',
@@ -267,14 +282,14 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
     const migrationTarget = new URL(connectionConfig.connectionString!);
     if (decodeURIComponent(runtimeTarget.username) === decodeURIComponent(migrationTarget.username)) {
       throw new DatabaseConfigurationError(
-        'MIGRATION_DATABASE_URL must use a migration principal distinct from the runtime database principal.',
+        'The migration URL must use a migration principal distinct from the runtime database principal.',
       );
     }
     const targetKey = (url: URL) =>
       `${url.hostname.toLowerCase()}:${url.port || '5432'}${url.pathname}`;
     if (targetKey(runtimeTarget) !== targetKey(migrationTarget)) {
       throw new DatabaseConfigurationError(
-        'MIGRATION_DATABASE_URL must target the same host, port, and database as the active runtime profile.',
+        'The migration URL must target the same host, port, and database as the active runtime profile.',
       );
     }
     const cliPool = createPool(connectionConfig);
