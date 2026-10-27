@@ -1,3 +1,8 @@
+- **2026-10-28 — BUILD-01 / إصلاح بناء صفحة البيانات الأساسية**
+  - Changed: أُضيف سياج Astro الافتتاحي المفقود في `/admin/master-data`؛ كان كود الخادم يُفسر كـmarkup.
+  - Evidence: تسلسل verification begin + build انتهى exit 0 محليًا؛ التشغيل كان على Node 22.22.3 لا عقد المشروع 24.20.0. لم يُنشأ PDF ضمن `dist`.
+  - State: PARTIAL — إصلاح وبناء محلي؛ لم يحدث push أو deployment.
+  - Key files: `src/pages/admin/master-data.astro`.
 - **2026-10-28 — NDB-01 / Server-side Neon runtime credentials**
   - Changed: Added pooled runtime URL/profile-host checks, operator-only `DATABASE_URL_UNPOOLED` while retaining `MIGRATION_DATABASE_URL`, log/trace/user-error redaction, and configuration/rotation guidance.
   - Evidence: NOT RUN by instruction; source/diff review only. No Neon/production connection or credential rotation.
