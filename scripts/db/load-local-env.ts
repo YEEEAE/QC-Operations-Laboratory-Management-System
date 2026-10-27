@@ -28,6 +28,8 @@ const LOCAL_RUNTIME_ENV_KEYS = new Set([
 ]);
 
 const LOCAL_OPERATOR_ENV_KEYS = new Set([
+  // Used only by the explicit migration CLI; never part of runtime config.
+  'MIGRATION_DATABASE_URL',
   'BOOTSTRAP_ADMIN_IDENTITY',
   'BOOTSTRAP_ADMIN_PASSWORD',
   'BOOTSTRAP_ADMIN_DISPLAY_NAME',

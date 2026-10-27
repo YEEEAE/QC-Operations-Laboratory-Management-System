@@ -1,6 +1,6 @@
-<!doctype html> 
+<!doctype html>
 <html lang="ar" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="color-scheme" content="dark"><title>QC Universe | تنفيذات جاهزة للنسخ بضغطة زر</title>
+<meta name="color-scheme" content="dark"><title>QC Universe | 51 Prompts · Neon/PostgreSQL/API · One-Click Copy</title>
 <style>
 :root{color-scheme:dark;--bg:#0b1118;--surface:#111b26;--surface2:#162230;--hover:#1b2a39;--border:#2a3b4c;--fg:#eaf0f7;--muted:#a6b4c4;--subtle:#8194a9;--accent:#93b9f9;--accent-d:#253f60;--green:#8bd6b4;--amber:#dfbe86;--purple:#c2a7f0}
 *{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Tahoma,Arial,sans-serif;background:var(--bg);color:var(--fg);line-height:1.75}a{color:var(--accent)}button,input{font:inherit}button{cursor:pointer}button:focus-visible,a:focus-visible,summary:focus-visible,input:focus-visible{outline:3px solid var(--accent);outline-offset:3px}::selection{background:#4b6c98;color:white}
@@ -17,13 +17,26 @@
   <label class="search-wrap"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m16 16 5 5"/></svg><input class="search" type="search" id="search" placeholder="ابحث برقم البرومبت، اسم المهمة، أو داخل النص…" aria-label="بحث في جميع البرومبتات" autocomplete="off"></label>
   <span class="header-tag">OFFLINE • SELF-CONTAINED</span>
 </div></header>
-<div class="layout"><aside class="sidebar" aria-label="فهرس البرومبتات"><div class="side-top"><span>الفهرس السريع</span><span>38</span></div><nav class="nav-toc"><a class="toc-link" href="#MASTER-00" data-nav-id="MASTER-00" data-priority="MASTER"><span class="toc-id">MASTER-00</span><span class="toc-text">Session setup (once before prompt 01)</span></a>
+<div class="layout"><aside class="sidebar" aria-label="فهرس البرومبتات"><div class="side-top"><span>الفهرس السريع</span><span>51</span></div><nav class="nav-toc"><a class="toc-link" href="#MASTER-00" data-nav-id="MASTER-00" data-priority="MASTER"><span class="toc-id">MASTER-00</span><span class="toc-text">Session setup (once before prompt 01)</span></a>
 <a class="toc-link" href="#REL-01" data-nav-id="REL-01" data-priority="P0"><span class="toc-id">REL-01</span><span class="toc-text">Repair verification pipeline configuration</span></a>
 <a class="toc-link" href="#REL-02" data-nav-id="REL-02" data-priority="P0"><span class="toc-id">REL-02</span><span class="toc-text">Separate Astro SSR deployment from Jekyll Pages</span></a>
 <a class="toc-link" href="#SAFE-01" data-nav-id="SAFE-01" data-priority="P0"><span class="toc-id">SAFE-01</span><span class="toc-text">Implement isolated staging and pilot configuration</span></a>
 <a class="toc-link" href="#REL-03" data-nav-id="REL-03" data-priority="P0"><span class="toc-id">REL-03</span><span class="toc-text">Guarantee pilot decisions cannot release real product</span></a>
 <a class="toc-link" href="#DATA-01" data-nav-id="DATA-01" data-priority="P0"><span class="toc-id">DATA-01</span><span class="toc-text">Implement governed Master Data onboarding</span></a>
 <a class="toc-link" href="#DATA-02" data-nav-id="DATA-02" data-priority="P1"><span class="toc-id">DATA-02</span><span class="toc-text">Harden PostgreSQL migrations and schema governance</span></a>
+<a class="toc-link" href="#NDB-01" data-nav-id="NDB-01" data-priority="P0"><span class="toc-id">NDB-01</span><span class="toc-text">Secure Neon credentials and runtime configuration</span></a>
+<a class="toc-link" href="#NDB-02" data-nav-id="NDB-02" data-priority="P0"><span class="toc-id">NDB-02</span><span class="toc-text">Neon pooled runtime, direct migrations and Kysely integration</span></a>
+<a class="toc-link" href="#NDB-03" data-nav-id="NDB-03" data-priority="P0"><span class="toc-id">NDB-03</span><span class="toc-text">Isolate Neon production, staging and pilot branches</span></a>
+<a class="toc-link" href="#NDB-04" data-nav-id="NDB-04" data-priority="P0"><span class="toc-id">NDB-04</span><span class="toc-text">Neon migration runner, checksum ledger and schema drift</span></a>
+<a class="toc-link" href="#NDB-05" data-nav-id="NDB-05" data-priority="P1"><span class="toc-id">NDB-05</span><span class="toc-text">PostgreSQL data-integrity, foreign keys and query indexes</span></a>
+<a class="toc-link" href="#NDB-06" data-nav-id="NDB-06" data-priority="P0"><span class="toc-id">NDB-06</span><span class="toc-text">Neon Auth JWKS and JWT server verification boundary</span></a>
+<a class="toc-link" href="#NDB-07" data-nav-id="NDB-07" data-priority="P1"><span class="toc-id">NDB-07</span><span class="toc-text">Safe identity mapping between Neon Auth and QC users</span></a>
+<a class="toc-link" href="#NDB-08" data-nav-id="NDB-08" data-priority="P0"><span class="toc-id">NDB-08</span><span class="toc-text">Astro API and database action contract hardening</span></a>
+<a class="toc-link" href="#NDB-09" data-nav-id="NDB-09" data-priority="P1"><span class="toc-id">NDB-09</span><span class="toc-text">EXPLABS key handling and external API provider adapter</span></a>
+<a class="toc-link" href="#NDB-10" data-nav-id="NDB-10" data-priority="P1"><span class="toc-id">NDB-10</span><span class="toc-text">Neon data import, revisions and manual template mappings</span></a>
+<a class="toc-link" href="#NDB-11" data-nav-id="NDB-11" data-priority="P1"><span class="toc-id">NDB-11</span><span class="toc-text">Database transaction outbox, Focus status and delivery integrity</span></a>
+<a class="toc-link" href="#NDB-12" data-nav-id="NDB-12" data-priority="P0"><span class="toc-id">NDB-12</span><span class="toc-text">Neon backup, point-in-time recovery and QC file traceability</span></a>
+<a class="toc-link" href="#NDB-13" data-nav-id="NDB-13" data-priority="P1"><span class="toc-id">NDB-13</span><span class="toc-text">Neon readiness, observability and operational runbook</span></a>
 <a class="toc-link" href="#SEC-01" data-nav-id="SEC-01" data-priority="P1"><span class="toc-id">SEC-01</span><span class="toc-text">Implement explicit authorization and shift scope matrix</span></a>
 <a class="toc-link" href="#SEC-02" data-nav-id="SEC-02" data-priority="P1"><span class="toc-id">SEC-02</span><span class="toc-text">Strengthen identity, sessions, credentials and shared terminals</span></a>
 <a class="toc-link" href="#APP-01" data-nav-id="APP-01" data-priority="P0"><span class="toc-id">APP-01</span><span class="toc-text">Unify Owner Controlled Internal Approvals</span></a>
@@ -56,8 +69,8 @@
 <a class="toc-link" href="#USR-01" data-nav-id="USR-01" data-priority="P2"><span class="toc-id">USR-01</span><span class="toc-text">Role-guided onboarding and adoption controls</span></a>
 <a class="toc-link" href="#FINAL-37" data-nav-id="FINAL-37" data-priority="FINAL"><span class="toc-id">FINAL-37</span><span class="toc-text">Integrate all edits without testing or deployment</span></a></nav><div class="aside-foot">اضغط على اسم البرومبت للانتقال إليه، ثم اضغط «نسخ البرومبت». يعمل الملف دون اتصال بالإنترنت.</div></aside>
 <main class="content">
-<section class="hero"><div class="eyebrow">SOURCE EDITS ONLY • NO TESTS • NO SCREENSHOTS</div><h1>جميع برومبتات تطوير QC Universe<br>جاهزة للنسخ بضغطة واحدة</h1><p>36 مهمة تنفيذية كاملة بالإضافة إلى برومبت الإعداد والدمج النهائي. انسخ أي برومبت مباشرةً إلى OpenCode أو وكيل البرمجة دون فتح النص الطويل.</p><div class="hero-stats"><div class="stat"><strong>38</strong>برومبت إجمالي</div><div class="stat"><strong>36</strong>مهمة تطوير</div><div class="stat"><strong>0</strong>اختبارات مطلوبة</div></div></section>
-<div class="notice">المحتوى الأصلي محفوظ كما هو: جميع المهام والقيود والقرارات دون حذف أو اختصار. زر النسخ ينقل نص البرومبت الإنجليزي كاملًا فقط.</div>
+<section class="hero"><div class="eyebrow">SOURCE EDITS ONLY • NO TESTS • NO SCREENSHOTS</div><h1>جميع برومبتات تطوير QC Universe<br>جاهزة للنسخ بضغطة واحدة</h1><p>49 مهمة تنفيذية كاملة، تتضمن 13 برومبت Neon/API بعد DATA-02، بالإضافة إلى برومبت الإعداد والدمج النهائي. انسخ أي برومبت مباشرةً إلى OpenCode أو وكيل البرمجة دون فتح النص الطويل.</p><div class="hero-stats"><div class="stat"><strong>51</strong>برومبت إجمالي</div><div class="stat"><strong>49</strong>مهمة تطوير</div><div class="stat"><strong>0</strong>اختبارات مطلوبة</div></div></section>
+<div class="notice">المحتوى الأصلي (38 برومبت) محفوظ كما هو، مع إضافة 13 برومبت Neon/PostgreSQL/Auth/API مباشرة بعد DATA-02. زر النسخ ينقل نص البرومبت كاملًا فقط. <strong>تنبيه أمني:</strong> أي مفاتيح أو كلمات مرور كُشفت بالمحادثة يجب تدويرها، ولم تُضمّن قيم الأسرار في هذا الملف.</div>
 <section class="guide-panel" id="guide"><details><summary>تعليمات الاستخدام • القرارات المعتمدة • جدول التنفيذ (اضغط للعرض)</summary><div class="guide-body"><h1>QC Universe — Complete Company Implementation Prompt Pack (EDIT ONLY / NO TESTS)</h1><p><strong>Deliverable:</strong> 36 executable, individually copyable prompts covering <strong>all 36 audit gaps</strong> (P0/P1/P2), plus a master setup instruction and final integration instruction.<br/>
 <strong>Source audit:</strong> <code>QC_Universe_Enterprise_Readiness_Audit_2026-10-27.md</code> (36 findings).<br/>
 <strong>Repository:</strong> https://github.com/YEEEAE/QC-Operations-Laboratory-Management-System<br/>
@@ -385,7 +398,7 @@
 </table><blockquote>
 <p>ملاحظة: بعض الاعتمادات في العمود تعبر عن ترابط وظيفي. لو تغير ترتيب العمل في مشروعك، يجب على الوكيل إعادة قراءة الملفات الحالية وفحص العقد المنفذة في المصدر بدل إعادة كتابة الموجود. ولا يجوز أن يعلن نتيجة اختبار لم يجره.</p>
 </blockquote><hr/></div></details></section>
-<div class="toolbar" id="all-prompts"><div><h2>مكتبة البرومبتات</h2><div class="subtitle" id="results-status" aria-live="polite">38 من 38 برومبت</div></div><div class="chips" role="group" aria-label="تصفية حسب الأولوية">
+<div class="toolbar" id="all-prompts"><div><h2>مكتبة البرومبتات</h2><div class="subtitle" id="results-status" aria-live="polite">51 من 51 برومبت</div></div><div class="chips" role="group" aria-label="تصفية حسب الأولوية">
 <button type="button" class="filter" data-filter="ALL" aria-pressed="true">الكل · 38</button>
 <button type="button" class="filter" data-filter="MASTER" aria-pressed="false">تهيئة · 1</button>
 <button type="button" class="filter" data-filter="P0" aria-pressed="false">P0 · 10</button>
@@ -649,7 +662,517 @@ IMPLEMENTATION CONTRACT (source-level expectation only, NOT tested or verified):
 
 Execute ONLY this task as source modifications. Do not stop at a plan. Do not do the next prompt automatically. End with only changed paths, actual edits made, and unresolved source-authority blockers.
 </code></pre></details>
-</article><article class="prompt-card" id="SEC-01" data-priority="P1" data-prompt-id="SEC-01">
+</article>
+<article class="prompt-card" data-priority="P0" data-prompt-id="NDB-01" id="NDB-01">
+<div class="card-upper"><div class="card-title-block"><div class="card-meta"><span class="prompt-id">NDB-01</span><span class="priority pr-p0">P0</span></div><h3>Secure Neon credentials and runtime configuration</h3></div>
+<button type="button" class="copy-button" aria-label="نسخ برومبت NDB-01" data-copy="code-NDB-01" title="نسخ نص البرومبت كاملًا بضغطة واحدة"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"/></svg><span class="copy-label">نسخ البرومبت</span></button></div>
+<div class="card-info"><p><strong>Dependencies:</strong> DATA-02, SEC-02<br><strong>Target paths:</strong> <code dir="ltr">.env.example, operator.env.example, src/config/env.ts, src/config/runtime.ts, src/config/constants.ts, src/shared/database/pool.ts, render.yaml, Documents/CONFIGURATION-REFERENCE.md</code></p></div>
+<details class="code-details"><summary><span class="disclosure-label">عرض النص الكامل</span><span class="line-count">35 سطر</span></summary><pre dir="ltr"><code id="code-NDB-01">YOU ARE: Senior PostgreSQL 18 / Neon / Astro SSR / TypeScript / QMS systems engineer.
+REPOSITORY: https://github.com/YEEEAE/QC-Operations-Laboratory-Management-System
+EXECUTION MODE: SOURCE-CODE EDITS ONLY in the authorized local working tree. Read CURRENT repository files first; preserve existing safe functionality and do not overwrite newer implementation solely to match an older commit.
+ABSOLUTE EXCLUSIONS: Do NOT create, modify, or run ANY tests (unit/integration/E2E/UAT/security), do NOT run build, lint, typecheck, browser automation, screenshots, dry-runs, preflight, SQL commands, migrations, backup/restore, scripts, remote probes, or REA execution. Do NOT connect to or mutate production, Neon, or any company environment. Do NOT commit, push, deploy, change external service settings, or disclose/log secrets. Write code/config/docs only.
+SECURITY: Never hardcode credentials, JWTs, database passwords, EXPLABS_API_KEY values or full secret-bearing PostgreSQL URLs in source, HTML, Markdown, telemetry, errors, generated artifacts, or browser assets. Environment variable NAMES only; keep .env templates blank. Credentials supplied in chat must be treated as exposed and rotated out-of-band by the owner.
+GOVERNANCE: Preserve exact current Sidebar, RBAC/scope/CSRF/idempotency/audit/traceability, immutable laboratory and controlled source evidence, separate PASS from product RELEASE, and preserve all owner-approved SYS-01..SYS-08 decisions. Unknown SYS-09..SYS-14 choices remain undecided and fail-closed. Do not invent QC limits, scientific approval, customer data, or provider API contracts. Current production is NOT an authorized edit target. Use additive forward-only migrations for schema changes; do NOT execute them.
+END: List files edited and remaining decisions/configuration required. Explicitly state that NO tests/build/lint/migrations/database connections/production operations/deployments were performed. Do not claim operational readiness.
+
+NEON INPUTS (PUBLIC METADATA ONLY):
+- Public Neon Auth JWKS discovery endpoint: https://ep-fragrant-bar-b5ns86ri.neonauth.c-7.us-east-2.aws.neon.tech/neondb/auth/.well-known/jwks.json
+- Neon branch label supplied by owner: NEON_BRANCH=production (LABEL ONLY; DO NOT CONNECT).
+- DATABASE_URL_UNPOOLED: secret-bearing direct PostgreSQL URL; DO NOT paste, reconstruct or output value.
+- DATABASE_URL: separately provisioned application runtime pooled URL, NOT provided; DO NOT invent host or credential.
+- EXPLABS_API_KEY: secret-bearing vendor key; only environment variable NAME is permitted; provider API base URL/contract not provided.
+- Existing application: Astro SSR + Node + pg + Kysely + PostgreSQL; preserve this stack.
+
+TASK ID: NDB-01 — Secure Neon credentials and runtime configuration
+PRIORITY: P0
+DEPENDENCIES: DATA-02, SEC-02
+TARGET PATHS (confirm actual current paths first): .env.example, operator.env.example, src/config/env.ts, src/config/runtime.ts, src/config/constants.ts, src/shared/database/pool.ts, render.yaml, Documents/CONFIGURATION-REFERENCE.md
+
+OBJECTIVE: Make production/staging/pilot credentials strictly server-side, isolated and secret-manager-driven. The user has identified a Neon production branch but not authorized use of its credentials.
+
+REQUIRED SOURCE EDITS:
+1. Identify existing environment parsing and canonical DATABASE_URL, DATABASE_URL_UNPOOLED, NEON_BRANCH, NEON_AUTH_JWKS_URL, NEON_AUTH_ISSUER, NEON_AUTH_AUDIENCE, EXPLABS_API_KEY and any existing provider-specific names. Do not replace established names silently.
+2. Introduce typed, fail-closed configuration for production versus staging/pilot. Accept Neon branch name &quot;production&quot; only as declared metadata, never evidence of database identity or permission to connect.
+3. Bind DATABASE_URL (pooled runtime credential, if issued), DATABASE_URL_UNPOOLED (direct administrative/migration credential), NEON_AUTH_JWKS_URL (public keys), EXPLABS_API_KEY (server-only optional secret) to the secret manager; no values in repo.
+4. Add startup configuration checks that refuse unsafe credential reuse across environment profiles without revealing values; compare non-secret fingerprints/metadata or approved environment identifiers, not raw DSNs in UI.
+5. Strip password, userinfo, tokens, credential query params and secret headers from logs, traces and user-safe errors; never serialize process.env to the browser.
+6. Add operator runbook for revocation/rotation of the already-exposed database password and EXPLABS key; only document safe operator actions, do not rotate via API automatically.
+7. Keep the unpooled URL out of app/browser bundles, and prevent a browser-provided URL from controlling a database connection.
+
+DONE CONDITION (CODE/CONTRACT ONLY; NOT RUNTIME VERIFIED): Code can be configured with blank placeholders without exposing production credentials; missing/invalid required secrets disable the affected capability without bypass.
+
+FINAL RESPONSE: Modified files; implementation outcomes; unresolved policy/provider/secret setup blockers. Do NOT claim tested, migrated, connected, or deployed.</code></pre></details></article>
+<article class="prompt-card" data-priority="P0" data-prompt-id="NDB-02" id="NDB-02">
+<div class="card-upper"><div class="card-title-block"><div class="card-meta"><span class="prompt-id">NDB-02</span><span class="priority pr-p0">P0</span></div><h3>Neon pooled runtime, direct migrations and Kysely integration</h3></div>
+<button type="button" class="copy-button" aria-label="نسخ برومبت NDB-02" data-copy="code-NDB-02" title="نسخ نص البرومبت كاملًا بضغطة واحدة"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"/></svg><span class="copy-label">نسخ البرومبت</span></button></div>
+<div class="card-info"><p><strong>Dependencies:</strong> NDB-01, DATA-02<br><strong>Target paths:</strong> <code dir="ltr">src/shared/database/pool.ts, src/shared/database/database.ts, scripts/db/migrate.ts, scripts/db/preflight.ts, src/config/**, db/README.md, package.json</code></p></div>
+<details class="code-details"><summary><span class="disclosure-label">عرض النص الكامل</span><span class="line-count">35 سطر</span></summary><pre dir="ltr"><code id="code-NDB-02">YOU ARE: Senior PostgreSQL 18 / Neon / Astro SSR / TypeScript / QMS systems engineer.
+REPOSITORY: https://github.com/YEEEAE/QC-Operations-Laboratory-Management-System
+EXECUTION MODE: SOURCE-CODE EDITS ONLY in the authorized local working tree. Read CURRENT repository files first; preserve existing safe functionality and do not overwrite newer implementation solely to match an older commit.
+ABSOLUTE EXCLUSIONS: Do NOT create, modify, or run ANY tests (unit/integration/E2E/UAT/security), do NOT run build, lint, typecheck, browser automation, screenshots, dry-runs, preflight, SQL commands, migrations, backup/restore, scripts, remote probes, or REA execution. Do NOT connect to or mutate production, Neon, or any company environment. Do NOT commit, push, deploy, change external service settings, or disclose/log secrets. Write code/config/docs only.
+SECURITY: Never hardcode credentials, JWTs, database passwords, EXPLABS_API_KEY values or full secret-bearing PostgreSQL URLs in source, HTML, Markdown, telemetry, errors, generated artifacts, or browser assets. Environment variable NAMES only; keep .env templates blank. Credentials supplied in chat must be treated as exposed and rotated out-of-band by the owner.
+GOVERNANCE: Preserve exact current Sidebar, RBAC/scope/CSRF/idempotency/audit/traceability, immutable laboratory and controlled source evidence, separate PASS from product RELEASE, and preserve all owner-approved SYS-01..SYS-08 decisions. Unknown SYS-09..SYS-14 choices remain undecided and fail-closed. Do not invent QC limits, scientific approval, customer data, or provider API contracts. Current production is NOT an authorized edit target. Use additive forward-only migrations for schema changes; do NOT execute them.
+END: List files edited and remaining decisions/configuration required. Explicitly state that NO tests/build/lint/migrations/database connections/production operations/deployments were performed. Do not claim operational readiness.
+
+NEON INPUTS (PUBLIC METADATA ONLY):
+- Public Neon Auth JWKS discovery endpoint: https://ep-fragrant-bar-b5ns86ri.neonauth.c-7.us-east-2.aws.neon.tech/neondb/auth/.well-known/jwks.json
+- Neon branch label supplied by owner: NEON_BRANCH=production (LABEL ONLY; DO NOT CONNECT).
+- DATABASE_URL_UNPOOLED: secret-bearing direct PostgreSQL URL; DO NOT paste, reconstruct or output value.
+- DATABASE_URL: separately provisioned application runtime pooled URL, NOT provided; DO NOT invent host or credential.
+- EXPLABS_API_KEY: secret-bearing vendor key; only environment variable NAME is permitted; provider API base URL/contract not provided.
+- Existing application: Astro SSR + Node + pg + Kysely + PostgreSQL; preserve this stack.
+
+TASK ID: NDB-02 — Neon pooled runtime, direct migrations and Kysely integration
+PRIORITY: P0
+DEPENDENCIES: NDB-01, DATA-02
+TARGET PATHS (confirm actual current paths first): src/shared/database/pool.ts, src/shared/database/database.ts, scripts/db/migrate.ts, scripts/db/preflight.ts, src/config/**, db/README.md, package.json
+
+OBJECTIVE: Adapt existing Node pg Pool + Kysely connection boundaries for Neon without changing the existing business repository architecture.
+
+REQUIRED SOURCE EDITS:
+1. Read current PostgreSQL 18 connection configuration and keep pg/Kysely as the single query layer; do not add Prisma/Drizzle/duplicate clients solely for Neon.
+2. Use server-only DATABASE_URL for transactional Astro SSR app traffic; a pooled Neon connection string is a distinct secret and must be obtained from Neon, not manufactured by replacing a hostname.
+3. Use DATABASE_URL_UNPOOLED for schema migrations, dump/restore and session-level utilities ONLY where explicitly selected by a controlled operator command. Keep application runtime independent of this privileged URL.
+4. Preserve TLS verification and channel-binding parameters as supplied; do not disable certificate verification, suppress errors, or log connection strings. Check compatibility with pg client semantics in code, not via a real connection.
+5. Configure conservative connection max, idle/connect/query timeouts and shutdown lifecycle for Astro Node SSR; distinguish retryable network failures from SQL constraints; never retry non-idempotent writes blindly.
+6. Keep transactions, audit and outbox atomic using a single database context, preserving advisory locks in migration tooling; ensure pooled connections do not depend on session state.
+7. Improve error classification and safe health reporting without leaking hostnames or credentials; an HTTP liveness response is not operational readiness.
+
+DONE CONDITION (CODE/CONTRACT ONLY; NOT RUNTIME VERIFIED): Separate pooled app and direct maintenance connection code paths exist, preserving existing modules with no database connection performed.
+
+FINAL RESPONSE: Modified files; implementation outcomes; unresolved policy/provider/secret setup blockers. Do NOT claim tested, migrated, connected, or deployed.</code></pre></details></article>
+<article class="prompt-card" data-priority="P0" data-prompt-id="NDB-03" id="NDB-03">
+<div class="card-upper"><div class="card-title-block"><div class="card-meta"><span class="prompt-id">NDB-03</span><span class="priority pr-p0">P0</span></div><h3>Isolate Neon production, staging and pilot branches</h3></div>
+<button type="button" class="copy-button" aria-label="نسخ برومبت NDB-03" data-copy="code-NDB-03" title="نسخ نص البرومبت كاملًا بضغطة واحدة"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"/></svg><span class="copy-label">نسخ البرومبت</span></button></div>
+<div class="card-info"><p><strong>Dependencies:</strong> NDB-01, SAFE-01, REL-03<br><strong>Target paths:</strong> <code dir="ltr">render.yaml, src/config/pilot.ts, src/config/env.ts, src/modules/release-governance/**, src/pages/system/control-center.astro, Documents/PILOT-STAGING-OPERATIONS.md</code></p></div>
+<details class="code-details"><summary><span class="disclosure-label">عرض النص الكامل</span><span class="line-count">35 سطر</span></summary><pre dir="ltr"><code id="code-NDB-03">YOU ARE: Senior PostgreSQL 18 / Neon / Astro SSR / TypeScript / QMS systems engineer.
+REPOSITORY: https://github.com/YEEEAE/QC-Operations-Laboratory-Management-System
+EXECUTION MODE: SOURCE-CODE EDITS ONLY in the authorized local working tree. Read CURRENT repository files first; preserve existing safe functionality and do not overwrite newer implementation solely to match an older commit.
+ABSOLUTE EXCLUSIONS: Do NOT create, modify, or run ANY tests (unit/integration/E2E/UAT/security), do NOT run build, lint, typecheck, browser automation, screenshots, dry-runs, preflight, SQL commands, migrations, backup/restore, scripts, remote probes, or REA execution. Do NOT connect to or mutate production, Neon, or any company environment. Do NOT commit, push, deploy, change external service settings, or disclose/log secrets. Write code/config/docs only.
+SECURITY: Never hardcode credentials, JWTs, database passwords, EXPLABS_API_KEY values or full secret-bearing PostgreSQL URLs in source, HTML, Markdown, telemetry, errors, generated artifacts, or browser assets. Environment variable NAMES only; keep .env templates blank. Credentials supplied in chat must be treated as exposed and rotated out-of-band by the owner.
+GOVERNANCE: Preserve exact current Sidebar, RBAC/scope/CSRF/idempotency/audit/traceability, immutable laboratory and controlled source evidence, separate PASS from product RELEASE, and preserve all owner-approved SYS-01..SYS-08 decisions. Unknown SYS-09..SYS-14 choices remain undecided and fail-closed. Do not invent QC limits, scientific approval, customer data, or provider API contracts. Current production is NOT an authorized edit target. Use additive forward-only migrations for schema changes; do NOT execute them.
+END: List files edited and remaining decisions/configuration required. Explicitly state that NO tests/build/lint/migrations/database connections/production operations/deployments were performed. Do not claim operational readiness.
+
+NEON INPUTS (PUBLIC METADATA ONLY):
+- Public Neon Auth JWKS discovery endpoint: https://ep-fragrant-bar-b5ns86ri.neonauth.c-7.us-east-2.aws.neon.tech/neondb/auth/.well-known/jwks.json
+- Neon branch label supplied by owner: NEON_BRANCH=production (LABEL ONLY; DO NOT CONNECT).
+- DATABASE_URL_UNPOOLED: secret-bearing direct PostgreSQL URL; DO NOT paste, reconstruct or output value.
+- DATABASE_URL: separately provisioned application runtime pooled URL, NOT provided; DO NOT invent host or credential.
+- EXPLABS_API_KEY: secret-bearing vendor key; only environment variable NAME is permitted; provider API base URL/contract not provided.
+- Existing application: Astro SSR + Node + pg + Kysely + PostgreSQL; preserve this stack.
+
+TASK ID: NDB-03 — Isolate Neon production, staging and pilot branches
+PRIORITY: P0
+DEPENDENCIES: NDB-01, SAFE-01, REL-03
+TARGET PATHS (confirm actual current paths first): render.yaml, src/config/pilot.ts, src/config/env.ts, src/modules/release-governance/**, src/pages/system/control-center.astro, Documents/PILOT-STAGING-OPERATIONS.md
+
+OBJECTIVE: Guarantee the provided NEON_BRANCH=production identification never routes a pilot or test command to production.
+
+REQUIRED SOURCE EDITS:
+1. Model an explicit environment/branch identity contract for production, staging and pilot; record a branch label, validated expected database identity and approved allowlist in server config.
+2. Reject ambiguous environments, missing branch bindings, mismatched expected host/database, and shared production-vs-pilot DSN references; never attempt live branch creation or clone in this task.
+3. Require separate credentials, PostgreSQL resources, session secrets and file stores for each non-production profile; preserve current Shadow Mode simulation without actual warehouse/material release.
+4. Enforce a production hard stop in all local command helpers when environment classification is absent or inconsistent; never auto-run migrations or seed real masters.
+5. Add a read-only runtime banner for non-production identity and &quot;NOT VERIFIED&quot; states; hide confidential connection details and mark configured != verified != approved.
+6. Update operations docs to require operator creation of Neon branches and safe sanitized snapshots outside this prompt; document no copying of unmasked company user data into sandbox.
+7. Keep existing server-side release authorization, separation of duties and lot safety gates intact.
+
+DONE CONDITION (CODE/CONTRACT ONLY; NOT RUNTIME VERIFIED): Pilot/staging app configuration cannot silently fall back to production DSN or mark simulated release as real.
+
+FINAL RESPONSE: Modified files; implementation outcomes; unresolved policy/provider/secret setup blockers. Do NOT claim tested, migrated, connected, or deployed.</code></pre></details></article>
+<article class="prompt-card" data-priority="P0" data-prompt-id="NDB-04" id="NDB-04">
+<div class="card-upper"><div class="card-title-block"><div class="card-meta"><span class="prompt-id">NDB-04</span><span class="priority pr-p0">P0</span></div><h3>Neon migration runner, checksum ledger and schema drift</h3></div>
+<button type="button" class="copy-button" aria-label="نسخ برومبت NDB-04" data-copy="code-NDB-04" title="نسخ نص البرومبت كاملًا بضغطة واحدة"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"/></svg><span class="copy-label">نسخ البرومبت</span></button></div>
+<div class="card-info"><p><strong>Dependencies:</strong> NDB-02, DATA-02<br><strong>Target paths:</strong> <code dir="ltr">db/migrations/**, scripts/db/migrate.ts, scripts/db/preflight.ts, src/shared/database/migration-checksum-policy.ts, db/README.md, Documents/RENDER-MIGRATION-RUNBOOK.md</code></p></div>
+<details class="code-details"><summary><span class="disclosure-label">عرض النص الكامل</span><span class="line-count">35 سطر</span></summary><pre dir="ltr"><code id="code-NDB-04">YOU ARE: Senior PostgreSQL 18 / Neon / Astro SSR / TypeScript / QMS systems engineer.
+REPOSITORY: https://github.com/YEEEAE/QC-Operations-Laboratory-Management-System
+EXECUTION MODE: SOURCE-CODE EDITS ONLY in the authorized local working tree. Read CURRENT repository files first; preserve existing safe functionality and do not overwrite newer implementation solely to match an older commit.
+ABSOLUTE EXCLUSIONS: Do NOT create, modify, or run ANY tests (unit/integration/E2E/UAT/security), do NOT run build, lint, typecheck, browser automation, screenshots, dry-runs, preflight, SQL commands, migrations, backup/restore, scripts, remote probes, or REA execution. Do NOT connect to or mutate production, Neon, or any company environment. Do NOT commit, push, deploy, change external service settings, or disclose/log secrets. Write code/config/docs only.
+SECURITY: Never hardcode credentials, JWTs, database passwords, EXPLABS_API_KEY values or full secret-bearing PostgreSQL URLs in source, HTML, Markdown, telemetry, errors, generated artifacts, or browser assets. Environment variable NAMES only; keep .env templates blank. Credentials supplied in chat must be treated as exposed and rotated out-of-band by the owner.
+GOVERNANCE: Preserve exact current Sidebar, RBAC/scope/CSRF/idempotency/audit/traceability, immutable laboratory and controlled source evidence, separate PASS from product RELEASE, and preserve all owner-approved SYS-01..SYS-08 decisions. Unknown SYS-09..SYS-14 choices remain undecided and fail-closed. Do not invent QC limits, scientific approval, customer data, or provider API contracts. Current production is NOT an authorized edit target. Use additive forward-only migrations for schema changes; do NOT execute them.
+END: List files edited and remaining decisions/configuration required. Explicitly state that NO tests/build/lint/migrations/database connections/production operations/deployments were performed. Do not claim operational readiness.
+
+NEON INPUTS (PUBLIC METADATA ONLY):
+- Public Neon Auth JWKS discovery endpoint: https://ep-fragrant-bar-b5ns86ri.neonauth.c-7.us-east-2.aws.neon.tech/neondb/auth/.well-known/jwks.json
+- Neon branch label supplied by owner: NEON_BRANCH=production (LABEL ONLY; DO NOT CONNECT).
+- DATABASE_URL_UNPOOLED: secret-bearing direct PostgreSQL URL; DO NOT paste, reconstruct or output value.
+- DATABASE_URL: separately provisioned application runtime pooled URL, NOT provided; DO NOT invent host or credential.
+- EXPLABS_API_KEY: secret-bearing vendor key; only environment variable NAME is permitted; provider API base URL/contract not provided.
+- Existing application: Astro SSR + Node + pg + Kysely + PostgreSQL; preserve this stack.
+
+TASK ID: NDB-04 — Neon migration runner, checksum ledger and schema drift
+PRIORITY: P0
+DEPENDENCIES: NDB-02, DATA-02
+TARGET PATHS (confirm actual current paths first): db/migrations/**, scripts/db/migrate.ts, scripts/db/preflight.ts, src/shared/database/migration-checksum-policy.ts, db/README.md, Documents/RENDER-MIGRATION-RUNBOOK.md
+
+OBJECTIVE: Prepare safe forward-only Neon PostgreSQL schema change workflows for the existing migration history, without executing a single migration.
+
+REQUIRED SOURCE EDITS:
+1. Inventory current committed migration numbering (51 as of the latest reviewed snapshot), and dynamically derive the present head rather than hardcoding the older count.
+2. Retain the schema_migrations checksum ledger, append-only migration numbering, DB advisory lock and transaction boundaries. Never rewrite checksums or already-applied historical migration bodies.
+3. Design the operator-only migration entrypoint to prefer DATABASE_URL_UNPOOLED and disallow use of production unless an explicit approved production release context is supplied at runtime.
+4. Provide source-only support for pending/unknown checksums, partial migrations, incompatible PostgreSQL version, duplicate versions and NOT VALID constraint promotion workflow; do not suppress errors.
+5. Keep locks, unique constraints and invalid historical data resolution visible instead of applying arbitrary defaults or silent data backfills.
+6. Separate release migrations from application startup and read-only health probes; deployment must not migrate production merely on web process boot.
+7. Prepare a human change-control plan for snapshot, pre-release backup, schema maintenance window and rollback via new corrective migration; do not execute any command.
+
+DONE CONDITION (CODE/CONTRACT ONLY; NOT RUNTIME VERIFIED): Controlled migration code can use Neon direct secret only when specifically invoked later by an authorized operator, with immutable migration history.
+
+FINAL RESPONSE: Modified files; implementation outcomes; unresolved policy/provider/secret setup blockers. Do NOT claim tested, migrated, connected, or deployed.</code></pre></details></article>
+<article class="prompt-card" data-priority="P1" data-prompt-id="NDB-05" id="NDB-05">
+<div class="card-upper"><div class="card-title-block"><div class="card-meta"><span class="prompt-id">NDB-05</span><span class="priority pr-p1">P1</span></div><h3>PostgreSQL data-integrity, foreign keys and query indexes</h3></div>
+<button type="button" class="copy-button" aria-label="نسخ برومبت NDB-05" data-copy="code-NDB-05" title="نسخ نص البرومبت كاملًا بضغطة واحدة"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"/></svg><span class="copy-label">نسخ البرومبت</span></button></div>
+<div class="card-info"><p><strong>Dependencies:</strong> NDB-04, DATA-01<br><strong>Target paths:</strong> <code dir="ltr">db/migrations/**, src/shared/database/db-types.ts, src/modules/**/infrastructure/postgres-*.ts, scripts/performance/**</code></p></div>
+<details class="code-details"><summary><span class="disclosure-label">عرض النص الكامل</span><span class="line-count">35 سطر</span></summary><pre dir="ltr"><code id="code-NDB-05">YOU ARE: Senior PostgreSQL 18 / Neon / Astro SSR / TypeScript / QMS systems engineer.
+REPOSITORY: https://github.com/YEEEAE/QC-Operations-Laboratory-Management-System
+EXECUTION MODE: SOURCE-CODE EDITS ONLY in the authorized local working tree. Read CURRENT repository files first; preserve existing safe functionality and do not overwrite newer implementation solely to match an older commit.
+ABSOLUTE EXCLUSIONS: Do NOT create, modify, or run ANY tests (unit/integration/E2E/UAT/security), do NOT run build, lint, typecheck, browser automation, screenshots, dry-runs, preflight, SQL commands, migrations, backup/restore, scripts, remote probes, or REA execution. Do NOT connect to or mutate production, Neon, or any company environment. Do NOT commit, push, deploy, change external service settings, or disclose/log secrets. Write code/config/docs only.
+SECURITY: Never hardcode credentials, JWTs, database passwords, EXPLABS_API_KEY values or full secret-bearing PostgreSQL URLs in source, HTML, Markdown, telemetry, errors, generated artifacts, or browser assets. Environment variable NAMES only; keep .env templates blank. Credentials supplied in chat must be treated as exposed and rotated out-of-band by the owner.
+GOVERNANCE: Preserve exact current Sidebar, RBAC/scope/CSRF/idempotency/audit/traceability, immutable laboratory and controlled source evidence, separate PASS from product RELEASE, and preserve all owner-approved SYS-01..SYS-08 decisions. Unknown SYS-09..SYS-14 choices remain undecided and fail-closed. Do not invent QC limits, scientific approval, customer data, or provider API contracts. Current production is NOT an authorized edit target. Use additive forward-only migrations for schema changes; do NOT execute them.
+END: List files edited and remaining decisions/configuration required. Explicitly state that NO tests/build/lint/migrations/database connections/production operations/deployments were performed. Do not claim operational readiness.
+
+NEON INPUTS (PUBLIC METADATA ONLY):
+- Public Neon Auth JWKS discovery endpoint: https://ep-fragrant-bar-b5ns86ri.neonauth.c-7.us-east-2.aws.neon.tech/neondb/auth/.well-known/jwks.json
+- Neon branch label supplied by owner: NEON_BRANCH=production (LABEL ONLY; DO NOT CONNECT).
+- DATABASE_URL_UNPOOLED: secret-bearing direct PostgreSQL URL; DO NOT paste, reconstruct or output value.
+- DATABASE_URL: separately provisioned application runtime pooled URL, NOT provided; DO NOT invent host or credential.
+- EXPLABS_API_KEY: secret-bearing vendor key; only environment variable NAME is permitted; provider API base URL/contract not provided.
+- Existing application: Astro SSR + Node + pg + Kysely + PostgreSQL; preserve this stack.
+
+TASK ID: NDB-05 — PostgreSQL data-integrity, foreign keys and query indexes
+PRIORITY: P1
+DEPENDENCIES: NDB-04, DATA-01
+TARGET PATHS (confirm actual current paths first): db/migrations/**, src/shared/database/db-types.ts, src/modules/**/infrastructure/postgres-*.ts, scripts/performance/**
+
+OBJECTIVE: Extend relational invariants for production QC data without inventing business constraints or altering historic records.
+
+REQUIRED SOURCE EDITS:
+1. Inspect quality, findings/NCR/RCA/CAPA, laboratory tests/samples/readings/retests, receiving/HOLD/release, approved templates and revisions, reject records, audit, attachments, permissions, tasks, idempotency and approvals.
+2. When source-backed and necessary, add forward-only FK, unique, CHECK, partial index or exclusion constraints to prevent duplicate active template mappings, duplicate retest sequence, cross-record source mismatches and orphaned traceability.
+3. For any historical data requiring cleanup, create a reviewable exception inventory/query helper source and defer constraint validation; do not fabricate migrated data or delete evidence.
+4. Review bounded pagination and hot WHERE/JOIN/ORDER BY indexes in SQL source; create only indexes with documented query relevance, not blanket indexes on every column.
+5. Keep DB default-deny app authorization in use cases; any optional DB row-level security requires a separate compatible policy decision and may not replace server-scoped reads.
+6. Preserve numeric precision for quantities/AQL and TIMESTAMPTZ for events; ensure correct item, lot, supplier and approved revision references.
+7. Update TypeScript table mappings for new additive columns, typed enums and nullable historical fields without changing existing record semantics.
+
+DONE CONDITION (CODE/CONTRACT ONLY; NOT RUNTIME VERIFIED): Structural source improvements are additive and evidence-preserving; no SQL executes against Neon.
+
+FINAL RESPONSE: Modified files; implementation outcomes; unresolved policy/provider/secret setup blockers. Do NOT claim tested, migrated, connected, or deployed.</code></pre></details></article>
+<article class="prompt-card" data-priority="P0" data-prompt-id="NDB-06" id="NDB-06">
+<div class="card-upper"><div class="card-title-block"><div class="card-meta"><span class="prompt-id">NDB-06</span><span class="priority pr-p0">P0</span></div><h3>Neon Auth JWKS and JWT server verification boundary</h3></div>
+<button type="button" class="copy-button" aria-label="نسخ برومبت NDB-06" data-copy="code-NDB-06" title="نسخ نص البرومبت كاملًا بضغطة واحدة"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"/></svg><span class="copy-label">نسخ البرومبت</span></button></div>
+<div class="card-info"><p><strong>Dependencies:</strong> NDB-01, SEC-02<br><strong>Target paths:</strong> <code dir="ltr">src/config/**, src/modules/identity/**, src/shared/authorization/**, src/middleware.ts, src/actions/**, .env.example, Documents/SECURITY-ARCHITECTURE.md</code></p></div>
+<details class="code-details"><summary><span class="disclosure-label">عرض النص الكامل</span><span class="line-count">36 سطر</span></summary><pre dir="ltr"><code id="code-NDB-06">YOU ARE: Senior PostgreSQL 18 / Neon / Astro SSR / TypeScript / QMS systems engineer.
+REPOSITORY: https://github.com/YEEEAE/QC-Operations-Laboratory-Management-System
+EXECUTION MODE: SOURCE-CODE EDITS ONLY in the authorized local working tree. Read CURRENT repository files first; preserve existing safe functionality and do not overwrite newer implementation solely to match an older commit.
+ABSOLUTE EXCLUSIONS: Do NOT create, modify, or run ANY tests (unit/integration/E2E/UAT/security), do NOT run build, lint, typecheck, browser automation, screenshots, dry-runs, preflight, SQL commands, migrations, backup/restore, scripts, remote probes, or REA execution. Do NOT connect to or mutate production, Neon, or any company environment. Do NOT commit, push, deploy, change external service settings, or disclose/log secrets. Write code/config/docs only.
+SECURITY: Never hardcode credentials, JWTs, database passwords, EXPLABS_API_KEY values or full secret-bearing PostgreSQL URLs in source, HTML, Markdown, telemetry, errors, generated artifacts, or browser assets. Environment variable NAMES only; keep .env templates blank. Credentials supplied in chat must be treated as exposed and rotated out-of-band by the owner.
+GOVERNANCE: Preserve exact current Sidebar, RBAC/scope/CSRF/idempotency/audit/traceability, immutable laboratory and controlled source evidence, separate PASS from product RELEASE, and preserve all owner-approved SYS-01..SYS-08 decisions. Unknown SYS-09..SYS-14 choices remain undecided and fail-closed. Do not invent QC limits, scientific approval, customer data, or provider API contracts. Current production is NOT an authorized edit target. Use additive forward-only migrations for schema changes; do NOT execute them.
+END: List files edited and remaining decisions/configuration required. Explicitly state that NO tests/build/lint/migrations/database connections/production operations/deployments were performed. Do not claim operational readiness.
+
+NEON INPUTS (PUBLIC METADATA ONLY):
+- Public Neon Auth JWKS discovery endpoint: https://ep-fragrant-bar-b5ns86ri.neonauth.c-7.us-east-2.aws.neon.tech/neondb/auth/.well-known/jwks.json
+- Neon branch label supplied by owner: NEON_BRANCH=production (LABEL ONLY; DO NOT CONNECT).
+- DATABASE_URL_UNPOOLED: secret-bearing direct PostgreSQL URL; DO NOT paste, reconstruct or output value.
+- DATABASE_URL: separately provisioned application runtime pooled URL, NOT provided; DO NOT invent host or credential.
+- EXPLABS_API_KEY: secret-bearing vendor key; only environment variable NAME is permitted; provider API base URL/contract not provided.
+- Existing application: Astro SSR + Node + pg + Kysely + PostgreSQL; preserve this stack.
+
+TASK ID: NDB-06 — Neon Auth JWKS and JWT server verification boundary
+PRIORITY: P0
+DEPENDENCIES: NDB-01, SEC-02
+TARGET PATHS (confirm actual current paths first): src/config/**, src/modules/identity/**, src/shared/authorization/**, src/middleware.ts, src/actions/**, .env.example, Documents/SECURITY-ARCHITECTURE.md
+
+OBJECTIVE: Add a secure optional Neon Auth identity verification layer while retaining existing QC authorization and not automatically replacing the company login.
+
+REQUIRED SOURCE EDITS:
+1. PUBLIC JWKS URL provided by owner: https://ep-fragrant-bar-b5ns86ri.neonauth.c-7.us-east-2.aws.neon.tech/neondb/auth/.well-known/jwks.json
+2. Treat the above as public key discovery ONLY; it is NOT a PostgreSQL DSN, write API, user database or proof that any JWT is acceptable.
+3. Introduce NEON_AUTH_JWKS_URL and distinct NEON_AUTH_ISSUER / NEON_AUTH_AUDIENCE server-side variables; obtain issuer/audience from approved Neon Auth configuration rather than deriving, guessing or blindly accepting any token.
+4. If enabled in an approved profile, verify JWT on server with a maintained JOSE implementation and cached remote JWK set; validate exact expected issuer, audience where required, expiry, nbf, authorized algorithms and appropriate token type.
+5. Defend against missing/invalid kid, algorithm substitution, expired/revoked session context, JWKS unavailability, refresh storms, arbitrary JWKS headers and untrusted dynamic issuer URLs; fail closed without exposing token contents.
+6. Never use a Neon Auth user claim to grant SYSTEM_OWNER, MANAGER, SUPERVISOR, QC permissions or scopes; resolve active locally approved identity and authorization independently.
+7. Keep established server sessions/CSRF/reauthentication behavior unchanged unless an approved transition policy exists; provide optional adapter disabled-by-default and migration plan documentation.
+8. Never call the owner JWKS endpoint during this editing prompt and never paste access tokens in source or operator documentation.
+
+DONE CONDITION (CODE/CONTRACT ONLY; NOT RUNTIME VERIFIED): Optional JWT verification adapter is source-integrated and policy-gated without bypassing QC RBAC or changing login behavior absent authorization.
+
+FINAL RESPONSE: Modified files; implementation outcomes; unresolved policy/provider/secret setup blockers. Do NOT claim tested, migrated, connected, or deployed.</code></pre></details></article>
+<article class="prompt-card" data-priority="P1" data-prompt-id="NDB-07" id="NDB-07">
+<div class="card-upper"><div class="card-title-block"><div class="card-meta"><span class="prompt-id">NDB-07</span><span class="priority pr-p1">P1</span></div><h3>Safe identity mapping between Neon Auth and QC users</h3></div>
+<button type="button" class="copy-button" aria-label="نسخ برومبت NDB-07" data-copy="code-NDB-07" title="نسخ نص البرومبت كاملًا بضغطة واحدة"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"/></svg><span class="copy-label">نسخ البرومبت</span></button></div>
+<div class="card-info"><p><strong>Dependencies:</strong> NDB-06, SEC-01, SEC-02<br><strong>Target paths:</strong> <code dir="ltr">src/modules/identity/**, src/shared/authorization/**, db/migrations/**, src/shared/database/db-types.ts, src/pages/account.astro</code></p></div>
+<details class="code-details"><summary><span class="disclosure-label">عرض النص الكامل</span><span class="line-count">35 سطر</span></summary><pre dir="ltr"><code id="code-NDB-07">YOU ARE: Senior PostgreSQL 18 / Neon / Astro SSR / TypeScript / QMS systems engineer.
+REPOSITORY: https://github.com/YEEEAE/QC-Operations-Laboratory-Management-System
+EXECUTION MODE: SOURCE-CODE EDITS ONLY in the authorized local working tree. Read CURRENT repository files first; preserve existing safe functionality and do not overwrite newer implementation solely to match an older commit.
+ABSOLUTE EXCLUSIONS: Do NOT create, modify, or run ANY tests (unit/integration/E2E/UAT/security), do NOT run build, lint, typecheck, browser automation, screenshots, dry-runs, preflight, SQL commands, migrations, backup/restore, scripts, remote probes, or REA execution. Do NOT connect to or mutate production, Neon, or any company environment. Do NOT commit, push, deploy, change external service settings, or disclose/log secrets. Write code/config/docs only.
+SECURITY: Never hardcode credentials, JWTs, database passwords, EXPLABS_API_KEY values or full secret-bearing PostgreSQL URLs in source, HTML, Markdown, telemetry, errors, generated artifacts, or browser assets. Environment variable NAMES only; keep .env templates blank. Credentials supplied in chat must be treated as exposed and rotated out-of-band by the owner.
+GOVERNANCE: Preserve exact current Sidebar, RBAC/scope/CSRF/idempotency/audit/traceability, immutable laboratory and controlled source evidence, separate PASS from product RELEASE, and preserve all owner-approved SYS-01..SYS-08 decisions. Unknown SYS-09..SYS-14 choices remain undecided and fail-closed. Do not invent QC limits, scientific approval, customer data, or provider API contracts. Current production is NOT an authorized edit target. Use additive forward-only migrations for schema changes; do NOT execute them.
+END: List files edited and remaining decisions/configuration required. Explicitly state that NO tests/build/lint/migrations/database connections/production operations/deployments were performed. Do not claim operational readiness.
+
+NEON INPUTS (PUBLIC METADATA ONLY):
+- Public Neon Auth JWKS discovery endpoint: https://ep-fragrant-bar-b5ns86ri.neonauth.c-7.us-east-2.aws.neon.tech/neondb/auth/.well-known/jwks.json
+- Neon branch label supplied by owner: NEON_BRANCH=production (LABEL ONLY; DO NOT CONNECT).
+- DATABASE_URL_UNPOOLED: secret-bearing direct PostgreSQL URL; DO NOT paste, reconstruct or output value.
+- DATABASE_URL: separately provisioned application runtime pooled URL, NOT provided; DO NOT invent host or credential.
+- EXPLABS_API_KEY: secret-bearing vendor key; only environment variable NAME is permitted; provider API base URL/contract not provided.
+- Existing application: Astro SSR + Node + pg + Kysely + PostgreSQL; preserve this stack.
+
+TASK ID: NDB-07 — Safe identity mapping between Neon Auth and QC users
+PRIORITY: P1
+DEPENDENCIES: NDB-06, SEC-01, SEC-02
+TARGET PATHS (confirm actual current paths first): src/modules/identity/**, src/shared/authorization/**, db/migrations/**, src/shared/database/db-types.ts, src/pages/account.astro
+
+OBJECTIVE: Design controlled linkage between external Neon Auth identity and existing qc.users, without unauthorized account auto-provisioning.
+
+REQUIRED SOURCE EDITS:
+1. Add an additive nullable subject mapping structure only if needed, with uniqueness on (issuer, subject), created/approved by, time, source and deactivation metadata.
+2. Do not map identity by mutable email alone; require approved linking workflow, reauthentication, and a locally ACTIVE user record with permitted role/scopes.
+3. Never auto-assign System Owner or administrative role from external JWT claims. Preserve the canonical owner-specific policy in the existing code.
+4. Handle disabled, deactivated, merged, revoked and duplicate external identities safely, including stale sessions and role downgrade without rights escalation.
+5. Preserve both login options behind explicit policy-controlled flags until an authorized replacement decision; default remains the existing login.
+6. Make audit logs identify the local actor, external issuer/subject reference (non-secret) and binding event without storing whole JWT or session tokens.
+7. Add operator-managed account linking/unlinking UI only for approved privileged roles; no public write without scope and CSRF validation.
+
+DONE CONDITION (CODE/CONTRACT ONLY; NOT RUNTIME VERIFIED): External auth is a distinct identity input, never an authorization shortcut or access to all qc.users.
+
+FINAL RESPONSE: Modified files; implementation outcomes; unresolved policy/provider/secret setup blockers. Do NOT claim tested, migrated, connected, or deployed.</code></pre></details></article>
+<article class="prompt-card" data-priority="P0" data-prompt-id="NDB-08" id="NDB-08">
+<div class="card-upper"><div class="card-title-block"><div class="card-meta"><span class="prompt-id">NDB-08</span><span class="priority pr-p0">P0</span></div><h3>Astro API and database action contract hardening</h3></div>
+<button type="button" class="copy-button" aria-label="نسخ برومبت NDB-08" data-copy="code-NDB-08" title="نسخ نص البرومبت كاملًا بضغطة واحدة"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"/></svg><span class="copy-label">نسخ البرومبت</span></button></div>
+<div class="card-info"><p><strong>Dependencies:</strong> NDB-02, NDB-06, SEC-01<br><strong>Target paths:</strong> <code dir="ltr">src/pages/api/**, src/actions/**, src/modules/**/application/**, src/shared/errors/**, src/shared/idempotency/**, src/shared/authorization/**</code></p></div>
+<details class="code-details"><summary><span class="disclosure-label">عرض النص الكامل</span><span class="line-count">36 سطر</span></summary><pre dir="ltr"><code id="code-NDB-08">YOU ARE: Senior PostgreSQL 18 / Neon / Astro SSR / TypeScript / QMS systems engineer.
+REPOSITORY: https://github.com/YEEEAE/QC-Operations-Laboratory-Management-System
+EXECUTION MODE: SOURCE-CODE EDITS ONLY in the authorized local working tree. Read CURRENT repository files first; preserve existing safe functionality and do not overwrite newer implementation solely to match an older commit.
+ABSOLUTE EXCLUSIONS: Do NOT create, modify, or run ANY tests (unit/integration/E2E/UAT/security), do NOT run build, lint, typecheck, browser automation, screenshots, dry-runs, preflight, SQL commands, migrations, backup/restore, scripts, remote probes, or REA execution. Do NOT connect to or mutate production, Neon, or any company environment. Do NOT commit, push, deploy, change external service settings, or disclose/log secrets. Write code/config/docs only.
+SECURITY: Never hardcode credentials, JWTs, database passwords, EXPLABS_API_KEY values or full secret-bearing PostgreSQL URLs in source, HTML, Markdown, telemetry, errors, generated artifacts, or browser assets. Environment variable NAMES only; keep .env templates blank. Credentials supplied in chat must be treated as exposed and rotated out-of-band by the owner.
+GOVERNANCE: Preserve exact current Sidebar, RBAC/scope/CSRF/idempotency/audit/traceability, immutable laboratory and controlled source evidence, separate PASS from product RELEASE, and preserve all owner-approved SYS-01..SYS-08 decisions. Unknown SYS-09..SYS-14 choices remain undecided and fail-closed. Do not invent QC limits, scientific approval, customer data, or provider API contracts. Current production is NOT an authorized edit target. Use additive forward-only migrations for schema changes; do NOT execute them.
+END: List files edited and remaining decisions/configuration required. Explicitly state that NO tests/build/lint/migrations/database connections/production operations/deployments were performed. Do not claim operational readiness.
+
+NEON INPUTS (PUBLIC METADATA ONLY):
+- Public Neon Auth JWKS discovery endpoint: https://ep-fragrant-bar-b5ns86ri.neonauth.c-7.us-east-2.aws.neon.tech/neondb/auth/.well-known/jwks.json
+- Neon branch label supplied by owner: NEON_BRANCH=production (LABEL ONLY; DO NOT CONNECT).
+- DATABASE_URL_UNPOOLED: secret-bearing direct PostgreSQL URL; DO NOT paste, reconstruct or output value.
+- DATABASE_URL: separately provisioned application runtime pooled URL, NOT provided; DO NOT invent host or credential.
+- EXPLABS_API_KEY: secret-bearing vendor key; only environment variable NAME is permitted; provider API base URL/contract not provided.
+- Existing application: Astro SSR + Node + pg + Kysely + PostgreSQL; preserve this stack.
+
+TASK ID: NDB-08 — Astro API and database action contract hardening
+PRIORITY: P0
+DEPENDENCIES: NDB-02, NDB-06, SEC-01
+TARGET PATHS (confirm actual current paths first): src/pages/api/**, src/actions/**, src/modules/**/application/**, src/shared/errors/**, src/shared/idempotency/**, src/shared/authorization/**
+
+OBJECTIVE: Create consistent secure internal API boundaries for QC workflows, without exposing SQL through arbitrary user-supplied URLs.
+
+REQUIRED SOURCE EDITS:
+1. Inventory existing Astro actions and /api routes and use cases before creating endpoints; do not invent extra public endpoints when an approved action already exists.
+2. Implement API contracts for essential server-side operations (receiving, inspection, in-process, lab, reject, documents, approvals, reporting) only where a business operation is already authorized.
+3. Enforce authentication and entity-level role+scope permission checks on every read/write; use server-derived actor, source revision and eligible transitions, not UI-provided permission claims.
+4. Use explicit request schemas, strict content-type and size limits, CSRF protection for session-bound state changes, origin restrictions and conservative CORS for browser endpoints.
+5. Protect writes with durable request-id / idempotency receipts, optimistic expectedVersion checks and transactionally coupled audit/outbox; guarantee safe duplicate-submit behavior.
+6. Sanitize errors without leaking SQL, credentials, item lists across unauthorized scopes, provider headers or raw stack traces. Return stable machine-readable error classes.
+7. Introduce endpoint versioning only where compatibility needs it; document server-side API contract and client-state changes, but do not create tests or call endpoints.
+8. Never return DATABASE_URL_UNPOOLED, connection metadata, process.env, EXPLABS_API_KEY or Neon JWT signing information in response bodies.
+
+DONE CONDITION (CODE/CONTRACT ONLY; NOT RUNTIME VERIFIED): Every new or changed server API maps to governed use cases and cannot bypass controlled QC decisions.
+
+FINAL RESPONSE: Modified files; implementation outcomes; unresolved policy/provider/secret setup blockers. Do NOT claim tested, migrated, connected, or deployed.</code></pre></details></article>
+<article class="prompt-card" data-priority="P1" data-prompt-id="NDB-09" id="NDB-09">
+<div class="card-upper"><div class="card-title-block"><div class="card-meta"><span class="prompt-id">NDB-09</span><span class="priority pr-p1">P1</span></div><h3>EXPLABS key handling and external API provider adapter</h3></div>
+<button type="button" class="copy-button" aria-label="نسخ برومبت NDB-09" data-copy="code-NDB-09" title="نسخ نص البرومبت كاملًا بضغطة واحدة"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"/></svg><span class="copy-label">نسخ البرومبت</span></button></div>
+<div class="card-info"><p><strong>Dependencies:</strong> NDB-01, NDB-08, SYS-11 decision pending<br><strong>Target paths:</strong> <code dir="ltr">src/config/**, src/modules/ai-advisory/**, src/shared/observability/**, .env.example, Documents/CONFIGURATION-REFERENCE.md</code></p></div>
+<details class="code-details"><summary><span class="disclosure-label">عرض النص الكامل</span><span class="line-count">35 سطر</span></summary><pre dir="ltr"><code id="code-NDB-09">YOU ARE: Senior PostgreSQL 18 / Neon / Astro SSR / TypeScript / QMS systems engineer.
+REPOSITORY: https://github.com/YEEEAE/QC-Operations-Laboratory-Management-System
+EXECUTION MODE: SOURCE-CODE EDITS ONLY in the authorized local working tree. Read CURRENT repository files first; preserve existing safe functionality and do not overwrite newer implementation solely to match an older commit.
+ABSOLUTE EXCLUSIONS: Do NOT create, modify, or run ANY tests (unit/integration/E2E/UAT/security), do NOT run build, lint, typecheck, browser automation, screenshots, dry-runs, preflight, SQL commands, migrations, backup/restore, scripts, remote probes, or REA execution. Do NOT connect to or mutate production, Neon, or any company environment. Do NOT commit, push, deploy, change external service settings, or disclose/log secrets. Write code/config/docs only.
+SECURITY: Never hardcode credentials, JWTs, database passwords, EXPLABS_API_KEY values or full secret-bearing PostgreSQL URLs in source, HTML, Markdown, telemetry, errors, generated artifacts, or browser assets. Environment variable NAMES only; keep .env templates blank. Credentials supplied in chat must be treated as exposed and rotated out-of-band by the owner.
+GOVERNANCE: Preserve exact current Sidebar, RBAC/scope/CSRF/idempotency/audit/traceability, immutable laboratory and controlled source evidence, separate PASS from product RELEASE, and preserve all owner-approved SYS-01..SYS-08 decisions. Unknown SYS-09..SYS-14 choices remain undecided and fail-closed. Do not invent QC limits, scientific approval, customer data, or provider API contracts. Current production is NOT an authorized edit target. Use additive forward-only migrations for schema changes; do NOT execute them.
+END: List files edited and remaining decisions/configuration required. Explicitly state that NO tests/build/lint/migrations/database connections/production operations/deployments were performed. Do not claim operational readiness.
+
+NEON INPUTS (PUBLIC METADATA ONLY):
+- Public Neon Auth JWKS discovery endpoint: https://ep-fragrant-bar-b5ns86ri.neonauth.c-7.us-east-2.aws.neon.tech/neondb/auth/.well-known/jwks.json
+- Neon branch label supplied by owner: NEON_BRANCH=production (LABEL ONLY; DO NOT CONNECT).
+- DATABASE_URL_UNPOOLED: secret-bearing direct PostgreSQL URL; DO NOT paste, reconstruct or output value.
+- DATABASE_URL: separately provisioned application runtime pooled URL, NOT provided; DO NOT invent host or credential.
+- EXPLABS_API_KEY: secret-bearing vendor key; only environment variable NAME is permitted; provider API base URL/contract not provided.
+- Existing application: Astro SSR + Node + pg + Kysely + PostgreSQL; preserve this stack.
+
+TASK ID: NDB-09 — EXPLABS key handling and external API provider adapter
+PRIORITY: P1
+DEPENDENCIES: NDB-01, NDB-08, SYS-11 decision pending
+TARGET PATHS (confirm actual current paths first): src/config/**, src/modules/ai-advisory/**, src/shared/observability/**, .env.example, Documents/CONFIGURATION-REFERENCE.md
+
+OBJECTIVE: Make server-side support for the owner-named EXPLABS_API_KEY secret without assuming what service this key authenticates to.
+
+REQUIRED SOURCE EDITS:
+1. Treat EXPLABS_API_KEY as a possibly exposed vendor secret: document rotation requirement, mask headers and telemetry, and leave the value blank in env templates.
+2. Do not guess EXPLABS vendor, authentication header, rate limits, base URL, methods, data model, domain, pricing or SDK. No endpoint URL was provided and the service is NOT verified.
+3. Create a disabled-by-default, contract-driven provider adapter with explicit EXPLABS_BASE_URL / EXPLABS_API_KEY / EXPLABS_ENABLED placeholders, allowlisted HTTPS origin and request timeout, ready for future verified provider spec.
+4. Put all HTTP access server-side, with least-privilege data minimization, safe retry only for idempotent requests, circuit breaker / availability states and bounded error logs.
+5. If integration may involve AI advisory, do not enable sending QC/medical/company data externally until the owner selects SYS-11 and establishes data-class, consent, retention and provider controls.
+6. Ensure the adapter is not automatically mounted into any approval, PASS/FAIL, CAPA closure, material RELEASE or laboratory result path.
+7. Document missing provider contract and user authorization as a hard blocker; supply only local source scaffolding, no outbound request.
+
+DONE CONDITION (CODE/CONTRACT ONLY; NOT RUNTIME VERIFIED): Optional provider integration stays fully disabled until vendor documentation and owner authorization exist.
+
+FINAL RESPONSE: Modified files; implementation outcomes; unresolved policy/provider/secret setup blockers. Do NOT claim tested, migrated, connected, or deployed.</code></pre></details></article>
+<article class="prompt-card" data-priority="P1" data-prompt-id="NDB-10" id="NDB-10">
+<div class="card-upper"><div class="card-title-block"><div class="card-meta"><span class="prompt-id">NDB-10</span><span class="priority pr-p1">P1</span></div><h3>Neon data import, revisions and manual template mappings</h3></div>
+<button type="button" class="copy-button" aria-label="نسخ برومبت NDB-10" data-copy="code-NDB-10" title="نسخ نص البرومبت كاملًا بضغطة واحدة"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"/></svg><span class="copy-label">نسخ البرومبت</span></button></div>
+<div class="card-info"><p><strong>Dependencies:</strong> NDB-03, DATA-01, TMP-02<br><strong>Target paths:</strong> <code dir="ltr">scripts/data/**, src/modules/quarantine/**, src/modules/documents/**, db/migrations/**, src/shared/database/db-types.ts, Documents/** data dictionary</code></p></div>
+<details class="code-details"><summary><span class="disclosure-label">عرض النص الكامل</span><span class="line-count">35 سطر</span></summary><pre dir="ltr"><code id="code-NDB-10">YOU ARE: Senior PostgreSQL 18 / Neon / Astro SSR / TypeScript / QMS systems engineer.
+REPOSITORY: https://github.com/YEEEAE/QC-Operations-Laboratory-Management-System
+EXECUTION MODE: SOURCE-CODE EDITS ONLY in the authorized local working tree. Read CURRENT repository files first; preserve existing safe functionality and do not overwrite newer implementation solely to match an older commit.
+ABSOLUTE EXCLUSIONS: Do NOT create, modify, or run ANY tests (unit/integration/E2E/UAT/security), do NOT run build, lint, typecheck, browser automation, screenshots, dry-runs, preflight, SQL commands, migrations, backup/restore, scripts, remote probes, or REA execution. Do NOT connect to or mutate production, Neon, or any company environment. Do NOT commit, push, deploy, change external service settings, or disclose/log secrets. Write code/config/docs only.
+SECURITY: Never hardcode credentials, JWTs, database passwords, EXPLABS_API_KEY values or full secret-bearing PostgreSQL URLs in source, HTML, Markdown, telemetry, errors, generated artifacts, or browser assets. Environment variable NAMES only; keep .env templates blank. Credentials supplied in chat must be treated as exposed and rotated out-of-band by the owner.
+GOVERNANCE: Preserve exact current Sidebar, RBAC/scope/CSRF/idempotency/audit/traceability, immutable laboratory and controlled source evidence, separate PASS from product RELEASE, and preserve all owner-approved SYS-01..SYS-08 decisions. Unknown SYS-09..SYS-14 choices remain undecided and fail-closed. Do not invent QC limits, scientific approval, customer data, or provider API contracts. Current production is NOT an authorized edit target. Use additive forward-only migrations for schema changes; do NOT execute them.
+END: List files edited and remaining decisions/configuration required. Explicitly state that NO tests/build/lint/migrations/database connections/production operations/deployments were performed. Do not claim operational readiness.
+
+NEON INPUTS (PUBLIC METADATA ONLY):
+- Public Neon Auth JWKS discovery endpoint: https://ep-fragrant-bar-b5ns86ri.neonauth.c-7.us-east-2.aws.neon.tech/neondb/auth/.well-known/jwks.json
+- Neon branch label supplied by owner: NEON_BRANCH=production (LABEL ONLY; DO NOT CONNECT).
+- DATABASE_URL_UNPOOLED: secret-bearing direct PostgreSQL URL; DO NOT paste, reconstruct or output value.
+- DATABASE_URL: separately provisioned application runtime pooled URL, NOT provided; DO NOT invent host or credential.
+- EXPLABS_API_KEY: secret-bearing vendor key; only environment variable NAME is permitted; provider API base URL/contract not provided.
+- Existing application: Astro SSR + Node + pg + Kysely + PostgreSQL; preserve this stack.
+
+TASK ID: NDB-10 — Neon data import, revisions and manual template mappings
+PRIORITY: P1
+DEPENDENCIES: NDB-03, DATA-01, TMP-02
+TARGET PATHS (confirm actual current paths first): scripts/data/**, src/modules/quarantine/**, src/modules/documents/**, db/migrations/**, src/shared/database/db-types.ts, Documents/** data dictionary
+
+OBJECTIVE: Implement governed data onboarding to PostgreSQL without importing any real company records during this editing task.
+
+REQUIRED SOURCE EDITS:
+1. Preserve SYS-08=C: authorized QC users configure Item Code to Inspection Template mapping manually in Quarantine Administration; System Owner approves and source/effective revision is pinned.
+2. Make imported Items, Suppliers, Equipment, organizational scopes, WI/SOP identities, and approved forms source-labeled, approval-gated, with conflict queues; do not treat imported CSV or Rev14 identity as certified operating controls.
+3. Create operator-only import staging tables or code where justified, with source hash, schema version, source file reference, import batch, actor, decision and immutable audit provenance.
+4. Validate references, quantities and units, duplicate identities and lineage before promotion, without inventing missing ISO tolerances, AQL codes, metadata, or ownership.
+5. Reject illegal or conflicting Item Code mappings, archive superseded mapping history and preserve inspection-report snapshots linked to exact version used.
+6. Never migrate or overwrite existing production data automatically; use an explicit authorized import action only after owner-approved SYS-10 master source is defined.
+7. Provide UI to review exceptions/missing mapping with appropriate scopes and NOT AVAILABLE FOR VERIFICATION where evidence is missing.
+
+DONE CONDITION (CODE/CONTRACT ONLY; NOT RUNTIME VERIFIED): Source-backed data promotion is controlled; draft catalog entities never become active inspections by accidental import.
+
+FINAL RESPONSE: Modified files; implementation outcomes; unresolved policy/provider/secret setup blockers. Do NOT claim tested, migrated, connected, or deployed.</code></pre></details></article>
+<article class="prompt-card" data-priority="P1" data-prompt-id="NDB-11" id="NDB-11">
+<div class="card-upper"><div class="card-title-block"><div class="card-meta"><span class="prompt-id">NDB-11</span><span class="priority pr-p1">P1</span></div><h3>Database transaction outbox, Focus status and delivery integrity</h3></div>
+<button type="button" class="copy-button" aria-label="نسخ برومبت NDB-11" data-copy="code-NDB-11" title="نسخ نص البرومبت كاملًا بضغطة واحدة"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"/></svg><span class="copy-label">نسخ البرومبت</span></button></div>
+<div class="card-info"><p><strong>Dependencies:</strong> NDB-02, NDB-08, REJ-03, OPS-02<br><strong>Target paths:</strong> <code dir="ltr">src/shared/outbox/**, src/shared/notifications/**, src/modules/reject-reports/**, src/modules/tasks/**, db/migrations/**</code></p></div>
+<details class="code-details"><summary><span class="disclosure-label">عرض النص الكامل</span><span class="line-count">35 سطر</span></summary><pre dir="ltr"><code id="code-NDB-11">YOU ARE: Senior PostgreSQL 18 / Neon / Astro SSR / TypeScript / QMS systems engineer.
+REPOSITORY: https://github.com/YEEEAE/QC-Operations-Laboratory-Management-System
+EXECUTION MODE: SOURCE-CODE EDITS ONLY in the authorized local working tree. Read CURRENT repository files first; preserve existing safe functionality and do not overwrite newer implementation solely to match an older commit.
+ABSOLUTE EXCLUSIONS: Do NOT create, modify, or run ANY tests (unit/integration/E2E/UAT/security), do NOT run build, lint, typecheck, browser automation, screenshots, dry-runs, preflight, SQL commands, migrations, backup/restore, scripts, remote probes, or REA execution. Do NOT connect to or mutate production, Neon, or any company environment. Do NOT commit, push, deploy, change external service settings, or disclose/log secrets. Write code/config/docs only.
+SECURITY: Never hardcode credentials, JWTs, database passwords, EXPLABS_API_KEY values or full secret-bearing PostgreSQL URLs in source, HTML, Markdown, telemetry, errors, generated artifacts, or browser assets. Environment variable NAMES only; keep .env templates blank. Credentials supplied in chat must be treated as exposed and rotated out-of-band by the owner.
+GOVERNANCE: Preserve exact current Sidebar, RBAC/scope/CSRF/idempotency/audit/traceability, immutable laboratory and controlled source evidence, separate PASS from product RELEASE, and preserve all owner-approved SYS-01..SYS-08 decisions. Unknown SYS-09..SYS-14 choices remain undecided and fail-closed. Do not invent QC limits, scientific approval, customer data, or provider API contracts. Current production is NOT an authorized edit target. Use additive forward-only migrations for schema changes; do NOT execute them.
+END: List files edited and remaining decisions/configuration required. Explicitly state that NO tests/build/lint/migrations/database connections/production operations/deployments were performed. Do not claim operational readiness.
+
+NEON INPUTS (PUBLIC METADATA ONLY):
+- Public Neon Auth JWKS discovery endpoint: https://ep-fragrant-bar-b5ns86ri.neonauth.c-7.us-east-2.aws.neon.tech/neondb/auth/.well-known/jwks.json
+- Neon branch label supplied by owner: NEON_BRANCH=production (LABEL ONLY; DO NOT CONNECT).
+- DATABASE_URL_UNPOOLED: secret-bearing direct PostgreSQL URL; DO NOT paste, reconstruct or output value.
+- DATABASE_URL: separately provisioned application runtime pooled URL, NOT provided; DO NOT invent host or credential.
+- EXPLABS_API_KEY: secret-bearing vendor key; only environment variable NAME is permitted; provider API base URL/contract not provided.
+- Existing application: Astro SSR + Node + pg + Kysely + PostgreSQL; preserve this stack.
+
+TASK ID: NDB-11 — Database transaction outbox, Focus status and delivery integrity
+PRIORITY: P1
+DEPENDENCIES: NDB-02, NDB-08, REJ-03, OPS-02
+TARGET PATHS (confirm actual current paths first): src/shared/outbox/**, src/shared/notifications/**, src/modules/reject-reports/**, src/modules/tasks/**, db/migrations/**
+
+OBJECTIVE: Implement robust transaction-safe event delivery and operational-status records without inventing a Focus API integration.
+
+REQUIRED SOURCE EDITS:
+1. Preserve atomic insert of domain event + audit + outbox in one PostgreSQL transaction and existing idempotency/replay guarantees.
+2. Add a bounded worker entrypoint / job lease / retry schedule / dead-letter state, concurrency-safe claiming and last-failure classification where missing; do not run or schedule a worker during this prompt.
+3. Create human-visible PENDING/SENT/CONFIRMED/FAILED statuses with source event references; a successful queue insert is not downstream delivery confirmation.
+4. For Focus SYS-09 is unapproved: implement explicit manual QC Compliance entry and evidence capture, and distinct Pending Focus Entry / Entered in Focus / Verified states; no guessed API, CSV upload guarantee, or automatic sync.
+5. Ensure notifications respect scoped recipients and cannot reveal products/lots to unauthorized roles; only authorized actors can mark notifications read.
+6. De-duplicate event deliveries and prevent event replay from generating duplicate warehouse/disposition/production changes.
+7. Add retention-policy hooks without deleting audit, scientific, controlled-document, or original lab results absent separately approved policy.
+
+DONE CONDITION (CODE/CONTRACT ONLY; NOT RUNTIME VERIFIED): A failed provider or missing worker cannot fabricate SUCCESS, ENTERED IN FOCUS, APPROVED or RELEASED.
+
+FINAL RESPONSE: Modified files; implementation outcomes; unresolved policy/provider/secret setup blockers. Do NOT claim tested, migrated, connected, or deployed.</code></pre></details></article>
+<article class="prompt-card" data-priority="P0" data-prompt-id="NDB-12" id="NDB-12">
+<div class="card-upper"><div class="card-title-block"><div class="card-meta"><span class="prompt-id">NDB-12</span><span class="priority pr-p0">P0</span></div><h3>Neon backup, point-in-time recovery and QC file traceability</h3></div>
+<button type="button" class="copy-button" aria-label="نسخ برومبت NDB-12" data-copy="code-NDB-12" title="نسخ نص البرومبت كاملًا بضغطة واحدة"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"/></svg><span class="copy-label">نسخ البرومبت</span></button></div>
+<div class="card-info"><p><strong>Dependencies:</strong> NDB-03, NDB-04, OPS-01, OPS-02<br><strong>Target paths:</strong> <code dir="ltr">src/modules/backup-recovery/**, scripts/recovery/**, Documents/BACKUP-RECOVERY-PLAN.md, src/modules/documents/**, db/migrations/**</code></p></div>
+<details class="code-details"><summary><span class="disclosure-label">عرض النص الكامل</span><span class="line-count">35 سطر</span></summary><pre dir="ltr"><code id="code-NDB-12">YOU ARE: Senior PostgreSQL 18 / Neon / Astro SSR / TypeScript / QMS systems engineer.
+REPOSITORY: https://github.com/YEEEAE/QC-Operations-Laboratory-Management-System
+EXECUTION MODE: SOURCE-CODE EDITS ONLY in the authorized local working tree. Read CURRENT repository files first; preserve existing safe functionality and do not overwrite newer implementation solely to match an older commit.
+ABSOLUTE EXCLUSIONS: Do NOT create, modify, or run ANY tests (unit/integration/E2E/UAT/security), do NOT run build, lint, typecheck, browser automation, screenshots, dry-runs, preflight, SQL commands, migrations, backup/restore, scripts, remote probes, or REA execution. Do NOT connect to or mutate production, Neon, or any company environment. Do NOT commit, push, deploy, change external service settings, or disclose/log secrets. Write code/config/docs only.
+SECURITY: Never hardcode credentials, JWTs, database passwords, EXPLABS_API_KEY values or full secret-bearing PostgreSQL URLs in source, HTML, Markdown, telemetry, errors, generated artifacts, or browser assets. Environment variable NAMES only; keep .env templates blank. Credentials supplied in chat must be treated as exposed and rotated out-of-band by the owner.
+GOVERNANCE: Preserve exact current Sidebar, RBAC/scope/CSRF/idempotency/audit/traceability, immutable laboratory and controlled source evidence, separate PASS from product RELEASE, and preserve all owner-approved SYS-01..SYS-08 decisions. Unknown SYS-09..SYS-14 choices remain undecided and fail-closed. Do not invent QC limits, scientific approval, customer data, or provider API contracts. Current production is NOT an authorized edit target. Use additive forward-only migrations for schema changes; do NOT execute them.
+END: List files edited and remaining decisions/configuration required. Explicitly state that NO tests/build/lint/migrations/database connections/production operations/deployments were performed. Do not claim operational readiness.
+
+NEON INPUTS (PUBLIC METADATA ONLY):
+- Public Neon Auth JWKS discovery endpoint: https://ep-fragrant-bar-b5ns86ri.neonauth.c-7.us-east-2.aws.neon.tech/neondb/auth/.well-known/jwks.json
+- Neon branch label supplied by owner: NEON_BRANCH=production (LABEL ONLY; DO NOT CONNECT).
+- DATABASE_URL_UNPOOLED: secret-bearing direct PostgreSQL URL; DO NOT paste, reconstruct or output value.
+- DATABASE_URL: separately provisioned application runtime pooled URL, NOT provided; DO NOT invent host or credential.
+- EXPLABS_API_KEY: secret-bearing vendor key; only environment variable NAME is permitted; provider API base URL/contract not provided.
+- Existing application: Astro SSR + Node + pg + Kysely + PostgreSQL; preserve this stack.
+
+TASK ID: NDB-12 — Neon backup, point-in-time recovery and QC file traceability
+PRIORITY: P0
+DEPENDENCIES: NDB-03, NDB-04, OPS-01, OPS-02
+TARGET PATHS (confirm actual current paths first): src/modules/backup-recovery/**, scripts/recovery/**, Documents/BACKUP-RECOVERY-PLAN.md, src/modules/documents/**, db/migrations/**
+
+OBJECTIVE: Prepare full database + controlled evidence/file recovery across isolated Neon environments, without performing a backup or restore.
+
+REQUIRED SOURCE EDITS:
+1. Inspect existing pg_dump/R2 artifacts, manifests, backup/restore metadata and request-only production restore path. Differentiate &quot;backup created&quot; from &quot;backup integrity verified&quot; from &quot;restore successfully rehearsed&quot;.
+2. Document Neon-native branch recovery/PITR as an optional operator procedure constrained by provider retention/configuration; do not assume an unverified recovery window or automatic branch recovery.
+3. Preserve exact Git SHA, migration head, schema checksum, source file digests, controlled WI version and detached file-store artifacts in backup manifests.
+4. Ensure file-store identity, encryption, private object access, immutable hash verification and no cross-environment silent writes; a database snapshot alone cannot establish restoration of QC evidence attachments.
+5. Keep production restore blocked absent approved RPO/RTO, a named emergency release authority and separate verification outcome; backup scripts must not be callable by web GET endpoints.
+6. Add safe operator-maintained recovery runbooks, retention approval hooks and controlled expiration; do not destroy data or automate deletions.
+7. Use direct non-pooled operator connection only for future controlled maintenance, never the browser or arbitrary user input.
+
+DONE CONDITION (CODE/CONTRACT ONLY; NOT RUNTIME VERIFIED): Prepared recovery code distinguishes request/verified artifact/verified restore, and production restore is never automated here.
+
+FINAL RESPONSE: Modified files; implementation outcomes; unresolved policy/provider/secret setup blockers. Do NOT claim tested, migrated, connected, or deployed.</code></pre></details></article>
+<article class="prompt-card" data-priority="P1" data-prompt-id="NDB-13" id="NDB-13">
+<div class="card-upper"><div class="card-title-block"><div class="card-meta"><span class="prompt-id">NDB-13</span><span class="priority pr-p1">P1</span></div><h3>Neon readiness, observability and operational runbook</h3></div>
+<button type="button" class="copy-button" aria-label="نسخ برومبت NDB-13" data-copy="code-NDB-13" title="نسخ نص البرومبت كاملًا بضغطة واحدة"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"/></svg><span class="copy-label">نسخ البرومبت</span></button></div>
+<div class="card-info"><p><strong>Dependencies:</strong> NDB-01..NDB-12, REL-01, REL-02<br><strong>Target paths:</strong> <code dir="ltr">src/pages/system/health.astro, src/pages/system/control-center.astro, src/pages/api/health/**, src/shared/observability/**, README-system-detailed/OPERATIONS.md, Documents/** runbooks</code></p></div>
+<details class="code-details"><summary><span class="disclosure-label">عرض النص الكامل</span><span class="line-count">35 سطر</span></summary><pre dir="ltr"><code id="code-NDB-13">YOU ARE: Senior PostgreSQL 18 / Neon / Astro SSR / TypeScript / QMS systems engineer.
+REPOSITORY: https://github.com/YEEEAE/QC-Operations-Laboratory-Management-System
+EXECUTION MODE: SOURCE-CODE EDITS ONLY in the authorized local working tree. Read CURRENT repository files first; preserve existing safe functionality and do not overwrite newer implementation solely to match an older commit.
+ABSOLUTE EXCLUSIONS: Do NOT create, modify, or run ANY tests (unit/integration/E2E/UAT/security), do NOT run build, lint, typecheck, browser automation, screenshots, dry-runs, preflight, SQL commands, migrations, backup/restore, scripts, remote probes, or REA execution. Do NOT connect to or mutate production, Neon, or any company environment. Do NOT commit, push, deploy, change external service settings, or disclose/log secrets. Write code/config/docs only.
+SECURITY: Never hardcode credentials, JWTs, database passwords, EXPLABS_API_KEY values or full secret-bearing PostgreSQL URLs in source, HTML, Markdown, telemetry, errors, generated artifacts, or browser assets. Environment variable NAMES only; keep .env templates blank. Credentials supplied in chat must be treated as exposed and rotated out-of-band by the owner.
+GOVERNANCE: Preserve exact current Sidebar, RBAC/scope/CSRF/idempotency/audit/traceability, immutable laboratory and controlled source evidence, separate PASS from product RELEASE, and preserve all owner-approved SYS-01..SYS-08 decisions. Unknown SYS-09..SYS-14 choices remain undecided and fail-closed. Do not invent QC limits, scientific approval, customer data, or provider API contracts. Current production is NOT an authorized edit target. Use additive forward-only migrations for schema changes; do NOT execute them.
+END: List files edited and remaining decisions/configuration required. Explicitly state that NO tests/build/lint/migrations/database connections/production operations/deployments were performed. Do not claim operational readiness.
+
+NEON INPUTS (PUBLIC METADATA ONLY):
+- Public Neon Auth JWKS discovery endpoint: https://ep-fragrant-bar-b5ns86ri.neonauth.c-7.us-east-2.aws.neon.tech/neondb/auth/.well-known/jwks.json
+- Neon branch label supplied by owner: NEON_BRANCH=production (LABEL ONLY; DO NOT CONNECT).
+- DATABASE_URL_UNPOOLED: secret-bearing direct PostgreSQL URL; DO NOT paste, reconstruct or output value.
+- DATABASE_URL: separately provisioned application runtime pooled URL, NOT provided; DO NOT invent host or credential.
+- EXPLABS_API_KEY: secret-bearing vendor key; only environment variable NAME is permitted; provider API base URL/contract not provided.
+- Existing application: Astro SSR + Node + pg + Kysely + PostgreSQL; preserve this stack.
+
+TASK ID: NDB-13 — Neon readiness, observability and operational runbook
+PRIORITY: P1
+DEPENDENCIES: NDB-01..NDB-12, REL-01, REL-02
+TARGET PATHS (confirm actual current paths first): src/pages/system/health.astro, src/pages/system/control-center.astro, src/pages/api/health/**, src/shared/observability/**, README-system-detailed/OPERATIONS.md, Documents/** runbooks
+
+OBJECTIVE: Give QC Operations and IT an auditable system setup/readiness picture, not a misleading GO indicator.
+
+REQUIRED SOURCE EDITS:
+1. Expose a read-only server-derived overview of env profile, Neon branch label (not credentials), migration expected/applied head, database reachability class, backup job status, verified restore evidence and service availability; no direct outbound check required to edit the UI.
+2. Keep liveness / readiness / QC operations acceptance / regulatory approval four separate concepts. Missing provider or no report source must show UNAVAILABLE or NOT VERIFIED, never a synthetic green status.
+3. Inventory key operational runbooks for secret rotation, Neon branch/user grants, schema release, user enrollment, incident response, disaster recovery and controlled GO/NO-GO decisions.
+4. Add non-secret database observability definitions: pool exhaustion, connection error class, query duration histogram, outbox backlog and slow-query identifiers; never log SQL literal customer values or passwords.
+5. Document tenant scope and unauthorized-read protections on admin dashboard, preventing a user with generic health permission from viewing cross-company records.
+6. Add explicit configuration-status notes for public JWKS URL vs PostgreSQL DSN vs EXPLABS key, without making API availability a proxy for production database health.
+7. No dashboards may claim that code edits were tested, migrations applied, real company pilot configured, acceptance passed or production release authorized.
+
+DONE CONDITION (CODE/CONTRACT ONLY; NOT RUNTIME VERIFIED): Operational screens report genuine evidence boundaries and can assist later company approval without falsely claiming deployment or passing tests.
+
+FINAL RESPONSE: Modified files; implementation outcomes; unresolved policy/provider/secret setup blockers. Do NOT claim tested, migrated, connected, or deployed.</code></pre></details></article>
+<article class="prompt-card" id="SEC-01" data-priority="P1" data-prompt-id="SEC-01">
   <div class="card-upper">
     <div class="card-title-block">
        <div class="card-meta"><span class="prompt-id">SEC-01</span><span class="priority pr-p1">P1</span></div>
@@ -1857,7 +2380,7 @@ TASK: Source-only integration pass after the 36 prompts have been applied by the
 STOP. The user explicitly requested edits only, with absolutely no tests or screenshots.
 </code></pre></details>
 </article></section>
-<footer class="footer"><h2>مرجع مصدر التقرير</h2><p>هذه الـ36 مهمة مأخوذة من بنود تقرير التدقيق (REL-01..USR-01). بعض تفاصيل التنفيذ المقترحة هي تصميم هندسي جديد <strong>وليست وصفًا لوظائف مكتملة أو سياسات معتمدة</strong>. كل اسم جدول جديد اقتراح تنفيذي يتحقق الوكيل أولًا من عدم وجود بديل مكافئ في المستودع. يجب أن تظل القرارات غير المعتمدة، وحدود ISO، وبيانات الإنتاج، وتكامل Focus دون افتراضات.</p><p><strong>Do not confuse code edits with real-world safety validation. No tests were requested or performed when authoring this prompt pack.</strong></p></footer>
+<footer class="footer"><h2>مرجع مصدر التقرير</h2><p>المهام الأصلية الـ36 مأخوذة من تقرير التدقيق (REL-01..USR-01)، وأضيفت 13 مهمة Neon/PostgreSQL/Auth/API بطلب لاحق لإعداد التكامل بصورة آمنة. بعض تفاصيل التنفيذ المقترحة هي تصميم هندسي جديد <strong>وليست وصفًا لوظائف مكتملة أو سياسات معتمدة</strong>. كل اسم جدول جديد اقتراح تنفيذي يتحقق الوكيل أولًا من عدم وجود بديل مكافئ في المستودع. يجب أن تظل القرارات غير المعتمدة، وحدود ISO، وبيانات الإنتاج، وتكامل Focus دون افتراضات.</p><p><strong>Do not confuse code edits with real-world safety validation. No tests were requested or performed when authoring this prompt pack.</strong></p></footer>
 </main></div><div class="toast" id="toast" role="status" aria-live="polite"></div><script>
 (function(){
   'use strict';

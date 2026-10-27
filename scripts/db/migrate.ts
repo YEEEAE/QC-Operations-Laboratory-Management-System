@@ -5,8 +5,13 @@ import { fileURLToPath } from 'node:url';
 import type { Pool, PoolClient } from 'pg';
 
 import { InvalidEnvironmentError } from '../../src/config/env.js';
-import { getPool } from '../../src/shared/database/pool.js';
-import { DatabaseConfigurationError } from '../../src/shared/database/pool.js';
+import { getRuntimeConfig } from '../../src/config/runtime.js';
+import {
+  createPool,
+  DatabaseConfigurationError,
+  getDatabaseConnectionConfig,
+  getPool,
+} from '../../src/shared/database/pool.js';
 import { isSupportedMigrationChecksum } from '../../src/shared/database/migration-checksum-policy.js';
 
 import { loadLocalEnv } from './load-local-env.js';
@@ -19,12 +24,34 @@ export interface MigrationFile {
   checksum: string;
 }
 
+export class MigrationIntegrityError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'MigrationIntegrityError';
+  }
+}
+
 const migrationsDirectory = resolve(dirname(fileURLToPath(import.meta.url)), '../../db/migrations');
 const lockKey = 'qc-operations-schema-migrations-v1';
 
 // These are the checksums of migrations from the pre-Render-compatible role
 // model. They are accepted only so an existing ledger remains auditable; fresh
 // databases always record the checksum of the current migration file.
+
+function assertContiguousMigrationSequence(migrations: MigrationFile[]): void {
+  const seen = new Set<string>();
+  for (const [index, migration] of migrations.entries()) {
+    const expectedVersion = String(index + 1).padStart(4, '0');
+    if (seen.has(migration.version))
+      throw new MigrationIntegrityError('Duplicate migration version detected.');
+    seen.add(migration.version);
+    if (migration.version !== expectedVersion) {
+      throw new MigrationIntegrityError(
+        `Migration source sequence gap: expected ${expectedVersion}, found ${migration.version}.`,
+      );
+    }
+  }
+}
 
 export async function loadMigrations(directory = migrationsDirectory): Promise<MigrationFile[]> {
   const names = (await readdir(directory))
@@ -45,8 +72,9 @@ export async function loadMigrations(directory = migrationsDirectory): Promise<M
     }),
   );
   if (new Set(migrations.map((migration) => migration.version)).size !== migrations.length) {
-    throw new Error('Duplicate migration version detected.');
+    throw new MigrationIntegrityError('Duplicate migration version detected.');
   }
+  assertContiguousMigrationSequence(migrations);
   return migrations;
 }
 
@@ -75,10 +103,6 @@ async function withMigrationLock<T>(
   }
 }
 
-async function ensureLedger(client: PoolClient): Promise<void> {
-  await client.query('CREATE SCHEMA IF NOT EXISTS qc');
-}
-
 async function readApplied(
   client: PoolClient,
 ): Promise<{ version: string; name: string; checksum: string }[]> {
@@ -88,7 +112,12 @@ async function readApplied(
     );
     return result.rows;
   } catch (error) {
-    if (typeof error === 'object' && error !== null && 'code' in error && error.code === '42P01')
+    if (
+      typeof error === 'object' &&
+      error !== null &&
+      'code' in error &&
+      (error.code === '42P01' || error.code === '3F000')
+    )
       return [];
     throw error;
   }
@@ -99,17 +128,22 @@ export async function verifyMigrationIntegrity(
   migrations?: MigrationFile[],
 ): Promise<void> {
   const migrationFiles = migrations ?? (await loadMigrations());
-  await ensureLedger(client);
+  assertContiguousMigrationSequence(migrationFiles);
   const result = await readApplied(client);
   const files = new Map(migrationFiles.map((migration) => [migration.version, migration]));
-  for (const applied of result) {
+  for (const [index, applied] of result.entries()) {
+    const expected = migrationFiles[index];
     const migration = files.get(applied.version);
     if (
+      !expected ||
+      applied.version !== expected.version ||
       !migration ||
       migration.name !== applied.name ||
       !isSupportedMigrationChecksum(applied.version, migration.checksum, applied.checksum)
     ) {
-      throw new Error(`Migration checksum mismatch for version ${applied.version}.`);
+      throw new MigrationIntegrityError(
+        `Applied migration ledger does not match the ordered source at version ${applied.version}.`,
+      );
     }
   }
 }
@@ -117,21 +151,18 @@ export async function verifyMigrationIntegrity(
 async function assertMigrationPrivileges(client: PoolClient): Promise<void> {
   const result = await client.query<{
     current_user: string;
-    is_superuser: boolean;
     can_create_database_schema: boolean;
     can_create_qc_objects: boolean;
   }>(`SELECT
       current_user,
-      rolsuper AS is_superuser,
       has_database_privilege(current_user, current_database(), 'CREATE') AS can_create_database_schema,
-      has_schema_privilege(current_user, 'qc', 'CREATE') AS can_create_qc_objects
-    FROM pg_roles
-    WHERE rolname = current_user`);
+      CASE WHEN to_regnamespace('qc') IS NULL THEN true
+        ELSE has_schema_privilege(current_user, 'qc', 'CREATE') END AS can_create_qc_objects`);
   const row = result.rows[0];
   if (!row?.can_create_database_schema || !row.can_create_qc_objects) {
     throw new Error(
       `Migration principal ${row?.current_user ?? 'current_user'} lacks CREATE on the database/schema. ` +
-        'Use the Render-managed database owner credential for MODE A; CREATEROLE is not required.',
+        'Configure the approved migration principal; CREATEROLE is not required.',
     );
   }
 }
@@ -163,7 +194,7 @@ export async function migrate(
     await verifyMigrationIntegrity(client, migrations);
     const applied = new Set((await readApplied(client)).map((row) => row.version));
     const pending = migrations.filter((migration) => !applied.has(migration.version));
-    if (pending.length > 0) {
+    if (pending.length > 0 && !options.check) {
       await assertMigrationPrivileges(client);
       await assertCurrentOwnership(client);
     }
@@ -199,6 +230,9 @@ export async function migrate(
 }
 
 export function formatMigrationError(error: unknown): string {
+  if (error instanceof MigrationIntegrityError) {
+    return `MIGRATION SOURCE/LEDGER DRIFT: ${error.message}`;
+  }
   if (error instanceof DatabaseConfigurationError || error instanceof InvalidEnvironmentError) {
     return `MIGRATION CONFIGURATION ERROR: ${error.message}`;
   }
@@ -212,7 +246,46 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
   // must never mutate their process environment.
   loadLocalEnv();
   const check = process.argv.includes('--check');
-  migrate({ check })
+  const runCli = async () => {
+    const migrationUrl = process.env.MIGRATION_DATABASE_URL?.trim();
+    if (!migrationUrl) return migrate({ check });
+
+    const connectionConfig = getDatabaseConnectionConfig(migrationUrl);
+    const hostname = new URL(connectionConfig.connectionString!).hostname.toLowerCase();
+    if (hostname.endsWith('-pooler')) {
+      throw new DatabaseConfigurationError(
+        'MIGRATION_DATABASE_URL must use a direct PostgreSQL endpoint, not a pooled endpoint.',
+      );
+    }
+    const runtimeUrl = getRuntimeConfig().databaseUrl;
+    if (!runtimeUrl) {
+      throw new DatabaseConfigurationError(
+        'DATABASE_URL must identify the active application database before a dedicated migration principal is used.',
+      );
+    }
+    const runtimeTarget = new URL(runtimeUrl);
+    const migrationTarget = new URL(connectionConfig.connectionString!);
+    if (decodeURIComponent(runtimeTarget.username) === decodeURIComponent(migrationTarget.username)) {
+      throw new DatabaseConfigurationError(
+        'MIGRATION_DATABASE_URL must use a migration principal distinct from the runtime database principal.',
+      );
+    }
+    const targetKey = (url: URL) =>
+      `${url.hostname.toLowerCase()}:${url.port || '5432'}${url.pathname}`;
+    if (targetKey(runtimeTarget) !== targetKey(migrationTarget)) {
+      throw new DatabaseConfigurationError(
+        'MIGRATION_DATABASE_URL must target the same host, port, and database as the active runtime profile.',
+      );
+    }
+    const cliPool = createPool(connectionConfig);
+    try {
+      return await migrate({ check, pool: cliPool });
+    } finally {
+      await cliPool.end();
+    }
+  };
+
+  runCli()
     .then((result) => {
       console.log(JSON.stringify({ mode: check ? 'check' : 'migrate', ...result }));
     })

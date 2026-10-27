@@ -343,6 +343,11 @@ export interface ReceivingItemsTable {
   source_system: string | null;
   source_reference: string | null;
   imported_at: Date | null;
+  /** Optional pilot scope binding; null preserves historical rows (migration 0050). */
+  pilot_scope_site: string | null;
+  pilot_scope_department: string | null;
+  pilot_scope_line: string | null;
+  pilot_scope_shift: string | null;
   receiving_date: string | Date;
   expiry_date: string | Date | null;
   workflow_state: string;
@@ -383,6 +388,67 @@ export interface ReceivingReleaseIntentsTable {
   record_scope_department: string | null;
   record_scope_line: string | null;
   record_scope_shift: string | null;
+  recorded_at: Generated<Date>;
+}
+export interface PilotShadowDecisionsTable {
+  id: Generated<string>;
+  environment_profile: string;
+  decision_type: string;
+  decision_state: string;
+  execution_state: string;
+  receiving_item_id: string;
+  request_id: string;
+  request_fingerprint: string;
+  actor_id: string;
+  source_workflow_state: string;
+  source_inspection_result: string;
+  source_record_version: bigint;
+  scope_site: string;
+  scope_department: string;
+  scope_line: string;
+  scope_shift: string;
+  record_scope_site: string | null;
+  record_scope_department: string | null;
+  record_scope_line: string | null;
+  record_scope_shift: string | null;
+  recorded_at: Generated<Date>;
+}
+export interface MasterDataImportRevisionsTable {
+  id: Generated<string>;
+  dataset_key: string;
+  content_sha256: string;
+  source_owner: string;
+  source_reference: string;
+  effective_revision: string | null;
+  source_approval_reference: string | null;
+  adapter_key: string | null;
+  source_last_updated: string | Date | null;
+  header_mapping: Generated<unknown>;
+  records: unknown;
+  preview: Generated<unknown>;
+  request_id: string;
+  request_fingerprint: string;
+  submitted_by: string;
+  submitted_at: Generated<Date>;
+  approval_state: Generated<string>;
+  import_state: Generated<string>;
+  import_request_id: string | null;
+  import_fingerprint: string | null;
+  import_result: unknown | null;
+  version: Generated<bigint>;
+}
+export interface MasterDataApprovalEventsTable {
+  id: Generated<string>;
+  revision_id: string;
+  event_type: string;
+  actor_id: string;
+  owner_authority: string | null;
+  owner_login_identity: string | null;
+  content_sha256: string;
+  request_id: string;
+  audit_event_id: string | null;
+  reason: string;
+  signature_deferred: Generated<boolean>;
   recorded_at: Generated<Date>;
 }
 export interface InspectionReportCatalogTable {
@@ -1362,6 +1428,9 @@ export interface DatabaseSchema {
   task_dependencies: TaskDependenciesTable;
   receiving_items: ReceivingItemsTable;
   receiving_release_intents: ReceivingReleaseIntentsTable;
+  pilot_shadow_decisions: PilotShadowDecisionsTable;
+  master_data_import_revisions: MasterDataImportRevisionsTable;
+  master_data_approval_events: MasterDataApprovalEventsTable;
   inspection_report_catalog: InspectionReportCatalogTable;
   inspection_report_source_evidence: InspectionReportSourceEvidenceTable;
   inspection_templates: InspectionTemplatesTable;

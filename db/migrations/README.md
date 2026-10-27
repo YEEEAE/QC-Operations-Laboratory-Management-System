@@ -2,8 +2,7 @@
 
 This directory contains the authoritative PostgreSQL migrations for the QC system.
 
-Current workspace source head is `0049_owner_approval_authority` (49 migration
-files). Migration 0049 introduces Owner-Controlled Internal Approval: it adds
+Current workspace source head after DATA-02 is `0053_validate_receiving_normalization_constraints` (53 migration files); immediately before this task it was `0052_master_data_intake_approval`. The source sequence is numbered without gaps. Migration 0049 introduces Owner-Controlled Internal Approval: it adds
 non-destructive owner-decision columns to `qc.approval_decisions` (decision type,
 owner authority and login identity, previous/resulting state, authorization
 context, evidence references, the deferred-signature marker and a real FK to the
@@ -39,13 +38,17 @@ pending provider migrations without the explicit authorization and credential
 rotation gate documented in `Documents/RENDER-DATABASE-CONNECTION.md`.
 
 - Files are forward-only SQL and are immutable after application to a shared environment.
-- `scripts/db/migrate.ts` applies them in lexical order and records SHA-256 checksums in `qc.schema_migrations`.
+- `scripts/db/migrate.ts` requires a contiguous four-digit source sequence, verifies the applied ledger is an exact source prefix (including names and supported SHA-256 checksums), takes a PostgreSQL advisory lock, and applies each migration plus its ledger row in one transaction. Unknown, reordered, skipped, or changed applied history is refused.
+- `scripts/db/migrate.ts --check` verifies drift without creating the schema or requiring DDL privileges; the advisory lock is still taken for a consistent ledger read.
 - Migration execution is explicit; the application never runs migrations during startup.
 - A checksum mismatch is a hard failure. Repair is represented by a new migration, never by editing history.
-- Fresh Render deployments use MODE A: the Render-managed `DATABASE_URL` credential is both migration principal and runtime principal. The credential must be able to create schemas/objects in its database, but it does not need `CREATEROLE`, `qc_migrator`, or `qc_app_runtime`.
-- Migrations intentionally leave the `qc` schema and its objects owned by the current database principal. This is required because the current modular monolith has one database identity and does not select a separate runtime role.
+- `DATABASE_URL` is the application runtime principal. The migration CLI accepts a separate direct (non-pooled) `MIGRATION_DATABASE_URL`; when absent it retains the existing shared-principal MODE A behavior for compatibility. The CLI rejects a `-pooler` endpoint for the dedicated migration URL.
+- In dedicated-principal deployments, the runtime principal should not have database/schema `CREATE` or write access to `qc.schema_migrations`; the migration principal needs separately approved DDL and ledger rights. `db:preflight` reports runtime capability only and never opens `MIGRATION_DATABASE_URL`. Use the permission template in `db/README.md` separately for each principal; source support does not establish provider grants or role separation.
+- Migration ownership checks remain fail-closed. No automatic ownership transfer or role creation is performed by the application credential.
 - The runner accepts the exact legacy checksums from the former role/ownership model so an existing ledger is not silently rewritten. If such a database has pending migrations, the runner fails closed until a provider administrator remediates ownership; it never transfers ownership or creates roles from the application credential.
 
 The first migration creates only shared database primitives and identity/platform infrastructure. Domain tables are introduced by later, separately reviewed migrations.
 
-Migration 0050 adds nullable Receiving scope attributes and an append-only pilot shadow-decision ledger. In pilot profile, release never updates the Receiving row or sends an outbox command; exact scope matches produce a `SIMULATED` record, and unbound records produce a `PENDING_SCOPE_BINDING` request. The source migration has not been applied or verified against any database.
+Migration 0050 adds nullable Receiving scope attributes and an append-only pilot shadow-decision ledger. In pilot profile, release never updates the Receiving row or sends an outbox command; exact scope matches produce a `SIMULATED` record, and unbound records produce a `PENDING_SCOPE_BINDING` request. Migration 0051 adds an append-only release-intent ledger that does not change product disposition or execute warehouse/ERP actions. Migration 0052 adds staged master-data revisions and scoped owner-decision evidence; the owner event is an internal approval record with deferred signature, not a formal signature. Migration 0053 validates the four receiving-normalization checks introduced as `NOT VALID` in 0035. It performs no historical backfill: a historical violation aborts the migration and requires a separately authorized disposition. None of these source migrations is asserted to be applied to any database.
+
+The outstanding `NOT VALID` source constraints before applying 0053 are `qc.receiving_items.receiving_items__quantity_unit_vocabulary`, `receiving_items__expiry_not_before_receiving`, `receiving_items__purchase_order_no_not_blank`, and `receiving_items__source_reference_not_blank`. Migration 0053 is the controlled, forward-only validation step; no legacy value is rewritten. Actual database validation state remains unknown until an authorized operator inspects it.
