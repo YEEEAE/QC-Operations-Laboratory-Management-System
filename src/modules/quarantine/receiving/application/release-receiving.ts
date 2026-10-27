@@ -7,31 +7,75 @@ import { isP05Authority } from '../../../../shared/authorization/p05-authority.j
 import { getPilotScope, isPilotShadowMode } from '../../../../config/pilot.js';
 import { getServerEnv } from '../../../../config/env.js';
 
-export interface ReleasePolicy {
-  canRelease(input: { item: ReceivingItem; actor: ActorContext }): boolean | Promise<boolean>;
+export type ReleaseGateStatus = 'PASS' | 'BLOCKED' | 'UNAVAILABLE';
+export interface ReleaseGateEvaluation {
+  decisionSource: string;
+  releaseAuthorityId?: string;
+  linkedInspectionReportId?: string;
+  scientificPass: ReleaseGateStatus;
+  effectiveDocuments: ReleaseGateStatus;
+  noOpenHold: ReleaseGateStatus;
+  notExpired: ReleaseGateStatus;
+  noOpenReject: ReleaseGateStatus;
+  freshEvidence: ReleaseGateStatus;
+  approvedReleaseAuthority: ReleaseGateStatus;
 }
-const p05ReleasePolicy: ReleasePolicy = { canRelease: () => true };
+
+export interface ReleasePolicy {
+  evaluate(input: { item: ReceivingItem; actor: ActorContext }): Promise<ReleaseGateEvaluation>;
+}
+
+// Production release stays disabled until an approved source adapter is wired
+// to this boundary. A provider failure never becomes an implicit approval.
+const unavailableReleasePolicy: ReleasePolicy = {
+  evaluate: async () => ({
+    decisionSource: 'NO_APPROVED_RELEASE_AUTHORITY_SOURCE',
+    scientificPass: 'UNAVAILABLE',
+    effectiveDocuments: 'UNAVAILABLE',
+    noOpenHold: 'UNAVAILABLE',
+    notExpired: 'UNAVAILABLE',
+    noOpenReject: 'UNAVAILABLE',
+    freshEvidence: 'UNAVAILABLE',
+    approvedReleaseAuthority: 'UNAVAILABLE',
+  }),
+};
 
 export class ReleaseReceivingUseCase {
   constructor(
     private readonly repository: ReceivingRepository,
-    private readonly policy: ReleasePolicy = p05ReleasePolicy,
+    private readonly policy: ReleasePolicy = unavailableReleasePolicy,
   ) {}
+
   async execute(input: {
     actor: ActorContext;
     id: string;
     expectedVersion: bigint;
     requestId: string;
+    reason: string;
   }) {
-    const pilotProfile = getServerEnv().APP_ENVIRONMENT_PROFILE === 'pilot';
-    if (!pilotProfile) {
-      const replay = await this.repository.resolveReplay?.(input);
-      if (replay) return replay;
-    }
+    if (!input.reason.trim()) throw new AppError('VALIDATION_FAILED', { userSafe: true });
+    const env = getServerEnv();
+    const pilotProfile = env.APP_ENVIRONMENT_PROFILE === 'pilot';
     const item = await this.repository.get(input.id, input.actor);
     if (!item) throw new AppError('RESOURCE_NOT_FOUND', { userSafe: true });
     if (!isP05Authority(input.actor)) throw new AppError('AUTHZ_DENIED', { userSafe: true });
-    const policyApproved = await this.policy.canRelease({ item, actor: input.actor });
+
+    const gate = pilotProfile
+      ? undefined
+      : await this.policy.evaluate({ item, actor: input.actor }).catch(() => undefined);
+    const gatesPass = Boolean(
+      gate &&
+      gate.scientificPass === 'PASS' &&
+      gate.effectiveDocuments === 'PASS' &&
+      gate.noOpenHold === 'PASS' &&
+      gate.notExpired === 'PASS' &&
+      gate.noOpenReject === 'PASS' &&
+      gate.freshEvidence === 'PASS' &&
+      gate.approvedReleaseAuthority === 'PASS' &&
+      gate.releaseAuthorityId?.trim() &&
+      gate.linkedInspectionReportId &&
+      gate.linkedInspectionReportId === item.approvedInspectionReportId
+    );
     authorize(
       {
         actor: input.actor,
@@ -53,27 +97,58 @@ export class ReleaseReceivingUseCase {
         expectedVersion: input.expectedVersion,
         businessCondition:
           item.workflowState === 'RELEASE_PENDING' &&
-          item.inspectionResult === 'PASS' &&
           !item.releaseSystem &&
-          policyApproved,
+          (pilotProfile
+            ? item.inspectionResult === 'PASS' &&
+              Boolean(item.approvedInspectionReportId) &&
+              item.latestInspectionReportState === 'APPROVED' &&
+              item.linkedInspections?.[0]?.id === item.approvedInspectionReportId &&
+              item.linkedInspections[0]?.finalResult === 'PASS'
+            : true),
       },
       { throwOnDeny: true },
     );
+
     if (pilotProfile) {
       if (!isPilotShadowMode()) throw new AppError('POLICY_SOURCE_REQUIRED', { userSafe: true });
-      const scope = getPilotScope();
-      if (!this.repository.recordPilotShadowRelease) {
+      if (!this.repository.recordReleaseIntent) {
         throw new AppError('POLICY_SOURCE_REQUIRED', { userSafe: true });
       }
-      const decision = await this.repository.recordPilotShadowRelease({ ...input, scope });
+      const decision = await this.repository.recordReleaseIntent({
+        ...input,
+        profile: 'pilot',
+        decisionSource: 'PILOT_SHADOW_ACTION',
+        linkedInspectionReportId: item.approvedInspectionReportId,
+        scope: getPilotScope(),
+      });
       return { disposition: decision.decisionState, decisionId: decision.decisionId };
     }
-    return this.repository.transition({
-      id: item.id,
-      expectedVersion: input.expectedVersion,
-      actor: input.actor,
-      action: 'RELEASE',
-      requestId: input.requestId,
+
+    if (!this.repository.recordReleaseIntent) {
+      throw new AppError('POLICY_SOURCE_REQUIRED', { userSafe: true });
+    }
+    const intent = await this.repository.recordReleaseIntent({
+      ...input,
+      profile: env.APP_ENVIRONMENT_PROFILE,
+      decisionSource: env.APP_ENVIRONMENT_PROFILE === 'production'
+        ? 'PRODUCTION_AUTHORITY_UNAVAILABLE'
+        : 'NONPRODUCTION_AUTHORITY_UNAVAILABLE',
+      linkedInspectionReportId: item.approvedInspectionReportId,
+      scope: {},
+      gateSnapshot: {
+        ...(gate ?? {
+          decisionSource: 'PRODUCTION_RELEASE_GATE_PROVIDER_UNAVAILABLE',
+          scientificPass: 'UNAVAILABLE',
+          effectiveDocuments: 'UNAVAILABLE',
+          noOpenHold: 'UNAVAILABLE',
+          notExpired: 'UNAVAILABLE',
+          noOpenReject: 'UNAVAILABLE',
+          freshEvidence: 'UNAVAILABLE',
+          approvedReleaseAuthority: 'UNAVAILABLE',
+        }),
+        decisionResult: gatesPass ? 'GATES_PASS_AUTHORITY_NOT_PERSISTED' : 'PENDING_GATE_EVIDENCE',
+      },
     });
+    return { disposition: intent.decisionState, decisionId: intent.decisionId };
   }
 }

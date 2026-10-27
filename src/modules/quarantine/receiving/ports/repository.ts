@@ -93,20 +93,18 @@ export interface ReceivingRepository {
     expiryDate?: Date;
     requestId: string;
   }): Promise<ReceivingItem>;
-  /** Returns a committed release replay before state validation. */
-  resolveReplay?(i: {
+  recordReleaseIntent?(i: {
     id: string;
     expectedVersion: bigint;
     actor: ActorContext;
     requestId: string;
-  }): Promise<ReceivingItem | undefined>;
-  recordPilotShadowRelease?(i: {
-    id: string;
-    expectedVersion: bigint;
-    actor: ActorContext;
-    requestId: string;
+    reason: string;
+    profile: 'development' | 'test' | 'staging' | 'pilot' | 'production';
+    decisionSource: 'PILOT_SHADOW_ACTION' | 'PRODUCTION_AUTHORITY_UNAVAILABLE' | 'NONPRODUCTION_AUTHORITY_UNAVAILABLE';
+    linkedInspectionReportId?: string;
     scope: { site?: string; department?: string; line?: string; shift?: string };
-  }): Promise<{ decisionId: string; decisionState: 'SIMULATED' | 'PENDING_SCOPE_BINDING' }>;
+    gateSnapshot?: Readonly<Record<string, unknown>>;
+  }): Promise<{ decisionId: string; decisionState: 'SIMULATED_ONLY' | 'PENDING_SCOPE_BINDING' | 'PENDING_AUTHORITY' }>;
   transition(i: {
     id: string;
     expectedVersion: bigint;

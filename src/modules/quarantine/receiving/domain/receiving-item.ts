@@ -37,6 +37,8 @@ export interface ReceivingItem {
   version: bigint;
   /** Server-derived inspection executor for release SoD checks. */
   inspectionAuthorId?: string;
+  /** Server-derived approved report linked to the current inspection result. */
+  approvedInspectionReportId?: string;
   /** Server-derived count of active receiving evidence links. */
   evidenceCount?: number;
   /** Server-derived state of the newest linked inspection report. */

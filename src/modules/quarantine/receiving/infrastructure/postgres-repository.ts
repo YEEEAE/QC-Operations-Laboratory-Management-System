@@ -174,7 +174,7 @@ export class PostgresReceivingRepository implements ReceivingRepository {
     const [inspection, linked, history, evidence] = await Promise.all([
       this.db
         .selectFrom('inspection_reports')
-        .select('author_id')
+        .select(['id', 'author_id', 'final_result'])
         .where('receiving_item_id', '=', id)
         .where('state', '=', 'APPROVED')
         .orderBy('updated_at', 'desc')
@@ -223,6 +223,8 @@ export class PostgresReceivingRepository implements ReceivingRepository {
       ? {
           ...x,
           inspectionAuthorId: inspection?.author_id,
+          approvedInspectionReportId:
+            inspection?.final_result === 'PASS' ? inspection.id : undefined,
           evidenceCount: Number(evidence.count),
           latestInspectionReportState: linked[0]?.state ?? null,
           linkedInspections: linked.map((report) => ({
@@ -508,6 +510,9 @@ export class PostgresReceivingRepository implements ReceivingRepository {
     reason?: string;
     requestId: string;
   }) {
+    if (i.action === 'RELEASE') {
+      throw new AppError('POLICY_SOURCE_REQUIRED', { userSafe: true });
+    }
     const old = await this.get(i.id, i.actor);
     if (!old) throw new AppError('RESOURCE_NOT_FOUND', { userSafe: true });
     const changed = applyReceivingAction(old, i.action, i.reason);
@@ -553,15 +558,11 @@ export class PostgresReceivingRepository implements ReceivingRepository {
             response_payload: null,
           })
           .execute();
-        const releasing = i.action === 'RELEASE';
         const row = await tx
           .updateTable('receiving_items')
           .set({
             workflow_state: changed.workflowState,
             inspection_result: old.inspectionResult,
-            ...(releasing
-              ? { release_system: true, released_at: new Date(), released_by: i.actor.id }
-              : {}),
             updated_by: i.actor.id,
             updated_at: new Date(),
             version: i.expectedVersion + 1n,
@@ -590,7 +591,7 @@ export class PostgresReceivingRepository implements ReceivingRepository {
           payload: {
             action: i.action,
             state: changed.workflowState,
-            releaseSystem: releasing || old.releaseSystem,
+            releaseSystem: old.releaseSystem,
           },
           dedupeKey: `receiving:${i.id}:v${i.expectedVersion + 1n}`,
         });
@@ -612,20 +613,25 @@ export class PostgresReceivingRepository implements ReceivingRepository {
     }
   }
 
-  async recordPilotShadowRelease(i: {
+  async recordReleaseIntent(i: {
     id: string;
     expectedVersion: bigint;
     actor: ActorContext;
     requestId: string;
+    reason: string;
+    profile: 'development' | 'test' | 'staging' | 'pilot' | 'production';
+    decisionSource: 'PILOT_SHADOW_ACTION' | 'PRODUCTION_AUTHORITY_UNAVAILABLE' | 'NONPRODUCTION_AUTHORITY_UNAVAILABLE';
+    linkedInspectionReportId?: string;
     scope: { site?: string; department?: string; line?: string; shift?: string };
-  }): Promise<{ decisionId: string; decisionState: 'SIMULATED' | 'PENDING_SCOPE_BINDING' }> {
+    gateSnapshot?: Readonly<Record<string, unknown>>;
+  }): Promise<{ decisionId: string; decisionState: 'SIMULATED_ONLY' | 'PENDING_SCOPE_BINDING' | 'PENDING_AUTHORITY' }> {
     const scope = {
       site: i.scope.site?.trim(),
       department: i.scope.department?.trim(),
       line: i.scope.line?.trim(),
       shift: i.scope.shift?.trim(),
     };
-    if (!scope.site || !scope.department || !scope.line || !scope.shift) {
+    if (i.profile === 'pilot' && (!scope.site || !scope.department || !scope.line || !scope.shift)) {
       throw new AppError('POLICY_SOURCE_REQUIRED', { userSafe: true });
     }
     if (!i.requestId || i.requestId === 'unknown') {
@@ -637,16 +643,20 @@ export class PostgresReceivingRepository implements ReceivingRepository {
       actorId: i.actor.id,
       requestId: i.requestId,
       scope,
-      decision: 'SIMULATED_RELEASE',
+      decision: i.profile === 'pilot' ? 'SIMULATED_ONLY' : 'PENDING_AUTHORITY',
+      decisionSource: i.decisionSource,
+      gateSnapshot: i.gateSnapshot ?? null,
+      reason: i.reason.trim(),
+      linkedInspectionReportId: i.linkedInspectionReportId ?? null,
       execution: 'NOT_SENT',
     })).digest('hex');
     try {
       return await this.db.transaction().execute(async (tx) => {
         const audit = this.auditFor(tx);
         if (!audit) throw new AppError('SYSTEM_INTERNAL', { userSafe: false });
-        const prior = await sql<{ id: string; request_fingerprint: string; decision_state: 'SIMULATED' | 'PENDING_SCOPE_BINDING' }>`
-          select id, request_fingerprint, decision_state from qc.pilot_shadow_decisions
-          where environment_profile = 'pilot' and receiving_item_id = ${i.id} and request_id = ${i.requestId}
+        const prior = await sql<{ id: string; request_fingerprint: string; decision_state: 'SIMULATED_ONLY' | 'PENDING_SCOPE_BINDING' | 'PENDING_AUTHORITY' }>`
+          select id, request_fingerprint, intent_state as decision_state from qc.receiving_release_intents
+          where environment_profile = ${i.profile} and receiving_item_id = ${i.id} and request_id = ${i.requestId}
           for update
         `.execute(tx);
         if (prior.rows[0]) {
@@ -666,24 +676,57 @@ export class PostgresReceivingRepository implements ReceivingRepository {
         const row = current.rows[0];
         if (!row) throw new AppError('RESOURCE_NOT_FOUND', { userSafe: true });
         if (BigInt(row.version) !== i.expectedVersion) throw new AppError('CONFLICT_STALE_VERSION', { userSafe: true });
-        if (row.workflow_state !== 'RELEASE_PENDING' || row.inspection_result !== 'PASS' || row.release_system) {
+        if (row.workflow_state !== 'RELEASE_PENDING' || row.release_system ||
+            (i.profile === 'pilot' && row.inspection_result !== 'PASS')) {
           throw new AppError('POLICY_SOURCE_REQUIRED', { userSafe: true });
+        }
+        if (i.linkedInspectionReportId) {
+          const linkedReport = i.profile === 'pilot'
+            ? await tx
+                .selectFrom('inspection_reports as report')
+                .innerJoin('inspection_template_versions as templateVersion', 'templateVersion.id', 'report.template_version_id')
+                .innerJoin('inspection_templates as template', 'template.id', 'templateVersion.template_id')
+                .innerJoin('inspection_report_catalog as catalog', 'catalog.id', 'template.catalog_id')
+                .select('report.id')
+                .where('report.id', '=', i.linkedInspectionReportId)
+                .where('report.receiving_item_id', '=', i.id)
+                .where('report.state', '=', 'APPROVED')
+                .where('report.final_result', '=', 'PASS')
+                .where('templateVersion.state', '=', 'APPROVED')
+                .where('templateVersion.effective_at', '<=', sql<Date>`CURRENT_TIMESTAMP`)
+                .where('template.active', '=', true)
+                .where('catalog.catalog_state', '=', 'ACTIVE')
+                .where('catalog.source_document_status', '=', 'MATCHED')
+                .whereRef('templateVersion.report_revision', '=', 'catalog.master_revision')
+                .executeTakeFirst()
+            : await tx
+                .selectFrom('inspection_reports')
+                .select('id')
+                .where('id', '=', i.linkedInspectionReportId)
+                .where('receiving_item_id', '=', i.id)
+                .executeTakeFirst();
+          if (!linkedReport) throw new AppError('POLICY_SOURCE_REQUIRED', { userSafe: true });
         }
         const inPilotScope = row.pilot_scope_site === scope.site && row.pilot_scope_department === scope.department &&
           row.pilot_scope_line === scope.line && row.pilot_scope_shift === scope.shift;
-        const decisionState = inPilotScope ? 'SIMULATED' as const : 'PENDING_SCOPE_BINDING' as const;
-        const decisionType = inPilotScope ? 'SIMULATED_RELEASE' : 'RELEASE_SIMULATION_REQUEST';
+        const decisionState = i.profile === 'pilot'
+          ? inPilotScope ? 'SIMULATED_ONLY' as const : 'PENDING_SCOPE_BINDING' as const
+          : 'PENDING_AUTHORITY' as const;
+        const decisionType = i.profile === 'pilot'
+          ? inPilotScope ? 'SIMULATED_RELEASE' : 'RELEASE_SIMULATION_REQUEST'
+          : i.profile === 'production' ? 'PRODUCTION_RELEASE_REQUEST' : 'NONPRODUCTION_RELEASE_REQUEST';
         const inserted = await sql<{ id: string }>`
-          insert into qc.pilot_shadow_decisions (
-            environment_profile, decision_type, decision_state, execution_state, receiving_item_id,
-            request_id, request_fingerprint, actor_id, source_workflow_state,
-            source_inspection_result, source_record_version, scope_site,
-            scope_department, scope_line, scope_shift, record_scope_site,
-            record_scope_department, record_scope_line, record_scope_shift
+          insert into qc.receiving_release_intents (
+            environment_profile, decision_type, intent_state, authority_state, execution_state,
+            decision_source, gate_snapshot, reason, receiving_item_id, linked_inspection_report_id, lot_snapshot,
+            request_id, request_fingerprint, actor_id, expected_version, source_workflow_state,
+            source_inspection_result, scope_site, scope_department, scope_line, scope_shift,
+            record_scope_site, record_scope_department, record_scope_line, record_scope_shift
           ) values (
-            'pilot', ${decisionType}, ${decisionState}, 'NOT_SENT', ${i.id}, ${i.requestId},
-            ${fingerprint}, ${i.actor.id}, ${row.workflow_state}, ${row.inspection_result},
-            ${i.expectedVersion}, ${scope.site}, ${scope.department}, ${scope.line}, ${scope.shift},
+            ${i.profile}, ${decisionType}, ${decisionState}, ${i.profile === 'pilot' && inPilotScope ? 'NOT_GRANTED' : 'UNAVAILABLE'}, 'NOT_SENT',
+            ${i.decisionSource}, ${stableJson(i.gateSnapshot ?? {})}::jsonb, ${i.reason.trim()}, ${i.id}, ${i.linkedInspectionReportId ?? null}, ${row.lot},
+            ${i.requestId}, ${fingerprint}, ${i.actor.id}, ${i.expectedVersion}, ${row.workflow_state}, ${row.inspection_result},
+            ${scope.site}, ${scope.department}, ${scope.line}, ${scope.shift},
             ${row.pilot_scope_site}, ${row.pilot_scope_department}, ${row.pilot_scope_line}, ${row.pilot_scope_shift}
           ) returning id
         `.execute(tx);
@@ -694,7 +737,13 @@ export class PostgresReceivingRepository implements ReceivingRepository {
           actorId: i.actor.id,
           subjectType: 'RECEIVING_ITEM',
           subjectId: i.id,
-          action: inPilotScope ? 'SIMULATED_RELEASE' : 'RELEASE_SIMULATION_REQUESTED',
+          action: i.profile === 'pilot' && inPilotScope
+            ? 'SIMULATED_RELEASE'
+            : i.profile === 'pilot'
+              ? 'RELEASE_SIMULATION_REQUESTED'
+              : i.profile === 'production'
+                ? 'PRODUCTION_RELEASE_REQUESTED'
+                : 'NONPRODUCTION_RELEASE_REQUESTED',
           oldState: row.workflow_state,
           newState: row.workflow_state,
           requestId: i.requestId,
@@ -702,6 +751,12 @@ export class PostgresReceivingRepository implements ReceivingRepository {
             decisionId,
             decisionType,
             decisionState,
+            decisionSource: i.decisionSource,
+            gateSnapshot: i.gateSnapshot ?? {},
+            reason: i.reason.trim(),
+            linkedInspectionReportId: i.linkedInspectionReportId ?? null,
+            expectedVersion: String(i.expectedVersion),
+            lot: row.lot,
             applicationDecision: true,
             erpWarehouseExecution: 'NOT_SENT',
             productDisposition: 'NOT_CHANGED',
@@ -715,35 +770,6 @@ export class PostgresReceivingRepository implements ReceivingRepository {
       if (e instanceof AppError) throw e;
       throw translateDatabaseError(e);
     }
-  }
-
-  async resolveReplay(i: {
-    id: string;
-    expectedVersion: bigint;
-    actor: ActorContext;
-    requestId: string;
-  }): Promise<ReceivingItem | undefined> {
-    const key = `RECEIVING:RELEASE:${i.id}:${i.requestId}`;
-    const fingerprint = createHash('sha256')
-      .update(
-        stableJson({
-          id: i.id,
-          expectedVersion: String(i.expectedVersion),
-          actorId: i.actor.id,
-          action: 'RELEASE',
-          reason: null,
-        }),
-      )
-      .digest('hex');
-    const row = await this.db
-      .selectFrom('idempotency_records')
-      .select(['request_fingerprint', 'status'])
-      .where('key', '=', key)
-      .executeTakeFirst();
-    if (!row) return undefined;
-    if (row.request_fingerprint !== fingerprint || row.status !== 'COMPLETED')
-      throw new AppError('CONFLICT_DUPLICATE_COMMAND', { userSafe: true });
-    return this.get(i.id, i.actor);
   }
 
   private auditFor(tx: Transaction<DatabaseSchema>): AuditRepository | undefined {

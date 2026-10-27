@@ -145,7 +145,7 @@ const holdReceiving = defineAction({
 });
 const releaseReceiving = defineAction({
   accept: 'json',
-  input: idVersion,
+  input: idVersion.extend({ reason: z.string().trim().min(1).max(500) }),
   handler: (input, context) =>
     run(() =>
       quarantineActionDependencies().receiving.release.execute({

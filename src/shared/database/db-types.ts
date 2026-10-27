@@ -356,6 +356,35 @@ export interface ReceivingItemsTable {
   updated_at: Generated<Date>;
   version: Generated<bigint>;
 }
+export interface ReceivingReleaseIntentsTable {
+  id: Generated<string>;
+  environment_profile: string;
+  decision_type: string;
+  intent_state: string;
+  authority_state: string;
+  execution_state: string;
+  decision_source: string;
+  gate_snapshot: unknown;
+  reason: string;
+  receiving_item_id: string;
+  linked_inspection_report_id: string | null;
+  lot_snapshot: string;
+  request_id: string;
+  request_fingerprint: string;
+  actor_id: string;
+  expected_version: bigint;
+  source_workflow_state: string;
+  source_inspection_result: string;
+  scope_site: string | null;
+  scope_department: string | null;
+  scope_line: string | null;
+  scope_shift: string | null;
+  record_scope_site: string | null;
+  record_scope_department: string | null;
+  record_scope_line: string | null;
+  record_scope_shift: string | null;
+  recorded_at: Generated<Date>;
+}
 export interface InspectionReportCatalogTable {
  id: string; doc_code: string; normalized_doc_code: string; official_title: string; normalized_search_title: string;
  master_revision: string; source_list_revision: number; source_row_no: number; source_sha256: string;
@@ -1332,6 +1361,7 @@ export interface DatabaseSchema {
   task_comments: TaskCommentsTable;
   task_dependencies: TaskDependenciesTable;
   receiving_items: ReceivingItemsTable;
+  receiving_release_intents: ReceivingReleaseIntentsTable;
   inspection_report_catalog: InspectionReportCatalogTable;
   inspection_report_source_evidence: InspectionReportSourceEvidenceTable;
   inspection_templates: InspectionTemplatesTable;
