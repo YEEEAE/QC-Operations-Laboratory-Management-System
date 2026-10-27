@@ -3,6 +3,11 @@
   - Evidence: NOT RUN by instruction; source/diff review only. No Neon/production connection or credential rotation.
   - State: PARTIAL — owner-led credential rotation and protected profile configuration remain outstanding; Neon Auth and ExLabs integrations are not established.
   - Key files: `src/config/env.ts`, `src/shared/observability/`, `Documents/CONFIGURATION-REFERENCE.md`, `Documents/NEON-CREDENTIAL-ROTATION-RUNBOOK.md`.
+- **2026-10-28 — NDB-02 / Pooled SSR and explicit direct migration boundary**
+  - Changed: Bounded the runtime pg pool, added a separate one-client maintenance pool, and made the migration CLI fail closed unless `--direct` selects operator credentials; Neon pooled/direct host labels are normalized only for same-target checks.
+  - Evidence: Source/diff review only; no tests, build, database connection, migration, or deployment. Provider-issued runtime/direct URLs and credential separation remain owner configuration.
+  - State: PARTIAL — code contract updated; pg runtime behavior, host correspondence, and deployment invocation of `destroyDatabase()` remain NOT VERIFIED.
+  - Key files: `src/shared/database/`, `scripts/db/migrate.ts`, `db/README.md`.
 - **2026-10-28 — SAFE-01 / Isolated staging and pilot source configuration**
   - Changed: Added separate staging/pilot profiles, fail-closed DB host separation, disabled-by-default pilot shadow decisions, readiness projection, environment banner, and onboarding/disable runbook.
   - Evidence: NOT RUN by instruction; source review only. File-store adapter is not wired to a runtime backup consumer; synthetic seeders remain development/test-only; approved master-data onboarding/scope binding is absent.

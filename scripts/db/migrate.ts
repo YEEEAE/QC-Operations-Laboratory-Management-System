@@ -6,10 +6,10 @@ import type { Pool, PoolClient } from 'pg';
 
 import { InvalidEnvironmentError, parseServerEnv } from '../../src/config/env.js';
 import {
-  createPool,
+  assertDirectDatabaseEndpoint,
+  createMaintenancePool,
   DatabaseConfigurationError,
   getDatabaseConnectionConfig,
-  getPool,
 } from '../../src/shared/database/pool.js';
 import { isSupportedMigrationChecksum } from '../../src/shared/database/migration-checksum-policy.js';
 
@@ -187,7 +187,12 @@ async function assertCurrentOwnership(client: PoolClient): Promise<void> {
 export async function migrate(
   options: { check?: boolean; pool?: Pool; migrations?: MigrationFile[] } = {},
 ): Promise<{ applied: string[]; pending: string[] }> {
-  const pool = options.pool ?? getPool();
+  if (!options.pool) {
+    throw new DatabaseConfigurationError(
+      'Migration execution requires an explicitly selected operator maintenance pool.',
+    );
+  }
+  const pool = options.pool;
   const migrations = options.migrations ?? (await loadMigrations());
   return withMigrationLock(pool, async (client) => {
     await verifyMigrationIntegrity(client, migrations);
@@ -238,6 +243,63 @@ export function formatMigrationError(error: unknown): string {
   return 'MIGRATION DATABASE/NETWORK ERROR: PostgreSQL could not be reached or the migration failed. Credentials and connection details were not printed.';
 }
 
+export function createOperatorMigrationPool(
+  args: readonly string[] = process.argv,
+  environment: NodeJS.ProcessEnv = process.env,
+): Pool {
+  if (!args.includes('--direct')) {
+    throw new DatabaseConfigurationError(
+      'Select the direct operator database path explicitly with --direct.',
+    );
+  }
+  const unpooledUrl = environment.DATABASE_URL_UNPOOLED?.trim();
+  const legacyMigrationUrl = environment.MIGRATION_DATABASE_URL?.trim();
+  if (unpooledUrl && legacyMigrationUrl && unpooledUrl !== legacyMigrationUrl) {
+    throw new DatabaseConfigurationError(
+      'DATABASE_URL_UNPOOLED and MIGRATION_DATABASE_URL disagree; configure one direct migration credential.',
+    );
+  }
+  const migrationUrl = unpooledUrl || legacyMigrationUrl;
+  if (!migrationUrl) {
+    throw new DatabaseConfigurationError(
+      'DATABASE_URL_UNPOOLED is required for the explicitly selected direct migration path.',
+    );
+  }
+
+  const directUrl = assertDirectDatabaseEndpoint(migrationUrl);
+  const connectionConfig = getDatabaseConnectionConfig(directUrl);
+  // Keep operator credentials outside the typed application runtime parse.
+  const runtimeEnv = {
+    ...environment,
+    DATABASE_URL_UNPOOLED: undefined,
+    MIGRATION_DATABASE_URL: undefined,
+  };
+  const runtimeUrl = parseServerEnv(runtimeEnv).DATABASE_URL;
+  if (!runtimeUrl) {
+    throw new DatabaseConfigurationError(
+      'DATABASE_URL must identify the active application database before a dedicated migration principal is used.',
+    );
+  }
+  const runtimeTarget = new URL(runtimeUrl);
+  const migrationTarget = new URL(connectionConfig.connectionString!);
+  if (decodeURIComponent(runtimeTarget.username) === decodeURIComponent(migrationTarget.username)) {
+    throw new DatabaseConfigurationError(
+      'The migration URL must use a migration principal distinct from the runtime database principal.',
+    );
+  }
+  const targetKey = (url: URL) => {
+    const labels = url.hostname.toLowerCase().split('.');
+    if (labels[0]?.endsWith('-pooler')) labels[0] = labels[0].slice(0, -'-pooler'.length);
+    return `${labels.join('.')}:${url.port || '5432'}${decodeURIComponent(url.pathname)}`;
+  };
+  if (targetKey(runtimeTarget) !== targetKey(migrationTarget)) {
+    throw new DatabaseConfigurationError(
+      'The migration URL must target the same host, port, and database as the active runtime profile.',
+    );
+  }
+  return createMaintenancePool(connectionConfig);
+}
+
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
   // Load the ignored local `.env` through the allowlisted parser before the
   // canonical pool resolves `DATABASE_URL`. Only the CLI entrypoint does this:
@@ -248,51 +310,7 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
   loadLocalMigrationEnv();
   const check = process.argv.includes('--check');
   const runCli = async () => {
-    const unpooledUrl = process.env.DATABASE_URL_UNPOOLED?.trim();
-    const legacyMigrationUrl = process.env.MIGRATION_DATABASE_URL?.trim();
-    if (unpooledUrl && legacyMigrationUrl && unpooledUrl !== legacyMigrationUrl) {
-      throw new DatabaseConfigurationError(
-        'DATABASE_URL_UNPOOLED and MIGRATION_DATABASE_URL disagree; configure one direct migration credential.',
-      );
-    }
-    const migrationUrl = unpooledUrl || legacyMigrationUrl;
-    if (!migrationUrl) return migrate({ check });
-
-    const connectionConfig = getDatabaseConnectionConfig(migrationUrl);
-    const hostname = new URL(connectionConfig.connectionString!).hostname.toLowerCase();
-    if (hostname.endsWith('-pooler')) {
-      throw new DatabaseConfigurationError(
-        'The migration URL must use a direct PostgreSQL endpoint, not a pooled endpoint.',
-      );
-    }
-    // The direct migration URL is operator-only. Exclude it from the typed
-    // application runtime parse so it can never become the app's connection.
-    const runtimeEnv = {
-      ...process.env,
-      DATABASE_URL_UNPOOLED: undefined,
-      MIGRATION_DATABASE_URL: undefined,
-    };
-    const runtimeUrl = parseServerEnv(runtimeEnv).DATABASE_URL;
-    if (!runtimeUrl) {
-      throw new DatabaseConfigurationError(
-        'DATABASE_URL must identify the active application database before a dedicated migration principal is used.',
-      );
-    }
-    const runtimeTarget = new URL(runtimeUrl);
-    const migrationTarget = new URL(connectionConfig.connectionString!);
-    if (decodeURIComponent(runtimeTarget.username) === decodeURIComponent(migrationTarget.username)) {
-      throw new DatabaseConfigurationError(
-        'The migration URL must use a migration principal distinct from the runtime database principal.',
-      );
-    }
-    const targetKey = (url: URL) =>
-      `${url.hostname.toLowerCase()}:${url.port || '5432'}${url.pathname}`;
-    if (targetKey(runtimeTarget) !== targetKey(migrationTarget)) {
-      throw new DatabaseConfigurationError(
-        'The migration URL must target the same host, port, and database as the active runtime profile.',
-      );
-    }
-    const cliPool = createPool(connectionConfig);
+    const cliPool = createOperatorMigrationPool(process.argv, process.env);
     try {
       return await migrate({ check, pool: cliPool });
     } finally {

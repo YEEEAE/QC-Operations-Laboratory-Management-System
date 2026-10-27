@@ -25,20 +25,38 @@ export function getDatabaseConnectionConfig(value: string | undefined): PoolConf
   const connectionString = validateDatabaseUrl(value);
   const url = new URL(connectionString);
   const sslMode = url.searchParams.get('sslmode')?.toLowerCase();
+  const channelBinding = url.searchParams.get('channel_binding')?.toLowerCase();
 
-  if (sslMode === 'disable') {
+  if (sslMode === 'disable' || sslMode === 'no-verify') {
     throw new DatabaseConfigurationError(
-      'DATABASE_URL must use TLS for network database connections; sslmode=disable is not allowed.',
+      'PostgreSQL connections must verify the server certificate; insecure sslmode values are not allowed.',
+    );
+  }
+
+  if (channelBinding && !['disable', 'prefer', 'require'].includes(channelBinding)) {
+    throw new DatabaseConfigurationError('The PostgreSQL channel_binding parameter is invalid.');
+  }
+  // pg 8.23.0 can prefer SCRAM-SHA-256-PLUS through enableChannelBinding, but
+  // cannot enforce libpq's strict channel_binding=require semantics. Fail
+  // closed instead of silently falling back to ordinary SCRAM.
+  if (channelBinding === 'require') {
+    throw new DatabaseConfigurationError(
+      'The installed pg client cannot enforce channel_binding=require; use a supported channel-binding mode.',
     );
   }
 
   // Preserve provider-supplied sslmode semantics. Adding an ssl object alongside
   // sslmode can make node-postgres override connection-string TLS settings.
-  if (sslMode) return { connectionString };
+  const channelBindingConfig = channelBinding === 'prefer' ? { enableChannelBinding: true } : {};
+  if (sslMode) return { connectionString, ...channelBindingConfig };
 
   // No sslmode means the URL is incomplete for the canonical runtime path.
   // Node's default CA store verifies the provider certificate.
-  return { connectionString, ssl: { rejectUnauthorized: true } };
+  return {
+    connectionString,
+    ssl: { rejectUnauthorized: true },
+    ...channelBindingConfig,
+  };
 }
 
 export function validateDatabaseUrl(value: string | undefined): string {
@@ -66,12 +84,55 @@ export function validateDatabaseUrl(value: string | undefined): string {
 
 export function createPool(config: PoolConfig): Pool {
   return new Pool({
-    ...config,
+    ...withDatabaseStartupOptions(config),
+    max: config.max ?? 5,
+    idleTimeoutMillis: config.idleTimeoutMillis ?? 10_000,
+    connectionTimeoutMillis: config.connectionTimeoutMillis ?? 10_000,
+    query_timeout: config.query_timeout ?? 35_000,
+    statement_timeout: config.statement_timeout ?? 30_000,
+    idle_in_transaction_session_timeout: config.idle_in_transaction_session_timeout ?? 60_000,
     application_name: config.application_name ?? 'qc-operations',
-    options: [config.options, '-c timezone=UTC', '-c search_path=qc,pg_catalog']
-      .filter(Boolean)
-      .join(' '),
   });
+}
+
+/** A small, independently owned pool for explicitly selected operator work. */
+export function createMaintenancePool(config: PoolConfig): Pool {
+  return new Pool({
+    ...withDatabaseStartupOptions(config),
+    max: 1,
+    idleTimeoutMillis: 5_000,
+    connectionTimeoutMillis: 10_000,
+    application_name: 'qc-operations-maintenance',
+  });
+}
+
+function withDatabaseStartupOptions(config: PoolConfig): PoolConfig {
+  const defaults = '-c timezone=UTC -c search_path=qc,pg_catalog';
+  if (config.connectionString) {
+    const url = new URL(config.connectionString);
+    const options = [url.searchParams.get('options'), config.options, defaults]
+      .filter((value): value is string => Boolean(value?.trim()))
+      .join(' ');
+    url.searchParams.set('options', options);
+    return { ...config, connectionString: url.toString(), options: undefined };
+  }
+  return {
+    ...config,
+    options: [config.options, defaults].filter(Boolean).join(' '),
+  };
+}
+
+/** Reject pooled Neon endpoints for tools that require a stable PostgreSQL session. */
+export function assertDirectDatabaseEndpoint(value: string | undefined): string {
+  const connectionString = validateDatabaseUrl(value);
+  const hostname = new URL(connectionString).hostname.toLowerCase();
+  const firstLabel = hostname.split('.')[0] ?? '';
+  if (hostname.endsWith('.neon.tech') && firstLabel.endsWith('-pooler')) {
+    throw new DatabaseConfigurationError(
+      'Operator maintenance requires a provider-issued direct PostgreSQL endpoint.',
+    );
+  }
+  return connectionString;
 }
 
 export function getPool(): Pool {
