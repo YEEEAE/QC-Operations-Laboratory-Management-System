@@ -38,3 +38,9 @@ audit/*.pdf
 
 # Local code knowledge graph (graphify; machine-local, regenerate with `graphify extract . --code-only`)
 graphify-out/
+
+/audit/27-10-2026/Wi2 2.pdf
+/audit/27-10-2026/Wi 2.pdf
+
+/audit/27-10-2026/Wi.pdf
+/audit/27-10-2026/Wi2.pdf
