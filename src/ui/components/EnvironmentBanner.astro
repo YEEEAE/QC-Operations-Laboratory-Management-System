@@ -1,0 +1,12 @@
+---
+import { getServerEnv } from '../../config/env.js';
+const profile = getServerEnv().APP_ENVIRONMENT_PROFILE;
+const host = Astro.url.hostname;
+const label = profile === 'pilot' ? 'PILOT' : profile === 'staging' ? 'STAGING' : profile.toUpperCase();
+---
+{profile !== 'production' && <div class={`environment-banner environment-banner--${profile}`} role="note" aria-label={`${label} environment`}><strong>{label} ENVIRONMENT</strong><span>{host}</span><span>Isolated trial environment · not production</span></div>}
+<style>
+  .environment-banner{display:flex;flex-wrap:wrap;align-items:center;gap:.5rem 1rem;padding:.55rem 1rem;border-block-end:1px solid var(--status-warning);background:var(--status-warning-bg);color:var(--status-warning);font-size:.8rem;font-weight:600}
+  .environment-banner--pilot{border-color:var(--status-danger);background:var(--status-danger-bg);color:var(--status-danger)}
+  .environment-banner span{font-weight:400}
+</style>

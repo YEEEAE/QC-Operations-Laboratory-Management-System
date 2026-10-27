@@ -47,3 +47,5 @@ rotation gate documented in `Documents/RENDER-DATABASE-CONNECTION.md`.
 - The runner accepts the exact legacy checksums from the former role/ownership model so an existing ledger is not silently rewritten. If such a database has pending migrations, the runner fails closed until a provider administrator remediates ownership; it never transfers ownership or creates roles from the application credential.
 
 The first migration creates only shared database primitives and identity/platform infrastructure. Domain tables are introduced by later, separately reviewed migrations.
+
+Migration 0050 adds nullable Receiving scope attributes and an append-only pilot shadow-decision ledger. In pilot profile, release never updates the Receiving row or sends an outbox command; exact scope matches produce a `SIMULATED` record, and unbound records produce a `PENDING_SCOPE_BINDING` request. The source migration has not been applied or verified against any database.

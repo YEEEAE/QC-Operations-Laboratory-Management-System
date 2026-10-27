@@ -8,6 +8,20 @@ export const TRACEPARENT_HEADER = 'traceparent';
 export const PROBLEM_CONTENT_TYPE = 'application/problem+json';
 
 export const ENV_KEYS = {
+  appEnvironmentProfile: 'APP_ENVIRONMENT_PROFILE',
+  stagingDatabaseUrl: 'STAGING_DATABASE_URL',
+  pilotDatabaseUrl: 'PILOT_DATABASE_URL',
+  pilotEnabled: 'PILOT_ENABLED',
+  pilotShadowMode: 'PILOT_SHADOW_MODE',
+  pilotSite: 'PILOT_SCOPE_SITE',
+  pilotDepartment: 'PILOT_SCOPE_DEPARTMENT',
+  pilotLine: 'PILOT_SCOPE_LINE',
+  pilotShift: 'PILOT_SCOPE_SHIFT',
+  pilotMasterDataEnabled: 'PILOT_REAL_MASTER_DATA_ENABLED',
+  pilotMasterDataApprovalReference: 'PILOT_MASTER_DATA_APPROVAL_REFERENCE',
+  stagingDatabaseHost: 'STAGING_DATABASE_HOST',
+  pilotDatabaseHost: 'PILOT_DATABASE_HOST',
+  productionDatabaseHost: 'PRODUCTION_DATABASE_HOST',
   nodeEnv: 'NODE_ENV',
   databaseUrl: 'DATABASE_URL',
   sessionSecret: 'SESSION_SECRET',
@@ -70,3 +84,5 @@ export const R2_ENV_KEYS = [
   ENV_KEYS.r2SecretAccessKey,
   ENV_KEYS.r2Bucket,
 ] as const;
+export const STAGING_R2_ENV_KEYS = ['STAGING_R2_ENDPOINT', 'STAGING_R2_ACCESS_KEY_ID', 'STAGING_R2_SECRET_ACCESS_KEY', 'STAGING_R2_BUCKET'] as const;
+export const PILOT_R2_ENV_KEYS = ['PILOT_R2_ENDPOINT', 'PILOT_R2_ACCESS_KEY_ID', 'PILOT_R2_SECRET_ACCESS_KEY', 'PILOT_R2_BUCKET'] as const;

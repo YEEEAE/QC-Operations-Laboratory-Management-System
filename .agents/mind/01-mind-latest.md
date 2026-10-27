@@ -1,3 +1,8 @@
+- **2026-10-28 — SAFE-01 / Isolated staging and pilot source configuration**
+  - Changed: Added separate staging/pilot profiles, fail-closed DB host separation, disabled-by-default pilot shadow decisions, readiness projection, environment banner, and onboarding/disable runbook.
+  - Evidence: NOT RUN by instruction; source review only. File-store adapter is not wired to a runtime backup consumer; synthetic seeders remain development/test-only; approved master-data onboarding/scope binding is absent.
+  - State: PARTIAL — no tests, builds, lint, migration, production operation, or deployment performed.
+  - Key files: `src/config/`, `src/modules/quarantine/receiving/`, `db/migrations/0050_pilot_shadow_release_scope.sql`, `Documents/PILOT-STAGING-OPERATIONS.md`.
 - **2026-10-28 — REL-01 / Repair verification pipeline configuration**
   - Changed: CI now pins Node via `.node-version`, installs/caches pinned pnpm after Node setup, checks exact checkout and downloaded artifact identity/checksums, and limits attestation to successful `main` runs. Release-evidence gate now checks environment, workflow build ID, and current server artifact SHA.
   - Evidence: NOT RUN by instruction; source diff only. Historical QC-LAUNCH-019 reports local stale `dist`, unavailable registry DNS, and absent Docker; no GitHub Actions job logs/settings were available.

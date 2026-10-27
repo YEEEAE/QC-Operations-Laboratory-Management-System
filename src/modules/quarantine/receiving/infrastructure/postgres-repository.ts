@@ -612,6 +612,111 @@ export class PostgresReceivingRepository implements ReceivingRepository {
     }
   }
 
+  async recordPilotShadowRelease(i: {
+    id: string;
+    expectedVersion: bigint;
+    actor: ActorContext;
+    requestId: string;
+    scope: { site?: string; department?: string; line?: string; shift?: string };
+  }): Promise<{ decisionId: string; decisionState: 'SIMULATED' | 'PENDING_SCOPE_BINDING' }> {
+    const scope = {
+      site: i.scope.site?.trim(),
+      department: i.scope.department?.trim(),
+      line: i.scope.line?.trim(),
+      shift: i.scope.shift?.trim(),
+    };
+    if (!scope.site || !scope.department || !scope.line || !scope.shift) {
+      throw new AppError('POLICY_SOURCE_REQUIRED', { userSafe: true });
+    }
+    if (!i.requestId || i.requestId === 'unknown') {
+      throw new AppError('SYSTEM_INTERNAL', { userSafe: false });
+    }
+    const fingerprint = createHash('sha256').update(stableJson({
+      id: i.id,
+      expectedVersion: String(i.expectedVersion),
+      actorId: i.actor.id,
+      requestId: i.requestId,
+      scope,
+      decision: 'SIMULATED_RELEASE',
+      execution: 'NOT_SENT',
+    })).digest('hex');
+    try {
+      return await this.db.transaction().execute(async (tx) => {
+        const audit = this.auditFor(tx);
+        if (!audit) throw new AppError('SYSTEM_INTERNAL', { userSafe: false });
+        const prior = await sql<{ id: string; request_fingerprint: string; decision_state: 'SIMULATED' | 'PENDING_SCOPE_BINDING' }>`
+          select id, request_fingerprint, decision_state from qc.pilot_shadow_decisions
+          where environment_profile = 'pilot' and receiving_item_id = ${i.id} and request_id = ${i.requestId}
+          for update
+        `.execute(tx);
+        if (prior.rows[0]) {
+          if (prior.rows[0].request_fingerprint !== fingerprint) {
+            throw new AppError('CONFLICT_DUPLICATE_COMMAND', { userSafe: true });
+          }
+          return { decisionId: prior.rows[0].id, decisionState: prior.rows[0].decision_state };
+        }
+        const current = await sql<{
+          id: string; version: string | number | bigint; workflow_state: string;
+          inspection_result: string; release_system: boolean;
+          pilot_scope_site: string | null; pilot_scope_department: string | null;
+          pilot_scope_line: string | null; pilot_scope_shift: string | null;
+        }>`select id, version, workflow_state, inspection_result, release_system,
+             pilot_scope_site, pilot_scope_department, pilot_scope_line, pilot_scope_shift
+          from qc.receiving_items where id = ${i.id} for update`.execute(tx);
+        const row = current.rows[0];
+        if (!row) throw new AppError('RESOURCE_NOT_FOUND', { userSafe: true });
+        if (BigInt(row.version) !== i.expectedVersion) throw new AppError('CONFLICT_STALE_VERSION', { userSafe: true });
+        if (row.workflow_state !== 'RELEASE_PENDING' || row.inspection_result !== 'PASS' || row.release_system) {
+          throw new AppError('POLICY_SOURCE_REQUIRED', { userSafe: true });
+        }
+        const inPilotScope = row.pilot_scope_site === scope.site && row.pilot_scope_department === scope.department &&
+          row.pilot_scope_line === scope.line && row.pilot_scope_shift === scope.shift;
+        const decisionState = inPilotScope ? 'SIMULATED' as const : 'PENDING_SCOPE_BINDING' as const;
+        const decisionType = inPilotScope ? 'SIMULATED_RELEASE' : 'RELEASE_SIMULATION_REQUEST';
+        const inserted = await sql<{ id: string }>`
+          insert into qc.pilot_shadow_decisions (
+            environment_profile, decision_type, decision_state, execution_state, receiving_item_id,
+            request_id, request_fingerprint, actor_id, source_workflow_state,
+            source_inspection_result, source_record_version, scope_site,
+            scope_department, scope_line, scope_shift, record_scope_site,
+            record_scope_department, record_scope_line, record_scope_shift
+          ) values (
+            'pilot', ${decisionType}, ${decisionState}, 'NOT_SENT', ${i.id}, ${i.requestId},
+            ${fingerprint}, ${i.actor.id}, ${row.workflow_state}, ${row.inspection_result},
+            ${i.expectedVersion}, ${scope.site}, ${scope.department}, ${scope.line}, ${scope.shift},
+            ${row.pilot_scope_site}, ${row.pilot_scope_department}, ${row.pilot_scope_line}, ${row.pilot_scope_shift}
+          ) returning id
+        `.execute(tx);
+        const decisionId = inserted.rows[0]?.id;
+        if (!decisionId) throw new AppError('SYSTEM_INTERNAL', { userSafe: false });
+        await audit.append({
+          actorType: 'USER',
+          actorId: i.actor.id,
+          subjectType: 'RECEIVING_ITEM',
+          subjectId: i.id,
+          action: inPilotScope ? 'SIMULATED_RELEASE' : 'RELEASE_SIMULATION_REQUESTED',
+          oldState: row.workflow_state,
+          newState: row.workflow_state,
+          requestId: i.requestId,
+          payload: {
+            decisionId,
+            decisionType,
+            decisionState,
+            applicationDecision: true,
+            erpWarehouseExecution: 'NOT_SENT',
+            productDisposition: 'NOT_CHANGED',
+            recordVersion: String(i.expectedVersion),
+            scope,
+          },
+        });
+        return { decisionId, decisionState };
+      });
+    } catch (e) {
+      if (e instanceof AppError) throw e;
+      throw translateDatabaseError(e);
+    }
+  }
+
   async resolveReplay(i: {
     id: string;
     expectedVersion: bigint;

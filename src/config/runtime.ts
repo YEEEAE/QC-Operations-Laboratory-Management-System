@@ -11,6 +11,7 @@ import {
 
 export interface RuntimeConfig {
   environment: ServerEnv['NODE_ENV'];
+  profile: ServerEnv['APP_ENVIRONMENT_PROFILE'];
   serviceName: typeof SERVICE_NAME;
   serviceVersion: string;
   release: ConfiguredReleaseIdentity;
@@ -34,6 +35,7 @@ export function getRuntimeConfig(env = getServerEnv()): RuntimeConfig {
   }
   return {
     environment: env.NODE_ENV,
+    profile: env.APP_ENVIRONMENT_PROFILE,
     serviceName: SERVICE_NAME,
     serviceVersion: getServiceVersion(env, '0.1.0'),
     release: getConfiguredReleaseIdentity(env, releaseArtifact, runtimeArtifactSha256),

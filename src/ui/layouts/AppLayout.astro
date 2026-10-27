@@ -5,6 +5,7 @@ import Topbar from '../shell/Topbar.astro';
 import CommandPalette from '../shell/CommandPalette.astro';
 import { routeBreadcrumbs } from '../navigation/navigation';
 import { actorRoleLabel, describeActorScope } from '../../shared/authorization/scope-description';
+import EnvironmentBanner from '../components/EnvironmentBanner.astro';
 interface Props { title?: string; locale?: string; direction?: 'ltr' | 'rtl'; density?: 'comfortable' | 'standard' | 'compact'; scope?: string; approvalCount?: number; notificationCount?: number; userRole?: string; }
 const props = Astro.props;
 const actor = Astro.locals.actor;
@@ -12,6 +13,7 @@ const breadcrumbs = routeBreadcrumbs(Astro.url.pathname);
 ---
 <BaseLayout {...props} visualDirection="capa-a">
   <a class="skip-link" href="#main-content" data-skip-link>Skip to main content</a>
+  <EnvironmentBanner />
   <div class="app-shell" data-app-shell data-preference-account={actor?.id ?? ''} data-mobile-nav-open="false" data-sidebar-collapsed="false">
     <aside id="primary-navigation" class="app-sidebar" data-sidebar-panel aria-label="Primary navigation" aria-hidden="false"><slot name="sidebar"><Sidebar actor={actor} /></slot></aside>
     <div class="app-workspace" data-app-workspace>

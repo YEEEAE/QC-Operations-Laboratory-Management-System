@@ -13,6 +13,7 @@ import { auditQueryDependencies } from '../../shared/audit/audit-dependencies.js
 import { SCOPE_KINDS, scopeRequiresValue } from '../../shared/authorization/types.js';
 import { hasAdminCapability } from '../../shared/authorization/admin-workspace.js';
 import { roleLabel, stateLabel, uxVocabulary } from '../../shared/copy/ux-vocabulary.js';
+import { pilotEnvironmentView } from '../../config/pilot.js';
 
 const actor = Astro.locals.actor;
 if (!actor) return Astro.redirect(`/login?returnTo=${encodeURIComponent(Astro.url.pathname)}`);
@@ -149,6 +150,7 @@ const statusClass = (status: string) =>
         ? 'unknown'
         : 'bad';
 const generatedAt = overview ? formatDateTime(overview.generatedAt) : '—';
+const pilotEnvironment = pilotEnvironmentView();
 // Shared formatter contract: en-GB + Asia/Riyadh everywhere (no ad-hoc locale).
 const formatDate = (value?: Date | string) => formatDateTime(value);
 const migrationBlocker = (migration: Overview['migration']) =>
@@ -177,6 +179,24 @@ const releaseBanner = {
       
       <p class="lede">Review member accounts and system operations.</p>
     <Fragment slot="actions"><span class={`banner ${releaseBanner.class}`}>{releaseBanner.title}</span></Fragment></PageHeader>
+
+  <section class="panel" id="pilot-readiness" aria-labelledby="pilot-readiness-title">
+    <h2 id="pilot-readiness-title">Staging and pilot readiness</h2>
+    <p class="muted">Read-only configuration summary. These stages are independent; configuration does not prove verification or approval.</p>
+    <dl class="readiness-facts">
+      <div><dt>Runtime profile</dt><dd>{pilotEnvironment.profile.toUpperCase()} · {Astro.url.hostname}</dd></div>
+      <div><dt>Implementation</dt><dd>{pilotEnvironment.stages.implementation}</dd></div>
+      <div><dt>Configuration</dt><dd>{pilotEnvironment.stages.configuration}</dd></div>
+      <div><dt>Verification</dt><dd>{pilotEnvironment.stages.verification}</dd></div>
+      <div><dt>Approval</dt><dd>{pilotEnvironment.stages.approval}</dd></div>
+      <div><dt>Pilot gate</dt><dd>{pilotEnvironment.enabled ? 'ENABLED' : 'DISABLED'}</dd></div>
+      <div><dt>Shadow mode</dt><dd>{pilotEnvironment.shadowMode}</dd></div>
+      <div><dt>File storage profile configuration</dt><dd>{pilotEnvironment.fileStorageConfigured ? 'CONFIGURED' : 'NOT CONFIGURED'}</dd></div>
+      <div><dt>Real company master data</dt><dd>{pilotEnvironment.realMasterData}</dd></div>
+      <div><dt>Scope</dt><dd>Site: {pilotEnvironment.scope.site ?? 'Not configured'} · Department: {pilotEnvironment.scope.department ?? 'Not configured'} · Line: {pilotEnvironment.scope.line ?? 'Not configured'} · Shift: {pilotEnvironment.scope.shift ?? 'Not configured'}</dd></div>
+    </dl>
+    <p class="muted">Release simulations never update Receiving release state or issue ERP/warehouse commands. Scope-linked master data onboarding is not implemented; follow the controlled PILOT-STAGING-OPERATIONS runbook before requesting approval.</p>
+  </section>
 
   <section class="panel" id="accounts" aria-labelledby="accounts-title">
     <h2 id="accounts-title">Accounts</h2>
@@ -719,6 +739,10 @@ const releaseBanner = {
     gap: var(--space-3);
     margin: 0 0 var(--space-4);
   }
+
+  .readiness-facts { grid-template-columns: repeat(auto-fit, minmax(min(100%, 15rem), 1fr)); margin-block: var(--space-4); }
+  .readiness-facts > div { min-width: 0; }
+  .readiness-facts dd { overflow-wrap: anywhere; }
   dl div {
     display: flex;
     justify-content: space-between;

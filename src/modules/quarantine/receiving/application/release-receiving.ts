@@ -4,6 +4,8 @@ import type { ActorContext } from '../../../../shared/authorization/types.js';
 import type { ReceivingItem } from '../domain/receiving-item.js';
 import type { ReceivingRepository } from '../ports/repository.js';
 import { isP05Authority } from '../../../../shared/authorization/p05-authority.js';
+import { getPilotScope, isPilotShadowMode } from '../../../../config/pilot.js';
+import { getServerEnv } from '../../../../config/env.js';
 
 export interface ReleasePolicy {
   canRelease(input: { item: ReceivingItem; actor: ActorContext }): boolean | Promise<boolean>;
@@ -21,8 +23,11 @@ export class ReleaseReceivingUseCase {
     expectedVersion: bigint;
     requestId: string;
   }) {
-    const replay = await this.repository.resolveReplay?.(input);
-    if (replay) return replay;
+    const pilotProfile = getServerEnv().APP_ENVIRONMENT_PROFILE === 'pilot';
+    if (!pilotProfile) {
+      const replay = await this.repository.resolveReplay?.(input);
+      if (replay) return replay;
+    }
     const item = await this.repository.get(input.id, input.actor);
     if (!item) throw new AppError('RESOURCE_NOT_FOUND', { userSafe: true });
     if (!isP05Authority(input.actor)) throw new AppError('AUTHZ_DENIED', { userSafe: true });
@@ -54,6 +59,15 @@ export class ReleaseReceivingUseCase {
       },
       { throwOnDeny: true },
     );
+    if (pilotProfile) {
+      if (!isPilotShadowMode()) throw new AppError('POLICY_SOURCE_REQUIRED', { userSafe: true });
+      const scope = getPilotScope();
+      if (!this.repository.recordPilotShadowRelease) {
+        throw new AppError('POLICY_SOURCE_REQUIRED', { userSafe: true });
+      }
+      const decision = await this.repository.recordPilotShadowRelease({ ...input, scope });
+      return { disposition: decision.decisionState, decisionId: decision.decisionId };
+    }
     return this.repository.transition({
       id: item.id,
       expectedVersion: input.expectedVersion,

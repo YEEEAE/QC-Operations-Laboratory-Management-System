@@ -1,7 +1,6 @@
 services:
-  # This repository currently defines the production SSR web service only.
-  # Staging requires its own explicitly reviewed service/environment; it is not
-  # implied by this production Blueprint or by GitHub Pages.
+  # Production, staging, and pilot are separate service profiles. Non-production
+  # services have dedicated database/storage aliases and automatic deploy disabled.
   - type: web
     name: qc-operations-laboratory-management-system
     runtime: node
@@ -25,6 +24,8 @@ services:
       - key: HOST
         value: 0.0.0.0
       - key: NODE_ENV
+        value: production
+      - key: APP_ENVIRONMENT_PROFILE
         value: production
       - key: SERVICE_VERSION
         value: 0.1.0
@@ -58,3 +59,100 @@ services:
         sync: false
       - key: GEMINI_BASE_URL
         sync: false
+  # Isolated staging service. Database, session, and file-store credentials must
+  # be provisioned specifically for staging; no production aliases are accepted.
+  - type: web
+    name: qc-operations-laboratory-management-system-staging
+    runtime: node
+    buildCommand: corepack pnpm install --frozen-lockfile && corepack pnpm verification:begin && corepack pnpm run build
+    startCommand: corepack pnpm start
+    autoDeployTrigger: off
+    envVars:
+      - key: NODE_VERSION
+        value: 24.20.0
+      - key: HOST
+        value: 0.0.0.0
+      - key: NODE_ENV
+        value: production
+      - key: APP_ENVIRONMENT_PROFILE
+        value: staging
+      - key: SERVICE_VERSION
+        value: 0.1.0
+      - key: STAGING_DATABASE_URL
+        sync: false
+      - key: STAGING_DATABASE_HOST
+        sync: false
+      - key: PRODUCTION_DATABASE_HOST
+        sync: false
+      - key: SESSION_SECRET
+        sync: false
+      - key: RATE_LIMIT_LOGIN_MAX
+        sync: false
+      - key: RATE_LIMIT_LOGIN_WINDOW_SECONDS
+        sync: false
+      - key: STAGING_R2_ENDPOINT
+        sync: false
+      - key: STAGING_R2_ACCESS_KEY_ID
+        sync: false
+      - key: STAGING_R2_SECRET_ACCESS_KEY
+        sync: false
+      - key: STAGING_R2_BUCKET
+        sync: false
+      - key: PILOT_ENABLED
+        value: "false"
+      - key: PILOT_SHADOW_MODE
+        value: "true"
+      - key: PILOT_REAL_MASTER_DATA_ENABLED
+        value: "false"
+  # Separate pilot service; the release path stays shadow-only and disabled.
+  - type: web
+    name: qc-operations-laboratory-management-system-pilot
+    runtime: node
+    buildCommand: corepack pnpm install --frozen-lockfile && corepack pnpm verification:begin && corepack pnpm run build
+    startCommand: corepack pnpm start
+    autoDeployTrigger: off
+    envVars:
+      - key: NODE_VERSION
+        value: 24.20.0
+      - key: HOST
+        value: 0.0.0.0
+      - key: NODE_ENV
+        value: production
+      - key: APP_ENVIRONMENT_PROFILE
+        value: pilot
+      - key: SERVICE_VERSION
+        value: 0.1.0
+      - key: PILOT_DATABASE_URL
+        sync: false
+      - key: PILOT_DATABASE_HOST
+        sync: false
+      - key: PRODUCTION_DATABASE_HOST
+        sync: false
+      - key: SESSION_SECRET
+        sync: false
+      - key: RATE_LIMIT_LOGIN_MAX
+        sync: false
+      - key: RATE_LIMIT_LOGIN_WINDOW_SECONDS
+        sync: false
+      - key: PILOT_R2_ENDPOINT
+        sync: false
+      - key: PILOT_R2_ACCESS_KEY_ID
+        sync: false
+      - key: PILOT_R2_SECRET_ACCESS_KEY
+        sync: false
+      - key: PILOT_R2_BUCKET
+        sync: false
+      - key: PILOT_ENABLED
+        value: "false"
+      - key: PILOT_SHADOW_MODE
+        value: "true"
+      - key: PILOT_SCOPE_SITE
+        sync: false
+      - key: PILOT_SCOPE_DEPARTMENT
+        sync: false
+      - key: PILOT_SCOPE_LINE
+        sync: false
+      - key: PILOT_SCOPE_SHIFT
+        sync: false
+      - key: PILOT_REAL_MASTER_DATA_ENABLED
+        value: "false"

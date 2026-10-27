@@ -100,6 +100,13 @@ export interface ReceivingRepository {
     actor: ActorContext;
     requestId: string;
   }): Promise<ReceivingItem | undefined>;
+  recordPilotShadowRelease?(i: {
+    id: string;
+    expectedVersion: bigint;
+    actor: ActorContext;
+    requestId: string;
+    scope: { site?: string; department?: string; line?: string; shift?: string };
+  }): Promise<{ decisionId: string; decisionState: 'SIMULATED' | 'PENDING_SCOPE_BINDING' }>;
   transition(i: {
     id: string;
     expectedVersion: bigint;

@@ -213,7 +213,17 @@ const correctionValues: Record<string, string> = {
         : action === 'quarantine.releaseReceiving'
           ? await actions.quarantine.releaseReceiving({ id: itemId, expectedVersion: BigInt(version) })
           : await actions.quarantine.transitionReceiving({ id: itemId, expectedVersion: BigInt(version), action: (button.dataset.transition ?? 'START_INSPECTION') as 'START_INSPECTION' });
-      if (!next.error) { window.location.reload(); return; }
+      if (!next.error) {
+        if (next.data?.disposition === 'SIMULATED' || next.data?.disposition === 'PENDING_SCOPE_BINDING') {
+          if (output) output.textContent = next.data.disposition === 'SIMULATED'
+            ? `Simulated release decision ${next.data.decisionId} recorded. No Receiving state, product disposition, ERP, or warehouse command changed.`
+            : `Release simulation request ${next.data.decisionId} is pending scope binding. No simulated decision, Receiving state change, product disposition, ERP, or warehouse command was made.`;
+          setBusy(button, false);
+          button.textContent = next.data.disposition === 'SIMULATED' ? 'Simulation recorded' : 'Request recorded';
+          return;
+        }
+        window.location.reload(); return;
+      }
       fail(button, 'The controlled action was not applied. Refresh and review the current state and version before trying again.');
     } catch {
       fail(button, 'The service did not confirm the result. Refresh the receiving record and its history before deciding whether to try again.');
