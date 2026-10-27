@@ -131,6 +131,12 @@ const pageParams = (overrides: Record<string, string>) => {
   for (const [key, value] of [...params]) if (!value) params.delete(key);
   return `/system/control-center?${params.toString()}#accounts`;
 };
+const activeFilters = [
+  ...(query ? [{ key: 'q', label: `Search: ${query}`, remove: pageParams({ q: '', page: '1' }) }] : []),
+  ...(stateFilter
+    ? [{ key: 'state', label: `State: ${stateLabel(stateFilter)}`, remove: pageParams({ state: '', page: '1' }) }]
+    : []),
+];
 const sortLink = (key: string) =>
   pageParams({ sort: key, dir: sortKey === key && sortDir === 'asc' ? 'desc' : 'asc', page: '1' });
 
@@ -144,7 +150,7 @@ const statusClass = (status: string) =>
         : 'bad';
 const generatedAt = overview ? formatDateTime(overview.generatedAt) : '—';
 // Shared formatter contract: en-GB + Asia/Riyadh everywhere (no ad-hoc locale).
-const formatDate = (value?: Date) => formatDateTime(value);
+const formatDate = (value?: Date | string) => formatDateTime(value);
 const migrationBlocker = (migration: Overview['migration']) =>
   !migration.sourceAvailable
     ? 'the shipped migration source could not be verified.'
@@ -169,93 +175,8 @@ const releaseBanner = {
   <PageHeader><Fragment slot="heading"><h1>System control center</h1></Fragment>
       
       
-      <p class="lede">Manage system access and operations.</p>
+      <p class="lede">Review member accounts and system operations.</p>
     <Fragment slot="actions"><span class={`banner ${releaseBanner.class}`}>{releaseBanner.title}</span></Fragment></PageHeader>
-
-  <section class="panel" aria-labelledby="overview-title">
-    <h2 id="overview-title">System overview</h2>
-    {
-      !overview ? (
-        <p class="muted" role="status">
-          Live status is temporarily unavailable. Machine readiness remains at
-          /api/health/ready.
-        </p>
-      ) : (
-        <>
-          <p class="muted">
-            Sanitized live status generated {generatedAt} (Asia/Riyadh).
-          </p>
-          <p class="release-boundary"><strong>QC acceptance: NOT VERIFIED.</strong> This console checks operational connectivity and migration posture; it does not establish QC completion, recovery acceptance, or production release approval.</p>
-          <p class="release-boundary"><strong>Operational console status only.</strong> Core system READY does not mean production GO or RELEASED. The exact-candidate production decision remains NO-GO until all 19 mandatory gates have accepted evidence.</p>
-          <div class="cards">
-            <div class="card">
-              <span class="card-label">Application</span>
-              <span class={`pill ${statusClass(overview.applicationStatus)}`}>
-                {overview.applicationStatus}
-              </span>
-              <small>Checked {formatDate(overview.sourceCheckedAt.application)} (Asia/Riyadh)</small>
-            </div>
-            <div class="card">
-              <span class="card-label">PostgreSQL</span>
-              <span class={`pill ${statusClass(overview.databaseStatus)}`}>
-                {overview.databaseStatus}
-              </span>
-              <small>Checked {formatDate(overview.sourceCheckedAt.database)} (Asia/Riyadh)</small>
-            </div>
-            <div class="card">
-              <span class="card-label">Audit subsystem</span>
-              <span class={`pill ${statusClass(overview.auditStatus)}`}>{overview.auditStatus}</span>
-              <small>Checked {formatDate(overview.sourceCheckedAt.audit)} (Asia/Riyadh)</small>
-            </div>
-            <div class="card">
-              <span class="card-label">Migrations</span>
-              <span class={`pill ${overview.migration.drift ? 'bad' : 'ok'}`}>
-                {overview.migration.drift ? 'DRIFT DETECTED' : 'IN SYNC'}
-              </span>
-              <small>Checked {formatDate(overview.sourceCheckedAt.migration)} (Asia/Riyadh)</small>
-            </div>
-          </div>
-          <dl>
-            <div><dt>Applied in this database</dt><dd>{overview.migration.appliedHead}</dd></div>
-            <div>
-              <dt>Shipped with this build</dt>
-              <dd>{overview.migration.buildHead}</dd>
-            </div>
-            <div><dt>Expected head</dt><dd>{overview.migration.expectedHead}</dd></div>
-            <div>
-              <dt>Pending migrations</dt>
-              <dd>
-                {overview.migration.pendingCount}
-                {overview.migration.pendingCount > 0 &&
-                  ` — the database is ${overview.migration.pendingCount} migration${overview.migration.pendingCount === 1 ? '' : 's'} behind this build`}
-              </dd>
-            </div>
-            <div>
-              <dt>Release verification</dt>
-              <dd class={overview.release.status === 'VERIFIED' ? 'good' : 'warn'}>
-                {overview.release.status}
-              </dd>
-            </div>
-            <div><dt>Release ID</dt><dd>{overview.release.releaseId ?? 'UNVERIFIED'}</dd></div>
-            <div><dt>Build ID</dt><dd>{overview.release.buildId ?? 'UNVERIFIED'}</dd></div>
-            <div><dt>Git SHA</dt><dd>{overview.release.gitSha ?? 'UNVERIFIED'}</dd></div>
-            <div>
-              <dt>Application version</dt>
-              <dd>{overview.release.applicationVersion ?? 'UNVERIFIED'}</dd>
-            </div>
-            <div><dt>Environment</dt><dd>{overview.release.environment ?? 'UNVERIFIED'}</dd></div>
-          </dl>
-          <p class="muted">
-            Open blockers:{' '}
-            {migrationBlocker(overview.migration)}{' '}
-            Core connectivity is not release approval; release gates and recovery evidence remain separate.{' '}
-            Dependency and backup detail: <a href="/system/health">System health</a> ·{' '}
-            <a href="/system/backups">Backups</a>
-          </p>
-        </>
-      )
-    }
-  </section>
 
   <section class="panel" id="accounts" aria-labelledby="accounts-title">
     <h2 id="accounts-title">Accounts</h2>
@@ -265,13 +186,10 @@ const releaseBanner = {
       ) : (
         <>
           {userAssignmentsUnavailable && <p class="muted" role="alert">Account role and scope assignments are temporarily unavailable; those relationship values are withheld.</p>}
-          <div class="cards">
-            <div class="card"><span class="card-label">Matching accounts</span><strong>{counts.total}</strong><small>Exact count for the current filters</small></div>
-          </div>
-          <form class="filters" method="get" action="/system/control-center">
+          <form class="filters" role="search" aria-label="Filter accounts" method="get" action="/system/control-center">
             <label for="q">
               Search
-              <input id="q" name="q" type="search" value={query} maxlength="200" placeholder="Login, name, or email" />
+              <input id="q" name="q" type="search" value={query} maxlength="120" placeholder="Login, name, or email" />
             </label>
             <label for="state">
               State
@@ -286,12 +204,20 @@ const releaseBanner = {
             <input type="hidden" name="dir" value={sortDir} />
             <button type="submit">Apply</button>
           </form>
+          {activeFilters.length > 0 && <div class="active-filters" aria-label="Active account filters">
+            <span class="filter-label">Filters</span>
+            {activeFilters.map((filter) => <span class="filter-chip" data-filter-key={filter.key}>{filter.label}<a href={filter.remove} aria-label={`Remove ${filter.key} filter`}>×</a></span>)}
+            <a class="clear-filters" href="/system/control-center#accounts">Clear all</a>
+          </div>}
+          <p class="register-count" role="status" aria-live="polite">
+            {counts.total} matching {counts.total === 1 ? 'account' : 'accounts'}
+          </p>
           {
             pageRows.length ? (
-              <div class="table-wrap">
+              <div class="table-wrap" role="region" aria-label="Account register" tabindex="0">
                 <table>
                   <caption>
-                    All member accounts — page {page} of {totalPages} ({counts.total} matching)
+                    Member accounts — page {page} of {totalPages}
                   </caption>
                   <thead>
                     <tr>
@@ -329,8 +255,8 @@ const releaseBanner = {
                             {stateLabel(user.accountState)}
                           </span>
                         </td>
-                        <td>{roleSummary.get(user.id) ?? '—'}</td>
-                        <td>{scopeSummary.get(user.id) ?? '—'}</td>
+                        <td>{userAssignmentsUnavailable ? 'N/A — assignments unavailable' : roleSummary.get(user.id) ?? '—'}</td>
+                        <td>{userAssignmentsUnavailable ? 'N/A — assignments unavailable' : scopeSummary.get(user.id) ?? '—'}</td>
                         <td>{formatDate(user.lastLoginAt)}</td>
                         <td><a href={`/admin/users/${user.id}`}>Open workspace</a></td>
                       </tr>
@@ -362,6 +288,77 @@ const releaseBanner = {
     }
   </section>
 
+  <section class="panel" aria-labelledby="overview-title">
+    <h2 id="overview-title">System overview</h2>
+    {
+      !overview ? (
+        <p class="muted" role="status">
+          Live status is temporarily unavailable. No connectivity or migration conclusion is available. Machine readiness remains at /api/health/ready.
+        </p>
+      ) : (
+        <>
+          <p class="muted">Overview generated {generatedAt} (Asia/Riyadh).</p>
+          <p class="release-boundary"><strong>QC acceptance: NOT VERIFIED.</strong> Connectivity and migration posture do not establish QC completion, recovery acceptance, or production release approval.</p>
+          <p class="muted">Core connectivity and release identity checks are separate diagnostics; neither is a production GO or RELEASED decision.</p>
+          <div class="cards">
+            <div class="card">
+              <span class="card-label">Core connectivity</span>
+              <span class={`pill ${statusClass(overview.coreStatus)}`}>{overview.coreStatus}</span>
+              <small>Source: application probe checked {formatDate(overview.sourceCheckedAt.application)} and PostgreSQL probe checked {formatDate(overview.sourceCheckedAt.database)} (Asia/Riyadh).</small>
+            </div>
+            <div class="card">
+              <span class="card-label">Application</span>
+              <span class={`pill ${statusClass(overview.applicationStatus)}`}>{overview.applicationStatus}</span>
+              <small>Source: application probe. Checked {formatDate(overview.sourceCheckedAt.application)} (Asia/Riyadh).</small>
+            </div>
+            <div class="card">
+              <span class="card-label">PostgreSQL</span>
+              <span class={`pill ${statusClass(overview.databaseStatus)}`}>{overview.databaseStatus}</span>
+              <small>Source: PostgreSQL probe. Checked {formatDate(overview.sourceCheckedAt.database)} (Asia/Riyadh).</small>
+            </div>
+            <div class="card">
+              <span class="card-label">Audit subsystem</span>
+              <span class={`pill ${statusClass(overview.auditStatus)}`}>{overview.auditStatus}</span>
+              <small>Source: audit readiness read. Checked {formatDate(overview.sourceCheckedAt.audit)} (Asia/Riyadh).</small>
+            </div>
+            <div class="card">
+              <span class="card-label">Migration posture</span>
+              <span class={`pill ${overview.migration.drift ? 'bad' : 'ok'}`}>
+                {overview.migration.drift ? 'DRIFT DETECTED' : 'IN SYNC'}
+              </span>
+              <small>Source: database migration ledger and shipped migration files. Checked {formatDate(overview.sourceCheckedAt.migration)} (Asia/Riyadh).</small>
+            </div>
+          </div>
+          <section class="evidence-block" aria-labelledby="release-identity-title">
+            <h3 id="release-identity-title">Release identity evidence</h3>
+            <p class="muted">Evidence source: dist/release-identity.json checked against the running server artifact SHA-256 and runtime metadata. This verification is not release readiness.</p>
+            <dl>
+              <div><dt>Identity verification</dt><dd class={overview.release.status === 'VERIFIED' ? 'good' : 'warn'}>{overview.release.status}</dd></div>
+              <div><dt>Identity evidence read at</dt><dd>{generatedAt} (Asia/Riyadh)</dd></div>
+              <div><dt>Release ID</dt><dd>{overview.release.releaseId ?? 'UNVERIFIED'}</dd></div>
+              <div><dt>Build ID</dt><dd>{overview.release.buildId ?? 'UNVERIFIED'}</dd></div>
+              <div><dt>Build timestamp</dt><dd>{formatDate(overview.release.buildTimestamp)}</dd></div>
+              <div><dt>Git SHA</dt><dd>{overview.release.gitSha ?? 'UNVERIFIED'}</dd></div>
+              <div><dt>Application version</dt><dd>{overview.release.applicationVersion ?? 'UNVERIFIED'}</dd></div>
+              <div><dt>Environment</dt><dd>{overview.release.environment ?? 'UNVERIFIED'}</dd></div>
+              <div><dt>Identity migration head</dt><dd>{overview.release.migrationHead ?? 'UNVERIFIED'}</dd></div>
+            </dl>
+          </section>
+          <section class="evidence-block" aria-labelledby="migration-evidence-title">
+            <h3 id="migration-evidence-title">Migration ledger</h3>
+            <dl>
+              <div><dt>Applied head — database ledger</dt><dd>{overview.migration.appliedHead}</dd></div>
+              <div><dt>Shipped head — build files</dt><dd>{overview.migration.buildHead}</dd></div>
+              <div><dt>Expected head — release identity or build</dt><dd>{overview.migration.expectedHead}</dd></div>
+              <div><dt>Pending migrations</dt><dd>{overview.migration.pendingCount}</dd></div>
+            </dl>
+            <p class="muted">Open blockers: {migrationBlocker(overview.migration)} Core connectivity is not release approval; release gates and recovery evidence remain separate. Dependency and backup detail: <a href="/system/health">System health</a> · <a href="/system/backups">Backups</a></p>
+          </section>
+        </>
+      )
+    }
+  </section>
+
   {canCreateUser ? <section class="panel" aria-labelledby="create-title">
     <h2 id="create-title">Create account</h2>
     <p class="muted">
@@ -388,7 +385,7 @@ const releaseBanner = {
       {canAssignRoles ? <fieldset>
         <legend>Initial role grants</legend>
         {rolesError && (
-          <p class="note" role="alert">Role options are temporarily unavailable.</p>
+          <p class="note">N/A — active role choices are withheld because the roles read is unavailable.</p>
         )}
         {roles
           .filter((role) => role.active)
@@ -439,7 +436,7 @@ const releaseBanner = {
       rolesError ? (
         <p class="muted" role="alert">The role register is temporarily unavailable.</p>
       ) : (
-        <div class="table-wrap">
+        <div class="table-wrap" role="region" aria-label="Canonical roles register" tabindex="0">
           <table>
             <caption>Canonical roles</caption>
             <thead>
@@ -494,7 +491,7 @@ const releaseBanner = {
       ) : !audit || audit.events.length === 0 ? (
         <p class="muted">No audit events are visible.</p>
       ) : (
-        <div class="table-wrap">
+        <div class="table-wrap" role="region" aria-label="Recent administrative activity register" tabindex="0">
           <table>
             <caption>Latest {audit.events.length} of {audit.total} audit events</caption>
             <thead>
@@ -526,7 +523,14 @@ const releaseBanner = {
     <p class="muted">Full history with filters: <a href="/audit">Audit history</a></p>
   </section>
 </AppLayout>
-<style>.release-boundary{padding:var(--space-3);border-inline-start:3px solid var(--status-error);background:var(--surface-raised);font-size:.84rem}</style>
+<style>
+  .release-boundary{padding:var(--space-3);background:var(--surface-raised);font-size:.84rem}
+  @media print {
+    .table-wrap{max-inline-size:none;overflow:visible!important}
+    table{inline-size:100%;min-inline-size:0;table-layout:fixed;font-size:8pt}
+    th,td{padding:3pt;overflow-wrap:anywhere}
+  }
+</style>
 <script>
   import { actions } from 'astro:actions';
   import { enhanceMutationForm } from '../../ui/forms/mutation-interaction.js';
@@ -647,6 +651,15 @@ const releaseBanner = {
     gap: var(--space-3);
     margin-bottom: var(--space-4);
   }
+  .evidence-block {
+    margin-block-start: var(--space-5);
+    padding-block-start: var(--space-4);
+    border-block-start: 1px solid var(--color-border-subtle);
+  }
+  .evidence-block h3 {
+    margin: 0 0 var(--space-3);
+    font-size: 0.92rem;
+  }
   .card {
     display: grid;
     gap: 0.35rem;
@@ -756,12 +769,19 @@ const releaseBanner = {
     color:var(--text-on-accent);
     border-radius: var(--radius-md);
     font-weight: 700;
+    min-height: 44px;
   }
   .table-wrap {
     overflow-x: auto;
+    border-radius: var(--radius-sm);
+  }
+  .table-wrap:focus-visible {
+    outline: 2px solid var(--color-accent-primary-hover);
+    outline-offset: 2px;
   }
   table {
     width: 100%;
+    min-width: 64rem;
     border-collapse: collapse;
   }
   caption {
@@ -776,9 +796,13 @@ const releaseBanner = {
     text-align: start;
     border-top: 1px solid var(--color-border-subtle);
     font-size: 0.82rem;
+    overflow-wrap: anywhere;
+    vertical-align: top;
   }
   th {
     font-weight: 700;
+    overflow-wrap: anywhere;
+    vertical-align: top;
   }
   /* P2-11: sort links are real controls; give them the project 44px target
      instead of the previous 28x16 text box. */
@@ -800,6 +824,50 @@ const releaseBanner = {
     align-items: center;
     margin-top: var(--space-4);
     font-size: 0.84rem;
+  }
+  .pagination a,
+  .pagination span {
+    min-block-size: 44px;
+    display: inline-flex;
+    align-items: center;
+  }
+  .active-filters {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-2);
+    margin-block: var(--space-3);
+  }
+  .filter-label {
+    color: var(--text-muted);
+    font-size: 0.8rem;
+    font-weight: 700;
+  }
+  .filter-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    min-height: 44px;
+    max-inline-size: 100%;
+    padding-inline: var(--space-3);
+    border: 1px solid var(--color-border-subtle);
+    border-radius: 999px;
+    background: var(--surface-page);
+    overflow-wrap: anywhere;
+  }
+  .filter-chip a,
+  .clear-filters {
+    min-inline-size: 44px;
+    min-block-size: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .register-count {
+    margin-block: var(--space-3);
+    color: var(--text-secondary);
+    font-size: 0.86rem;
+    font-weight: 700;
   }
   .form {
     display: grid;
@@ -868,6 +936,12 @@ const releaseBanner = {
     }
     dd {
       text-align: start;
+    }
+    .scope-row {
+      grid-template-columns: minmax(0, 1fr);
+    }
+    .panel {
+      padding: var(--space-4);
     }
   }
 </style>
