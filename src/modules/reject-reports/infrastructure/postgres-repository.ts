@@ -132,6 +132,12 @@ function mapApproval(row: ApprovalRow): ApprovalConfirmation {
     role: row.approval_role as ApprovalConfirmation['role'],
     status: row.status as ApprovalConfirmation['status'],
     approverName: row.approver_name ?? undefined,
+    approverIdentity: row.approver_identity ?? undefined,
+    outcome: (row.outcome ?? undefined) as ApprovalConfirmation['outcome'],
+    evidenceConfidence: row.evidence_confidence as ApprovalConfirmation['evidenceConfidence'],
+    confirmationBasis: row.confirmation_basis as ApprovalConfirmation['confirmationBasis'],
+    reportedBy: row.confirmed_by ?? undefined,
+    evidenceReporterRole: row.recorder_class as ApprovalConfirmation['evidenceReporterRole'],
     confirmedBy: row.confirmed_by ?? undefined,
     confirmedAt: row.confirmed_at ?? undefined,
     note: row.note ?? undefined,
@@ -334,6 +340,11 @@ export class PostgresRejectReportRepository implements RejectReportRepository {
             ('issue_slip_approval_confirmations', 'approval_role'),
             ('issue_slip_approval_confirmations', 'status'),
             ('issue_slip_approval_confirmations', 'approver_name'),
+            ('issue_slip_approval_confirmations', 'approver_identity'),
+            ('issue_slip_approval_confirmations', 'outcome'),
+            ('issue_slip_approval_confirmations', 'evidence_confidence'),
+            ('issue_slip_approval_confirmations', 'confirmation_basis'),
+            ('issue_slip_approval_confirmations', 'recorder_class'),
             ('issue_slip_approval_confirmations', 'confirmed_by'),
             ('issue_slip_approval_confirmations', 'confirmed_at'),
             ('issue_slip_approval_confirmations', 'note'),
@@ -374,6 +385,11 @@ export class PostgresRejectReportRepository implements RejectReportRepository {
             ('issue_slip_approval_confirmations', 'fk_issue_slip_approvals__confirmed_by'),
             ('issue_slip_approval_confirmations', 'fk_issue_slip_approvals__reversed_by'),
             ('issue_slip_approval_confirmations', 'fk_issue_slip_approvals__evidence_file'),
+            ('issue_slip_approval_confirmations', 'ck_issue_slip_approval_basis'),
+            ('issue_slip_approval_confirmations', 'ck_issue_slip_approval_outcome'),
+            ('issue_slip_approval_confirmations', 'ck_issue_slip_evidence_confidence'),
+            ('issue_slip_approval_confirmations', 'ck_issue_slip_recorder_class'),
+            ('issue_slip_approval_confirmations', 'ck_issue_slip_confirmed_provenance'),
             ('daily_reject_entries', 'uq_daily_reject_entries__report_position'),
             ('daily_reject_entries', 'fk_daily_reject_entries__report_id'),
             ('daily_reject_entries', 'daily_reject_entries__total_produced_nonnegative'),
@@ -833,11 +849,7 @@ export class PostgresRejectReportRepository implements RejectReportRepository {
     }
   }
 
-  /**
-   * Records one creator confirmation. If it is the last pending checkpoint,
-   * the report completes in the same transaction (ISSUE_SLIP_COMPLETED).
-   * Duplicate confirmations hit the row status guard (PENDING only).
-   */
+  /** Records one reported external fact; this does not approve or complete the slip. */
   async confirmApproval(input: {
     id: string;
     expectedVersion: bigint;
@@ -845,6 +857,9 @@ export class PostgresRejectReportRepository implements RejectReportRepository {
     requestId: string;
     role: IssueSlipApprovalRole;
     approverName?: string;
+    outcome: NonNullable<ApprovalConfirmation['outcome']>;
+    evidenceConfidence: ApprovalConfirmation['evidenceConfidence'];
+    approverIdentity?: string;
     note?: string;
     evidenceFileId?: string;
   }): Promise<IssueSlip> {
@@ -856,6 +871,11 @@ export class PostgresRejectReportRepository implements RejectReportRepository {
           .set({
             status: 'CONFIRMED',
             approver_name: input.approverName ?? null,
+            approver_identity: input.approverIdentity ?? input.approverName ?? null,
+            outcome: input.outcome,
+            evidence_confidence: input.evidenceConfidence,
+            confirmation_basis: 'SELF_REPORTED',
+            recorder_class: input.actor.roles.includes('QC_COMPLIANCE') ? 'QC_COMPLIANCE_DATA_ENTRY' : 'ORIGINAL_SUBMITTER',
             confirmed_by: input.actor.id,
             confirmed_at: now,
             note: input.note ?? null,
@@ -873,56 +893,26 @@ export class PostgresRejectReportRepository implements RejectReportRepository {
           .executeTakeFirst();
         if (!confirmation) throw new AppError('CONFLICT_STALE_VERSION', { userSafe: true });
 
-        const report = await this.bumpReport(tx, input.id, input.expectedVersion, input.actor, {});
+        await this.bumpReport(tx, input.id, input.expectedVersion, input.actor, {});
         await this.auditFor(tx)?.append({
           actorType: 'USER',
           actorId: input.actor.id,
           subjectType: 'REJECT_REPORT',
           subjectId: input.id,
-          action: 'ISSUE_SLIP_APPROVAL_CONFIRMED',
+          action: 'ISSUE_SLIP_EXTERNAL_CONFIRMATION_RECORDED',
           requestId: input.requestId,
           payload: {
             approvalRole: input.role,
-            semantics: 'CREATOR_RECORDED_CONFIRMATION',
+            outcome: input.outcome,
+            confirmationBasis: 'SELF_REPORTED',
+            evidenceConfidence: input.evidenceConfidence,
+            recorderClass: input.actor.roles.includes('QC_COMPLIANCE')
+              ? 'QC_COMPLIANCE_DATA_ENTRY'
+              : 'ORIGINAL_SUBMITTER',
+            semantics: 'REPORTED_EXTERNAL_FACT_NOT_INTERNAL_APPROVAL',
           },
         });
 
-        const pending = await tx
-          .selectFrom('issue_slip_approval_confirmations')
-          .select(({ fn }) => fn.countAll().as('count'))
-          .where('report_id', '=', input.id)
-          .where('status', '=', 'PENDING')
-          .executeTakeFirstOrThrow();
-        if (Number(pending.count) === 0) {
-          await tx
-            .updateTable('reject_reports')
-            .set({
-              status: 'COMPLETED',
-              completed_at: now,
-              updated_by: input.actor.id,
-              updated_at: now,
-              version: sql`version + 1`,
-            } as never)
-            .where('id', '=', input.id)
-            .execute();
-          await this.auditFor(tx)?.append({
-            actorType: 'USER',
-            actorId: input.actor.id,
-            subjectType: 'REJECT_REPORT',
-            subjectId: input.id,
-            action: 'ISSUE_SLIP_COMPLETED',
-            oldState: 'APPROVAL_TRACKING',
-            newState: 'COMPLETED',
-            requestId: input.requestId,
-          });
-          await this.outboxFor(tx)?.enqueue({
-            eventType: 'ISSUE_SLIP_COMPLETED',
-            aggregateType: 'REJECT_REPORT',
-            aggregateId: input.id,
-            payload: { reportNo: report.report_no },
-            dedupeKey: `issue-slip-completed:${input.id}`,
-          });
-        }
         const updated = await this.loadSlip(tx, input.id);
         if (!updated) throw new AppError('SYSTEM_INTERNAL');
         return updated;

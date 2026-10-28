@@ -134,6 +134,9 @@ export interface RejectReportRepository {
     requestId: string;
     role: IssueSlipApprovalRole;
     approverName?: string;
+    approverIdentity?: string;
+    outcome: 'APPROVED' | 'REJECTED' | 'UNKNOWN';
+    evidenceConfidence: 'UNASSESSED' | 'LOW' | 'MEDIUM' | 'HIGH';
     note?: string;
     evidenceFileId?: string;
   }): Promise<IssueSlip>;

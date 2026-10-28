@@ -13,11 +13,13 @@ export type IssueSlipApprovalRole = (typeof ISSUE_SLIP_APPROVAL_ROLES)[number];
 
 export const APPROVAL_CONFIRMATION_STATUSES = ['PENDING', 'CONFIRMED', 'REVERSED'] as const;
 export type ApprovalConfirmationStatus = (typeof APPROVAL_CONFIRMATION_STATUSES)[number];
+export type ExternalApprovalOutcome = 'APPROVED' | 'REJECTED' | 'UNKNOWN';
+export type EvidenceConfidence = 'UNASSESSED' | 'LOW' | 'MEDIUM' | 'HIGH';
 
 /**
- * A creator-recorded confirmation that a real-world approval was obtained.
- * This is NOT an electronic signature by the named approver role; UI and
- * documents must always render it as "confirmation recorded by the creator".
+ * A recorded external-approval fact. The recorder and named approver are
+ * separate actors; the stored fact is not an electronic signature or an
+ * internal approval decision.
  */
 export interface ApprovalConfirmation {
   id: string;
@@ -25,6 +27,14 @@ export interface ApprovalConfirmation {
   role: IssueSlipApprovalRole;
   status: ApprovalConfirmationStatus;
   approverName?: string;
+  /** Identity/name as recorded by the reporter; it is not identity proof. */
+  approverIdentity?: string;
+  outcome?: ExternalApprovalOutcome;
+  evidenceConfidence: EvidenceConfidence;
+  /** Actor who entered the factual confirmation, distinct from the approver. */
+  reportedBy?: string;
+  evidenceReporterRole?: 'ORIGINAL_SUBMITTER' | 'QC_COMPLIANCE_DATA_ENTRY';
+  confirmationBasis: 'SELF_REPORTED' | 'APPROVER_CONFIRMED';
   confirmedBy?: string;
   confirmedAt?: Date;
   note?: string;
@@ -89,7 +99,7 @@ export function pendingApprovalRoles(
   approvals: readonly ApprovalConfirmation[],
 ): readonly IssueSlipApprovalRole[] {
   return ISSUE_SLIP_APPROVAL_ROLES.filter(
-    (role) => !approvals.some((a) => a.role === role && a.status === 'CONFIRMED'),
+    (role) => !approvals.some((a) => a.role === role && a.status === 'CONFIRMED' && a.outcome === 'APPROVED'),
   );
 }
 
@@ -97,13 +107,24 @@ export function allApprovalsConfirmed(approvals: readonly ApprovalConfirmation[]
   return pendingApprovalRoles(approvals).length === 0;
 }
 
+export function approvalPresentationState(
+  confirmation: ApprovalConfirmation | undefined,
+): 'AWAITING_EXTERNAL_APPROVAL' | 'CONFIRMATION_RECORDED_BY_CREATOR' | 'CONFIRMATION_RECORDED_BY_QC_COMPLIANCE' | 'EVIDENCE_ATTACHED' {
+  if (!confirmation || confirmation.status === 'PENDING' || confirmation.status === 'REVERSED')
+    return 'AWAITING_EXTERNAL_APPROVAL';
+  if (confirmation.evidenceFileId) return 'EVIDENCE_ATTACHED';
+  return confirmation.evidenceReporterRole === 'QC_COMPLIANCE_DATA_ENTRY'
+    ? 'CONFIRMATION_RECORDED_BY_QC_COMPLIANCE'
+    : 'CONFIRMATION_RECORDED_BY_CREATOR';
+}
+
 /**
  * Ordering gate (QC-100-FINAL-004 Task 3).
  *
  * The three checkpoints are sequential — `SUPERVISOR → QC_MANAGER →
- * FACTORY_DIRECTOR`. Only the first checkpoint that is not `CONFIRMED` may be
- * recorded next, so a later checkpoint can never be confirmed while an earlier
- * one is still pending. A `REVERSED` row is not `CONFIRMED`, so reversing a
+ * FACTORY_DIRECTOR`. Only the first checkpoint without a reported `APPROVED`
+ * outcome may be recorded next, so a later checkpoint cannot pass an earlier
+ * rejection or unknown outcome. A `REVERSED` row is not approved, so reversing a
  * checkpoint returns it to the front of the queue and re-confirmation restarts
  * from that checkpoint (the following checkpoints still apply in order).
  */
@@ -114,9 +135,7 @@ export function nextPendingApprovalRole(
 }
 
 /**
- * Rejects a confirmation that is out of order, whatever the actor's role:
- * a QC data-entry (EMPLOYEE) creator who holds `PERM-RREJ-CONFIRM-APPROVAL`
- * cannot record a checkpoint above the one the slip is currently at.
+ * Rejects a confirmation that is out of order, whatever the recorder's role.
  */
 export function assertApprovalRoleIsNext(
   approvals: readonly ApprovalConfirmation[],

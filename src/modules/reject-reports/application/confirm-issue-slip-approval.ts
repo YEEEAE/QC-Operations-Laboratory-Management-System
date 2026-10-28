@@ -6,9 +6,10 @@ import { assertApprovalRoleIsNext, assertConfirmable } from '../domain/issue-sli
 import type { RejectReportRepository } from '../ports/repository.js';
 
 /**
- * Records that the report creator obtained a real-world approval. This is a
- * creator attestation, never an electronic signature by the approver role.
- * Only the report creator may record it (businessCondition owner check).
+ * Records an external approval as a reported fact. It is not an internal
+ * approval decision or an electronic signature. The original submitter or a
+ * scoped QC Compliance data-entry actor may enter the fact; the approver is
+ * recorded separately and is never inferred from the recorder.
  *
  * QC-100-FINAL-004 Task 3: checkpoints are sequential, so the creator may only
  * record the next pending checkpoint (`SUPERVISOR → QC_MANAGER →
@@ -24,6 +25,9 @@ export class ConfirmIssueSlipApprovalUseCase {
     expectedVersion: bigint;
     role: IssueSlipApprovalRole;
     approverName?: string;
+    approverIdentity?: string;
+    outcome: 'APPROVED' | 'REJECTED' | 'UNKNOWN';
+    evidenceConfidence: 'UNASSESSED' | 'LOW' | 'MEDIUM' | 'HIGH';
     note?: string;
     evidenceFileId?: string;
     requestId: string;
@@ -32,6 +36,8 @@ export class ConfirmIssueSlipApprovalUseCase {
     if (!slip) throw new AppError('RESOURCE_NOT_FOUND', { userSafe: true });
     assertConfirmable(slip);
     assertApprovalRoleIsNext(slip.approvals, input.role);
+    const isSubmitter = slip.createdBy === input.actor.id;
+    const isQcComplianceRecorder = input.actor.roles.includes('QC_COMPLIANCE');
     authorize(
       {
         actor: input.actor,
@@ -46,7 +52,7 @@ export class ConfirmIssueSlipApprovalUseCase {
         scope: { ownerId: slip.createdBy },
         currentVersion: slip.version,
         expectedVersion: input.expectedVersion,
-        businessCondition: slip.createdBy === input.actor.id,
+        businessCondition: isSubmitter || isQcComplianceRecorder,
       },
       { throwOnDeny: true },
     );
@@ -57,6 +63,9 @@ export class ConfirmIssueSlipApprovalUseCase {
       requestId: input.requestId,
       role: input.role,
       approverName: input.approverName,
+      approverIdentity: input.approverIdentity,
+      outcome: input.outcome,
+      evidenceConfidence: input.evidenceConfidence,
       note: input.note,
       evidenceFileId: input.evidenceFileId,
     });

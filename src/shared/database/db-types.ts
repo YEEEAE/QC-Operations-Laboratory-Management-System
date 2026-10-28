@@ -1717,6 +1717,10 @@ export interface IssueSlipApprovalConfirmationsTable {
   approval_role: string;
   status: Generated<string>;
   approver_name: string | null;
+  approver_identity: string | null;
+  outcome: string | null;
+  evidence_confidence: string;
+  confirmation_basis: string;
   confirmed_by: string | null;
   confirmed_at: Date | null;
   note: string | null;

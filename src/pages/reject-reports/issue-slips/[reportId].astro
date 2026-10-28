@@ -7,9 +7,11 @@ import {
   ISSUE_SLIP_APPROVAL_ROLES,
   nextPendingApprovalRole,
 } from '../../../modules/reject-reports/application/view-model.js';
+import { approvalPresentationState } from '../../../modules/reject-reports/domain/issue-slip.js';
 import { stateLabel } from '../../../shared/copy/ux-vocabulary.js';
 import { actions } from 'astro:actions';
 import { field, parseExpectedVersionField } from '../../../ui/forms/mutation-post.js';
+import { isNamedSystemOwner } from '../../../shared/authorization/p05-authority.js';
 
 const actor = Astro.locals.actor;
 if (!actor)
@@ -44,7 +46,8 @@ const hasPermission = (code: string) =>
   actor.permissions.some((grant) => grant.code === code && grant.active !== false);
 const isCreator = slip?.createdBy === actor.id;
 const canManage = isCreator && hasPermission('PERM-RREJ-EDIT');
-const canConfirm = isCreator && hasPermission('PERM-RREJ-CONFIRM-APPROVAL');
+const canConfirm = (isCreator || actor.roles.includes('QC_COMPLIANCE')) && hasPermission('PERM-RREJ-CONFIRM-APPROVAL');
+const canReverse = (isCreator && hasPermission('PERM-RREJ-CONFIRM-APPROVAL')) || (isNamedSystemOwner(actor) && hasPermission('PERM-RREJ-ADMIN-CORRECT'));
 const canVerifyFocus = actor.permissions.some(
   (grant) => grant.code === 'PERM-RREJ-CONFIRM-APPROVAL' && grant.active !== false && grant.scopes.includes('GLOBAL'),
 );
@@ -57,8 +60,8 @@ if (Astro.request.method === 'POST' && slip && !printMode) {
   try {
     const expectedVersion = parseExpectedVersionField(field(form, 'expectedVersion'));
     let result;
-    if (intent === 'confirm' && canConfirm) result = await Astro.callAction(actions.rejectReports.confirmApproval, { reportId, expectedVersion, role: field(form, 'role') as 'SUPERVISOR' | 'QC_MANAGER' | 'FACTORY_DIRECTOR', approverName: field(form, 'approverName') || undefined });
-    else if (intent === 'reverse' && (canConfirm || hasPermission('PERM-RREJ-ADMIN-CORRECT'))) result = await Astro.callAction(actions.rejectReports.reverseApproval, { reportId, expectedVersion, role: field(form, 'role') as 'SUPERVISOR' | 'QC_MANAGER' | 'FACTORY_DIRECTOR', reason: field(form, 'reason') });
+    if (intent === 'confirm' && canConfirm) result = await Astro.callAction(actions.rejectReports.confirmApproval, { reportId, expectedVersion, role: field(form, 'role') as 'SUPERVISOR' | 'QC_MANAGER' | 'FACTORY_DIRECTOR', approverName: field(form, 'approverName') || undefined, approverIdentity: field(form, 'approverIdentity') || undefined, outcome: field(form, 'outcome') as 'APPROVED' | 'REJECTED' | 'UNKNOWN', evidenceConfidence: field(form, 'evidenceConfidence') as 'UNASSESSED' | 'LOW' | 'MEDIUM' | 'HIGH', evidenceFileId: field(form, 'evidenceFileId') || undefined });
+    else if (intent === 'reverse' && canReverse) result = await Astro.callAction(actions.rejectReports.reverseApproval, { reportId, expectedVersion, role: field(form, 'role') as 'SUPERVISOR' | 'QC_MANAGER' | 'FACTORY_DIRECTOR', reason: field(form, 'reason') });
     else if (intent === 'issue' && canManage) result = await Astro.callAction(actions.rejectReports.issueIssueSlip, { reportId, expectedVersion });
     else if (intent === 'focus-entered' && canManage) result = await Astro.callAction(actions.rejectReports.recordFocusEntry, { reportId, expectedVersion, evidenceNote: field(form, 'evidenceNote') });
     else if (intent === 'focus-verified' && canConfirm) result = await Astro.callAction(actions.rejectReports.verifyFocusEntry, { reportId, expectedVersion, evidenceNote: field(form, 'evidenceNote') });
@@ -105,7 +108,7 @@ const fmtDateTime = (d?: Date) =>
       <p class="eyebrow">Rejected material/product issue slip</p>
       <h1>{slip.reportNo}</h1>
       <div class="record-meta">
-        <span>Status <strong class={`status status-${slip.status.toLowerCase()}`}>{stateLabel(slip.status)}</strong></span>
+        <span>Status <strong class={`status status-${slip.status.toLowerCase()}`}>{slip.status === 'COMPLETED' ? 'Legacy completion — external confirmations recorded' : stateLabel(slip.status)}</strong></span>
         <span>Version <strong class="version">{slip.version.toString()}</strong></span>
       </div>
     </div>
@@ -201,13 +204,13 @@ const fmtDateTime = (d?: Date) =>
       <section class="panel evidence" id="approval-confirmations" aria-labelledby="approval-history-title">
         <h2 id="approval-history-title">Approval confirmation history</h2>
         <p class="hint">
-          The report creator records that each real-world approval was obtained. These are
-          confirmations recorded by the creator — not electronic signatures by the approvers.
+          External approval details are reported facts entered by the original submitter or an authorized QC Compliance data-entry recorder. The recorder and named approver are shown separately. These records are not electronic signatures or internal approval decisions.
         </p>
         <ol class="tracker">
           {ISSUE_SLIP_APPROVAL_ROLES.map((role) => {
             const confirmation = slip.approvals.find((a) => a.role === role);
             const state = confirmation?.status ?? 'PENDING';
+            const presentationState = approvalPresentationState(confirmation);
             return (
               <li class={`step step-${state.toLowerCase()}`}>
                 <span class={`dot dot-${state.toLowerCase()}`} aria-hidden="true"></span>
@@ -215,7 +218,7 @@ const fmtDateTime = (d?: Date) =>
                   <strong>{approvalLabel[role]}</strong>
                   <span class="state">
                     {state === 'CONFIRMED'
-                      ? `Confirmed (recorded ${fmtDateTime(confirmation?.confirmedAt)}${confirmation?.approverName ? ` · approver: ${confirmation.approverName}` : ''})`
+                      ? `${presentationState.replaceAll('_', ' ')} (${confirmation?.outcome ?? 'outcome not recorded'}; recorded ${fmtDateTime(confirmation?.confirmedAt)}${confirmation?.approverIdentity || confirmation?.approverName ? ` · approver as reported: ${confirmation.approverIdentity ?? confirmation.approverName}` : ''}; reporter: ${confirmation?.reportedBy === actor.id ? 'You' : 'another authorized user'} (${confirmation?.evidenceReporterRole === 'QC_COMPLIANCE_DATA_ENTRY' ? 'QC Compliance data entry' : 'original submitter'}); evidence confidence: ${confirmation?.evidenceConfidence ?? 'UNASSESSED'})`
                       : state === 'REVERSED'
                         ? `Reversed ${fmtDateTime(confirmation?.reversedAt)} — ${confirmation?.reversalReason}`
                         : 'Pending'}
@@ -246,18 +249,26 @@ const fmtDateTime = (d?: Date) =>
           return (
             <div class="checkpoint-action" data-checkpoint={role}>
               <h3>{approvalLabel[role]}</h3>
-              {state === 'PENDING' && canConfirm && slip.status === 'APPROVAL_TRACKING' && role === nextApprovalRole && (
+              {(state === 'PENDING' || state === 'REVERSED') && canConfirm && slip.status === 'APPROVAL_TRACKING' && role === nextApprovalRole && (
                 <form class="inline-form" method="post" data-confirm-form={role} data-version={slip.version.toString()}>
                   <input type="hidden" name="intent" value="confirm" /><input type="hidden" name="role" value={role} /><input type="hidden" name="expectedVersion" value={slip.version.toString()} />
                   <label class="sr-only" for={`approver-${role}`}>Approver name (optional)</label>
                   <input id={`approver-${role}`} name="approverName" maxlength="200" placeholder="Approver name (optional)" value={postedValues.approverName ?? ''} />
-                  <button type="submit">Confirm approval</button>
+                  <label for={`identity-${role}`}>Approver identity as recorded (optional)</label>
+                  <input id={`identity-${role}`} name="approverIdentity" maxlength="200" placeholder="Recorded identity or reference" value={postedValues.approverIdentity ?? ''} />
+                  <label for={`outcome-${role}`}>Reported external outcome</label>
+                  <select id={`outcome-${role}`} name="outcome" required><option value="">Select outcome</option><option value="APPROVED">Approved</option><option value="REJECTED">Rejected</option><option value="UNKNOWN">Unknown</option></select>
+                  <label for={`confidence-${role}`}>Evidence confidence</label>
+                  <select id={`confidence-${role}`} name="evidenceConfidence" required><option value="UNASSESSED">Unassessed</option><option value="LOW">Low</option><option value="MEDIUM">Medium</option><option value="HIGH">High</option></select>
+                  <label for={`evidence-${role}`}>Evidence file reference (optional)</label>
+                  <input id={`evidence-${role}`} name="evidenceFileId" inputmode="text" placeholder="Evidence file ID" value={postedValues.evidenceFileId ?? ''} />
+                  <button type="submit">Record external confirmation</button>
                 </form>
               )}
-              {state === 'PENDING' && canConfirm && slip.status === 'APPROVAL_TRACKING' && role !== nextApprovalRole && (
+              {(state === 'PENDING' || state === 'REVERSED') && canConfirm && slip.status === 'APPROVAL_TRACKING' && role !== nextApprovalRole && (
                 <p class="hint">Confirm the earlier checkpoint first.</p>
               )}
-              {state === 'CONFIRMED' && (canConfirm || hasPermission('PERM-RREJ-ADMIN-CORRECT')) && (
+              {state === 'CONFIRMED' && canReverse && (
                 <form class="inline-form" method="post" data-reverse-form={role} data-version={slip.version.toString()}>
                   <input type="hidden" name="intent" value="reverse" /><input type="hidden" name="role" value={role} /><input type="hidden" name="expectedVersion" value={slip.version.toString()} />
                   <label class="sr-only" for={`reason-${role}`}>Correction reason</label>
@@ -268,6 +279,7 @@ const fmtDateTime = (d?: Date) =>
             </div>
           );
         })}
+        {slip.status === 'APPROVAL_TRACKING' && !nextApprovalRole && <p class="hint">All sequential external confirmations are recorded. Internal approval remains pending because no approved Issue Slip decision authority is configured. This record does not authorize material disposition or product release.</p>}
         {slip.status === 'DRAFT' && canManage && (
           <form method="post" data-issue-form><input type="hidden" name="intent" value="issue" /><input type="hidden" name="expectedVersion" value={slip.version.toString()} /><button type="submit" data-issue data-version={slip.version.toString()}>Issue slip (start approval tracking)</button></form>
         )}
@@ -309,12 +321,20 @@ const fmtDateTime = (d?: Date) =>
       event.preventDefault();
       const role = form.dataset.confirmForm as Role;
       const approverName = String(new FormData(form).get('approverName') ?? '').trim();
+      const approverIdentity = String(new FormData(form).get('approverIdentity') ?? '').trim();
+      const outcome = String(new FormData(form).get('outcome') ?? '') as 'APPROVED' | 'REJECTED' | 'UNKNOWN';
+      const evidenceConfidence = String(new FormData(form).get('evidenceConfidence') ?? 'UNASSESSED') as 'UNASSESSED' | 'LOW' | 'MEDIUM' | 'HIGH';
+      const evidenceFileId = String(new FormData(form).get('evidenceFileId') ?? '').trim();
       run(
         actions.rejectReports.confirmApproval({
           reportId,
           expectedVersion: BigInt(form.dataset.version || '0'),
           role,
           approverName: approverName || undefined,
+          approverIdentity: approverIdentity || undefined,
+          outcome,
+          evidenceConfidence,
+          evidenceFileId: evidenceFileId || undefined,
         }),
       );
     }),
