@@ -2,7 +2,7 @@ import { Client } from 'pg';
 import { fileURLToPath } from 'node:url';
 
 import { loadMigrations } from './migrate.js';
-import { isSupportedMigrationChecksum } from '../../src/shared/database/migration-checksum-policy.js';
+import { getMigrationChecksumDisposition } from '../../src/shared/database/migration-checksum-policy.js';
 import {
   DatabaseConfigurationError,
   getDatabaseConnectionConfig,
@@ -14,6 +14,7 @@ import { assertSafeLocalDatabaseCommand } from './local-target-guard.js';
 export interface DatabasePreflightReport {
   connectivity: 'PASS' | 'FAIL';
   postgresqlVersion: string | null;
+  postgresVersionSupported: boolean | null;
   currentDatabase: string | null;
   currentUser: string | null;
   runtimePrincipal: 'DATABASE_URL';
@@ -24,6 +25,13 @@ export interface DatabasePreflightReport {
   migrationCountApplied: number;
   migrationCountPending: number;
   migrationLedgerState: 'UNINITIALIZED' | 'CURRENT' | 'PENDING' | 'DRIFT';
+  migrationLedgerIssues: Array<
+    | 'MIGRATION_LEDGER_MISSING'
+    | 'DUPLICATE_APPLIED_VERSION'
+    | 'OUT_OF_ORDER_OR_GAP'
+    | 'MIGRATION_NAME_MISMATCH'
+    | 'UNKNOWN_CHECKSUM'
+  >;
   capabilities: {
     transactionReadOnly: boolean;
     schemaUsage: boolean | null;
@@ -52,6 +60,7 @@ export async function runDatabasePreflight(
     await client.query('SET TRANSACTION READ ONLY');
     const settings = await client.query<{
       version: string;
+      version_num: number;
       database: string;
       user: string;
       schema: string | null;
@@ -67,6 +76,7 @@ export async function runDatabasePreflight(
       migrations_write: boolean;
     }>(`SELECT
         version() AS version,
+        current_setting('server_version_num')::integer AS version_num,
         current_database() AS database,
         current_user AS user,
         current_schema() AS schema,
@@ -101,17 +111,34 @@ export async function runDatabasePreflight(
       );
       appliedRows = result.rows;
     }
-    const hasLedgerDrift =
-      appliedRows.length > migrations.length ||
-      appliedRows.some((applied, index) => {
-        const source = migrations[index];
-        return (
-          !source ||
-          applied.version !== source.version ||
-          applied.name !== source.name ||
-          !isSupportedMigrationChecksum(applied.version, source.checksum, applied.checksum)
-        );
-      });
+    const migrationLedgerIssues = new Set<DatabasePreflightReport['migrationLedgerIssues'][number]>();
+    if (!row.migrations_exists) migrationLedgerIssues.add('MIGRATION_LEDGER_MISSING');
+    const seenAppliedVersions = new Set<string>();
+    for (const [index, applied] of appliedRows.entries()) {
+      if (seenAppliedVersions.has(applied.version)) {
+        migrationLedgerIssues.add('DUPLICATE_APPLIED_VERSION');
+      }
+      seenAppliedVersions.add(applied.version);
+      const source = migrations[index];
+      if (!source || applied.version !== source.version) {
+        migrationLedgerIssues.add('OUT_OF_ORDER_OR_GAP');
+      }
+      if (source && applied.name !== source.name) {
+        migrationLedgerIssues.add('MIGRATION_NAME_MISMATCH');
+      }
+      if (
+        source &&
+        getMigrationChecksumDisposition(applied.version, source.checksum, applied.checksum) === 'UNKNOWN'
+      ) {
+        migrationLedgerIssues.add('UNKNOWN_CHECKSUM');
+      }
+    }
+    if (appliedRows.length > migrations.length) {
+      migrationLedgerIssues.add('OUT_OF_ORDER_OR_GAP');
+    }
+    const hasLedgerDrift = [...migrationLedgerIssues].some((issue) =>
+      issue !== 'MIGRATION_LEDGER_MISSING',
+    );
     const migrationLedgerState = !row.migrations_exists
       ? 'UNINITIALIZED'
       : hasLedgerDrift
@@ -123,6 +150,7 @@ export async function runDatabasePreflight(
     return {
       connectivity: 'PASS',
       postgresqlVersion: row.version,
+      postgresVersionSupported: row.version_num >= 180000 && row.version_num < 190000,
       currentDatabase: row.database,
       currentUser: row.user,
       runtimePrincipal: 'DATABASE_URL',
@@ -133,6 +161,7 @@ export async function runDatabasePreflight(
       migrationCountApplied: appliedRows.length,
       migrationCountPending: Math.max(0, migrations.length - appliedRows.length),
       migrationLedgerState,
+      migrationLedgerIssues: [...migrationLedgerIssues],
       capabilities: {
         transactionReadOnly: row.read_only === 'on',
         schemaUsage: row.schema_usage,

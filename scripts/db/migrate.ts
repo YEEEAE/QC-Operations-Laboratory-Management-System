@@ -31,6 +31,17 @@ export class MigrationIntegrityError extends Error {
   }
 }
 
+export class MigrationExecutionError extends Error {
+  constructor(
+    readonly version: string,
+    readonly outcome: 'ROLLED_BACK' | 'UNKNOWN',
+    options?: ErrorOptions,
+  ) {
+    super(`Migration ${version} failed; transaction outcome is ${outcome}.`, options);
+    this.name = 'MigrationExecutionError';
+  }
+}
+
 const migrationsDirectory = resolve(dirname(fileURLToPath(import.meta.url)), '../../db/migrations');
 const lockKey = 'qc-operations-schema-migrations-v1';
 
@@ -82,6 +93,19 @@ async function acquireLock(client: PoolClient): Promise<void> {
   await client.query('SELECT pg_advisory_lock(hashtextextended($1, 0))', [lockKey]);
 }
 
+async function assertSupportedPostgresVersion(client: PoolClient): Promise<void> {
+  const result = await client.query<{ version: string; version_num: number }>(
+    `SELECT current_setting('server_version') AS version,
+            current_setting('server_version_num')::integer AS version_num`,
+  );
+  const row = result.rows[0];
+  if (!row || row.version_num < 180000 || row.version_num >= 190000) {
+    throw new MigrationIntegrityError(
+      `Migration runner requires PostgreSQL 18.x; detected ${row?.version ?? 'an unknown version'}.`,
+    );
+  }
+}
+
 async function releaseLock(client: PoolClient): Promise<void> {
   await client.query('SELECT pg_advisory_unlock(hashtextextended($1, 0))', [lockKey]);
 }
@@ -131,18 +155,29 @@ export async function verifyMigrationIntegrity(
   assertContiguousMigrationSequence(migrationFiles);
   const result = await readApplied(client);
   const files = new Map(migrationFiles.map((migration) => [migration.version, migration]));
+  const appliedVersions = new Set<string>();
   for (const [index, applied] of result.entries()) {
+    if (appliedVersions.has(applied.version)) {
+      throw new MigrationIntegrityError(
+        `Duplicate applied migration version detected at ${applied.version}.`,
+      );
+    }
+    appliedVersions.add(applied.version);
     const expected = migrationFiles[index];
     const migration = files.get(applied.version);
     if (
       !expected ||
       applied.version !== expected.version ||
       !migration ||
-      migration.name !== applied.name ||
-      !isSupportedMigrationChecksum(applied.version, migration.checksum, applied.checksum)
+      migration.name !== applied.name
     ) {
       throw new MigrationIntegrityError(
         `Applied migration ledger does not match the ordered source at version ${applied.version}.`,
+      );
+    }
+    if (!isSupportedMigrationChecksum(applied.version, migration.checksum, applied.checksum)) {
+      throw new MigrationIntegrityError(
+        `Unknown applied checksum at migration version ${applied.version}; historical source and ledger values are immutable.`,
       );
     }
   }
@@ -196,6 +231,7 @@ export async function migrate(
   const pool = options.pool;
   const migrations = options.migrations ?? (await loadMigrations());
   return withMigrationLock(pool, async (client) => {
+    await assertSupportedPostgresVersion(client);
     await verifyMigrationIntegrity(client, migrations);
     const applied = new Set((await readApplied(client)).map((row) => row.version));
     const pending = migrations.filter((migration) => !applied.has(migration.version));
@@ -209,6 +245,7 @@ export async function migrate(
     const appliedNow: string[] = [];
     for (const migration of pending) {
       const started = performance.now();
+      let commitStarted = false;
       await client.query('BEGIN');
       try {
         await client.query(migration.sql);
@@ -223,11 +260,23 @@ export async function migrate(
             '0.1.0',
           ],
         );
+        commitStarted = true;
         await client.query('COMMIT');
         appliedNow.push(migration.version);
       } catch (error) {
-        await client.query('ROLLBACK');
-        throw error;
+        try {
+          await client.query('ROLLBACK');
+          throw new MigrationExecutionError(
+            migration.version,
+            commitStarted ? 'UNKNOWN' : 'ROLLED_BACK',
+            { cause: error },
+          );
+        } catch (rollbackError) {
+          if (rollbackError instanceof MigrationExecutionError) throw rollbackError;
+          throw new MigrationExecutionError(migration.version, 'UNKNOWN', {
+            cause: rollbackError,
+          });
+        }
       }
     }
     return { applied: appliedNow, pending: [] };
@@ -235,6 +284,11 @@ export async function migrate(
 }
 
 export function formatMigrationError(error: unknown): string {
+  if (error instanceof MigrationExecutionError) {
+    return error.outcome === 'ROLLED_BACK'
+      ? `MIGRATION FAILED: version ${error.version} was rolled back; no later migration was attempted.`
+      : `MIGRATION OUTCOME UNKNOWN: version ${error.version}; stop and inspect the ledger/schema before any retry. Credentials and connection details were not printed.`;
+  }
   if (error instanceof MigrationIntegrityError) {
     return `MIGRATION SOURCE/LEDGER DRIFT: ${error.message}`;
   }
@@ -298,6 +352,17 @@ export function createOperatorMigrationPool(
       'The migration URL must target the same host, port, and database as the active runtime profile.',
     );
   }
+  if (environment.APP_ENVIRONMENT_PROFILE === 'production') {
+    const productionContextProvided =
+      args.includes('--production-approved') &&
+      Boolean(environment.MIGRATION_PRODUCTION_RELEASE_ID?.trim()) &&
+      Boolean(environment.MIGRATION_PRODUCTION_APPROVAL_REFERENCE?.trim());
+    if (!productionContextProvided) {
+      throw new DatabaseConfigurationError(
+        'Production migration use requires --production-approved, MIGRATION_PRODUCTION_RELEASE_ID, and MIGRATION_PRODUCTION_APPROVAL_REFERENCE.',
+      );
+    }
+  }
   return createMaintenancePool(connectionConfig);
 }
 
@@ -314,6 +379,7 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
     assertSafeLocalDatabaseCommand(
       process.env,
       process.env.DATABASE_URL_UNPOOLED ?? process.env.MIGRATION_DATABASE_URL,
+      { productionApproved: process.argv.includes('--production-approved') },
     );
     const cliPool = createOperatorMigrationPool(process.argv, process.env);
     try {

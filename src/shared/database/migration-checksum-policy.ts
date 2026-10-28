@@ -31,7 +31,16 @@ export function isSupportedMigrationChecksum(
   currentChecksum: string,
   appliedChecksum: string,
 ): boolean {
-  return (
-    currentChecksum === appliedChecksum || isKnownLegacyMigrationChecksum(version, appliedChecksum)
-  );
+  return getMigrationChecksumDisposition(version, currentChecksum, appliedChecksum) !== 'UNKNOWN';
+}
+
+/** Distinguishes current source, explicitly retained legacy bytes, and drift. */
+export function getMigrationChecksumDisposition(
+  version: string,
+  currentChecksum: string,
+  appliedChecksum: string,
+): 'CURRENT' | 'KNOWN_LEGACY' | 'UNKNOWN' {
+  if (currentChecksum === appliedChecksum) return 'CURRENT';
+  if (isKnownLegacyMigrationChecksum(version, appliedChecksum)) return 'KNOWN_LEGACY';
+  return 'UNKNOWN';
 }

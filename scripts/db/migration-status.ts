@@ -21,7 +21,11 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
   loadLocalEnv();
   loadLocalOperatorEnv();
   loadLocalMigrationEnv();
-  assertSafeLocalDatabaseCommand(process.env, process.env.DATABASE_URL_UNPOOLED ?? process.env.MIGRATION_DATABASE_URL ?? process.env.DATABASE_URL);
+  assertSafeLocalDatabaseCommand(
+    process.env,
+    process.env.DATABASE_URL_UNPOOLED ?? process.env.MIGRATION_DATABASE_URL ?? process.env.DATABASE_URL,
+    { productionApproved: process.argv.includes('--production-approved') },
+  );
   migrationStatus().catch((error: unknown) => {
     console.error(formatMigrationError(error));
     process.exitCode = 1;
