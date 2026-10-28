@@ -16,9 +16,8 @@ try { sourceReceiving = await getSourceReceivingForLabTest(actor,test.id); }
 catch { sourceReceivingUnavailable = true; }
 const relatedLinks=[{ label: 'Laboratory register', href: '/laboratory/tests', detail: 'Laboratory-owned records' }];
 if(sourceReceiving)relatedLinks.push({ label: `Source receiving ${sourceReceiving.receivingNo}`, href: `/quarantine/receiving/${sourceReceiving.id}`, detail: 'Quarantine-owned source record' });
-const hasRetestAuthority = actor.permissions.some((permission) => permission.code === 'PERM-LAB-RETEST' && permission.active !== false) || actor.permissions.some((permission) => permission.code === 'PERM-LAB-AUTHORIZE-RETEST' && permission.active !== false);
-const canRetest = hasRetestAuthority && test.scientificResult != null;
 const hasPermission = (code: string) => actor.permissions.some((permission) => permission.code === code && permission.active !== false);
+const canRequestRetest = !test.originalTestId && test.scientificResult != null && hasPermission('PERM-LAB-CREATE');
 const canExecute = test.state === 'DRAFT' && hasPermission('PERM-LAB-EDIT-DRAFT');
 const atReviewerStage = ['SUBMITTED', 'UNDER_REVIEW'].includes(test.state);
 const atQcmStage = test.state === 'PENDING_QCM_APPROVAL';
@@ -386,24 +385,15 @@ const documentEvidence = test.context.documents.map((item) => ({
               <h3>Retest</h3>
               {test.originalTestId ? (
                 <p class="action-note">
-                  Retest of an original laboratory test — sequence and authority follow the approved
-                  P-05 policy; the original test remains unchanged.
+                  This test is already linked as a retest. Retest requests must link directly to an original test.
                 </p>
-              ) : canRetest ? (
-                <p class="action-note">
-                  Retest authorization follows the approved P-05 policy: a retest may only be created
-                  by the approved authority, with its own record version and reason. The original test
-                  remains unchanged.
-                </p>
+              ) : canRequestRetest ? (
+                <><p class="action-note">Submit a request with investigation and evidence. The original result remains unchanged.</p><a class="button" href={`/laboratory/tests/${test.id}/retests/new`}>Request retest</a></>
               ) : (
                 <p class="action-note">
-                  Retest requires the approved retest authority; this account does not hold it for
-                  this record.
+                  A retest request requires a recorded scientific result and laboratory test creation permission.
                 </p>
               )}
-              <p class="action-note">
-                Retest creation is not offered on this read-only record page.
-              </p>
             </div>
           </div>
           <p class="muted">

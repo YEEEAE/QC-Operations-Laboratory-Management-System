@@ -21,11 +21,14 @@ import { ReturnLabTestUseCase } from './return-lab-test.js';
 import { ResumeLabTestUseCase } from './resume-lab-test.js';
 import { ApproveLabTestUseCase } from './approve-lab-test.js';
 import { RejectLabTestUseCase } from './reject-lab-test.js';
-import { CreateRetestUseCase } from './create-retest.js';
 import { createPasswordReauthenticationVerifier } from '../../e-signatures/application/reauthentication-verifier.js';
+import { GetRetestRequestUseCase, RetestWorkflowUseCase } from './retest-workflow.js';
+import { PostgresRetestWorkflowRepository } from '../infrastructure/postgres-retest-workflow-repository.js';
+import { GetRetestOutcomesUseCase } from './get-retest-outcomes.js';
 export function laboratoryReadDependencies() {
   const repository = new PostgresLabRepository(getDatabase());
   const sources = new PostgresControlledLabSources(getDatabase());
+  const retestRequests = new PostgresRetestWorkflowRepository(getDatabase());
   return {
     get: new GetLabTestUseCase(repository),
     equipmentUsage: {
@@ -34,6 +37,8 @@ export function laboratoryReadDependencies() {
     list: new ListLabTestsUseCase(repository),
     workload: new GetLabWorkloadUseCase(repository),
     listApprovedTemplates: new ListApprovedLabTemplatesUseCase(sources),
+    retestRequest: new GetRetestRequestUseCase(repository, retestRequests),
+    retestOutcomes: new GetRetestOutcomesUseCase(repository),
   };
 }
 export function laboratoryActionDependencies() {
@@ -44,6 +49,7 @@ export function laboratoryActionDependencies() {
     new PostgresOutboxRepository(db),
   );
   const sources = new PostgresControlledLabSources(db);
+  const retestWorkflow = new RetestWorkflowUseCase(repository, new PostgresRetestWorkflowRepository(db), sources);
   // Each approval stage reauthenticates and records its own bound signature.
   const finalApprovalCeremony = createFinalApprovalCeremony(
     createPasswordReauthenticationVerifier(db),
@@ -68,6 +74,6 @@ export function laboratoryActionDependencies() {
     // TR-LAB-007 reject decision authority is POLICY SOURCE REQUIRED:
     // the use case is wired with the default fail-closed policy.
     reject: new RejectLabTestUseCase(repository),
-    retest: new CreateRetestUseCase(repository, sources),
+    retestWorkflow,
   };
 }

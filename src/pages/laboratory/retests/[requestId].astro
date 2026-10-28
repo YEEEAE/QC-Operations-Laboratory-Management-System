@@ -1,0 +1,77 @@
+import AppLayout from '../../../ui/layouts/AppLayout.astro';
+import PageHeader from '../../../ui/components/PageHeader.astro';
+import { actions } from 'astro:actions';
+import { laboratoryReadDependencies } from '../../../modules/laboratory/application/dependencies.js';
+import { uuidv7 } from '../../../shared/id/uuid.js';
+import { classifyReadFailure, providerUnavailableResponse } from '../../../shared/errors/read-failure.js';
+import { field } from '../../../ui/forms/mutation-post.js';
+import { isNamedSystemOwner } from '../../../shared/authorization/p05-authority.js';
+import type { LabTest } from '../../../modules/laboratory/domain/lab-test.js';
+
+const actor = Astro.locals.actor;
+if (!actor) return Astro.redirect(`/login?returnTo=${encodeURIComponent(Astro.url.pathname)}`);
+const requestId = Astro.params.requestId ?? '';
+let record;
+let failure = '';
+if (Astro.request.method === 'POST') {
+  const form = await Astro.request.formData();
+  const intent = field(form, 'intent');
+  const payload = { id: requestId, expectedVersion: field(form, 'expectedVersion'), requestKey: field(form, 'requestKey') };
+  try {
+    const result = intent === 'investigate'
+      ? await Astro.callAction(actions.laboratory.investigateRetest, { ...payload, investigation: field(form, 'investigation') })
+      : intent === 'approve'
+        ? await Astro.callAction(actions.laboratory.approveRetest, { ...payload, reason: field(form, 'reason') })
+        : intent === 'reject'
+          ? await Astro.callAction(actions.laboratory.rejectRetest, { ...payload, reason: field(form, 'reason') })
+          : null;
+    if (result && !result.error) return Astro.redirect(`/laboratory/retests/${requestId}`, 303);
+    failure = 'The action was not accepted. Refresh this request and review its current version and access.';
+  } catch {
+    failure = 'The result could not be confirmed. Review the request and its audit history before trying again.';
+  }
+}
+try {
+  record = await laboratoryReadDependencies().retestRequest.execute({ actor, id: requestId });
+} catch (error) {
+  if (classifyReadFailure(error) === 'UNAVAILABLE') return providerUnavailableResponse('Retest request is temporarily unavailable', Astro.url.pathname);
+  return Astro.redirect('/404');
+}
+const { request, original } = record;
+let relatedRetests: LabTest[] = [];
+try {
+  relatedRetests = (await laboratoryReadDependencies().retestOutcomes.execute({ actor, originalId: original.id })).retests;
+} catch {
+  return providerUnavailableResponse('Retest outcomes are temporarily unavailable', Astro.url.pathname);
+}
+const recordedResults = [original.scientificResult, ...relatedRetests.map((test) => test.scientificResult)].filter((result): result is 'PASS' | 'FAIL' | 'HOLD' => result != null);
+const hasConflictingResults = new Set(recordedResults).size > 1;
+const canReview = actor.accountState === 'ACTIVE' && (actor.roles.includes('SUPERVISOR') || isNamedSystemOwner(actor)) &&
+  ['PERM-LAB-RETEST','PERM-LAB-AUTHORIZE-RETEST'].every((code) => actor.permissions.some((p) => p.code === code && p.active !== false));
+const canInvestigate = request.status === 'REQUESTED' || request.status === 'INVESTIGATING';
+const stateText = request.status;
+---
+<AppLayout title={`Retest request ${request.id}`} locale="en" direction="ltr">
+  <main class="workspace">
+    <PageHeader section="Laboratory">
+      <Fragment slot="heading"><h1>Retest request</h1></Fragment>
+      <p class="lede">Request → investigation → internal decision → source-authorized retest → outcome comparison → final disposition</p>
+      <Fragment slot="actions"><a href={`/laboratory/tests/${original.id}`}>Open original test</a></Fragment>
+    </PageHeader>
+    {failure && <p class="feedback" role="alert" tabindex="-1">{failure}</p>}
+    <section class="panel" aria-labelledby="status-heading"><p class="eyebrow">Request status</p><h2 id="status-heading">{stateText}</h2><p>Request ID: <code>{request.id}</code> · Version {request.version.toString()}</p><p>Requested by account {request.requesterId} · {request.reason}</p><p>Decision: {request.decisionReason ?? 'No decision recorded'}</p><p>Decision actor: {request.decisionActorId ?? 'Not recorded'} · Time: {request.decisionAt?.toISOString() ?? 'Not recorded'}</p></section>
+    <section class="panel" aria-labelledby="original-heading"><p class="eyebrow">Immutable scientific record</p><h2 id="original-heading">Original test — {original.labTestNo}</h2><dl><div><dt>Workflow state</dt><dd>{original.state}</dd></div><div><dt>Scientific result at request</dt><dd>{request.originalScientificResult ?? 'Not recorded'}</dd></div><div><dt>Current scientific result</dt><dd>{original.scientificResult ?? 'Not recorded'}</dd></div><div><dt>Request version snapshot</dt><dd>{request.originalTestVersion.toString()}</dd></div><div><dt>Method source</dt><dd>{request.sourceMethodReference}</dd></div><div><dt>Source hash</dt><dd><code>{request.sourceContentHash}</code></dd></div></dl><p>The original result, measurements, history, and approvals are preserved independently.</p></section>
+    <section class="panel workflow-step" aria-labelledby="investigation-heading"><p class="eyebrow">Step 2 · Investigate</p><h2 id="investigation-heading">Investigation and evidence</h2><p>{request.investigation ?? 'No investigation recorded'}</p>
+      {canInvestigate && (request.requesterId === actor.id || canReview) && <form method="post" class="form"><input type="hidden" name="intent" value="investigate"/><input type="hidden" name="expectedVersion" value={request.version.toString()}/><input type="hidden" name="requestKey" value={uuidv7()}/><label for="investigation">Add investigation evidence</label><textarea id="investigation" name="investigation" required rows="5">{request.investigation ?? ''}</textarea><button type="submit">Save investigation</button></form>}
+    </section>
+    <section class="panel workflow-step" aria-labelledby="decision-heading"><p class="eyebrow">Step 3 · Authorize or reject</p><h2 id="decision-heading">Internal decision</h2><p>Only an active Laboratory Supervisor or named System Owner with both server grants can decide. A decision does not assign a scientific outcome or release material.</p>
+      {canInvestigate && canReview ? <div class="decision-forms"><form method="post" class="form"><input type="hidden" name="intent" value="approve"/><input type="hidden" name="expectedVersion" value={request.version.toString()}/><input type="hidden" name="requestKey" value={uuidv7()}/><label for="approveReason">Approval rationale</label><textarea id="approveReason" name="reason" required rows="3"></textarea><button type="submit">Authorize request</button></form><form method="post" class="form"><input type="hidden" name="intent" value="reject"/><input type="hidden" name="expectedVersion" value={request.version.toString()}/><input type="hidden" name="requestKey" value={uuidv7()}/><label for="rejectReason">Rejection rationale</label><textarea id="rejectReason" name="reason" required rows="3"></textarea><button type="submit" class="secondary">Reject request</button></form></div> : <p>{request.status === 'APPROVED' ? 'Authorized internally.' : request.status === 'REJECTED' ? 'Request rejected.' : 'Decision controls are unavailable for this account or request state.'}</p>}
+    </section>
+    <section class="panel workflow-step" aria-labelledby="create-heading"><p class="eyebrow">Step 4 · Create retest</p><h2 id="create-heading">New test</h2><p>A retest cannot be created until an approved effective method source establishes this case's eligibility and the controlled test-number allocation. The original test cannot be selected as a retest parent.</p><button type="button" disabled aria-describedby="create-blocker">Create retest</button><p id="create-blocker" class="blocker"><strong>METHOD_SOURCE_REQUIRED</strong> · No test was created.</p></section>
+    <section class="panel workflow-step" aria-labelledby="compare-heading"><p class="eyebrow">Step 5 · Compare outcomes</p><h2 id="compare-heading">Outcome comparison</h2><table><caption>Independent scientific outcomes linked to {original.labTestNo}</caption><thead><tr><th scope="col">Record</th><th scope="col">Test number</th><th scope="col">Scientific result</th><th scope="col">Workflow state</th></tr></thead><tbody><tr><th scope="row">Original</th><td><a href={`/laboratory/tests/${original.id}`}>{original.labTestNo}</a></td><td>{original.scientificResult ?? 'Not recorded'}</td><td>{original.state}</td></tr>{relatedRetests.map((test) => <tr><th scope="row">Retest {test.retestSequence}</th><td><a href={`/laboratory/tests/${test.id}`}>{test.labTestNo}</a></td><td>{test.scientificResult ?? 'Not recorded'}</td><td>{test.state}</td></tr>)}</tbody></table>{relatedRetests.length === 0 && <p>No retest test has been created.</p>}{hasConflictingResults && <p class="blocker"><strong>Conflicting recorded scientific outcomes.</strong> Preserve each record and follow the effective method's evaluation rule.</p>}<p>Scientific results remain separate. No automatic PASS or overwritten outcome is produced.</p></section>
+    <section class="panel workflow-step" aria-labelledby="disposition-heading"><p class="eyebrow">Step 6 · Final disposition</p><h2 id="disposition-heading">Controlled disposition</h2><p>{hasConflictingResults ? 'Conflicting outcomes require an effective method source that defines evaluation and a documented final disposition.' : 'Final disposition requires an effective method source that defines the permitted decision and evidence.'}</p><p class="blocker">Pending controlled method decision · No product release or physical disposition is implied.</p></section>
+  </main>
+</AppLayout>
+<style>
+  .workspace{display:grid;gap:var(--space-5);min-inline-size:0}.lede{color:var(--text-muted)}.panel{max-inline-size:72rem;padding:var(--space-5);border:1px solid var(--color-border-subtle);border-radius:var(--radius-lg);background:var(--surface-panel);min-inline-size:0}.workflow-step{border-inline-start:3px solid var(--color-accent-primary)}h2{margin-block:var(--space-1) var(--space-3);font-size:var(--font-size-lg)}.eyebrow{margin:0;color:var(--text-muted);font-size:var(--font-size-xs);font-weight:var(--font-weight-semibold)}p{overflow-wrap:anywhere}dl{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,13rem),1fr));gap:var(--space-3)}dt{color:var(--text-muted);font-size:var(--font-size-xs)}dd{margin:var(--space-1) 0 0;overflow-wrap:anywhere}code{font-size:var(--font-size-xs);overflow-wrap:anywhere}.form{display:grid;gap:var(--space-3);max-inline-size:48rem;margin-block-start:var(--space-4)}.decision-forms{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,20rem),1fr));gap:var(--space-4)}label{font-weight:var(--font-weight-semibold)}textarea{inline-size:100%;box-sizing:border-box;min-block-size:5rem;padding:var(--space-3);border:1px solid var(--control-border);border-radius:var(--radius-sm);background:var(--surface-inset);color:var(--text-primary);font:inherit;resize:vertical}button,.form button{min-block-size:44px;inline-size:max-content;max-inline-size:100%;padding:var(--space-2) var(--space-4);border:0;border-radius:var(--radius-sm);background:var(--color-accent-primary);color:var(--text-on-accent);font:inherit;font-weight:var(--font-weight-semibold)}button:disabled{opacity:.65;cursor:not-allowed}.secondary{background:var(--surface-inset);color:var(--text-primary);border:1px solid var(--control-border)!important}.blocker,.feedback{padding:var(--space-3);border-inline-start:3px solid var(--status-warning);background:var(--surface-inset)}:focus-visible{outline:2px solid var(--focus-ring);outline-offset:2px}@media(max-width:600px){.panel{padding:var(--space-4)}button{inline-size:100%;width:100%}}
+</style>

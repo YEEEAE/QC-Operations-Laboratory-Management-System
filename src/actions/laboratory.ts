@@ -223,17 +223,31 @@ const reject = defineAction({
       }),
     ),
 });
-const createRetest = defineAction({
+const requestRetest = defineAction({
   accept: 'json',
-  input: z.object({ originalId: z.string().uuid(), reason: z.string().trim().min(1) }),
+  input: z.object({ originalId: z.string().uuid(), expectedVersion: z.coerce.bigint(), reason: z.string().trim().min(1), investigation: z.string().trim().min(1), requestKey: z.string().uuid() }),
   handler: (input, context) =>
     run(() =>
-      laboratoryActionDependencies().retest.execute({
+      laboratoryActionDependencies().retestWorkflow.request({
         ...input,
         actor: actor(context),
-        requestId: requestId(context),
       }),
     ),
+});
+const investigateRetest = defineAction({
+  accept: 'json',
+  input: z.object({ id: z.string().uuid(), expectedVersion: z.coerce.bigint(), investigation: z.string().trim().min(1), requestKey: z.string().uuid() }),
+  handler: (input, context) => run(() => laboratoryActionDependencies().retestWorkflow.investigate({ ...input, actor: actor(context) })),
+});
+const approveRetest = defineAction({
+  accept: 'json',
+  input: z.object({ id: z.string().uuid(), expectedVersion: z.coerce.bigint(), reason: z.string().trim().min(1), requestKey: z.string().uuid() }),
+  handler: (input, context) => run(() => laboratoryActionDependencies().retestWorkflow.decide({ ...input, decision: 'APPROVED', actor: actor(context) })),
+});
+const rejectRetest = defineAction({
+  accept: 'json',
+  input: z.object({ id: z.string().uuid(), expectedVersion: z.coerce.bigint(), reason: z.string().trim().min(1), requestKey: z.string().uuid() }),
+  handler: (input, context) => run(() => laboratoryActionDependencies().retestWorkflow.decide({ ...input, decision: 'REJECTED', actor: actor(context) })),
 });
 export const laboratory = {
   create,
@@ -248,5 +262,8 @@ export const laboratory = {
   finalApprove,
   reopen,
   reject,
-  createRetest,
+  requestRetest,
+  investigateRetest,
+  approveRetest,
+  rejectRetest,
 };

@@ -213,6 +213,13 @@ const routeTuples = [
     'permission-bound',
     'required',
   ],
+  [
+    'RT-LAB-008',
+    '/laboratory/retests/[requestId]',
+    'src/pages/laboratory/retests/[requestId].astro',
+    'permission-bound',
+    'required',
+  ],
   ['RT-ASSET-001', '/assets', 'src/pages/assets/index.astro', 'permission-bound', 'required'],
   [
     'RT-EQUIP-001',

@@ -886,6 +886,35 @@ export interface LabMethodSpecificationsTable {
   created_at: Generated<Date>;
   request_id: string;
 }
+export interface LabRetestRequestsTable {
+  id: Generated<string>;
+  original_test_id: string;
+  original_test_version: bigint;
+  original_scientific_result: string | null;
+  requester_id: string;
+  reason: string;
+  investigation: string | null;
+  status: string;
+  decision_actor_id: string | null;
+  decision_at: Date | null;
+  decision_reason: string | null;
+  source_method_reference: string;
+  source_template_version_id: string;
+  source_content_hash: string;
+  request_key: string;
+  created_at: Generated<Date>;
+  updated_at: Generated<Date>;
+  version: Generated<bigint>;
+}
+export interface LabRetestRequestEventsTable {
+  id: Generated<string>;
+  request_id: string;
+  event_type: string;
+  actor_id: string;
+  request_key: string;
+  event_payload: unknown;
+  created_at: Generated<Date>;
+}
 export interface LabTestsTable {
   id: Generated<string>;
   lab_test_no: string;
@@ -1778,6 +1807,8 @@ export interface DatabaseSchema {
   lab_test_template_versions: LabTestTemplateVersionsTable;
   lab_test_template_parameters: LabTestTemplateParametersTable;
   lab_method_specifications: LabMethodSpecificationsTable;
+  lab_retest_requests: LabRetestRequestsTable;
+  lab_retest_request_events: LabRetestRequestEventsTable;
   lab_tests: LabTestsTable;
   lab_test_batches: LabTestBatchesTable;
   lab_samples: LabSamplesTable;

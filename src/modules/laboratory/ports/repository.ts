@@ -54,6 +54,7 @@ export interface LabWorkloadRead {
 
 export interface LabRepository {
   get(id: string, actor: ActorContext): Promise<LabTest | undefined>;
+  retests(originalId: string, actor: ActorContext): Promise<LabTest[]>;
   /**
    * A bounded register page plus the readable total for the same filter.
    *

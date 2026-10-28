@@ -77,6 +77,13 @@ export class PostgresLabRepository implements LabRepository {
     return test;
   }
 
+  async retests(originalId: string, actor: ActorContext): Promise<LabTest[]> {
+    const rows = await this.db.selectFrom('lab_tests').selectAll().where('original_test_id', '=', originalId)
+      .orderBy('retest_sequence').orderBy('created_at').execute();
+    const readable = rows.filter((row) => this.canRead(actor, row));
+    return readable.length ? this.hydrate(readable) : [];
+  }
+
   /**
    * The register, filtered server-side and loaded in a constant number of
    * queries.
