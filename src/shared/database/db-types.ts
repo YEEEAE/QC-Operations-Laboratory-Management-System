@@ -157,6 +157,71 @@ export interface EvidenceLinksTable {
   removal_reason: string | null;
 }
 
+export interface LibraryBinaryObjectsTable {
+  id: Generated<string>;
+  sha256: string;
+  size_bytes: number | bigint;
+  mime_type: string;
+  object_state: 'STAGING' | 'COMPLETE' | 'QUARANTINED';
+  chunk_count: number;
+  integrity_status: 'PENDING' | 'VERIFIED' | 'FAILED';
+  created_at: Generated<Date>;
+}
+
+export interface LibraryBinaryChunksTable {
+  object_id: string;
+  chunk_no: number;
+  chunk_bytes: Uint8Array;
+}
+
+export interface LibraryBinaryObjectKeysTable {
+  storage_key: string;
+  object_id: string;
+  created_at: Generated<Date>;
+}
+
+export interface LibraryImportBatchesTable {
+  id: Generated<string>;
+  manifest_sha256: string;
+  actor_id: string;
+  profile: 'development' | 'test' | 'staging' | 'production';
+  target_project_id: string;
+  target_branch_id: string;
+  target_database: string;
+  change_reference: string;
+  approval_reference: string;
+  recovery_reference: string;
+  state: 'PLANNED' | 'RUNNING' | 'COMPLETED' | 'PARTIAL' | 'FAILED';
+  counters: unknown;
+  sanitized_error: string | null;
+  started_at: Generated<Date>;
+  completed_at: Date | null;
+}
+
+export interface LibrarySourceOccurrencesTable {
+  id: Generated<string>;
+  batch_id: string;
+  manifest_row: number;
+  manifest_sha256: string;
+  original_filename: string;
+  source_path: string;
+  source_title: string | null;
+  classification: string;
+  filename_code: string | null;
+  filename_revision: string | null;
+  content_code: string | null;
+  content_revision: string | null;
+  review_state: 'UNREVIEWED' | 'READABLE' | 'PARTIAL' | 'SCAN_REQUIRED' | 'SOURCE_CONFLICT' | 'UNAVAILABLE';
+  license_state: 'NOT_APPLICABLE' | 'LICENSE_REVIEW_REQUIRED' | 'AUTHORIZED' | 'DENIED';
+  sha256: string;
+  file_size_bytes: number | bigint;
+  binary_object_id: string | null;
+  file_id: string | null;
+  source_location: string | null;
+  provenance: unknown;
+  created_at: Generated<Date>;
+}
+
 export interface NotificationsTable {
   id: Generated<string>;
   recipient_user_id: string;
@@ -1622,6 +1687,11 @@ export interface DatabaseSchema {
   idempotency_records: IdempotencyRecordsTable;
   files: FilesTable;
   evidence_links: EvidenceLinksTable;
+  library_binary_objects: LibraryBinaryObjectsTable;
+  library_binary_chunks: LibraryBinaryChunksTable;
+  library_binary_object_keys: LibraryBinaryObjectKeysTable;
+  library_import_batches: LibraryImportBatchesTable;
+  library_source_occurrences: LibrarySourceOccurrencesTable;
   notifications: NotificationsTable;
   notification_deliveries: NotificationDeliveriesTable;
   roles: RolesTable;

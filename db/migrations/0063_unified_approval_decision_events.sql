@@ -1,4 +1,4 @@
--- 0062_unified_approval_decision_events
+-- 0063_unified_approval_decision_events
 -- Append-only cross-domain record of internal approval decisions. Each event is
 -- linked to the audit row created by the same domain transaction. This table
 -- records authorization path metadata; it is not an electronic-signature store.

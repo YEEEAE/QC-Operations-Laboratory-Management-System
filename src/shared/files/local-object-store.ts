@@ -13,6 +13,8 @@ function safePath(root: string, key: string): string {
 }
 
 export class LocalObjectStore implements ObjectStore {
+  readonly provider = 'LOCAL_FILESYSTEM';
+
   constructor(
     private readonly root: string,
     environment: 'development' | 'test' | 'production' = 'development',

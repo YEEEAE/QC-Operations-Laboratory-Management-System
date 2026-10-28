@@ -1,0 +1,113 @@
+---
+import AppLayout from '../../ui/layouts/AppLayout.astro';
+import PageHeader from '../../ui/components/PageHeader.astro';
+import { isNamedSystemOwner } from '../../shared/authorization/p05-authority.js';
+import { getDatabase } from '../../shared/database/database.js';
+
+const actor = Astro.locals.actor;
+if (!actor) return Astro.redirect('/login?returnTo=%2Fdocuments%2Fsource-library');
+if (!isNamedSystemOwner(actor)) return new Response(null, { status: 404 });
+
+const search = Astro.url.searchParams.get('q')?.trim().slice(0, 200) ?? '';
+const classification = Astro.url.searchParams.get('type')?.trim().slice(0, 80) ?? '';
+let sources: Array<{
+  id: string;
+  original_filename: string;
+  source_path: string;
+  classification: string;
+  filename_code: string | null;
+  filename_revision: string | null;
+  content_code: string | null;
+  content_revision: string | null;
+  review_state: string;
+  license_state: string;
+  sha256: string;
+  file_size_bytes: number | bigint;
+  binary_object_id: string | null;
+}> = [];
+let unavailable = false;
+try {
+  let query = getDatabase()
+    .selectFrom('library_source_occurrences')
+    .select([
+      'id', 'original_filename', 'source_path', 'classification',
+      'filename_code', 'filename_revision', 'content_code', 'content_revision',
+      'review_state', 'license_state', 'sha256', 'file_size_bytes', 'binary_object_id',
+    ])
+    .orderBy('classification')
+    .orderBy('source_path')
+    .limit(200);
+  if (search) {
+    const escaped = search.replace(/[\\%_]/g, '\\$&');
+    query = query.where((eb) => eb.or([
+      eb('original_filename', 'ilike', `%${escaped}%`),
+      eb('source_path', 'ilike', `%${escaped}%`),
+      eb('filename_code', 'ilike', `%${escaped}%`),
+      eb('content_code', 'ilike', `%${escaped}%`),
+    ]));
+  }
+  if (classification) query = query.where('classification', '=', classification);
+  sources = await query.execute();
+} catch {
+  // Missing/unapplied source-library schema is shown as unavailable, never as an empty library.
+  unavailable = true;
+}
+
+const formatBytes = (value: number | bigint) => {
+  const bytes = Number(value);
+  if (!Number.isFinite(bytes)) return 'Size unavailable';
+  return `${(bytes / (1024 * 1024)).toFixed(2)} MiB`;
+};
+const canDownload = (source: (typeof sources)[number]) => Boolean(
+  source.binary_object_id &&
+  ['NOT_APPLICABLE', 'AUTHORIZED'].includes(source.license_state) &&
+  ['READABLE', 'PARTIAL'].includes(source.review_state),
+);
+---
+
+<AppLayout title="QC source library · QC Operations" locale="en" direction="ltr">
+  <PageHeader purpose="Traceable source records and original attachments. Imported content remains unapproved until governed through its owning QMS workflow.">
+    <Fragment slot="heading"><h1>QC source library</h1></Fragment>
+    <Fragment slot="actions"><a class="button secondary" href="/documents">Controlled documents</a></Fragment>
+  </PageHeader>
+
+  <section class="library-panel" aria-labelledby="library-filters">
+    <h2 id="library-filters">Find source records</h2>
+    <form method="get" action="/documents/source-library">
+      <label for="q">Filename, path, or document code</label>
+      <input id="q" name="q" type="search" maxlength="200" value={search} />
+      <label for="type">Classification</label>
+      <input id="type" name="type" maxlength="80" value={classification} />
+      <button class="button" type="submit">Search</button>
+    </form>
+    <p class="muted">Showing up to 200 records. Filename-derived and content-confirmed identity remain separate. This owner review surface does not approve, activate, or change a controlled document.</p>
+  </section>
+
+  {unavailable ? (
+    <section class="empty-state" role="status"><h2>Source library unavailable</h2><p>The source-library schema is not available on this application database. No source records or attachments were returned.</p></section>
+  ) : sources.length === 0 ? (
+    <section class="empty-state" role="status"><h2>No source records found</h2><p>The source library may not have been imported. An empty result is not evidence of a completed import.</p></section>
+  ) : (
+    <div class="table-wrap"><table>
+      <thead><tr><th>Source</th><th>Classification</th><th>Filename identity</th><th>Confirmed identity</th><th>Review</th><th>License</th><th>Integrity</th><th>Original</th></tr></thead>
+      <tbody>{sources.map((source) => <tr>
+        <td><strong>{source.original_filename}</strong><small>{source.source_path}</small><small>{formatBytes(source.file_size_bytes)}</small></td>
+        <td>{source.classification}</td>
+        <td>{source.filename_code ?? 'Not identified'} · {source.filename_revision ?? 'Revision unknown'}</td>
+        <td>{source.content_code ?? 'Not confirmed'} · {source.content_revision ?? 'Revision not confirmed'}</td>
+        <td>{source.review_state}</td>
+        <td>{source.license_state}</td>
+        <td><code>{source.sha256}</code></td>
+        <td>{canDownload(source) ? <a href={`/documents/source-library/${encodeURIComponent(source.id)}/download`}>Download verified original</a> : <span>Unavailable or restricted</span>}</td>
+      </tr>)}</tbody>
+    </table></div>
+  )}
+</AppLayout>
+
+<style>
+  .library-panel,.empty-state{margin:1.25rem 0;padding:1rem;border:1px solid var(--border,#d8dee8);border-radius:.75rem;background:var(--surface,#fff)}
+  form{display:grid;grid-template-columns:minmax(12rem,2fr) minmax(10rem,1fr) auto;gap:.6rem 1rem;align-items:end}
+  form label{font-size:.85rem;font-weight:600} input{display:block;width:100%;min-height:2.6rem;padding:.5rem;border:1px solid var(--border,#aeb8c7);border-radius:.45rem}
+  .muted,small{display:block;color:var(--muted,#5d6878);font-size:.85rem} table{width:100%;border-collapse:collapse} th,td{padding:.7rem;text-align:left;vertical-align:top;border-bottom:1px solid var(--border,#d8dee8)}
+  code{overflow-wrap:anywhere;font-size:.75rem} .table-wrap{overflow:auto} @media(max-width:700px){form{grid-template-columns:1fr}td,th{min-width:9rem}}
+</style>

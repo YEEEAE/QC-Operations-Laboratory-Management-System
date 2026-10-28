@@ -13,6 +13,8 @@ export interface S3CompatibleClient {
 }
 
 export class S3ObjectStore implements ObjectStore {
+  readonly provider = 'OBJECT_STORE';
+
   constructor(
     private readonly client: S3CompatibleClient,
     private readonly bucket: string,

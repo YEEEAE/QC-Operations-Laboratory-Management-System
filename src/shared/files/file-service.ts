@@ -165,7 +165,7 @@ export class FileService {
       id: fileId,
       originalFilename: input.originalFilename,
       storageKey,
-      storageProvider: 'OBJECT_STORE',
+      storageProvider: this.store.provider ?? 'OBJECT_STORE',
       mimeType: input.mimeType,
       ...(input.extension ? { extension: input.extension } : {}),
       sizeBytes: input.bytes.byteLength,
@@ -263,7 +263,9 @@ export class FileService {
     });
     const file = await this.repository.findById(link.fileId);
     if (!file || file.state !== 'ACTIVE') throw new AppError('RESOURCE_NOT_FOUND');
-    const object = await this.store.get(file.storageKey);
+    const object = this.store.getForProvider
+      ? await this.store.getForProvider(file.storageProvider, file.storageKey)
+      : await this.store.get(file.storageKey);
     if (!object) throw new AppError('RESOURCE_NOT_FOUND');
     if (
       object.bytes.byteLength !== file.sizeBytes ||

@@ -10,6 +10,7 @@ import { documentsReadDependencies } from '../../modules/documents/application/d
 import { identityAdminReadDependencies } from '../../modules/identity/application/admin-dependencies.js';
 import { DEFAULT_PAGE_SIZE } from '../../config/constants.js';
 import { AppError } from '../../shared/errors/app-error.js';
+import { isNamedSystemOwner } from '../../shared/authorization/p05-authority.js';
 
 const actor = Astro.locals.actor;
 if (!actor) return Astro.redirect('/login?returnTo=%2Fdocuments');
@@ -48,6 +49,7 @@ try {
 const canCreate = actor.permissions.some(
   (permission) => permission.code === 'PERM-DOC-CREATE' && permission.active !== false,
 );
+const canReviewSourceLibrary = isNamedSystemOwner(actor);
 // The register names the owner, never a raw account identifier. Resolution is
 // presentation-only and failure-tolerant.
 let accountNames = new Map<string, string>();
@@ -97,7 +99,7 @@ const reviewCountText = `Showing ${reviewQueue?.items.length ?? 0} of ${reviewTo
         ><h1>{reviewMine ? 'Documents awaiting your review' : 'Controlled documents'}</h1></Fragment
       >
       <Fragment slot="actions"
-        >{canCreate && <a class="button" href="/documents/new">Create document</a>}</Fragment
+        >{canCreate && <a class="button" href="/documents/new">Create document</a>}{canReviewSourceLibrary && <a class="button secondary" href="/documents/source-library">QC source library</a>}</Fragment
       >
     </PageHeader>
 

@@ -60,7 +60,9 @@
     "uat:clean": "tsx scripts/uat/cleanup-uat-personas.ts",
     "uat:ingest": "tsx scripts/uat/ingest-uat-evidence.ts",
     "uat:scenarios": "tsx scripts/uat/run-uat-scenarios.ts",
-    "data:master-data:preflight": "tsx scripts/data/run-master-data-import.ts --entity equipment --dataset tests/fixtures/master-data/equipment-starting-set.json"
+    "data:master-data:preflight": "tsx scripts/data/run-master-data-import.ts --entity equipment --dataset tests/fixtures/master-data/equipment-starting-set.json",
+    "qc:library:scan": "tsx scripts/qc-library/scan-sources.ts --mode scan",
+    "qc:library:prepare": "tsx scripts/qc-library/scan-sources.ts --mode prepare"
   },
   "dependencies": {
     "@astrojs/check": "0.9.10",
