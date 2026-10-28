@@ -1,3 +1,8 @@
+- **2026-10-28 — NDB-05 / PostgreSQL laboratory traceability integrity**
+  - Changed: Added deferred-validation composite FKs for lab test/run/sample and frozen template revision ownership, source-backed bounded-register index, and a retest sequence unique index guarded against historical duplicates; no historic data cleanup or type semantics changed.
+  - Evidence: Source review/diff only; no SQL, scripts, tests, build, database connection, migration, or production operation.
+  - State: PARTIAL — local source sequence now includes 0054–0055; retest uniqueness can be blocked by historical conflicts and database state is unknown.
+  - Key files: `db/migrations/0054_laboratory_traceability_integrity.sql`, `db/migrations/0055_lab_retest_sequence_unique.sql`, `db/diagnostics/NDB-05-laboratory-integrity-exceptions.sql`, `src/shared/database/db-types.ts`, `src/modules/laboratory/infrastructure/postgres-repository.ts`.
 - **2026-10-28 — DEP-HEALTH-20261028 / Render runtime configuration and Neon pooling repair**
   - Changed: Inactive/unprovisioned profile identities no longer block startup; supplied identities remain complete/distinct. Neon pooled startup omits unsupported `search_path`; runtime Kysely qualifies `qc` explicitly.
   - Evidence: Node24.20.0 focused tests 20/20 and Astro build PASS. Built-server local HTTP smoke using proposed production settings returned readiness `200 healthy` and liveness 200; database checks were read-only. Render logs confirm `f4398ef` rejects missing runtime configuration while older `d183e6c` remains live; `a4b83580` had no open ports before timeout. Neon provider metadata confirms the production branch and pooled host.

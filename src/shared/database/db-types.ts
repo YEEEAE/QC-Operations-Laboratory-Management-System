@@ -729,6 +729,8 @@ export interface LabReadingsTable {
   batch_id: string;
   sample_id: string;
   template_parameter_id: string;
+  /** Nullable only for rows predating migration 0054; new rows bind the test's frozen template revision. */
+  template_version_id: string | null;
   reading_index: number;
   raw_numeric_value: string | null;
   raw_text_value: string | null;
@@ -746,6 +748,8 @@ export interface LabMeasurementsTable {
   batch_id: string | null;
   sample_id: string | null;
   template_parameter_id: string;
+  /** Nullable only for rows predating migration 0054; new rows bind the test's frozen template revision. */
+  template_version_id: string | null;
   raw_numeric_value: string | null;
   raw_text_value: string | null;
   raw_boolean_value: boolean | null;

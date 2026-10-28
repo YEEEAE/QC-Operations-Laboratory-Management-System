@@ -815,6 +815,7 @@ export class PostgresLabRepository implements LabRepository {
             batch_id: measurement.batchId ?? null,
             sample_id: measurement.sampleId,
             template_parameter_id: measurement.parameterId,
+            template_version_id: next.context.templateVersionId,
             ...rawColumns(measurement.raw, measurement.parameterId, next),
             unit: measurement.unit,
             calculated_value: measurement.calculatedValue ?? null,
@@ -835,6 +836,7 @@ export class PostgresLabRepository implements LabRepository {
         .onConflict((oc) =>
           oc.column('id').doUpdateSet({
             batch_id: sql`excluded.batch_id`,
+            template_version_id: sql`excluded.template_version_id`,
             raw_numeric_value: sql`excluded.raw_numeric_value`,
             raw_text_value: sql`excluded.raw_text_value`,
             raw_boolean_value: sql`excluded.raw_boolean_value`,
@@ -860,6 +862,7 @@ export class PostgresLabRepository implements LabRepository {
             batch_id: reading.batchId,
             sample_id: reading.sampleId,
             template_parameter_id: reading.parameterId,
+            template_version_id: next.context.templateVersionId,
             reading_index: reading.readingIndex,
             ...rawColumns(reading.raw, reading.parameterId, next),
             unit: reading.unit,
