@@ -16,6 +16,7 @@ export const GET: APIRoute = async ({ params, locals }) => {
     const source = await database
       .selectFrom('library_source_occurrences')
       .innerJoin('library_binary_objects', 'library_binary_objects.id', 'library_source_occurrences.binary_object_id')
+      .innerJoin('files', 'files.id', 'library_source_occurrences.file_id')
       .select([
         'library_source_occurrences.original_filename as original_filename',
         'library_source_occurrences.license_state as license_state',
@@ -23,6 +24,7 @@ export const GET: APIRoute = async ({ params, locals }) => {
         'library_binary_objects.id as object_id',
         'library_binary_objects.mime_type as mime_type',
         'library_binary_objects.size_bytes as size_bytes',
+        'files.mime_type as file_mime_type',
       ])
       .where('library_source_occurrences.id', '=', occurrenceId)
       .where('library_binary_objects.object_state', '=', 'COMPLETE')
@@ -52,7 +54,7 @@ export const GET: APIRoute = async ({ params, locals }) => {
     return new Response(body, {
       status: 200,
       headers: {
-        'content-type': binary.contentType,
+        'content-type': source.file_mime_type,
         'content-length': String(binary.sizeBytes),
         'content-disposition': `attachment; filename="${safeName}"; filename*=UTF-8''${encodeURIComponent(source.original_filename)}`,
         'cache-control': 'private, no-store',

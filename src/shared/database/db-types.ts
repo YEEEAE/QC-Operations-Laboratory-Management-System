@@ -211,13 +211,29 @@ export interface LibrarySourceOccurrencesTable {
   filename_revision: string | null;
   content_code: string | null;
   content_revision: string | null;
-  review_state: 'UNREVIEWED' | 'READABLE' | 'PARTIAL' | 'SCAN_REQUIRED' | 'SOURCE_CONFLICT' | 'UNAVAILABLE';
+  review_state: 'UNREVIEWED' | 'READABLE' | 'PARTIAL' | 'SCAN_REQUIRED' | 'SOURCE_CONFLICT' | 'UNAVAILABLE' | 'NEEDS_SOURCE_RESCAN';
   license_state: 'NOT_APPLICABLE' | 'LICENSE_REVIEW_REQUIRED' | 'AUTHORIZED' | 'DENIED';
   sha256: string;
   file_size_bytes: number | bigint;
   binary_object_id: string | null;
   file_id: string | null;
   source_location: string | null;
+  provenance: unknown;
+  extracted_text: string | null;
+  extraction_status: 'NOT_READ' | 'EXTRACTED_COMPLETE' | 'ARCHIVE_INSPECTED' | 'NEEDS_SOURCE_RESCAN' | 'EXTRACTION_ERROR' | 'LICENSE_CONTENT_NOT_RETAINED' | 'LICENSE_REVIEW_REQUIRED' | 'SOURCE_NOT_AVAILABLE' | 'SOURCE_CONFLICT' | 'EMPTY_DOCUMENT' | 'EMPTY_WORKBOOK' | 'MANUAL_REVIEW_REQUIRED';
+  content_metadata: unknown;
+  created_at: Generated<Date>;
+}
+
+export interface LibrarySourceAliasesTable {
+  id: Generated<string>;
+  batch_id: string;
+  manifest_sha256: string;
+  alias_filename: string;
+  canonical_filename: string;
+  sha256: string;
+  file_id: string | null;
+  binary_object_id: string | null;
   provenance: unknown;
   created_at: Generated<Date>;
 }
@@ -1698,6 +1714,7 @@ export interface DatabaseSchema {
   library_binary_object_keys: LibraryBinaryObjectKeysTable;
   library_import_batches: LibraryImportBatchesTable;
   library_source_occurrences: LibrarySourceOccurrencesTable;
+  library_source_aliases: LibrarySourceAliasesTable;
   notifications: NotificationsTable;
   notification_deliveries: NotificationDeliveriesTable;
   roles: RolesTable;

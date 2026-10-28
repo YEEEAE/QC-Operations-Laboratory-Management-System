@@ -62,7 +62,10 @@
     "uat:scenarios": "tsx scripts/uat/run-uat-scenarios.ts",
     "data:master-data:preflight": "tsx scripts/data/run-master-data-import.ts --entity equipment --dataset tests/fixtures/master-data/equipment-starting-set.json",
     "qc:library:scan": "tsx scripts/qc-library/scan-sources.ts --mode scan",
-    "qc:library:prepare": "tsx scripts/qc-library/scan-sources.ts --mode prepare"
+    "qc:library:prepare": "tsx scripts/qc-library/scan-sources.ts --mode prepare",
+    "qc:library:read": "python3 scripts/qc-library/read-sources.py",
+    "qc:library:dry-run": "tsx scripts/qc-library/import-sources.ts",
+    "qc:library:apply": "tsx scripts/qc-library/import-sources.ts --apply"
   },
   "dependencies": {
     "@astrojs/check": "0.9.10",

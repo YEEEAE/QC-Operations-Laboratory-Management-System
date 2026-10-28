@@ -10,7 +10,7 @@ This document is a gated operator runbook. It is not production authorization.
 - Database: `neondb` (ID `944840`); PostgreSQL `18.6`; inspected DB role: `neondb_owner`
 - Applied migration ledger at inspection: contiguous through `0045`; no live migration was run.
 - Neon provider snapshot listing returned no snapshots for this project. No recoverable point was verified.
-- Current source sequence is reconciled through `0066`; `0060` is authorization scopes, `0061` effectivity decisions, and new BYTEA library schema is `0066`. The source reconciliation does not prove migrations `0046`–`0066` are safe to apply as one release.
+- Current source migration files are numbered contiguously through `0068`; `0060` is authorization scopes, `0061` effectivity decisions, `0066` BYTEA storage, and `0067` equipment source requests and `0068` extracted-text/alias metadata. The source reconciliation does not prove migrations `0046`–`0068` are safe to apply as one release.
 - Source manifest: 207 canonical rows; 179 original files physically present and matching manifest byte count and SHA-256 (29,798,087 bytes); 28 missing; 0 digest/size mismatches; 0 unsafe paths; 19 exact alias rows. The 28 unavailable entries comprise 25 standards PDFs and 3 evidence archives. All 25 standards are license-review gated.
 - Manifest-declared canonical bytes total 121,143,588 bytes. This is not a verified Neon storage forecast. Database size at inspection was 14,491,648 bytes; the project is on a Free plan with a reported 1 GiB logical storage limit. Quota/cost approval and headroom forecast remain unverified.
 - `qc.library_*` tables do not exist in the inspected production schema. Raw source bytes stored and verified in Neon: **0**.
@@ -21,7 +21,7 @@ Do not apply or import until all gates are evidenced for this exact target:
 
 1. Enable production branch protection and obtain a provider-verified recoverable snapshot/PITR reference for `br-bitter-river-b59dpz92`.
 2. Obtain the approved QMS change/release ID and separate production schema approval reference. Configure the repository migration release context only from those approved records.
-3. Reconcile every pending migration from the live `0045` ledger through `0066`, including source checksum/history and migration `0053`/`0055` data-conflict checks. Stop on any integrity or historical-data conflict; do not hand-edit `qc.schema_migrations`.
+3. Reconcile every pending migration from the live `0045` ledger through `0068`, including source checksum/history and migration `0053`/`0055` data-conflict checks. Stop on any integrity or historical-data conflict; do not hand-edit `qc.schema_migrations`.
 4. Confirm the exact target project/branch/database against a direct connection. Use a dedicated migration principal distinct from the runtime principal.
 5. Approve the storage quota/headroom and malware/content scanning policy. Confirm company rights for every standards edition before storing any full ISO bytes. Keep unavailable files unavailable.
 6. Approve database grants for the application runtime principal and owner-only source review/download route. The new migration defines schema but does not grant runtime privileges. Filename candidates are not content-confirmed document identities; imported records remain unapproved and non-effective.
@@ -49,7 +49,7 @@ pnpm db:migrate:status -- --direct
 pnpm qc:library:scan
 ```
 
-**Import is not implemented or authorized by this runbook.** The current `qc:library:prepare` command generates a local classification/content-addressing plan only. It does not store database rows or bytes. A separately approved importer must be completed and reviewed before an import command is offered. Do not substitute a manual SQL write or claim that the source plan is an import.
+The repository now contains a separately gated `qc:library:apply` importer. Its default invocation is a local dry run; apply requires an explicitly configured staging identity, active canonical named System Owner, concrete change/approval/recovery references, PostgreSQL 18, and the exact source migration prefix through `0068`. No importer has been applied to any database. This runbook does not authorize staging or production writes. Do not substitute a manual SQL write or claim source parsing as durable import.
 
 ## Required closeout evidence
 

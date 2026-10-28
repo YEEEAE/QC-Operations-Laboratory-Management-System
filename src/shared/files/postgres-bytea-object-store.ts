@@ -77,9 +77,10 @@ export class PostgresByteaObjectStore implements ObjectStore {
         mime_type: string;
         object_state: string;
         integrity_status: string;
+        chunk_count: number;
       }>`
         SELECT k.object_id::text AS object_id, o.sha256, o.size_bytes, o.mime_type,
-               o.object_state, o.integrity_status
+               o.object_state, o.integrity_status, o.chunk_count
         FROM qc.library_binary_object_keys k
         JOIN qc.library_binary_objects o ON o.id = k.object_id
         WHERE k.storage_key = ${key}
@@ -95,6 +96,7 @@ export class PostgresByteaObjectStore implements ObjectStore {
           row.integrity_status !== 'VERIFIED'
         )
           throw new AppError('CONFLICT_STALE');
+        await this.assertReadback(trx, row.object_id, row.chunk_count, input.sizeBytes, digest);
         return;
       }
 
@@ -117,7 +119,6 @@ export class PostgresByteaObjectStore implements ObjectStore {
       if (existing) {
         if (
           Number(existing.size_bytes) !== input.sizeBytes ||
-          existing.mime_type !== input.contentType ||
           existing.object_state !== 'COMPLETE' ||
           existing.integrity_status !== 'VERIFIED'
         )
@@ -212,7 +213,13 @@ export class PostgresByteaObjectStore implements ObjectStore {
   }
 
   async getForProvider(provider: string, key: string): Promise<StoredObject | undefined> {
-    return provider === this.provider ? this.get(key) : undefined;
+    if (provider !== this.provider) return undefined;
+    const object = await this.get(key);
+    if (!object) return undefined;
+    const file = await this.database.selectFrom('files').select('mime_type')
+      .where('storage_key', '=', key).where('storage_provider', '=', this.provider)
+      .orderBy('uploaded_at', 'desc').executeTakeFirst();
+    return file ? { ...object, contentType: file.mime_type } : object;
   }
 
   async getStream(
