@@ -2,30 +2,31 @@ import type { APIRoute } from 'astro';
 import { providerEvidenceIntakeDependencies } from '../../modules/release-governance/application/provider-evidence-intake-dependencies.js';
 import { AppError } from '../../shared/errors/app-error.js';
 import { ProviderAttestationError } from '../../modules/release-governance/application/ports/provider-attestation.js';
-
-const headers = { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store' };
-function response(status: number, code: string, extra: Record<string, unknown> = {}): Response {
-  return new Response(JSON.stringify({ status, code, ...extra }), { status, headers });
-}
+import { apiJsonResponse, readBoundedJsonBody } from '../../shared/http/api-boundary.js';
 
 /** Signed, explicit-scope intake for CI/security/database/E2E provider evidence. */
-export const POST: APIRoute = async ({ request }) => {
-  const declaredLength = Number(request.headers.get('content-length') ?? 0);
-  if (declaredLength > 32_768) return response(413, 'PAYLOAD_TOO_LARGE');
-  const rawBody = await request.text();
-  if (Buffer.byteLength(rawBody, 'utf8') > 32_768) return response(413, 'PAYLOAD_TOO_LARGE');
+export const POST: APIRoute = async ({ request, locals }) => {
+  const requestId = locals.requestContext?.requestId;
+  const body = await readBoundedJsonBody(request, 32_768, { rejectBrowserOrigin: true });
+  if (!body.ok) {
+    return apiJsonResponse(body.status, {
+      status: body.status,
+      code: body.code,
+      ...(requestId ? { requestId } : {}),
+    });
+  }
 
   try {
     const { attestation, result } = await providerEvidenceIntakeDependencies().execute({
-      rawBody,
+      rawBody: body.rawBody,
       keyId: request.headers.get('x-qc-key-id'),
       timestamp: request.headers.get('x-qc-timestamp'),
       signature: request.headers.get('x-qc-signature'),
     });
-    return response(
+    return apiJsonResponse(
       result.replayed ? 200 : 201,
-      result.replayed ? 'EVIDENCE_ALREADY_RECORDED' : 'EVIDENCE_RECORDED',
       {
+        code: result.replayed ? 'EVIDENCE_ALREADY_RECORDED' : 'EVIDENCE_RECORDED',
         evidenceId: result.evidenceId,
         gate: attestation.evidenceType,
         status: attestation.status,
@@ -37,11 +38,25 @@ export const POST: APIRoute = async ({ request }) => {
   } catch (error) {
     if (error instanceof ProviderAttestationError) {
       if (error.reason === 'REGISTRY_NOT_APPROVED')
-        return response(503, 'BLOCKED_BY_AUTHORITY_SOURCE');
+        return apiJsonResponse(503, {
+          status: 503,
+          code: 'BLOCKED_BY_AUTHORITY_SOURCE',
+          requestId,
+        });
       if (error.reason === 'POLICY_NOT_CONFIGURED')
-        return response(503, 'PROVIDER_SIGNER_POLICY_NOT_CONFIGURED');
-      if (error.reason === 'CONFIGURATION') return response(503, 'PROVIDER_SIGNER_POLICY_INVALID');
-      if (error.reason === 'PAYLOAD') return response(400, 'INVALID_ATTESTATION');
+        return apiJsonResponse(503, {
+          status: 503,
+          code: 'PROVIDER_SIGNER_POLICY_NOT_CONFIGURED',
+          requestId,
+        });
+      if (error.reason === 'CONFIGURATION')
+        return apiJsonResponse(503, {
+          status: 503,
+          code: 'PROVIDER_SIGNER_POLICY_INVALID',
+          requestId,
+        });
+      if (error.reason === 'PAYLOAD')
+        return apiJsonResponse(400, { status: 400, code: 'INVALID_ATTESTATION', requestId });
       const status =
         error.reason === 'SIGNATURE'
           ? 401
@@ -50,19 +65,39 @@ export const POST: APIRoute = async ({ request }) => {
             : error.reason === 'IDENTITY'
               ? 409
               : 400;
-      return response(status, `EVIDENCE_${error.reason}_REJECTED`);
+      return apiJsonResponse(status, {
+        status,
+        code: `EVIDENCE_${error.reason}_REJECTED`,
+        requestId,
+      });
     }
     if (error instanceof AppError && error.code === 'RESOURCE_NOT_FOUND')
-      return response(404, 'RELEASE_CANDIDATE_NOT_FOUND');
+      return apiJsonResponse(404, {
+        status: 404,
+        code: 'RELEASE_CANDIDATE_NOT_FOUND',
+        requestId,
+      });
     if (error instanceof AppError && error.code === 'CONFLICT_STALE_VERSION') {
-      return response(409, 'CANDIDATE_IDENTITY_MISMATCH');
+      return apiJsonResponse(409, {
+        status: 409,
+        code: 'CANDIDATE_IDENTITY_MISMATCH',
+        requestId,
+      });
     }
     if (error instanceof AppError && error.code === 'CONFLICT_DUPLICATE_COMMAND') {
-      return response(409, 'EVIDENCE_REPLAY_REJECTED');
+      return apiJsonResponse(409, {
+        status: 409,
+        code: 'EVIDENCE_REPLAY_REJECTED',
+        requestId,
+      });
     }
     if (error instanceof AppError && error.code === 'DOMAIN_INVALID_TRANSITION') {
-      return response(409, 'CANDIDATE_STATE_REJECTED');
+      return apiJsonResponse(409, {
+        status: 409,
+        code: 'CANDIDATE_STATE_REJECTED',
+        requestId,
+      });
     }
-    return response(503, 'EVIDENCE_STORE_UNAVAILABLE');
+    return apiJsonResponse(503, { status: 503, code: 'EVIDENCE_STORE_UNAVAILABLE', requestId });
   }
 };

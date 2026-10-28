@@ -1,19 +1,16 @@
 import type { APIRoute } from 'astro';
 import { AppError } from '../../../shared/errors/app-error.js';
 import { systemHealthReleaseIdentityDependencies } from '../../../modules/system-health/application/dependencies.js';
-
-const JSON_HEADERS = { 'content-type': 'application/json; charset=utf-8' };
+import { apiJsonResponse } from '../../../shared/http/api-boundary.js';
 
 function problem(status: number, title: string, requestId?: string): Response {
-  return new Response(
-    JSON.stringify({
-      type: 'about:blank',
-      title,
-      status,
-      ...(requestId ? { requestId } : {}),
-    }),
-    { status, headers: JSON_HEADERS },
-  );
+  return apiJsonResponse(status, {
+    type: 'about:blank',
+    title,
+    status,
+    code: title,
+    ...(requestId ? { requestId } : {}),
+  });
 }
 
 /**
@@ -33,25 +30,22 @@ export const GET: APIRoute = ({ locals }) => {
   if (!actor) return problem(401, 'AUTH_REQUIRED', requestId);
   try {
     const release = systemHealthReleaseIdentityDependencies().identity.execute({ actor });
-    return new Response(
-      JSON.stringify({
-        status: release.status,
-        verifiedFields: release.verifiedFields,
-        fieldCount: release.fieldCount,
-        checkedAt: release.checkedAt,
-        fields: release.fields,
-        ...(release.reason ? { reason: release.reason } : {}),
-        release: {
-          ...(release.releaseId ? { id: release.releaseId } : {}),
-          ...(release.buildId ? { buildId: release.buildId } : {}),
-          ...(release.gitSha ? { gitSha: release.gitSha } : {}),
-          ...(release.buildTimestamp ? { buildTimestamp: release.buildTimestamp } : {}),
-          ...(release.environment ? { environment: release.environment } : {}),
-          ...(release.migrationHead ? { migrationHead: release.migrationHead } : {}),
-        },
-      }),
-      { status: 200, headers: JSON_HEADERS },
-    );
+    return apiJsonResponse(200, {
+      status: release.status,
+      verifiedFields: release.verifiedFields,
+      fieldCount: release.fieldCount,
+      checkedAt: release.checkedAt,
+      fields: release.fields,
+      ...(release.reason ? { reason: release.reason } : {}),
+      release: {
+        ...(release.releaseId ? { id: release.releaseId } : {}),
+        ...(release.buildId ? { buildId: release.buildId } : {}),
+        ...(release.gitSha ? { gitSha: release.gitSha } : {}),
+        ...(release.buildTimestamp ? { buildTimestamp: release.buildTimestamp } : {}),
+        ...(release.environment ? { environment: release.environment } : {}),
+        ...(release.migrationHead ? { migrationHead: release.migrationHead } : {}),
+      },
+    });
   } catch (error) {
     if (error instanceof AppError) return problem(403, error.code, requestId);
     return problem(500, 'SYSTEM_INTERNAL', requestId);

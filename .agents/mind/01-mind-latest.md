@@ -1,3 +1,8 @@
+- **2026-10-28 — NDB-08 / Astro API boundary hardening**
+  - Changed: Added bounded JSON intake rules to existing machine-facing APIs; no duplicate QC workflow endpoints were added.
+  - Evidence: Source and diff review only; no tests, build, lint, scripts, SQL, database connection, migration, or deployment.
+  - State: PARTIAL — transaction-level idempotency remains operation-specific for Astro Actions; no in-process action contract was found.
+  - Key files: `src/shared/http/api-boundary.ts`, `src/pages/api/release-evidence.ts`, `Documents/SECURITY-ARCHITECTURE.md`.
 - **2026-10-28 — NDB-07 / Safe Neon subject mapping contract**
   - Changed: Added append-only subject-key reservation with admin link/deactivate actions; link requires local scope/role eligibility and operator reauthentication, audits local actor plus issuer/subject, and never provisions or grants roles. Existing password login now has a default-on local flag; external login remains unwired.
   - Evidence: Source and textual diff review only; no tests, build, lint, database connection, migration, provider request, or deployment.

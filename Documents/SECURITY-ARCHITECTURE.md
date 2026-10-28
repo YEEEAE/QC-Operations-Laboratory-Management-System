@@ -32,3 +32,29 @@ The operator attestation records an externally reviewed subject reference; this 
 - Establish and review the subject mapping and revocation/session transition policy before adding a login or middleware call site.
 
 No JWKS request, token verification, database connection, migration, test, build, lint, browser check, or deployment is part of the implementation evidence for this addendum.
+
+## Astro Actions and JSON API boundary (NDB-08)
+
+### Canonical workflow boundary
+
+QC workflow reads and writes remain on the existing server-side Astro Action namespaces exported by `src/actions/index.ts`: receiving and inspections (`quarantine`), task records (`tasks`), laboratory (`laboratory`), reject records (`rejectReports`), controlled documents (`documents`), approvals (`approvals`), and reports (`reports`). The source inventory contains no separate in-process action namespace, so no such API is invented here. The action handlers parse their declared schemas and call the owning domain use cases. Session actors come from middleware-resolved local sessions; permission and entity scope, state transitions, separation of duties, and current versions are resolved or rechecked by the use case/repository. Do not add parallel `/api` mutations for an operation already represented by one of these actions.
+
+Astro is configured with `security.checkOrigin: true`; session-bound writes use Astro Actions and inherit its origin check. Browser endpoints do not enable CORS. Action-specific request schemas and size limits remain owned by each action and domain; adding an operation still requires an explicit schema and the domain's existing authorization and audit path. A middleware request ID is trace correlation, not by itself a durable idempotency key. Durable replay receipts must be implemented in the owning transaction where the operation's established contract requires them; do not apply a generic wrapper that can commit a receipt separately from the QC write.
+
+### Current `/api` routes
+
+The checked-in API surface is limited to these operational routes; no receiving, inspection, in-process, laboratory, reject, document, approval, or reporting REST endpoint is added by NDB-08.
+
+| Route | Contract and authority |
+| --- | --- |
+| `GET /api/health/live` | Public liveness only; reports process availability and no QC decision. |
+| `GET /api/health/ready` | Public operational readiness; `healthy` or `unhealthy` reflects the canonical readiness probe, not QC acceptance or product release. |
+| `GET /api/system/release-identity` | Requires a middleware-resolved actor and `PERM-HLTH-VIEW` through `GetReleaseIdentityUseCase`; returns only server-derived release identity fields. Errors are sanitized problem JSON with stable `code`, `status`, and optional `requestId`. |
+| `GET /api/performance-metrics` | Development/test only, explicitly enabled, bearer-token protected, and bound to loopback hostnames; returns process/pool measurements only. Denial is an opaque 404. |
+| `POST /api/release-evidence` | Machine-to-machine signed intake only. Requires `application/json` with UTF-8 (no other media parameters or content encodings), no `Origin` header, a body of at most 32 KiB, and the configured signer key ID, timestamp, and HMAC signature headers. There is no CORS grant. The payload's consumed fields are validated by the release-governance use case against signer gate/environment scope and the locked candidate identity; unconsumed extra properties are not persisted. A durable signer/key/nonce claim, append-only evidence row, and audit event are written in one PostgreSQL transaction; duplicate nonce submissions fail with stable `409 EVIDENCE_REPLAY_REJECTED`. Successful responses retain the established body where `status` is the gate result (`PASS`, `PARTIAL`, `FAIL`, or `UNVERIFIED`), not the HTTP status. This is evidence intake only and cannot approve a gate or release a product. |
+
+JSON API responses use UTF-8 JSON, `Cache-Control: no-store`, and `X-Content-Type-Options: nosniff`. The release-identity response adds a `code` field to its existing error object; existing fields and the successful payload are retained. The release-evidence response keeps its established top-level `status` and `code` fields and now includes the request correlation ID on failures. Clients must treat only the documented stable `code` as a machine class and must not parse server exception text.
+
+### Limits and open owner decisions
+
+This route inventory does not establish blanket idempotency for every Astro Action. Existing action/use-case replay guarantees remain operation-specific; any expansion to durable request keys across other commands needs an approved client key contract and transaction-level receipt in each owning repository. No endpoint may accept caller-supplied actor, role, permission, scope, source revision, or eligible transition as authority. Source-level contract edits do not establish runtime behavior, database schema parity, provider signer configuration, or production acceptance.
