@@ -6,6 +6,9 @@ export interface MasterDataRevision {
   contentSha256: string;
   sourceOwner: string;
   sourceReference: string;
+  sourceFileReference: string | null;
+  schemaVersion: string;
+  importBatchId: string;
   effectiveRevision: string | null;
   sourceApprovalReference: string | null;
   adapterKey: string | null;
@@ -26,6 +29,8 @@ export interface MasterDataRepository {
     contentSha256: string;
     sourceOwner: string;
     sourceReference: string;
+    sourceFileReference: string;
+    schemaVersion: string;
     adapterKey: string | null;
     headerMapping: Record<string, string>;
     records: Record<string, unknown>[];

@@ -37,7 +37,7 @@ export interface MasterDataEntity {
   governance: MasterDataGovernance;
   /** Governed table when one exists; `null` when the entity has no table. */
   governedTable: string | null;
-  /** Natural business key columns used for duplicate detection (governed only). */
+  /** Source identity fields used for duplicate/conflict detection; not a list of approved values. */
   businessKey: readonly string[];
   /** Canonical documented source of the definition. Never a new source. */
   sourceReference: string;
@@ -124,7 +124,7 @@ export const MASTER_DATA_ENTITIES: readonly MasterDataEntity[] = [
     classification: 'POLICY-DEPENDENT',
     governance: 'NOT-GOVERNED',
     governedTable: null,
-    businessKey: [],
+    businessKey: ['item_code'],
     sourceReference:
       'Documents/DATA-DICTIONARY.md §26 (receiving_items.item_code) and §22 (ncrs.affected_item_code)',
     sourceVersion: 'DATA-DICTIONARY §§22, 26 (current source revision; free-text only)',

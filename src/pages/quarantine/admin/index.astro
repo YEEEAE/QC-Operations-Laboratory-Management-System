@@ -8,12 +8,14 @@ import { templateActionDependencies, templateReadDependencies } from '../../../m
 import { readOutcome } from '../../../shared/errors/read-outcome.js';
 import { stateLabel } from '../../../shared/copy/ux-vocabulary.js';
 import { isTemplateAuthority } from '../../../modules/quarantine/templates/application/template-authority.js';
+import { isNamedSystemOwner } from '../../../shared/authorization/p05-authority.js';
 
 const actor = Astro.locals.actor;
 if (!actor) return Astro.redirect('/login?returnTo=%2Fquarantine%2Fadmin');
 
 const hasTemplatePermission = actor.permissions.some((p) => p.code === 'PERM-ADM-TEMPLATES' && p.active !== false);
 const isAuthority = isTemplateAuthority(actor);
+const isSystemOwner = isNamedSystemOwner(actor);
 
 const templateResult = await readOutcome(() => templateReadDependencies().list.executePage({ actor, page: { page: Astro.url.searchParams.get('templatePage') ?? 1 } }));
 let templates: readonly import('../../../modules/quarantine/templates/domain/template.js').TemplateVersion[] = templateResult.status === 'AVAILABLE' ? templateResult.value.items : [];
@@ -24,6 +26,11 @@ const search = (Astro.url.searchParams.get('search') ?? '').slice(0,120);
 const page = Math.max(1, Number(Astro.url.searchParams.get('page')) || 1);
 const catalogResult = !denied ? await readOutcome(() => inspectionCatalogDependencies().catalog.search({ actor, search, page })) : null;
 const catalog = catalogResult?.status === 'AVAILABLE' ? catalogResult.value : [];
+const mappingRead = hasTemplatePermission ? await readOutcome(() => templateActionDependencies().manageMappings.list({ actor })) : null;
+const itemSourceRead = hasTemplatePermission ? await readOutcome(() => templateActionDependencies().manageMappings.listApprovedItemSources({ actor })) : null;
+const itemMappings = mappingRead?.status === 'AVAILABLE' ? mappingRead.value : [];
+const approvedItemSources = itemSourceRead?.status === 'AVAILABLE' ? itemSourceRead.value : [];
+let mappingError = '';
 let values = { catalogId: '', description: '', templateCode: '', versionNo: '', name: '' };
 let reauthenticationSecret = '';
 let failure: FormFailure | null = null;
@@ -41,6 +48,33 @@ if (Astro.request.method === 'POST' && hasTemplatePermission) {
   };
   reauthenticationSecret = field(formData, 'reauthenticationSecret');
   try {
+    if (formData.get('intent') === 'submit-item-mapping') {
+      await templateActionDependencies().manageMappings.submit({
+        actor, itemCode: field(formData, 'itemCode'),
+        templateVersionId: field(formData, 'templateVersionId'),
+        sourceRevisionId: field(formData, 'sourceRevisionId'),
+        requestId: Astro.locals.requestContext?.requestId ?? 'unknown',
+      });
+      return Astro.redirect('/quarantine/admin?mapping-submitted=1', 303);
+    }
+    if (formData.get('intent') === 'approve-item-mapping') {
+      const expectedVersion = BigInt(field(formData, 'expectedVersion'));
+      await templateActionDependencies().manageMappings.approve({
+        actor, mappingId: field(formData, 'mappingId'), expectedVersion,
+        reason: field(formData, 'reason'),
+        requestId: Astro.locals.requestContext?.requestId ?? 'unknown',
+      });
+      return Astro.redirect('/quarantine/admin?mapping-approved=1', 303);
+    }
+    if (formData.get('intent') === 'reject-item-mapping') {
+      const expectedVersion = BigInt(field(formData, 'expectedVersion'));
+      await templateActionDependencies().manageMappings.reject({
+        actor, mappingId: field(formData, 'mappingId'), expectedVersion,
+        reason: field(formData, 'reason'),
+        requestId: Astro.locals.requestContext?.requestId ?? 'unknown',
+      });
+      return Astro.redirect('/quarantine/admin?mapping-rejected=1', 303);
+    }
     if(formData.get('intent')==='import-sources') {
       await inspectionCatalogDependencies().importSources.execute({actor,requestId:Astro.locals.requestContext?.requestId ?? 'unknown'});
       return Astro.redirect('/quarantine/admin',303);
@@ -72,7 +106,9 @@ if (Astro.request.method === 'POST' && hasTemplatePermission) {
     values = { catalogId: '', description: '', templateCode: '', versionNo: '', name: '' };
     reauthenticationSecret = '';
   } catch (error) {
-    failure = toFormFailure(error, {
+    if (['submit-item-mapping', 'approve-item-mapping', 'reject-item-mapping'].includes(String(formData.get('intent') ?? ''))) {
+      mappingError = 'The mapping could not be saved or approved. Verify the approved item source, pinned template revision, current mapping state and owner authority.';
+    } else failure = toFormFailure(error, {
       entity: 'Template',
       requiredFields: [
         { name: 'catalogId', label: 'Inspection Report' },
@@ -84,6 +120,11 @@ if (Astro.request.method === 'POST' && hasTemplatePermission) {
   }
   reauthenticationSecret = '';
 }
+const mappingSuccess = Astro.url.searchParams.has('mapping-submitted')
+  ? 'Mapping submitted for named System Owner approval; it cannot resolve inspections while pending.'
+  : Astro.url.searchParams.has('mapping-approved')
+    ? 'Mapping approved and pinned to the reviewed item source and exact template version.'
+    : Astro.url.searchParams.has('mapping-rejected') ? 'Mapping rejected. The submission remains in history and cannot resolve inspections.' : '';
 
 type FieldName = keyof typeof values | 'reauthenticationSecret';
 function describedBy(name: FieldName): string | undefined {
@@ -136,6 +177,55 @@ function disabledReason(state: string, action: 'REVIEW' | 'APPROVE' | 'STOP' | '
       <p>This area requires the explicit Quarantine administration permission. Admin role alone is not business authority.</p>
     </section>
   ) : (
+    <>
+    <section class="panel" aria-labelledby="item-mapping-title">
+      <h2 id="item-mapping-title">Item Code to inspection template mapping</h2>
+      <p class="note">Authorized QC users submit mappings against an owner-approved item source and one exact approved template version. A named System Owner approves; pending or legacy mappings cannot select an inspection template. Approval records the item source revision and becomes effective on the approval date.</p>
+      {mappingSuccess && <p class="success" role="status">{mappingSuccess}</p>}
+      {mappingError && <p class="field-error" role="alert">{mappingError}</p>}
+      {!hasTemplatePermission ? <p role="alert">Mapping administration requires the explicit Quarantine template permission.</p> : <>
+        {mappingRead?.status !== 'AVAILABLE' && <p role="alert">Mapping history: NOT AVAILABLE FOR VERIFICATION.</p>}
+        {itemSourceRead?.status !== 'AVAILABLE' && <p role="alert">Approved item-source revisions: NOT AVAILABLE FOR VERIFICATION.</p>}
+        <form method="post" class="mapping-form">
+          <input type="hidden" name="intent" value="submit-item-mapping" />
+          <label for="mappingItemCode">Item Code</label><input id="mappingItemCode" name="itemCode" maxlength="200" required />
+          <label for="mappingSourceRevision">Owner-approved item source revision</label>
+          <select id="mappingSourceRevision" name="sourceRevisionId" required>
+            <option value="">Select a source revision</option>
+            {approvedItemSources.map((source) => <option value={source.id}>{source.source_reference} · effective {source.effective_revision} · SHA-256 {source.content_sha256}</option>)}
+          </select>
+          <label for="mappingTemplateVersion">Exact approved inspection template version</label>
+          <select id="mappingTemplateVersion" name="templateVersionId" required>
+            <option value="">Select an approved version</option>
+            {templates.filter((template) => template.state === 'APPROVED').map((template) => <option value={template.id}>{template.templateCode} · revision {template.versionNo} · {template.id}</option>)}
+          </select>
+          <p class="hint">Missing approved source or exact template evidence? NOT AVAILABLE FOR VERIFICATION. The mapping will not be created.</p>
+          <button type="submit" disabled={!approvedItemSources.length || !templates.some((template) => template.state === 'APPROVED')}>Submit for owner approval</button>
+        </form>
+        {mappingRead?.status === 'AVAILABLE' && (itemMappings.length ? <div class="table-wrap" role="region" aria-label="Item mapping revisions" tabindex="0"><table>
+          <caption>Mapping submissions, exact source and template revisions, and approval history</caption>
+          <thead><tr><th scope="col">Item Code</th><th scope="col">Template version</th><th scope="col">Item source</th><th scope="col">Mapping state</th><th scope="col">Decision</th></tr></thead>
+          <tbody>{itemMappings.map((mapping) => <tr>
+            <th scope="row">{mapping.item_code}</th>
+            <td>{mapping.template_version_id ?? 'NOT AVAILABLE FOR VERIFICATION'}</td>
+            <td>{mapping.source_reference ?? 'NOT AVAILABLE FOR VERIFICATION'}{mapping.effective_revision ? <span class="cell-detail">Effective revision {mapping.effective_revision}</span> : null}<span class="cell-detail">Source revision {mapping.source_revision_id ?? 'NOT AVAILABLE FOR VERIFICATION'}</span><span class="cell-detail">Source SHA-256 {mapping.source_sha256 ?? 'NOT AVAILABLE FOR VERIFICATION'}</span></td>
+            <td>{mapping.state} · {mapping.approval_state}{itemMappings.filter((candidate) => candidate.item_code === mapping.item_code && candidate.approval_state === 'PENDING_SOURCE_APPROVAL').length > 1 ? <span class="cell-detail">Conflict queue: multiple pending revisions for this Item Code</span> : null}</td>
+            <td>{mapping.approval_state === 'PENDING_SOURCE_APPROVAL' && isSystemOwner ? <div class="mapping-decisions">
+              <form method="post" class="approve-mapping">
+                <input type="hidden" name="intent" value="approve-item-mapping" /><input type="hidden" name="mappingId" value={mapping.id} /><input type="hidden" name="expectedVersion" value={String(mapping.version)} />
+                <label for={`mapping-approve-reason-${mapping.id}`}>Approval reason</label><input id={`mapping-approve-reason-${mapping.id}`} name="reason" maxlength="500" required />
+                <button type="submit">Approve mapping</button>
+              </form>
+              <form method="post" class="approve-mapping">
+                <input type="hidden" name="intent" value="reject-item-mapping" /><input type="hidden" name="mappingId" value={mapping.id} /><input type="hidden" name="expectedVersion" value={String(mapping.version)} />
+                <label for={`mapping-reject-reason-${mapping.id}`}>Rejection reason</label><input id={`mapping-reject-reason-${mapping.id}`} name="reason" maxlength="500" required />
+                <button type="submit">Reject mapping</button>
+              </form>
+            </div> : mapping.approval_state === 'PENDING_SOURCE_APPROVAL' ? 'Awaiting named System Owner review' : mapping.approval_state}</td>
+          </tr>)}</tbody>
+        </table></div> : <p>No submitted mapping revisions are available.</p>)}
+      </>}
+    </section>
     <section class="panel" aria-labelledby="catalog-title"><h2 id="catalog-title">Inspection Report catalogue · Rev 14</h2>
       <form method="get" class="catalog-filters" role="search" aria-label="Filter Inspection Report catalogue"><label for="catalog-search">Search Doc. Code or official title<input id="catalog-search" name="search" type="search" maxlength="120" value={search} /></label><button type="submit">Search catalogue</button><a href="/quarantine/admin">Clear search</a></form>
       {search && <p class="active-filter">Active catalogue filter: <strong>{search}</strong></p>}
@@ -261,6 +351,7 @@ function disabledReason(state: string, action: 'REVIEW' | 'APPROVE' | 'STOP' | '
       </section>
       </div>
     </div>
+    </>
   )}
 
   </div>
@@ -343,7 +434,7 @@ function disabledReason(state: string, action: 'REVIEW' | 'APPROVE' | 'STOP' | '
   nav{display:flex;align-items:center;flex-wrap:wrap;gap:var(--space-4);margin-block-start:var(--space-4)}
   :is(a,button,input,select,textarea,.table-wrap):focus-visible{outline:2px solid var(--color-accent-primary);outline-offset:3px}
   .note{margin-block-start:var(--space-4);padding-block-start:var(--space-4);border-block-start:1px solid var(--color-border-subtle)}
-  .denied{padding:var(--space-5);border-inline-start:3px solid var(--status-warning);background:var(--surface-panel)}.field-error{color:var(--status-danger)}
+  .denied{padding:var(--space-5);border:1px solid var(--color-border-subtle);background:var(--surface-panel)}.field-error{color:var(--status-danger)}
   @media(max-width:900px){.creation-grid{grid-template-columns:minmax(0,1fr)}}
   @media(max-width:480px){.panel{padding:var(--space-3)}.catalog-filters{align-items:stretch}.catalog-filters button{inline-size:100%}}
 </style>

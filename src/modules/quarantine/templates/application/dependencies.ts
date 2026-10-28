@@ -6,6 +6,7 @@ import { PostgresSignatureEvidenceRepository } from '../../../e-signatures/infra
 import { Argon2idPasswordHasher } from '../../../identity/security/argon2-password-hasher.js';
 import { PostgresUserRepository } from '../../../identity/infrastructure/postgres-user-repository.js';
 import { PostgresTemplateRepository } from '../infrastructure/postgres-repository.js';
+import { ManageItemTemplateMappingsUseCase } from '../../inspection/application/manage-item-template-mappings.js';
 import { createTemplateCeremony } from './template-ceremony.js';
 import { CreateTemplateUseCase } from './create-template.js';
 import {
@@ -29,6 +30,7 @@ function verifier(database: ReturnType<typeof getDatabase>) {
   const users = new PostgresUserRepository(database);
   const passwords = new Argon2idPasswordHasher();
   return {
+    manageMappings: new ManageItemTemplateMappingsUseCase(database),
     verify: async (input: { actorId: string; secret: string }): Promise<boolean> => {
       const user = await users.findById(input.actorId);
       return Boolean(

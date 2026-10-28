@@ -31,6 +31,7 @@ if (Astro.request.method === 'POST' && isOwner) {
           datasetKey, source, mapping,
           sourceOwner: String(form.get('sourceOwner') ?? ''),
           sourceReference: String(form.get('sourceReference') ?? ''),
+          sourceFileReference: String(form.get('sourceFileReference') ?? ''),
           requestId: String(form.get('requestId') ?? ''),
         });
         return Astro.redirect('/admin/master-data?submitted=1', 303);
@@ -104,6 +105,7 @@ const success = Astro.url.searchParams.has('submitted') ? 'Revision saved as PEN
         <textarea id="mapping" name="mapping" rows="3" required placeholder={'{"Equipment No":"equipment_no"}'}></textarea>
         <label for="sourceOwner">Source owner</label><input id="sourceOwner" name="sourceOwner" maxlength="200" />
         <label for="sourceReference">Controlled source reference</label><input id="sourceReference" name="sourceReference" maxlength="500" />
+        <label for="sourceFileReference">Source file identifier (non-secret controlled document ID; letters, numbers, dot, underscore, hyphen)</label><input id="sourceFileReference" name="sourceFileReference" maxlength="200" pattern="[A-Za-z0-9][A-Za-z0-9._-]*" required />
         <div class="actions"><button name="mode" value="preview">Preview mapping and validation</button><button name="mode" value="submit">Save pending source revision</button></div>
       </form>
     </section>
@@ -119,6 +121,7 @@ const success = Astro.url.searchParams.has('submitted') ? 'Revision saved as PEN
       {!revisions.length ? <p>No staged revisions are available.</p> : revisions.map((revision) => <article class="revision">
         <h3>{revision.datasetKey} · {revision.approvalState}</h3>
         <p>Revision ID: <code>{revision.id}</code> · Version {revision.version}</p>
+        <p>Import batch: <code>{revision.importBatchId}</code> · Schema: {revision.schemaVersion} · File reference: {revision.sourceFileReference ?? 'NOT AVAILABLE FOR VERIFICATION'}</p>
         <p>Source owner: {revision.sourceOwner} · Source: {revision.sourceReference}</p>
         <p>Content SHA-256: <code>{revision.contentSha256}</code></p>
         <details><summary>Staged records and validation</summary><pre>{JSON.stringify({ mapping: revision.headerMapping, records: revision.records, preview: revision.preview }, null, 2)}</pre></details>

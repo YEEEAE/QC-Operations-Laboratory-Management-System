@@ -1,3 +1,8 @@
+- **2026-10-28 — NDB-10 / Governed master-data intake and item mapping**
+  - Changed: Added immutable intake lineage and owner-approved item mapping revisions pinned to exact source/template versions; master-data approval now fails closed until the dataset’s SYS-10 source policy is approved.
+  - Evidence: Source and textual diff review only; no tests, build, lint, scripts, SQL, database connection, migration, or deployment.
+  - State: PARTIAL — SYS-10 source/authority decisions remain unresolved; supplier, equipment, organizational-scope, WI/SOP and approved-form promotion adapters are not authorized/implemented.
+  - Key files: `db/migrations/0057_governed_master_data_and_item_mappings.sql`, `src/modules/quarantine/inspection/application/manage-item-template-mappings.ts`, `src/modules/administration/`.
 - **2026-10-28 — NDB-09 / EXPLABS provider boundary**
   - Changed: Added blank server-side config placeholders, a disabled/unmounted contract adapter, and header/telemetry redaction; rotation and SYS-11 remain required.
   - Evidence: Source/diff review only; no tests, runtime, or outbound request.

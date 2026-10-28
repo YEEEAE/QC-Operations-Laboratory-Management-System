@@ -349,7 +349,8 @@ export const admin = {
     accept: 'json',
     input: z.object({
       datasetKey: z.string(), source: z.string().max(2_000_000), mapping: z.record(z.string(), z.string()),
-      sourceOwner: z.string().min(1).max(200), sourceReference: z.string().min(1).max(500), requestId: z.string().uuid(),
+      sourceOwner: z.string().min(1).max(200), sourceReference: z.string().min(1).max(500),
+      sourceFileReference: z.string().trim().min(1).max(200).regex(/^[A-Za-z0-9][A-Za-z0-9._-]*$/), requestId: z.string().uuid(),
     }).strict(),
     handler: (input, context) => withErrors(async () => {
       requireActor(context.locals.actor);

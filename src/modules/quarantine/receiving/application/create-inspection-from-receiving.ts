@@ -88,7 +88,7 @@ export class CreateInspectionFromReceivingUseCase {
     if (inFlight) throw new AppError('CONFLICT_DUPLICATE_COMMAND', { userSafe: true });
 
     if(!this.deps.mapping) throw new AppError('AUTHZ_DENIED',{userSafe:true});
-    await this.deps.mapping.verifyExplicitSelection({actor:i.actor,itemCode:item.itemCode,templateVersionId:i.templateVersionId});
+    const mapping = await this.deps.mapping.verifyExplicitSelection({actor:i.actor,itemCode:item.itemCode,templateVersionId:i.templateVersionId});
     const templateVersion = await this.deps.template.get(i.templateVersionId, i.actor);
     if (!templateVersion || templateVersion.state !== 'APPROVED') {
       // Fail-closed: an inspection can only be created from an approved
@@ -98,12 +98,17 @@ export class CreateInspectionFromReceivingUseCase {
     const template: TemplateContext = {
       templateId: templateVersion.templateId,
       templateVersionId: templateVersion.id,
+      mappingRevisionId: mapping.mappingRevisionId,
       versionNo: templateVersion.versionNo,
       approved: true,
       templateSnapshot: {
         versionNo: templateVersion.versionNo,
         name: templateVersion.name,
         sourceDocument: templateVersion.sourceDocument ?? null,
+        mappingRevisionId: mapping.mappingRevisionId,
+        itemSourceRevisionId: mapping.sourceRevisionId,
+        itemSourceReference: mapping.sourceReference,
+        itemEffectiveRevision: mapping.effectiveRevision,
       },
       sourceDocument: templateVersion.sourceDocument ?? undefined,
     };

@@ -79,16 +79,20 @@ export class SubmitMasterDataRevisionUseCase {
   async execute(input: {
     actor: ActorContext; datasetKey: string; source: string; mapping: Record<string, string>;
     sourceOwner: string; sourceReference: string; requestId: string;
+    sourceFileReference?: string;
   }) {
     if (!isNamedSystemOwner(input.actor)) throw new AppError('AUTHZ_DENIED', { userSafe: true });
     const preview = new PreviewMasterDataRevisionUseCase().execute(input);
     const entity = getMasterDataEntity(input.datasetKey);
     const hasUnsafeInput = preview.issues.some((issue) => issue.code === 'MISSING_HEADER_MAPPING');
     const rows = preview.records as ImportRow[];
-    if (hasUnsafeInput || rows.length === 0) throw new AppError('VALIDATION_FAILED', { userSafe: true });
+    const sourceFileReference = input.sourceFileReference?.trim() ?? '';
+    if (hasUnsafeInput || rows.length === 0 || !/^[A-Za-z0-9][A-Za-z0-9._-]{0,199}$/.test(sourceFileReference))
+      throw new AppError('VALIDATION_FAILED', { userSafe: true });
     return this.repository.submitRevision({
       actor: input.actor, datasetKey: input.datasetKey, contentSha256: preview.contentSha256,
       sourceOwner: input.sourceOwner, sourceReference: input.sourceReference,
+      sourceFileReference, schemaVersion: 'master-data-csv/v1',
       adapterKey: entity.importAdapter, headerMapping: input.mapping, records: rows,
       preview: { headers: preview.headers, issues: preview.issues, status: preview.status, mappingFingerprint: preview.mappingFingerprint },
       requestId: input.requestId,

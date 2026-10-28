@@ -19,7 +19,7 @@ export class InspectionReportCatalog {
       .selectFrom('inspection_report_catalog as c')
       .selectAll('c')
       .select([
-        sql<number>`(select count(*)::int from qc.inspection_item_templates m join qc.inspection_templates t on t.id=m.template_id where t.catalog_id=c.id and m.state='ACTIVE')`.as(
+        sql<number>`(select count(*)::int from qc.inspection_item_templates m join qc.inspection_templates t on t.id=m.template_id where t.catalog_id=c.id and m.state='ACTIVE' and m.approval_state='APPROVED')`.as(
           'mappingCount',
         ),
         sql<

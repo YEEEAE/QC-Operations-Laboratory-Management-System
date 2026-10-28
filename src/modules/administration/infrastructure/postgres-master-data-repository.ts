@@ -9,10 +9,12 @@ import { uuidv7 } from '../../../shared/id/uuid.js';
 import { AppError } from '../../../shared/errors/app-error.js';
 import { isNamedSystemOwner } from '../../../shared/authorization/p05-authority.js';
 import type { MasterDataRepository, MasterDataRevision } from '../ports/master-data-repository.js';
+import { MASTER_DATA_ENTITIES } from '../../../../scripts/data/master-data-catalog.js';
 
 type RevisionRow = {
   id: string; dataset_key: string; content_sha256: string; source_owner: string;
   source_reference: string; effective_revision: string | null; source_approval_reference: string | null;
+  source_file_reference: string | null; schema_version: string; import_batch_id: string;
   adapter_key: string | null; source_last_updated: string | null; header_mapping: Record<string, string>;
   records: Record<string, unknown>[]; preview: Record<string, unknown>;
   approval_state: MasterDataRevision['approvalState']; import_state: MasterDataRevision['importState']; version: number;
@@ -21,6 +23,7 @@ type RevisionRow = {
 const selectRevision = sql<RevisionRow>`
   select id, dataset_key, content_sha256, source_owner, source_reference,
     effective_revision, source_approval_reference, adapter_key,
+    source_file_reference, schema_version, import_batch_id,
     source_last_updated::text as source_last_updated, header_mapping, records, preview,
     approval_state, import_state, version
   from qc.master_data_import_revisions`;
@@ -29,6 +32,7 @@ function map(row: RevisionRow): MasterDataRevision {
   return {
     id: row.id, datasetKey: row.dataset_key, contentSha256: row.content_sha256,
     sourceOwner: row.source_owner, sourceReference: row.source_reference,
+    sourceFileReference: row.source_file_reference, schemaVersion: row.schema_version, importBatchId: row.import_batch_id,
     effectiveRevision: row.effective_revision, sourceApprovalReference: row.source_approval_reference,
     adapterKey: row.adapter_key, sourceLastUpdated: row.source_last_updated,
     headerMapping: row.header_mapping, records: row.records, preview: row.preview,
@@ -48,6 +52,7 @@ export class PostgresMasterDataRepository implements MasterDataRepository {
       const result = await sql<RevisionRow>`
         select id, dataset_key, content_sha256, source_owner, source_reference,
           effective_revision, source_approval_reference, adapter_key,
+          source_file_reference, schema_version, import_batch_id,
           source_last_updated::text as source_last_updated, header_mapping, records, preview,
           approval_state, import_state, version
         from qc.master_data_import_revisions
@@ -62,6 +67,7 @@ export class PostgresMasterDataRepository implements MasterDataRepository {
     const fingerprint = createHash('sha256').update(JSON.stringify({
       datasetKey: input.datasetKey, contentSha256: input.contentSha256,
       sourceOwner: input.sourceOwner, sourceReference: input.sourceReference,
+      sourceFileReference: input.sourceFileReference, schemaVersion: input.schemaVersion,
       adapterKey: input.adapterKey, headerMapping: input.headerMapping, records: input.records,
     })).digest('hex');
     try {
@@ -78,13 +84,14 @@ export class PostgresMasterDataRepository implements MasterDataRepository {
         }
         const inserted = await sql<RevisionRow>`
           insert into qc.master_data_import_revisions
-            (dataset_key, content_sha256, source_owner, source_reference, adapter_key,
+            (dataset_key, content_sha256, source_owner, source_reference, source_file_reference, schema_version, adapter_key,
              header_mapping, records, preview, request_id, request_fingerprint, submitted_by)
-          values (${input.datasetKey}, ${input.contentSha256}, ${input.sourceOwner}, ${input.sourceReference},
+          values (${input.datasetKey}, ${input.contentSha256}, ${input.sourceOwner}, ${input.sourceReference}, ${input.sourceFileReference}, ${input.schemaVersion},
             ${input.adapterKey}, ${JSON.stringify(input.headerMapping)}::jsonb, ${JSON.stringify(input.records)}::jsonb,
             ${JSON.stringify(input.preview)}::jsonb, ${input.requestId}, ${fingerprint}, ${input.actor.id})
           returning id, dataset_key, content_sha256, source_owner, source_reference, effective_revision,
             source_approval_reference, adapter_key, source_last_updated::text as source_last_updated,
+            source_file_reference, schema_version, import_batch_id,
             header_mapping, records, preview, approval_state, import_state, version
         `.execute(tx);
         if (!inserted.rows[0]) throw new AppError('SYSTEM_DATABASE_UNAVAILABLE');
@@ -102,6 +109,12 @@ export class PostgresMasterDataRepository implements MasterDataRepository {
         `.execute(tx);
         const row = current.rows[0];
         if (!row) throw new AppError('RESOURCE_NOT_FOUND', { userSafe: true });
+        const entity = MASTER_DATA_ENTITIES.find((candidate) => candidate.key === row.dataset_key);
+        if (!entity || entity.classification !== 'APPROVED' || entity.governance !== 'GOVERNED'
+          || entity.approval.status !== 'APPROVED' || !entity.approval.reference
+          || entity.sourceApprovalState !== 'APPROVED') {
+          throw new AppError('POLICY_SOURCE_REQUIRED', { userSafe: true });
+        }
         const priorDecision = await sql<{ actor_id: string; event_type: string; content_sha256: string; reason: string }>`
           select actor_id, event_type, content_sha256, reason from qc.master_data_approval_events
           where revision_id = ${input.revisionId} and request_id = ${input.requestId}
@@ -128,11 +141,13 @@ export class PostgresMasterDataRepository implements MasterDataRepository {
           where id = ${input.revisionId} and version = ${input.expectedVersion}
           returning id, dataset_key, content_sha256, source_owner, source_reference, effective_revision,
             source_approval_reference, adapter_key, source_last_updated::text as source_last_updated,
+            source_file_reference, schema_version, import_batch_id,
             header_mapping, records, preview, approval_state, import_state, version
         `.execute(tx);
         if (!changed.rows[0]) throw new AppError('CONFLICT_STALE_VERSION', { userSafe: true });
         const auditEventId = uuidv7();
         const auditPayload = { datasetKey: row.dataset_key, contentSha256: row.content_sha256,
+          sourceFileReference: row.source_file_reference, schemaVersion: row.schema_version, importBatchId: row.import_batch_id,
           effectiveRevision: input.effectiveRevision, sourceApprovalReference: input.sourceApprovalReference,
           authority: 'SYSTEM_OWNER', ownerLoginIdentity: 'yazeed', signatureDeferred: true };
         assertSafeAuditPayload(auditPayload);

@@ -20,6 +20,7 @@ export interface ReceivingContext {
 export interface TemplateContext {
   templateId: string;
   templateVersionId: string;
+  mappingRevisionId?: string;
   versionNo: string;
   templateSnapshot: Readonly<Record<string, unknown>>;
   approved: boolean;

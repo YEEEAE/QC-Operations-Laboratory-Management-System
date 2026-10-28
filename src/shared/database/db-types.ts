@@ -440,6 +440,9 @@ export interface MasterDataImportRevisionsTable {
   source_approval_reference: string | null;
   adapter_key: string | null;
   source_last_updated: string | Date | null;
+  schema_version: string;
+  source_file_reference: string | null;
+  import_batch_id: string;
   header_mapping: Generated<unknown>;
   records: unknown;
   preview: Generated<unknown>;
@@ -536,6 +539,7 @@ export interface InspectionReportsTable {
   inspection_no: string;
   receiving_item_id: string;
   template_version_id: string;
+  item_mapping_revision_id: string | null;
   state: string;
   final_result: string | null;
   author_id: string;
@@ -576,6 +580,28 @@ export interface InspectionItemTemplatesTable {
   updated_by: string | null;
   updated_at: Generated<Date>;
   version: Generated<bigint>;
+  approval_state: string;
+  template_version_id: string | null;
+  source_revision_id: string | null;
+  source_reference: string | null;
+  effective_revision: string | null;
+  approved_by: string | null;
+  approved_at: Date | null;
+  superseded_by: string | null;
+}
+export interface InspectionItemTemplateMappingEventsTable {
+  id: Generated<string>;
+  mapping_id: string;
+  event_type: string;
+  actor_id: string;
+  owner_authority: string | null;
+  owner_login_identity: string | null;
+  source_revision_id: string;
+  content_sha256: string;
+  request_id: string;
+  audit_event_id: string;
+  reason: string;
+  recorded_at: Generated<Date>;
 }
 export interface InspectionEquipmentUsageTable {
   id: Generated<string>;
@@ -617,6 +643,7 @@ export interface InspectionReportSnapshotsTable {
   results_snapshot: unknown;
   created_at: Generated<Date>;
   snapshot_hash: string;
+  item_mapping_revision_id: string | null;
 }
 export interface InspectionTemplateDocumentSourcesTable {
   id: Generated<string>;
@@ -1463,6 +1490,7 @@ export interface DatabaseSchema {
   inspection_report_results: InspectionReportResultsTable;
   inspection_report_snapshots: InspectionReportSnapshotsTable;
   inspection_item_templates: InspectionItemTemplatesTable;
+  inspection_item_template_mapping_events: InspectionItemTemplateMappingEventsTable;
   inspection_equipment_usage: InspectionEquipmentUsageTable;
   inspection_template_document_sources: InspectionTemplateDocumentSourcesTable;
   lab_test_templates: LabTestTemplatesTable;
