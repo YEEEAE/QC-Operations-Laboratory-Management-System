@@ -7,6 +7,7 @@ import {
 } from '../../../../shared/authorization/p05-authority.js';
 import type { FinalApprovalCeremony } from '../../../e-signatures/application/final-approval-ceremony.js';
 import type { InspectionRepository } from '../ports/repository.js';
+import { decideApprovalPath } from '../../../approvals/application/owner-approval-policy.js';
 
 /**
  * QC-100-FINAL-004 — final (QCM) approval.
@@ -27,9 +28,9 @@ export class FinalApproveInspectionUseCase {
     actor: ActorContext;
     id: string;
     expectedVersion: bigint;
-    reauthenticationSecret: string;
+    reauthenticationSecret?: string;
     requestId: string;
-  }): Promise<{ signatureId: string }> {
+  }): Promise<{ signatureId?: string }> {
     const inspection = await this.repository.get(input.id, input.actor);
     if (!inspection) throw new AppError('RESOURCE_NOT_FOUND', { userSafe: true });
     if (!isFinalApprovalAuthority(input.actor))
@@ -55,20 +56,21 @@ export class FinalApproveInspectionUseCase {
           expectedVersion: input.expectedVersion,
           // The named owner may override stage order; every other final
           // approver must act on a record already approved by Supervisor.
-          sod: isNamedSystemOwner(input.actor)
-            ? undefined
-            : {
-                actorId: input.actor.id,
-                authorId: inspection.authorId,
-                executorId: inspection.authorId,
-              },
+          sod: {
+            actorId: input.actor.id,
+            authorId: inspection.authorId,
+            executorId: inspection.authorId,
+          },
           businessCondition:
-            inspection.state === 'PENDING_QCM_APPROVAL' || isNamedSystemOwner(input.actor),
+            inspection.state === 'PENDING_QCM_APPROVAL' ||
+            (isNamedSystemOwner(input.actor) && inspection.state === 'UNDER_REVIEW' && Boolean(inspection.finalResult)),
         },
         { throwOnDeny: true },
       );
     authorizeFinal('APPROVE');
-    const signatureEvidence = await this.ceremony.createFinalApprovalEvidence({
+    const signatureEvidence = isNamedSystemOwner(input.actor)
+      ? undefined
+      : await this.ceremony.createFinalApprovalEvidence({
       actor: input.actor,
       subjectType: 'INSPECTION_REPORT',
       subjectId: inspection.id,
@@ -78,15 +80,23 @@ export class FinalApproveInspectionUseCase {
       snapshotHash: `inspection:${inspection.id}:v${inspection.version}:final-approval`,
       reauthenticationSecret: input.reauthenticationSecret,
       requestId: input.requestId,
-    });
+      });
     await this.repository.transition({
       id: input.id,
       expectedVersion: input.expectedVersion,
       actor: input.actor,
       action: 'FINAL_APPROVE',
-      signatureEvidence,
+      ...(signatureEvidence ? { signatureEvidence } : {}),
+      approvalDecisionEvent: decideApprovalPath({
+        actor: input.actor,
+        subjectType: 'INSPECTION_REPORT',
+        subjectId: inspection.id,
+        subjectVersion: inspection.version,
+        decision: 'FINAL_APPROVE',
+        reauthenticationVerified: Boolean(signatureEvidence),
+      }),
       requestId: input.requestId,
     });
-    return { signatureId: signatureEvidence.id };
+    return signatureEvidence ? { signatureId: signatureEvidence.id } : {};
   }
 }

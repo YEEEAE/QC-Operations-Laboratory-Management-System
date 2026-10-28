@@ -12,6 +12,7 @@ import type { AuditRepository } from '../../../../shared/audit/audit-repository.
 import { PostgresAuditRepository } from '../../../../shared/audit/postgres-audit-repository.js';
 import type { OutboxRepository } from '../../../../shared/outbox/outbox-repository.js';
 import { PostgresOutboxRepository } from '../../../../shared/outbox/postgres-outbox-repository.js';
+import { persistApprovalDecisionEvent } from '../../../../shared/approval-decision-event.js';
 
 type TemplateRow = DatabaseRow<'inspection_template_versions'>;
 type HeaderRow = DatabaseRow<'inspection_templates'>;
@@ -259,6 +260,7 @@ export class PostgresTemplateRepository implements TemplateRepository {
     reason?: string;
     requestId: string;
     signatureId?: string;
+    approvalDecisionEvent?: import('../../../../shared/approval-decision-event.js').ApprovalDecisionEvent;
   }): Promise<TemplateVersion> {
     const old = await this.load(input.id);
     if (!old) throw new AppError('RESOURCE_NOT_FOUND', { userSafe: true });
@@ -284,7 +286,8 @@ export class PostgresTemplateRepository implements TemplateRepository {
           .returningAll()
           .executeTakeFirst();
         if (!updated) throw new AppError('CONFLICT_STALE_VERSION', { userSafe: true });
-        await this.auditFor(tx)?.append({
+        const audit = this.auditFor(tx);
+        const auditEvent = {
           actorType: 'USER',
           actorId: input.actor.id,
           subjectType: 'INSPECTION_TEMPLATE_VERSION',
@@ -296,7 +299,24 @@ export class PostgresTemplateRepository implements TemplateRepository {
           reason: input.reason,
           requestId: input.requestId,
           signatureId: input.signatureId,
-        });
+          payload: input.approvalDecisionEvent
+            ? {
+                approvalPath: input.approvalDecisionEvent.approvalPath,
+                policyRevision: input.approvalDecisionEvent.policyRevision,
+                subjectVersion: input.approvalDecisionEvent.subjectVersion.toString(),
+                reauthenticationStatus: input.approvalDecisionEvent.reauthenticationStatus,
+              }
+            : undefined,
+        };
+        if (audit instanceof PostgresAuditRepository) {
+          const auditEventId = await audit.appendReturningId(auditEvent);
+          if (input.approvalDecisionEvent)
+            await persistApprovalDecisionEvent(tx, input.approvalDecisionEvent, auditEventId, input.requestId, now);
+        } else if (input.approvalDecisionEvent) {
+          throw new AppError('SYSTEM_DATABASE_UNAVAILABLE', { userSafe: true });
+        } else {
+          await audit?.append(auditEvent);
+        }
         await this.outboxFor(tx)?.enqueue({
           eventType: 'TEMPLATE_CHANGED',
           aggregateType: 'INSPECTION_TEMPLATE_VERSION',

@@ -16,6 +16,7 @@ import type { DocumentVersionAction } from '../domain/document-state.js';
 import type { DocumentListFilter, DocumentRepository, DocumentSourceFileOption } from '../ports/repository.js';
 import type { DatabaseTransaction } from '../../../shared/database/transaction.js';
 import { decideRevisionCreation, expectedPredecessorOf } from '../domain/revision-creation.js';
+import { persistApprovalDecisionEvent } from '../../../shared/approval-decision-event.js';
 
 const identityMap = (row: DatabaseRow<'document_identities'>, currentEffectiveVersionId?: string): DocumentIdentity => ({
   id: row.id,
@@ -291,12 +292,14 @@ export class PostgresDocumentRepository implements DocumentRepository {
     } catch (error) { if (error instanceof AppError) throw error; throw translateDatabaseError(error); }
   }
 
-  async transition(input: { id: string; expectedVersion: bigint; actor: ActorContext; action: DocumentVersionAction; toState: DocumentVersion['state']; reason?: string; now: Date; requestId: string }, transaction?: DatabaseTransaction): Promise<DocumentVersion> {
+  async transition(input: { id: string; expectedVersion: bigint; actor: ActorContext; action: DocumentVersionAction; toState: DocumentVersion['state']; reason?: string; now: Date; requestId: string; approvalDecisionEvent?: import('../../../shared/approval-decision-event.js').ApprovalDecisionEvent }, transaction?: DatabaseTransaction): Promise<DocumentVersion> {
     try {
       const commit = async (tx: DatabaseTransaction) => {
         const old = await tx.selectFrom('document_versions').selectAll().where('id', '=', input.id).where('version', '=', input.expectedVersion).forUpdate().executeTakeFirst();
         if (!old) throw new AppError('CONFLICT_STALE_VERSION', { userSafe: true });
         if (input.action === 'APPROVE') {
+          if (old.state !== 'IN_REVIEW' || input.toState !== 'APPROVED')
+            throw new AppError('DOMAIN_INVALID_TRANSITION', { userSafe: true });
           const files = await this.listVersionFiles(tx, input.id, true);
           const expectedDigest = documentContentDigest({ documentId: old.document_id, revision: old.revision, files });
           if (files.some((file) => file.state !== 'ACTIVE') || old.content_hash !== expectedDigest)
@@ -308,10 +311,19 @@ export class PostgresDocumentRepository implements DocumentRepository {
         if (input.action === 'SUPERSEDE') values.superseded_at = input.now;
         if (input.action === 'ARCHIVE') values.archived_at = input.now;
         if (input.action === 'VOID') { values.voided_at = input.now; values.void_reason = input.reason?.trim() ?? null; }
-        const row = await tx.updateTable('document_versions').set(values as never).where('id', '=', input.id).where('version', '=', input.expectedVersion).returningAll().executeTakeFirst();
+        const row = await tx.updateTable('document_versions').set(values as never).where('id', '=', input.id).where('version', '=', input.expectedVersion).where('state', '=', old.state).returningAll().executeTakeFirst();
         if (!row) throw new AppError('CONFLICT_STALE_VERSION', { userSafe: true });
         const bindingPayload = input.action === 'APPROVE' ? { revision: old.revision, contentHash: old.content_hash } : undefined;
-        await this.auditFor(tx)?.append({ actorType: 'USER', actorId: input.actor.id, subjectType: 'DOCUMENT_VERSION', subjectId: input.id, action: input.action, transitionId: `TR-DOC-${input.action}`, oldState: old.state, newState: input.toState, reason: input.reason, requestId: input.requestId, ...(bindingPayload ? { payload: bindingPayload } : {}) });
+        const audit = this.auditFor(tx);
+        const auditEvent = { actorType: 'USER' as const, actorId: input.actor.id, subjectType: 'DOCUMENT_VERSION', subjectId: input.id, action: input.action, transitionId: `TR-DOC-${input.action}`, oldState: old.state, newState: input.toState, reason: input.reason, requestId: input.requestId, payload: { ...(bindingPayload ?? {}), ...(input.approvalDecisionEvent ? { approvalPath: input.approvalDecisionEvent.approvalPath, policyRevision: input.approvalDecisionEvent.policyRevision, subjectVersion: input.approvalDecisionEvent.subjectVersion.toString(), reauthenticationStatus: input.approvalDecisionEvent.reauthenticationStatus } : {}) } };
+        if (audit instanceof PostgresAuditRepository) {
+          const auditEventId = await audit.appendReturningId(auditEvent);
+          if (input.approvalDecisionEvent) await persistApprovalDecisionEvent(tx, input.approvalDecisionEvent, auditEventId, input.requestId, input.now);
+        } else if (input.approvalDecisionEvent) {
+          throw new AppError('SYSTEM_DATABASE_UNAVAILABLE', { userSafe: true });
+        } else {
+          await audit?.append(auditEvent);
+        }
         await this.outboxFor(tx)?.enqueue({ eventType: 'DOCUMENT_VERSION_CHANGED', aggregateType: 'DOCUMENT_VERSION', aggregateId: input.id, payload: { action: input.action, state: input.toState, ...(bindingPayload ?? {}) }, dedupeKey: `document-version:${input.id}:v${input.expectedVersion + 1n}` });
         return versionMap(row, await this.listVersionFiles(tx, input.id));
       };

@@ -122,7 +122,7 @@ const reviewTemplate = defineAction({
 
 const approveTemplate = defineAction({
   accept: 'json',
-  input: idVersion.extend({ reauthenticationSecret: z.string().min(1) }),
+  input: idVersion.extend({ reauthenticationSecret: z.string().optional() }),
   handler: (input, context) =>
     run(() =>
       templateActionDependencies().approve.execute({

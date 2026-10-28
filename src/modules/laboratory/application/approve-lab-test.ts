@@ -7,6 +7,7 @@ import type { LabRepository } from '../ports/repository.js';
 import { authorizeLab } from './lab-authorization.js';
 import type { DatabaseTransaction } from '../../../shared/database/transaction.js';
 import type { FinalApprovalCeremony } from '../../e-signatures/application/final-approval-ceremony.js';
+import { decideApprovalPath, isOwnerApprovalPath } from '../../approvals/application/owner-approval-policy.js';
 const signatureRequired: FinalApprovalCeremony = {
   async createFinalApprovalEvidence() {
     throw new AppError('AUTH_REAUTH_REQUIRED', { userSafe: true });
@@ -40,6 +41,7 @@ export class ApproveLabTestUseCase {
     actor: ActorContext;
     id: string;
     expectedVersion: bigint;
+    reason?: string;
     reauthenticationSecret?: string;
     requestId: string;
     transaction?: DatabaseTransaction;
@@ -60,7 +62,8 @@ export class ApproveLabTestUseCase {
       evaluation.contentHash !== test.context.contentHash
     )
       throw new AppError('AUTHZ_DENIED', { userSafe: true });
-    const signatureEvidence = await this.ceremony.createFinalApprovalEvidence({
+    const ownerPath = isOwnerApprovalPath(input.actor);
+    const signatureEvidence = ownerPath ? undefined : await this.ceremony.createFinalApprovalEvidence({
       actor: input.actor,
       subjectType: 'LAB_TEST',
       subjectId: test.id,
@@ -82,7 +85,22 @@ export class ApproveLabTestUseCase {
         version: test.version + 1n,
         updatedAt: at,
       },
-      { actor: input.actor, requestId: input.requestId, action: 'APPROVE', signatureEvidence },
+      {
+        actor: input.actor,
+        requestId: input.requestId,
+        action: 'APPROVE',
+        reason: input.reason,
+        ...(signatureEvidence ? { signatureEvidence } : {}),
+        approvalDecisionEvent: decideApprovalPath({
+          actor: input.actor,
+          subjectType: 'LAB_TEST',
+          subjectId: test.id,
+          subjectVersion: test.version,
+          decision: 'APPROVE',
+          reason: input.reason,
+          reauthenticationVerified: Boolean(signatureEvidence),
+        }),
+      },
       input.transaction,
     );
   }

@@ -4,6 +4,7 @@ import type { ActorContext } from '../../../../shared/authorization/types.js';
 import { isTemplateAuthority } from '../domain/template-policy.js';
 import type { TemplateRepository } from '../ports/repository.js';
 import type { TemplateCeremony } from './template-ceremony.js';
+import { decideApprovalPath, isOwnerApprovalPath } from '../../../approvals/application/owner-approval-policy.js';
 
 export class ReviewTemplateUseCase {
   constructor(private readonly repository: TemplateRepository) {}
@@ -103,7 +104,8 @@ export class ApproveTemplateUseCase {
       },
       { throwOnDeny: true },
     );
-    const signatureId = await this.ceremony.verifySignature({
+    const ownerPath = isOwnerApprovalPath(input.actor);
+    const signatureId = ownerPath ? undefined : await this.ceremony.verifySignature({
       actor: input.actor,
       subjectId: current.id,
       subjectVersion: input.expectedVersion,
@@ -119,7 +121,15 @@ export class ApproveTemplateUseCase {
       actor: input.actor,
       action: 'APPROVE',
       requestId: input.requestId,
-      signatureId,
+      ...(signatureId ? { signatureId } : {}),
+      approvalDecisionEvent: decideApprovalPath({
+        actor: input.actor,
+        subjectType: 'INSPECTION_TEMPLATE_VERSION',
+        subjectId: current.id,
+        subjectVersion: current.version,
+        decision: 'APPROVE',
+        reauthenticationVerified: Boolean(signatureId),
+      }),
     });
   }
 }

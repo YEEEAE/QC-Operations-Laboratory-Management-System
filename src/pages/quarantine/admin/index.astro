@@ -241,7 +241,7 @@ function disabledReason(state: string, action: 'REVIEW' | 'APPROVE' | 'STOP' | '
           <p class="note" role="note">Employee accounts create DRAFT only and cannot review, approve, stop, void, or supersede (P-06). Supervisor, Manager, and yazeed (SYSTEM_OWNER) act with reauthentication and E-Signature.</p>
         )}
         {isAuthority && (
-          <p class="note" role="note">Catalogue authoring creates a draft until matching source evidence and digital content are bound. Approval retains the authorized E-Signature ceremony and the template-only SoD exception.</p>
+          <p class="note" role="note">Catalogue authoring creates a draft until matching source evidence and digital content are bound. Supervisor and Manager lifecycle actions retain the configured e-signature ceremony. The named System Owner records internal approval without an e-signature; approval does not establish external company or quality authority.</p>
         )}
         {templateResult.status === 'AVAILABLE' && <p class="register-count" role="status">{templateResult.value.total} template versions · Page {templateResult.value.page} of {Math.max(1, Math.ceil(templateResult.value.total / templateResult.value.pageSize))}</p>}
         {listUnavailable ? (

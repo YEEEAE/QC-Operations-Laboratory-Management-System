@@ -4,6 +4,7 @@ import {
   isFinalApprovalAuthority,
   isNamedSystemOwner,
 } from '../../../shared/authorization/p05-authority.js';
+import { decideApprovalPath } from '../../approvals/application/owner-approval-policy.js';
 import type { FinalApprovalCeremony } from '../../e-signatures/application/final-approval-ceremony.js';
 import { transitionLab } from '../domain/lab-state.js';
 import type { LabRepository } from '../ports/repository.js';
@@ -29,26 +30,29 @@ export class FinalApproveLabTestUseCase {
     actor: ActorContext;
     id: string;
     expectedVersion: bigint;
-    reauthenticationSecret: string;
+    reauthenticationSecret?: string;
     requestId: string;
-  }): Promise<{ signatureId: string }> {
+  }): Promise<{ signatureId?: string }> {
     const test = await this.repository.get(input.id, input.actor);
     if (!test) throw new AppError('RESOURCE_NOT_FOUND', { userSafe: true });
     if (!isFinalApprovalAuthority(input.actor))
       throw new AppError('AUTHZ_DENIED', { userSafe: true });
-    // The named owner may override stage order; every other final approver must
-    // act on a record already approved by Supervisor.
-    if (test.state !== 'PENDING_QCM_APPROVAL' && !isNamedSystemOwner(input.actor))
+    // Do not let an internal owner click bypass the scientific evaluation stage.
+    if (test.state !== 'PENDING_QCM_APPROVAL')
       throw new AppError('AUTHZ_DENIED', { userSafe: true });
+    if (test.scientificResult !== 'PASS')
+      throw new AppError('POLICY_SOURCE_REQUIRED', { userSafe: true });
     authorizeLab(
       input.actor,
       test,
       'PERM-APR-APPROVE',
       'APPROVE',
       input.expectedVersion,
-      !isNamedSystemOwner(input.actor),
+      true,
     );
-    const signatureEvidence = await this.ceremony.createFinalApprovalEvidence({
+    const signatureEvidence = isNamedSystemOwner(input.actor)
+      ? undefined
+      : await this.ceremony.createFinalApprovalEvidence({
       actor: input.actor,
       subjectType: 'LAB_TEST',
       subjectId: test.id,
@@ -58,7 +62,7 @@ export class FinalApproveLabTestUseCase {
       snapshotHash: `lab-test:${test.id}:v${test.version}:final-approval`,
       reauthenticationSecret: input.reauthenticationSecret,
       requestId: input.requestId,
-    });
+      });
     const at = this.now().toISOString();
     await this.repository.save(
       test,
@@ -73,9 +77,17 @@ export class FinalApproveLabTestUseCase {
         actor: input.actor,
         requestId: input.requestId,
         action: 'FINAL_APPROVE',
-        signatureEvidence,
+        ...(signatureEvidence ? { signatureEvidence } : {}),
+        approvalDecisionEvent: decideApprovalPath({
+          actor: input.actor,
+          subjectType: 'LAB_TEST',
+          subjectId: test.id,
+          subjectVersion: test.version,
+          decision: 'FINAL_APPROVE',
+          reauthenticationVerified: Boolean(signatureEvidence),
+        }),
       },
     );
-    return { signatureId: signatureEvidence.id };
+    return signatureEvidence ? { signatureId: signatureEvidence.id } : {};
   }
 }

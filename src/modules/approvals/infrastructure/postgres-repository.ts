@@ -23,6 +23,8 @@ import type {
 } from '../ports/repository.js';
 import type { SignatureEvidence } from '../../e-signatures/domain/signature-evidence.js';
 import { inTransaction, type DatabaseTransaction } from '../../../shared/database/transaction.js';
+import { decideApprovalPath } from '../application/owner-approval-policy.js';
+import { persistApprovalDecisionEvent } from '../../../shared/approval-decision-event.js';
 
 const caseMap = (row: DatabaseRow<'approval_cases'>): ApprovalCase => {
   assertApprovalSubjectType(row.subject_type);
@@ -315,6 +317,26 @@ export class PostgresApprovalRepository implements ApprovalRepository {
           auditEventId = await audit.appendReturningId(auditEvent);
         } else if (audit) {
           await audit.append(auditEvent);
+        }
+        const approvalDecisionEvent = decideApprovalPath({
+          actor: input.actor,
+          subjectType: record.subject.subjectType,
+          subjectId: record.subject.subjectId,
+          subjectVersion: input.subjectVersion,
+          decision: input.decision,
+          reason: input.reason,
+          reauthenticationVerified: Boolean(signature),
+        });
+        if (auditEventId) {
+          await persistApprovalDecisionEvent(
+            tx,
+            approvalDecisionEvent,
+            auditEventId,
+            input.requestId,
+            input.now,
+          );
+        } else {
+          throw new AppError('SYSTEM_DATABASE_UNAVAILABLE', { userSafe: true });
         }
         const row = await tx
           .insertInto('approval_decisions')

@@ -170,7 +170,7 @@ const resume = defineAction({
 });
 const approve = defineAction({
   accept: 'json',
-  input: id.extend({ reauthenticationSecret: z.string().min(1) }),
+  input: id.extend({ reauthenticationSecret: z.string().optional() }),
   handler: (input, context) =>
     run(() =>
       laboratoryActionDependencies().approve.execute({
@@ -186,7 +186,7 @@ const approve = defineAction({
  */
 const finalApprove = defineAction({
   accept: 'json',
-  input: id.extend({ reauthenticationSecret: z.string().min(1) }),
+  input: id.extend({ reauthenticationSecret: z.string().optional() }),
   handler: (input, context) =>
     run(() =>
       laboratoryActionDependencies().finalApprove.execute({

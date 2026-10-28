@@ -6,6 +6,7 @@ import type { InspectionRepository } from '../ports/repository.js';
 import { isStageOneApprovalAuthority } from '../../../../shared/authorization/p05-authority.js';
 import type { DatabaseTransaction } from '../../../../shared/database/transaction.js';
 import type { FinalApprovalCeremony } from '../../../e-signatures/application/final-approval-ceremony.js';
+import { decideApprovalPath, isOwnerApprovalPath } from '../../../approvals/application/owner-approval-policy.js';
 const signatureRequired: FinalApprovalCeremony = {
   async createFinalApprovalEvidence() {
     throw new AppError('AUTH_REAUTH_REQUIRED', { userSafe: true });
@@ -36,6 +37,7 @@ export class ApproveInspectionUseCase {
     actor: ActorContext;
     id: string;
     expectedVersion: bigint;
+    reason?: string;
     reauthenticationSecret?: string;
     requestId: string;
     transaction?: DatabaseTransaction;
@@ -72,7 +74,8 @@ export class ApproveInspectionUseCase {
       { ...common, permission: 'PERM-INSP-APPROVE', action: 'APPROVE' },
       { throwOnDeny: true },
     );
-    const signatureEvidence = await this.ceremony.createFinalApprovalEvidence({
+    const ownerPath = isOwnerApprovalPath(input.actor);
+    const signatureEvidence = ownerPath ? undefined : await this.ceremony.createFinalApprovalEvidence({
       actor: input.actor,
       subjectType: 'INSPECTION_REPORT',
       subjectId: inspection.id,
@@ -89,7 +92,17 @@ export class ApproveInspectionUseCase {
       expectedVersion: input.expectedVersion,
       actor: input.actor,
       action: 'APPROVE',
-      signatureEvidence,
+      reason: input.reason,
+      ...(signatureEvidence ? { signatureEvidence } : {}),
+      approvalDecisionEvent: decideApprovalPath({
+        actor: input.actor,
+        subjectType: 'INSPECTION_REPORT',
+        subjectId: inspection.id,
+        subjectVersion: inspection.version,
+        decision: 'APPROVE',
+        reason: input.reason,
+        reauthenticationVerified: Boolean(signatureEvidence),
+      }),
       requestId: input.requestId,
       transaction: input.transaction,
     });

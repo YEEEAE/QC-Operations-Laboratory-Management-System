@@ -6,6 +6,7 @@ import type { SignatureEvidence } from '../../../e-signatures/domain/signature-e
 import type { PointCriteria } from '../application/record-inspection-results.js';
 import type { AqlSampling } from '../domain/inspection-aql.js';
 import type { DatabaseTransaction } from '../../../../shared/database/transaction.js';
+import type { ApprovalDecisionEvent } from '../../../../shared/approval-decision-event.js';
 export interface InspectionRepository {
   listPage?(i: Parameters<InspectionRepository['list']>[0] & { page: import('../../../../shared/pagination/page.js').Page }): Promise<import('../../../../shared/pagination/page.js').PageResult<Inspection>>;
   /**
@@ -56,6 +57,7 @@ export interface InspectionRepository {
     reason?: string;
     /** Final-approval evidence is committed atomically with the state transition. */
     signatureEvidence?: SignatureEvidence;
+    approvalDecisionEvent?: ApprovalDecisionEvent;
     requestId: string;
     transaction?: DatabaseTransaction;
   }): Promise<Inspection>;

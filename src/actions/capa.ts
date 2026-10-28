@@ -32,7 +32,7 @@ const close = defineAction({
     id: z.string().uuid(),
     expectedVersion: z.coerce.bigint(),
     reason: z.string().trim().min(1).max(2000),
-    reauthenticationSecret: z.string().min(1),
+    reauthenticationSecret: z.string().optional(),
   }),
   handler: (input, context) =>
     run(() =>

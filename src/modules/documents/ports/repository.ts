@@ -4,6 +4,7 @@ import type { DocumentVersion } from '../domain/document-version.js';
 import type { DocumentVersionAction } from '../domain/document-state.js';
 import type { ExpectedDocumentPredecessor } from '../domain/revision-creation.js';
 import type { DatabaseTransaction } from '../../../shared/database/transaction.js';
+import type { ApprovalDecisionEvent } from '../../../shared/approval-decision-event.js';
 
 export interface DocumentListFilter { search?: string; documentType?: string; state?: string; }
 
@@ -26,7 +27,7 @@ export interface DocumentRepository {
   listVersions(documentId: string): Promise<readonly DocumentVersion[]>;
   updateDraft(input: { id: string; expectedVersion: bigint; expectedContentHash: string; actor: ActorContext; revision: string; changeSummary?: string; now: Date; requestId: string }, transaction?: DatabaseTransaction): Promise<DocumentVersion>;
   recordReview(input: { id: string; expectedVersion: bigint; actor: ActorContext; now: Date; requestId: string }): Promise<DocumentVersion>;
-  transition(input: { id: string; expectedVersion: bigint; actor: ActorContext; action: DocumentVersionAction; toState: DocumentVersion['state']; reason?: string; now: Date; requestId: string }, transaction?: DatabaseTransaction): Promise<DocumentVersion>;
+  transition(input: { id: string; expectedVersion: bigint; actor: ActorContext; action: DocumentVersionAction; toState: DocumentVersion['state']; reason?: string; now: Date; requestId: string; approvalDecisionEvent?: ApprovalDecisionEvent }, transaction?: DatabaseTransaction): Promise<DocumentVersion>;
   supersede(input: { currentId: string; currentExpectedVersion: bigint; replacementId: string; replacementExpectedVersion: bigint; actor: ActorContext; effectiveAt: Date; requestId: string }): Promise<{ current: DocumentVersion; replacement: DocumentVersion }>;
 }
 

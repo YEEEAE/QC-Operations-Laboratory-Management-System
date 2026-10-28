@@ -12,6 +12,7 @@ import { AppError } from '../../../shared/errors/app-error.js';
 import { classifyReadFailure, providerUnavailableResponse } from '../../../shared/errors/read-failure.js';
 import { stateLabel } from '../../../shared/copy/ux-vocabulary.js';
 import { isTemplateAuthority } from '../../../modules/quarantine/templates/application/template-authority.js';
+import { isNamedSystemOwner } from '../../../shared/authorization/p05-authority.js';
 
 const actor = Astro.locals.actor;
 if (!actor) return Astro.redirect('/login?returnTo=%2Fquarantine%2Fadmin');
@@ -20,6 +21,7 @@ if (!templateId) return Astro.redirect('/quarantine/admin');
 
 const hasTemplatePermission = actor.permissions.some((p) => p.code === 'PERM-ADM-TEMPLATES' && p.active !== false);
 const isAuthority = isTemplateAuthority(actor);
+const ownerInternalPath = isNamedSystemOwner(actor);
 
 let template;
 try {
@@ -197,7 +199,7 @@ const designerDesign =
     <aside aria-label="Current template actions">
       <section class="panel">
         <h2>Lifecycle actions</h2>
-        {!isAuthority && <p class="muted">Employee accounts cannot review, approve, stop, void, or supersede (P-06). Those actions require Supervisor, Manager, or yazeed with reauthentication and E-Signature.</p>}
+        {!isAuthority && <p class="muted">Employee accounts cannot review, approve, stop, void, or supersede (P-06). Supervisor and Manager actions use the configured e-signature ceremony. The named System Owner may record an internal approval without an e-signature.</p>}
         <div class="actions">
           {(['review', 'approve', 'stop', 'void', 'supersede'] as const).map((intent) => {
             const reason = reasonFor(intent.toUpperCase());
@@ -207,7 +209,7 @@ const designerDesign =
                 ? 'This action requires an authorized Supervisor, Manager, or named yazeed account under P-06.'
                 : null;
             const disabled = reason ?? roleBlocked;
-            const needsSig = intent !== 'review';
+            const needsSig = intent !== 'review' && !(intent === 'approve' && ownerInternalPath);
             return (
               <form method="post">
                 <input type="hidden" name="intent" value={intent} />
@@ -218,6 +220,7 @@ const designerDesign =
                 {needsSig && (
                   <label for={`reauthenticationSecret-${intent}`}>Password confirmation (required)<input id={`reauthenticationSecret-${intent}`} name="reauthenticationSecret" type="password" autocomplete="current-password" required disabled={Boolean(disabled)} aria-invalid={formIntent === intent && failure?.fieldErrors.reauthenticationSecret ? 'true' : undefined} aria-describedby={formIntent === intent && failure?.fieldErrors.reauthenticationSecret ? 'reauthenticationSecret-error' : undefined} /></label>
                 )}
+                {intent === 'approve' && ownerInternalPath && <p class="muted">This records an internal owner approval. It creates no e-signature and does not establish external company or quality authority.</p>}
                 {formIntent === intent && failure?.fieldErrors.reason && <p class="field-error" id="reason-error">{failure.fieldErrors.reason}</p>}
                 {formIntent === intent && failure?.fieldErrors.reauthenticationSecret && <p class="field-error" id="reauthenticationSecret-error">{failure.fieldErrors.reauthenticationSecret} Re-enter the password; it is not retained after submission.</p>}
                 <button type="submit" disabled={Boolean(disabled)} title={disabled ?? `${intent} template ${template.versionNo}`}>{intent}</button>

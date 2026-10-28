@@ -3,6 +3,8 @@ import {
   SYSTEM_OWNER_LOGIN_IDENTITY,
   isNamedSystemOwner,
 } from '../../../shared/authorization/p05-authority.js';
+import type { ApprovalDecisionEvent } from '../../../shared/approval-decision-event.js';
+export type { ApprovalDecisionEvent } from '../../../shared/approval-decision-event.js';
 
 /**
  * Owner-Controlled Internal Approval.
@@ -33,6 +35,7 @@ export const OWNER_INTERNAL_APPROVAL_AUTHORITY = 'SYSTEM_OWNER' as const;
 export type OwnerDecisionType = 'OWNER_INTERNAL_APPROVAL' | 'STANDARD_WORKFLOW';
 
 export type OwnerApprovalPath = 'OWNER_PATH' | 'STANDARD_PATH';
+export type ApprovalPath = ApprovalDecisionEvent['approvalPath'];
 
 export interface OwnerApprovalDeferral {
   /** Owner decision identifier. */
@@ -74,6 +77,34 @@ export function ownerApprovalPathFor(actor: ActorContext): OwnerApprovalPath {
 
 export function isOwnerApprovalPath(actor: ActorContext): boolean {
   return ownerApprovalPathFor(actor) === 'OWNER_PATH';
+}
+
+/** The one decision resolver used by generic and domain-specific approval flows. */
+export function decideApprovalPath(input: {
+  actor: ActorContext;
+  subjectType: string;
+  subjectId: string;
+  subjectVersion: bigint;
+  decision: string;
+  reason?: string;
+  reauthenticationVerified?: boolean;
+}): ApprovalDecisionEvent {
+  const ownerPath = isOwnerApprovalPath(input.actor);
+  return {
+    approvalPath: ownerPath ? 'OWNER_INTERNAL_APPROVAL' : 'STANDARD_WORKFLOW',
+    actorId: input.actor.id,
+    ...(ownerPath ? { actorLoginIdentity: SYSTEM_OWNER_LOGIN_IDENTITY } : {}),
+    subjectType: input.subjectType,
+    subjectId: input.subjectId,
+    subjectVersion: input.subjectVersion,
+    decision: input.decision,
+    ...(input.reason?.trim() ? { reason: input.reason.trim() } : {}),
+    policyRevision: ownerPath ? OWNER_APPROVAL_DEFERRAL.decisionId : 'STANDARD_WORKFLOW',
+    signatureDeferred:
+      ownerPath &&
+      ['APPROVE', 'FINAL_APPROVE', 'STAGE1_APPROVE', 'CLOSE_EXCEPTION'].includes(input.decision),
+    reauthenticationStatus: input.reauthenticationVerified ? 'VERIFIED' : null,
+  };
 }
 
 export interface OwnerDecisionMetadata {

@@ -8,6 +8,7 @@ import { ListCapaUseCase } from './list-capa.js';
 import { CAPA_CLOSE_ELIGIBLE_STATES } from '../domain/capa.js';
 import { PostgresNcrRepository } from '../../ncr/infrastructure/postgres-repository.js';
 import { ListRelatedNcrsForCapaUseCase } from './related-ncrs.js';
+import { isNamedSystemOwner } from '../../../../shared/authorization/p05-authority.js';
 
 export function capaActionDependencies() {
   const database = getDatabase();
@@ -34,14 +35,16 @@ export function capaReadDependencies() {
     listRelatedNcrs: new ListRelatedNcrsForCapaUseCase(new PostgresNcrRepository(database)),
     canClose: (
       actor: {
+        id: string;
         accountState: string;
         roles: readonly string[];
+        loginIdentity?: string;
         permissions: readonly { code: string; active?: boolean }[];
       },
       state: string,
     ) =>
       actor.accountState === 'ACTIVE' &&
-      actor.roles.includes('SUPERVISOR') &&
+      (actor.roles.includes('SUPERVISOR') || isNamedSystemOwner(actor)) &&
       actor.permissions.some(
         (permission) => permission.code === 'PERM-CAPA-CLOSE' && permission.active !== false,
       ) &&

@@ -6,6 +6,7 @@ import { laboratoryReadDependencies } from '../../../../modules/laboratory/appli
 import { comparisonRows } from '../../../../modules/laboratory/application/lab-presentation.js';
 import { actions } from 'astro:actions';
 import { field, parseExpectedVersionField } from '../../../../ui/forms/mutation-post.js';
+import { isNamedSystemOwner } from '../../../../shared/authorization/p05-authority.js';
 
 const actor = Astro.locals.actor;
 if (!actor)
@@ -17,12 +18,13 @@ try {
   if (classifyReadFailure(error) === 'UNAVAILABLE') return providerUnavailableResponse('Laboratory test details are temporarily unavailable', Astro.url.pathname + Astro.url.search);
   return Astro.redirect('/404');
 }
-// Each approval stage requires its own permission, e-sign permission, and
-// fresh reauthentication; final approval remains a separate QCM decision.
+// Standard approval requires its e-sign permission and ceremony. The named
+// owner records an internal decision under the approved deferral.
 const hasPermission = (code: string) =>
   actor.permissions.some((permission) => permission.code === code && permission.active !== false);
-const canStageApprove = hasPermission('PERM-LAB-APPROVE') && hasPermission('PERM-ESIG-SIGN');
-const canFinalApprove = hasPermission('PERM-APR-APPROVE') && hasPermission('PERM-ESIG-SIGN');
+const ownerInternalPath = isNamedSystemOwner(actor);
+const canStageApprove = hasPermission('PERM-LAB-APPROVE') && (ownerInternalPath || hasPermission('PERM-ESIG-SIGN'));
+const canFinalApprove = hasPermission('PERM-APR-APPROVE') && (ownerInternalPath || hasPermission('PERM-ESIG-SIGN'));
 const canReturn = hasPermission('PERM-LAB-RETURN');
 const atSupervisorStage = test.state === 'UNDER_REVIEW';
 const atQcmStage = test.state === 'PENDING_QCM_APPROVAL';
@@ -50,9 +52,9 @@ if (Astro.request.method === 'POST') {
   try {
     const expectedVersion = parseExpectedVersionField(field(form, 'expectedVersion'));
     const result = decisionIntent === 'approve'
-      ? await Astro.callAction(actions.laboratory.approve, { id: test.id, expectedVersion, reauthenticationSecret: String(form.get('reauthenticationSecret') ?? '') })
+      ? await Astro.callAction(actions.laboratory.approve, { id: test.id, expectedVersion, reauthenticationSecret: String(form.get('reauthenticationSecret') ?? '') || undefined })
       : decisionIntent === 'final-approve'
-        ? await Astro.callAction(actions.laboratory.finalApprove, { id: test.id, expectedVersion, reauthenticationSecret: String(form.get('reauthenticationSecret') ?? '') })
+        ? await Astro.callAction(actions.laboratory.finalApprove, { id: test.id, expectedVersion, reauthenticationSecret: String(form.get('reauthenticationSecret') ?? '') || undefined })
         : decisionIntent === 'return'
           ? await Astro.callAction(actions.laboratory.returnTest, { id: test.id, expectedVersion, reason: field(form, 'reason') })
           : null;
@@ -185,17 +187,17 @@ if (Astro.request.method === 'POST') {
     {
       atSupervisorStage && canStageApprove ? (
       <form method="post" data-action="laboratory.approve" aria-labelledby="stage-decision-title" aria-describedby="decision-conditions lab-decision-feedback">
-        <h3 id="stage-decision-title">Supervisor stage approval</h3>
-        <p>Supervisor stage approval sends this report to QCM for final review. It does not approve or release the report.</p>
-        <p class="muted">Shown during UNDER_REVIEW with laboratory approval and e-sign permissions. The server must accept the source-bound scientific evaluation and this stage's signature.</p>
+        <h3 id="stage-decision-title">{ownerInternalPath ? 'Owner internal stage approval' : 'Supervisor stage approval'}</h3>
+        <p>{ownerInternalPath ? 'The named System Owner internal decision sends this report to QCM for final review. No e-signature is created, and this does not authorize product release.' : 'Supervisor stage approval sends this report to QCM for final review. It does not approve or release the report.'}</p>
+        <p class="muted">Shown during UNDER_REVIEW with laboratory approval permission. The server still requires a source-bound scientific evaluation; standard workflow also requires this stage's signature.</p>
         <input type="hidden" name="intent" value="approve" />
         <input type="hidden" name="expectedVersion" value={test.version.toString()} />
-        <label for="lab-stage-approval-password">
+        {!ownerInternalPath && <label for="lab-stage-approval-password">
           Reauthentication password (stage approval signature)
           <input id="lab-stage-approval-password" name="reauthenticationSecret" type="password" autocomplete="current-password" required />
-        </label>
+        </label>}
         <button type="submit" data-submit>
-        Supervisor approval — send to QCM
+        {ownerInternalPath ? 'Record internal approval — send to QCM' : 'Supervisor approval — send to QCM'}
         </button>
       </form>
       ) : null
@@ -219,12 +221,12 @@ if (Astro.request.method === 'POST') {
     {
       atQcmStage && canFinalApprove ? (
         <form class="final-decision" method="post" data-action="laboratory.finalApprove" aria-labelledby="final-decision-title" aria-describedby="decision-conditions lab-decision-feedback">
-          <h3 id="final-decision-title">QCM final approval</h3>
-          <p>Approve and lock this report with the final approval signature. This decision does not release material.</p>
-          <p class="muted">Shown during PENDING_QCM_APPROVAL with final approval and e-sign permissions. Final authority and reauthentication are checked by the server.</p>
+          <h3 id="final-decision-title">{ownerInternalPath ? 'Owner internal final approval' : 'QCM final approval'}</h3>
+          <p>{ownerInternalPath ? 'The named System Owner internal final decision records no e-signature and does not authorize product release.' : 'Approve and lock this report with the final approval signature. This decision does not release material.'}</p>
+          <p class="muted">Shown during PENDING_QCM_APPROVAL with final approval permission. Scientific PASS, final authority, and standard reauthentication remain server-checked.</p>
           <input type="hidden" name="intent" value="final-approve" />
           <input type="hidden" name="expectedVersion" value={test.version.toString()} />
-          <label for="lab-final-approval-password">
+          {!ownerInternalPath && <label for="lab-final-approval-password">
             Reauthentication password (final approval signature)
             <input
               id="lab-final-approval-password"
@@ -233,9 +235,9 @@ if (Astro.request.method === 'POST') {
               autocomplete="current-password"
               required
             />
-          </label>
+          </label>}
           <button type="submit" data-submit>
-            QCM final approval — approve and lock
+            {ownerInternalPath ? 'Record internal final approval — approve and lock' : 'QCM final approval — approve and lock'}
           </button>
         </form>
       ) : null
@@ -257,8 +259,7 @@ if (Astro.request.method === 'POST') {
       ) : null
     }
     <p class="muted">
-      Only the QCM final approval carries the binding electronic signature. PASS is never a release
-      command.
+      {ownerInternalPath ? 'The owner internal decision is not an electronic signature. PASS is never a release command.' : 'Only standard QCM final approval carries the binding electronic signature. PASS is never a release command.'}
     </p>
   </aside>
   </div>

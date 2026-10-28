@@ -3,6 +3,7 @@ import type { EquipmentContext, LabTest } from '../domain/lab-test.js';
 import type { LabState } from '../domain/lab-state.js';
 import type { SignatureEvidence } from '../../e-signatures/domain/signature-evidence.js';
 import type { DatabaseTransaction } from '../../../shared/database/transaction.js';
+import type { ApprovalDecisionEvent } from '../../../shared/approval-decision-event.js';
 export interface Mutation {
   actor: ActorContext;
   requestId: string;
@@ -10,6 +11,7 @@ export interface Mutation {
   reason?: string;
   /** Approval-stage evidence is committed atomically with the state transition. */
   signatureEvidence?: SignatureEvidence;
+  approvalDecisionEvent?: ApprovalDecisionEvent;
 }
 
 /**

@@ -1175,6 +1175,23 @@ export interface ApprovalDecisionsTable {
   signature_deferred: Generated<boolean>;
   audit_event_id: string | null;
 }
+export interface ApprovalDecisionEventsTable {
+  id: string;
+  approval_path: string;
+  actor_id: string;
+  actor_login_identity: string | null;
+  subject_type: string;
+  subject_id: string;
+  subject_version: bigint;
+  decision: string;
+  decision_reason: string | null;
+  policy_revision: string;
+  signature_deferred: Generated<boolean>;
+  reauthentication_status: string | null;
+  audit_event_id: string;
+  request_id: string;
+  decided_at: Date;
+}
 export interface ElectronicSignaturesTable {
   id: Generated<string>;
   actor_id: string;
@@ -1590,6 +1607,7 @@ export interface DatabaseSchema {
   approval_cases: ApprovalCasesTable;
   approval_work_items: ApprovalWorkItemsTable;
   approval_decisions: ApprovalDecisionsTable;
+  approval_decision_events: ApprovalDecisionEventsTable;
   electronic_signatures: ElectronicSignaturesTable;
   backup_runs: BackupRunsTable;
   restore_runs: RestoreRunsTable;

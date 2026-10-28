@@ -279,7 +279,7 @@ const reviewInspection = defineAction({
 });
 const approveInspection = defineAction({
   accept: 'json',
-  input: inspectionVersion.extend({ reauthenticationSecret: z.string().min(1) }),
+  input: inspectionVersion.extend({ reauthenticationSecret: z.string().optional() }),
   handler: (input, context) =>
     run(() =>
       quarantineActionDependencies().inspection.approve.execute({
@@ -297,7 +297,7 @@ const approveInspection = defineAction({
  */
 const finalApproveInspection = defineAction({
   accept: 'json',
-  input: inspectionVersion.extend({ reauthenticationSecret: z.string().min(1) }),
+  input: inspectionVersion.extend({ reauthenticationSecret: z.string().optional() }),
   handler: (input, context) =>
     run(() =>
       quarantineActionDependencies().inspection.finalApprove.execute({

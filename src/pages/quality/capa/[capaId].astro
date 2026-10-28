@@ -7,6 +7,7 @@ import { capaReadDependencies } from '../../../modules/quality/capa/application/
 import { stateLabel } from '../../../shared/copy/ux-vocabulary.js';
 import { readOutcome } from '../../../shared/errors/read-outcome.js';
 import { classifyReadFailure } from '../../../shared/errors/read-failure.js';
+import { isNamedSystemOwner } from '../../../shared/authorization/p05-authority.js';
 const actor = Astro.locals.actor;
 if (!actor) return Astro.redirect('/login');
 const capaId = Astro.params.capaId ?? '';
@@ -22,6 +23,7 @@ if (/^[0-9a-f-]{36}$/i.test(capaId)) {
 if (!capa && !providerUnavailable) Astro.response.status = 404;
 if (providerUnavailable) Astro.response.status = 503;
 const canClose = Boolean(capa && capaRead.canClose(actor, capa.state));
+const ownerInternalApproval = isNamedSystemOwner(actor);
 // The source NCR is resolved server-side through the NCR domain's own
 // scope-limited read (QC-100-FINAL-024). The CAPA page holds no mutation
 // authority over NCR state — the linkage is presentation only.
@@ -155,14 +157,12 @@ if (capa?.ncrId) {
             <h2 id="current-actions-heading">Current actions</h2>
             {canClose ? <section aria-labelledby="close-heading" class="close-panel">
               <h3 id="close-heading">Close CAPA · P-04</h3>
-              <p id="close-help">P-04 allows this exception only for an active Supervisor with the explicit close grant and authorized scope. The CAPA must be in an eligible state and at the displayed version. Enter a reason, reauthenticate, and sign the CLOSE meaning. Incomplete actions or unaccepted effectiveness do not block this exception; closure does not claim effectiveness.</p>
+              <p id="close-help">P-04 permits this exception for an authorized Supervisor or the active named System Owner with the explicit close grant and authorized scope. The CAPA must be in an eligible state and at the displayed version. Enter a reason. {ownerInternalApproval ? 'This is an internal owner decision; no electronic signature is created. ' : 'Reauthenticate and complete the standard signature ceremony. '}Incomplete actions or unaccepted effectiveness do not block this exception; closure does not claim effectiveness or authorize physical product release.</p>
         <form data-capa-close data-capa-id={capa.id} data-capa-version={capa.version.toString()}>
           <label for="close-reason">Closure reason</label>
           <textarea id="close-reason" name="reason" aria-describedby="close-help" required maxlength="2000"></textarea>
-          <label for="close-reauth">Reauthentication</label>
-          <input id="close-reauth" name="reauthenticationSecret" type="password" autocomplete="current-password" required />
-          <p id="close-meaning" class="signature-meaning">I close CAPA {capa.capaNo}, version {capa.version}.</p>
-          <button type="submit" aria-describedby="close-meaning" data-submit>Close CAPA</button>
+          {!ownerInternalApproval && <><label for="close-reauth">Reauthentication</label><input id="close-reauth" name="reauthenticationSecret" type="password" autocomplete="current-password" required /><p id="close-meaning" class="signature-meaning">I sign the CLOSE action for CAPA {capa.capaNo}, version {capa.version}.</p></>}
+          <button type="submit" aria-describedby={ownerInternalApproval ? 'close-help' : 'close-meaning'} data-submit>Close CAPA</button>
           <output data-result role="status" tabindex="-1"></output>
         </form>
 

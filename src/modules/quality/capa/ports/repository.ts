@@ -1,6 +1,7 @@
 import type { ActorContext } from '../../../../shared/authorization/types.js';
 import type { Capa, CapaActionType } from '../domain/capa.js';
 import type { SignatureEvidence } from '../../../e-signatures/domain/signature-evidence.js';
+import type { ApprovalDecisionEvent } from '../../../../shared/approval-decision-event.js';
 export interface CapaRepository {
   listPage?(i: { actor: ActorContext; state?: Capa['state']; ncrId?: string; page: import('../../../../shared/pagination/page.js').Page }): Promise<import('../../../../shared/pagination/page.js').PageResult<Capa>>;
   create(i: { capa: Capa; actor: ActorContext; requestId: string }): Promise<Capa>;
@@ -20,6 +21,7 @@ export interface CapaRepository {
     actor: ActorContext;
     reason: string;
     requestId: string;
-    signature: SignatureEvidence;
+    signature?: SignatureEvidence;
+    approvalDecisionEvent?: ApprovalDecisionEvent;
   }): Promise<Capa>;
 }

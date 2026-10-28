@@ -10,6 +10,8 @@ import {
 } from '../../../../shared/audit/audit-event.js';
 import { stableJson } from '../../../../shared/json/stable-stringify.js';
 import { createHash } from 'node:crypto';
+import { uuidv7 } from '../../../../shared/id/uuid.js';
+import { persistApprovalDecisionEvent } from '../../../../shared/approval-decision-event.js';
 export class PostgresCapaRepository implements CapaRepository {
   constructor(private db: Kysely<DatabaseSchema>) {}
   private map(r: DatabaseRow<'capas'>, a: readonly DatabaseRow<'capa_actions'>[] = []): Capa {
@@ -204,7 +206,7 @@ export class PostgresCapaRepository implements CapaRepository {
       const snapshot = { capa: snapshotCapa, actions: snapshotCapa.actions };
       const snapshotJson = stableJson(snapshot);
       const snapshotHash = createHash('sha256').update(snapshotJson).digest('hex');
-      if (snapshotHash !== i.signature.snapshotHash)
+      if (snapshotHash !== (i.signature?.snapshotHash ?? snapshotHash))
         throw new AppError('CONFLICT_STALE_VERSION', { userSafe: true });
       await trx
         .insertInto('capa_close_snapshots')
@@ -228,23 +230,25 @@ export class PostgresCapaRepository implements CapaRepository {
         .returningAll()
         .executeTakeFirst();
       if (!updated) throw new AppError('CONFLICT_STALE_VERSION', { userSafe: true });
-      await trx
-        .insertInto('electronic_signatures')
-        .values({
-          id: i.signature.id,
-          actor_id: i.signature.actorId,
-          subject_type: i.signature.subjectType,
-          subject_id: i.signature.subjectId,
-          subject_version: i.signature.subjectVersion,
-          action: i.signature.action,
-          meaning: i.signature.meaning,
-          signed_at: i.signature.signedAt,
-          snapshot_hash: i.signature.snapshotHash,
-          reason: i.signature.reason ?? null,
-          reauth_method: i.signature.reauthMethod,
-          request_id: i.signature.requestId,
-        })
-        .execute();
+      if (i.signature) {
+        await trx
+          .insertInto('electronic_signatures')
+          .values({
+            id: i.signature.id,
+            actor_id: i.signature.actorId,
+            subject_type: i.signature.subjectType,
+            subject_id: i.signature.subjectId,
+            subject_version: i.signature.subjectVersion,
+            action: i.signature.action,
+            meaning: i.signature.meaning,
+            signed_at: i.signature.signedAt,
+            snapshot_hash: i.signature.snapshotHash,
+            reason: i.signature.reason ?? null,
+            reauth_method: i.signature.reauthMethod,
+            request_id: i.signature.requestId,
+          })
+          .execute();
+      }
       const auditPayload = {
         oldVersion: String(row.version),
         newVersion: String(BigInt(row.version) + 1n),
@@ -252,9 +256,10 @@ export class PostgresCapaRepository implements CapaRepository {
       };
       assertSafeAuditPayload(auditPayload);
       assertSafeAuditText(i.reason);
-      await trx
+      const auditRow = await trx
         .insertInto('audit_events')
         .values({
+          id: uuidv7(),
           actor_type: 'USER',
           actor_id: i.actor.id,
           subject_type: 'CAPA',
@@ -265,10 +270,20 @@ export class PostgresCapaRepository implements CapaRepository {
           new_state: 'CLOSED',
           reason: i.reason,
           request_id: i.requestId,
-          signature_id: i.signature.id,
+          signature_id: i.signature?.id ?? null,
           payload: auditPayload,
         })
-        .execute();
+        .returning('id')
+        .executeTakeFirstOrThrow();
+      if (i.approvalDecisionEvent) {
+        await persistApprovalDecisionEvent(
+          trx,
+          i.approvalDecisionEvent,
+          auditRow.id,
+          i.requestId,
+          new Date(),
+        );
+      }
       const result = this.map(updated, actions);
       await trx
         .updateTable('idempotency_records')

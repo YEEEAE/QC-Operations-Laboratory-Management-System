@@ -12,6 +12,7 @@ import type { OutboxRepository } from '../../../shared/outbox/outbox-repository.
 import { stableJson } from '../../../shared/json/stable-stringify.js';
 import { insertSignatureEvidence } from '../../../shared/e-signatures/insert-signature-evidence.js';
 import { PostgresOutboxRepository } from '../../../shared/outbox/postgres-outbox-repository.js';
+import { persistApprovalDecisionEvent } from '../../../shared/approval-decision-event.js';
 import type { LabListFilter, LabRepository, Mutation } from '../ports/repository.js';
 import type { LabState } from '../domain/lab-state.js';
 import type { ControlledContext, EquipmentContext, LabTest } from '../domain/lab-test.js';
@@ -520,7 +521,13 @@ export class PostgresLabRepository implements LabRepository {
     if (mutation.action === 'FINAL_APPROVE' || mutation.action === 'APPROVE') {
       const evidence = mutation.signatureEvidence;
       const expectedAction = mutation.action === 'APPROVE' ? 'STAGE1_APPROVE' : 'FINAL_APPROVE';
-      if (
+      const ownerInternalDecision =
+        mutation.approvalDecisionEvent?.approvalPath === 'OWNER_INTERNAL_APPROVAL' &&
+        mutation.approvalDecisionEvent.actorId === mutation.actor.id &&
+        mutation.approvalDecisionEvent.subjectType === 'LAB_TEST' &&
+        mutation.approvalDecisionEvent.subjectId === next.id &&
+        mutation.approvalDecisionEvent.subjectVersion === previous?.version;
+      if (!ownerInternalDecision && (
         !evidence ||
         evidence.subjectType !== 'LAB_TEST' ||
         evidence.subjectId !== next.id ||
@@ -529,7 +536,7 @@ export class PostgresLabRepository implements LabRepository {
         evidence.action !== expectedAction ||
         evidence.meaning !== expectedAction ||
         evidence.requestId !== mutation.requestId
-      )
+      ))
         throw new AppError('VALIDATION_FAILED', { userSafe: true });
     } else if (mutation.signatureEvidence) {
       throw new AppError('VALIDATION_FAILED', { userSafe: true });
@@ -641,7 +648,16 @@ export class PostgresLabRepository implements LabRepository {
         .set({ snapshot_id: snap.id })
         .where('id', '=', next.id)
         .execute();
-      await this.auditFor(tx)?.append({
+      const auditPayload = mutation.approvalDecisionEvent
+        ? {
+            approvalPath: mutation.approvalDecisionEvent.approvalPath,
+            policyRevision: mutation.approvalDecisionEvent.policyRevision,
+            subjectVersion: mutation.approvalDecisionEvent.subjectVersion.toString(),
+            reauthenticationStatus: mutation.approvalDecisionEvent.reauthenticationStatus,
+          }
+        : undefined;
+      const audit = this.auditFor(tx);
+      const auditEvent = {
         actorType: 'USER',
         actorId: mutation.actor.id,
         subjectType: 'LAB_TEST',
@@ -651,7 +667,17 @@ export class PostgresLabRepository implements LabRepository {
         newState: next.state,
         reason: mutation.reason,
         requestId: mutation.requestId,
-      });
+        payload: auditPayload,
+      };
+      if (audit instanceof PostgresAuditRepository) {
+        const auditEventId = await audit.appendReturningId(auditEvent);
+        if (mutation.approvalDecisionEvent)
+          await persistApprovalDecisionEvent(tx, mutation.approvalDecisionEvent, auditEventId, mutation.requestId, new Date());
+      } else if (mutation.approvalDecisionEvent) {
+        throw new AppError('SYSTEM_DATABASE_UNAVAILABLE', { userSafe: true });
+      } else {
+        await audit?.append(auditEvent);
+      }
       await this.outboxFor(tx)?.enqueue({
         eventType: 'LAB_TEST_CHANGED',
         aggregateType: 'LAB_TEST',

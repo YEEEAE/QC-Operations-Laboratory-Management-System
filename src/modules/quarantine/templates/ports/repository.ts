@@ -1,6 +1,7 @@
 import type { ActorContext } from '../../../../shared/authorization/types.js';
 import type { TemplateAuthoringOrigin, TemplateVersion } from '../domain/template.js';
 import type { TemplateVersionAction } from '../domain/template-state.js';
+import type { ApprovalDecisionEvent } from '../../../../shared/approval-decision-event.js';
 
 export interface TemplateRepository {
   listPage?(input: { actor: ActorContext; state?: TemplateVersion['state']; page: import('../../../../shared/pagination/page.js').Page }): Promise<import('../../../../shared/pagination/page.js').PageResult<TemplateVersion>>;
@@ -40,6 +41,7 @@ export interface TemplateRepository {
     reason?: string;
     requestId: string;
     signatureId?: string;
+    approvalDecisionEvent?: ApprovalDecisionEvent;
   }): Promise<TemplateVersion>;
   createRevision(input: {
     id: string;

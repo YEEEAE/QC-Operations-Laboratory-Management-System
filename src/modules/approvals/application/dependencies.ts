@@ -39,6 +39,7 @@ function transitionDependencies() {
         actor: input.actor,
         versionId: input.subjectId,
         expectedVersion: input.expectedVersion,
+        reason: input.reason,
         requestId: input.requestId,
         transaction: input.transaction,
       });
@@ -52,6 +53,7 @@ function transitionDependencies() {
         actor: input.actor,
         id: input.subjectId,
         expectedVersion: input.expectedVersion,
+        reason: input.reason,
         requestId: input.requestId,
         transaction: input.transaction,
       });
@@ -77,6 +79,7 @@ function transitionDependencies() {
           actor: input.actor,
           id: input.subjectId,
           expectedVersion: input.expectedVersion,
+          reason: input.reason,
           requestId: input.requestId,
           transaction: input.transaction,
         });

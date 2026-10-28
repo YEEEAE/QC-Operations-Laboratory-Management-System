@@ -24,6 +24,7 @@ import { stableJson } from '../../../../shared/json/stable-stringify.js';
 import { createHash } from 'node:crypto';
 import { insertSignatureEvidence } from '../../../../shared/e-signatures/insert-signature-evidence.js';
 import type { DatabaseTransaction } from '../../../../shared/database/transaction.js';
+import { persistApprovalDecisionEvent } from '../../../../shared/approval-decision-event.js';
 
 function reviveReceivingSnapshot(input: unknown): Inspection['receiving'] {
  const s=input as Inspection['receiving'];
@@ -722,7 +723,13 @@ export class PostgresInspectionRepository implements InspectionRepository {
     if (i.action === 'FINAL_APPROVE' || i.action === 'APPROVE') {
       const evidence = i.signatureEvidence;
       const expectedAction = i.action === 'APPROVE' ? 'STAGE1_APPROVE' : 'FINAL_APPROVE';
-      if (
+      const ownerInternalDecision =
+        i.approvalDecisionEvent?.approvalPath === 'OWNER_INTERNAL_APPROVAL' &&
+        i.approvalDecisionEvent.actorId === i.actor.id &&
+        i.approvalDecisionEvent.subjectType === 'INSPECTION_REPORT' &&
+        i.approvalDecisionEvent.subjectId === i.id &&
+        i.approvalDecisionEvent.subjectVersion === i.expectedVersion;
+      if (!ownerInternalDecision && (
         !evidence ||
         evidence.subjectType !== 'INSPECTION_REPORT' ||
         evidence.subjectId !== i.id ||
@@ -731,7 +738,7 @@ export class PostgresInspectionRepository implements InspectionRepository {
         evidence.action !== expectedAction ||
         evidence.meaning !== expectedAction ||
         evidence.requestId !== i.requestId
-      )
+      ))
         throw new AppError('VALIDATION_FAILED', { userSafe: true });
     } else if (i.signatureEvidence) {
       throw new AppError('VALIDATION_FAILED', { userSafe: true });
@@ -847,7 +854,8 @@ export class PostgresInspectionRepository implements InspectionRepository {
             .executeTakeFirst();
           if (!receiving) throw new AppError('CONFLICT_STALE_VERSION', { userSafe: true });
         }
-        await this.auditFor(tx)?.append({
+        const audit = this.auditFor(tx);
+        const auditEvent = {
           actorType: 'USER',
           actorId: i.actor.id,
           subjectType: 'INSPECTION_REPORT',
@@ -857,11 +865,29 @@ export class PostgresInspectionRepository implements InspectionRepository {
           newState: next,
           reason: i.reason,
           requestId: i.requestId,
-          payload:
-            i.action === 'FINAL_APPROVE'
+          payload: {
+            ...(i.action === 'FINAL_APPROVE'
               ? { finalResult: old.finalResult ?? 'UNDETERMINED' }
-              : undefined,
-        });
+              : {}),
+            ...(i.approvalDecisionEvent
+              ? {
+                  approvalPath: i.approvalDecisionEvent.approvalPath,
+                  policyRevision: i.approvalDecisionEvent.policyRevision,
+                  subjectVersion: i.approvalDecisionEvent.subjectVersion.toString(),
+                  reauthenticationStatus: i.approvalDecisionEvent.reauthenticationStatus,
+                }
+              : {}),
+          },
+        };
+        if (audit instanceof PostgresAuditRepository) {
+          const auditEventId = await audit.appendReturningId(auditEvent);
+          if (i.approvalDecisionEvent)
+            await persistApprovalDecisionEvent(tx, i.approvalDecisionEvent, auditEventId, i.requestId, now);
+        } else if (i.approvalDecisionEvent) {
+          throw new AppError('SYSTEM_DATABASE_UNAVAILABLE', { userSafe: true });
+        } else {
+          await audit?.append(auditEvent);
+        }
         await this.outboxFor(tx)?.enqueue({
           eventType: 'INSPECTION_CHANGED',
           aggregateType: 'INSPECTION_REPORT',
