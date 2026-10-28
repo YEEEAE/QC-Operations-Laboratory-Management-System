@@ -198,6 +198,29 @@ export interface RolePermissionsTable {
   granted_at: Generated<Date>;
   granted_by: string | null;
 }
+export interface AuthorizationMatrixChangeRequestsTable {
+  id: Generated<string>;
+  role_id: string;
+  requested_by: string;
+  request_id: string;
+  idempotency_key: string;
+  expected_role_version: bigint;
+  reason: string;
+  proposed_permission_codes: unknown;
+  proposed_scope_assignments: unknown;
+  status: string;
+  created_at: Generated<Date>;
+}
+export interface AuthorizationScopeChangeRequestsTable {
+  id: Generated<string>;
+  user_id: string;
+  requested_by: string;
+  request_id: string;
+  reason: string;
+  proposed_scope_assignments: unknown;
+  status: string;
+  created_at: Generated<Date>;
+}
 export interface UserRolesTable {
   id: Generated<string>;
   user_id: string;
@@ -1504,6 +1527,8 @@ export interface DatabaseSchema {
   roles: RolesTable;
   permissions: PermissionsTable;
   role_permissions: RolePermissionsTable;
+  authorization_matrix_change_requests: AuthorizationMatrixChangeRequestsTable;
+  authorization_scope_change_requests: AuthorizationScopeChangeRequestsTable;
   user_roles: UserRolesTable;
   user_scopes: UserScopesTable;
   tasks: TasksTable;

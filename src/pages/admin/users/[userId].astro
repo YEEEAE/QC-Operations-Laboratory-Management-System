@@ -111,9 +111,10 @@ if (user) {
 const version = user?.version.toString() ?? '0';
 const subject = user ? `${user.loginIdentity} — ${user.displayName}` : 'user';
 const protectedRole = (roleCode: string) =>
-  Boolean(user) && isProtectedOwnerRoleGrant(user!.loginIdentity, roleCode);
+  Boolean(user) && isProtectedOwnerRoleGrant(user!.id, user!.accountState, roleCode);
 const protectedScope = (kind: (typeof SCOPE_KINDS)[number]) =>
-  Boolean(user) && isProtectedOwnerScope(user!.loginIdentity, kind);
+  Boolean(user) && roles?.some((role) => role.code === 'SYSTEM_OWNER' && role.active) &&
+  isProtectedOwnerScope(user!.id, user!.accountState, kind);
 const scopeLabel = (scope: { kind: string; value: string | null }) => {
   const kindLabel = uxVocabulary.scopeKindLabels[scope.kind] ?? scope.kind;
   return scope.value ? `${kindLabel}: ${scope.value}` : kindLabel;
@@ -758,7 +759,7 @@ const scopeLabel = (scope: { kind: string; value: string | null }) => {
   const enhanceForm = (
     form: HTMLFormElement,
     invoke: (data: FormData) => Promise<Outcome>,
-    onSuccess?: () => void,
+    onSuccess?: (data?: unknown) => void,
   ) => {
     form.addEventListener('submit', async (event) => {
       event.preventDefault();
@@ -770,9 +771,10 @@ const scopeLabel = (scope: { kind: string; value: string | null }) => {
       if (submit) submit.disabled = true;
       if (status) status.textContent = `${context.operation}…`;
       try {
-        const outcome = classifyActionResult(await invoke(new FormData(form)));
+        const response = await invoke(new FormData(form));
+        const outcome = classifyActionResult(response);
         if (outcome.state === 'SUCCESS') {
-          if (onSuccess) onSuccess();
+          if (onSuccess) onSuccess(response.data);
           else window.location.reload();
           return;
         }
@@ -820,16 +822,24 @@ const scopeLabel = (scope: { kind: string; value: string | null }) => {
     const valueInput = scopeForm.querySelector<HTMLInputElement>('[data-scope-value-input]');
     const valueRequired = scopeForm.querySelector<HTMLElement>('[data-scope-value-required]');
     const valueHint = scopeForm.querySelector<HTMLElement>('[data-scope-value-hint]');
+    const reasonInput = scopeForm.querySelector<HTMLInputElement>('[name="reason"]');
     const syncValueField = () => {
       const option = kindSelect?.selectedOptions[0];
       const kind = option?.value ?? 'OWN';
       const requiresValue = option?.dataset.requiresValue === 'true';
+      const requiresApprovedSource = ['AREA', 'SHIFT', 'FUNCTION'].includes(kind);
       if (valueField) valueField.hidden = !requiresValue;
       if (valueInput) valueInput.required = requiresValue;
       if (valueRequired) valueRequired.hidden = !requiresValue;
+      if (reasonInput) {
+        reasonInput.required = requiresApprovedSource;
+        reasonInput.minLength = requiresApprovedSource ? 8 : 0;
+      }
       if (valueHint)
         valueHint.textContent = requiresValue
-          ? `The value names the ${kind} scope, for example an operational site or domain.`
+          ? requiresApprovedSource
+            ? `This scope needs an approved directory. Submitting records a pending request; it does not grant access.`
+            : `The value names the ${kind} scope, for example an operational site or domain.`
           : `${kind} uses its defined record scope and needs no value.`;
     };
     kindSelect?.addEventListener('change', syncValueField);
@@ -839,10 +849,18 @@ const scopeLabel = (scope: { kind: string; value: string | null }) => {
       const reason = String(data.get('reason') || '').trim();
       return actions.admin.assignUserScope({
         userId,
-        kind: String(data.get('kind')) as 'OWN' | 'ASSIGNED' | 'TEAM' | 'DEPARTMENT' | 'SITE' | 'DOMAIN' | 'GLOBAL',
+        kind: String(data.get('kind')) as 'OWN' | 'ASSIGNED' | 'TEAM' | 'AREA' | 'DEPARTMENT' | 'SITE' | 'DOMAIN' | 'SHIFT' | 'FUNCTION' | 'GLOBAL',
         ...(value ? { value } : {}),
         ...(reason ? { reason } : {}),
       }) as unknown as Promise<Outcome>;
+    }, (data) => {
+      const request = data as { id?: string; status?: string } | undefined;
+      if (request?.status === 'PENDING_POLICY') {
+        const status = scopeForm.querySelector<HTMLElement>('[data-status]');
+        if (status) status.textContent = `Request ${request.id ?? ''} is pending policy review. No scope was assigned.`;
+        return;
+      }
+      window.location.reload();
     });
   }
 
@@ -1019,7 +1037,6 @@ const scopeLabel = (scope: { kind: string; value: string | null }) => {
     padding: var(--space-4) var(--space-5);
     background: var(--surface-panel);
     border: 1px solid var(--status-error);
-    border-inline-start: 3px solid var(--status-error);
     border-radius: var(--radius-lg);
   }
   .failure:focus-visible {
@@ -1042,7 +1059,7 @@ const scopeLabel = (scope: { kind: string; value: string | null }) => {
     border-radius: var(--radius-lg);
   }
   .denied {
-    border-inline-start: 3px solid var(--status-warning);
+    border-color: var(--status-warning);
   }
   .denied p {
     color: var(--text-muted);

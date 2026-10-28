@@ -5,7 +5,7 @@ import type { User } from '../domain/user.js';
 import { AppError } from '../../../shared/errors/app-error.js';
 import { PostgresAuditRepository } from '../../../shared/audit/postgres-audit-repository.js';
 import { uuidv7 } from '../../../shared/id/uuid.js';
-import { isScopeKind, normalizeScopeValue } from '../../../shared/authorization/types.js';
+import { isScopeKind, normalizeScopeValue, scopeKindNeedsApprovedDirectory } from '../../../shared/authorization/types.js';
 const map = (r: DatabaseRow<'users'>): User => ({
   id: r.id as string,
   loginIdentity: r.login_identity,
@@ -39,6 +39,8 @@ export class PostgresUserRepository implements UserRepository {
         throw new AppError('VALIDATION_FAILED', { userSafe: true });
       const scopes = input.scopes.map((scope) => {
         if (!isScopeKind(scope.kind)) throw new AppError('VALIDATION_FAILED', { userSafe: true });
+        if (scopeKindNeedsApprovedDirectory(scope.kind))
+          throw new AppError('POLICY_SOURCE_REQUIRED', { userSafe: true });
         const normalized = normalizeScopeValue(scope.kind, scope.value);
         if (!normalized.ok) throw new AppError('VALIDATION_FAILED', { userSafe: true });
         return { kind: scope.kind, ...(normalized.value ? { value: normalized.value } : {}) };

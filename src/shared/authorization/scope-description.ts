@@ -15,6 +15,7 @@ const ROLE_LABELS: Readonly<Record<string, string>> = {
   MANAGER: 'Manager',
   SUPERVISOR: 'Supervisor',
   EMPLOYEE: 'Employee',
+  QC_COMPLIANCE: 'QC Compliance',
 };
 
 const SCOPE_KIND_LABELS: Readonly<Record<string, string>> = {
@@ -23,6 +24,9 @@ const SCOPE_KIND_LABELS: Readonly<Record<string, string>> = {
   DEPARTMENT: 'One department',
   DOMAIN: 'One domain',
   TEAM: 'One team',
+  AREA: 'Assigned area',
+  SHIFT: 'Assigned shift',
+  FUNCTION: 'Assigned function',
 };
 
 /**

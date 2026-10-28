@@ -12,9 +12,20 @@ type PermissionList = Awaited<ReturnType<ReturnType<typeof administrationDepende
 const permissionSearchText = (permission: PermissionList[number]) =>
   [permission.code, permission.domain, permission.action, permission.description ?? ''].join(' ');
 let permissions: PermissionList | undefined;
+let roles: Awaited<ReturnType<ReturnType<typeof administrationDependencies>['listRoles']['execute']>> | undefined;
+let rolePermissionSets = new Map<string, Set<string>>();
 let denied = false;
 try {
-  permissions = await administrationDependencies().listPermissions.execute({ actor });
+  const dependencies = administrationDependencies();
+  [permissions, roles] = await Promise.all([
+    dependencies.listPermissions.execute({ actor }),
+    dependencies.listRoles.execute({ actor }),
+  ]);
+  const grants = await Promise.all(roles.filter((role) => role.active).map(async (role) => [
+    role.id,
+    new Set(await dependencies.listRolePermissions.execute({ actor, roleId: role.id })),
+  ] as const));
+  rolePermissionSets = new Map(grants);
 } catch (error) {
   denied = error instanceof AppError && error.category === 'AUTHORIZATION';
   if (!denied) throw error;
@@ -24,7 +35,7 @@ try {
 <AppLayout title="Permissions · Administration" locale="en" direction="ltr">
   <PageHeader>
     <Fragment slot="heading"><h1>Permissions</h1></Fragment>
-    <p class="lede">Read-only catalog. Manage grants through roles.</p>
+    <p class="lede">Current permission catalog and recorded role grants. Scope decisions remain pending an approved matrix.</p>
     <Fragment slot="actions"><a href="/admin">Back to administration</a></Fragment>
   </PageHeader>
   {
@@ -85,6 +96,26 @@ try {
       <p class="empty">No active permissions are cataloged.</p>
     )
   }
+  {permissions && roles && !denied && (
+    <section class="scope-matrix" aria-labelledby="scope-matrix-title">
+      <h2 id="scope-matrix-title">Role and scope matrix</h2>
+      <p>Role grants below reflect current records only. No approved source defines responsibility assignments across area, site, department, shift, or function. Proposed changes can be recorded for policy review but do not activate access.</p>
+      <div class="table-wrap" role="region" aria-label="Role and scope matrix" tabindex="0">
+        <table>
+          <caption>Recorded role permission grants and unconfigured scope dimensions</caption>
+          <thead><tr><th scope="col">Role</th><th scope="col">Recorded permission grants</th><th scope="col">Area</th><th scope="col">Site</th><th scope="col">Department</th><th scope="col">Shift</th><th scope="col">Function</th></tr></thead>
+          <tbody>{roles.map((role) => (
+            <tr>
+              <th scope="row">{role.name} <code>{role.code}</code></th>
+              <td>{!role.active ? 'Inactive role; grants not projected' : [...(rolePermissionSets.get(role.id) ?? [])].length ? [...(rolePermissionSets.get(role.id) ?? [])].join(', ') : 'No recorded grants'}</td>
+              <td>Pending approved source</td><td>Pending approved source</td><td>Pending approved source</td><td>Pending approved source</td><td>Pending approved source</td>
+            </tr>
+          ))}</tbody>
+        </table>
+      </div>
+      <p class="scope-blocker" role="status">No role-to-permission scope matrix is approved. Any proposed matrix update remains pending and does not grant access.</p>
+    </section>
+  )}
 </AppLayout>
 <script>
   const form = document.querySelector<HTMLFormElement>('[data-permission-filters]');
@@ -155,7 +186,7 @@ try {
     padding: var(--space-5);
     background: var(--surface-panel);
     border: 1px solid var(--color-border-subtle);
-    border-inline-start: 3px solid var(--status-warning);
+    border-color: var(--status-warning);
     border-radius: var(--radius-lg);
   }
   .denied p {
@@ -174,6 +205,10 @@ try {
   }
   table { min-width: 48rem; }
   .register { min-width: 0; }
+  .scope-matrix { margin-block-start: var(--space-6); padding: var(--space-5); border: 1px solid var(--color-border-subtle); border-radius: var(--radius-lg); background: var(--surface-panel); }
+  .scope-matrix h2 { margin-block: 0 var(--space-2); }
+  .scope-matrix p { max-width: 80ch; color: var(--text-muted); line-height: 1.5; }
+  .scope-blocker { padding: var(--space-3); border: 1px solid var(--status-warning); border-radius: var(--radius-sm); background: var(--surface-inset); }
   .filters {
     display: grid;
     grid-template-columns: minmax(12rem, 1fr) auto;

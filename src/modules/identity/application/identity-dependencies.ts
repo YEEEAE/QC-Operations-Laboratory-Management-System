@@ -57,14 +57,17 @@ export async function resolveActor(
       .where('revoked_at', 'is', null)
       .execute(),
   ]);
-  const scopeKinds = [
-    ...new Set(scopes.map((scope) => scope.scope_kind)),
-  ] as ActorContext['permissions'][number]['scopes'];
+  const scopeAssignments = scopes.map((scope) => ({
+    kind: scope.scope_kind,
+    ...(scope.scope_value !== null ? { value: scope.scope_value } : {}),
+  })) as NonNullable<ActorContext['scopeAssignments']>;
+  const scopeKinds = [...new Set(scopeAssignments.map((scope) => scope.kind))] as ActorContext['permissions'][number]['scopes'];
   return {
     id: user.id,
     loginIdentity: user.login_identity,
     accountState: user.account_state as ActorContext['accountState'],
     roles: [...new Set(rows.map((r) => r.role))],
+    scopeAssignments,
     permissions: addUniversalOperationalReadPermissions(
       [...new Set(rows.map((r) => r.permission))].map((code) => ({
         code: code as ActorContext['permissions'][number]['code'],

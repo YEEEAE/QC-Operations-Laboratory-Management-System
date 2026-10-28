@@ -1,4 +1,4 @@
-import { AppError } from '../../../shared/errors/app-error.js';
+import { requireAdminWorkspaceRead } from '../../../shared/authorization/admin-workspace.js';
 import type { ActorContext } from '../../../shared/authorization/types.js';
 import type { AuthorizationRepository } from '../ports/authorization-repository.js';
 
@@ -10,13 +10,11 @@ export class ListUserScopesUseCase {
   constructor(private readonly repository: AuthorizationRepository) {}
 
   async execute(input: { actor: ActorContext; userId: string }) {
-    if (input.actor.accountState !== 'ACTIVE')
-      throw new AppError('AUTHZ_DENIED', { userSafe: true });
+    requireAdminWorkspaceRead(input.actor);
     return this.repository.listUserScopes(input.userId);
   }
   async executeForUsers(input: { actor: ActorContext; userIds: readonly string[] }) {
-    if (input.actor.accountState !== 'ACTIVE')
-      throw new AppError('AUTHZ_DENIED', { userSafe: true });
+    requireAdminWorkspaceRead(input.actor);
     if (this.repository.listUserScopesForUsers)
       return this.repository.listUserScopesForUsers(input.userIds);
     return Promise.all(

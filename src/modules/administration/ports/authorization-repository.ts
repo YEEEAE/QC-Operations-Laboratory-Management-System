@@ -49,6 +49,23 @@ export interface AuthorizationRepository {
     expectedVersion: bigint;
     requestId: string;
   }): Promise<RoleRecord>;
+  createRoleMatrixChangeRequest(input: {
+    roleId: string;
+    permissionCodes: readonly PermissionCode[];
+    scopeAssignments: readonly { kind: ScopeKind; value?: string }[];
+    expectedVersion: bigint;
+    actorId: string;
+    requestId: string;
+    idempotencyKey: string;
+    reason: string;
+  }): Promise<{ id: string; status: 'PENDING_POLICY' }>;
+  createUserScopeChangeRequest(input: {
+    userId: string;
+    scopeAssignments: readonly { kind: ScopeKind; value?: string }[];
+    actorId: string;
+    requestId: string;
+    reason: string;
+  }): Promise<{ id: string; status: 'PENDING_POLICY' }>;
   listUserScopes(userId: string): Promise<readonly UserScopeRecord[]>;
   listUserRoles(userId: string): Promise<readonly RoleRecord[]>;
   listUserRolesForUsers?(userIds: readonly string[]): Promise<readonly UserRoleSummary[]>;

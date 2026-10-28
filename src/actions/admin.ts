@@ -65,7 +65,10 @@ const updateRolePermissions = defineAction({
   input: z.object({
     roleId: z.string(),
     permissionCodes: z.array(z.string()),
+    scopeAssignments: z.array(z.object({ kind: z.enum(SCOPE_KINDS), value: z.string().max(200).optional() })).max(100),
     expectedVersion: z.coerce.bigint(),
+    idempotencyKey: z.string().uuid(),
+    reason: z.string().min(8).max(500),
   }),
   handler: (input, context) =>
     withErrors(async () => {
@@ -76,7 +79,10 @@ const updateRolePermissions = defineAction({
         actor: context.locals.actor!,
         roleId: input.roleId,
         permissionCodes: input.permissionCodes as never,
+        scopeAssignments: input.scopeAssignments,
         expectedVersion: input.expectedVersion,
+        idempotencyKey: input.idempotencyKey,
+        reason: input.reason,
         requestId: context.locals.requestContext?.requestId ?? 'unknown',
       });
     }, context.locals.requestContext?.requestId),
@@ -115,12 +121,11 @@ const assignUserScope = defineAction({
   handler: (input, context) =>
     withErrors(async () => {
       requireActor(context.locals.actor);
-      await repo().assignUserScope.execute({
+      return repo().assignUserScope.execute({
         actor: context.locals.actor!,
         ...input,
         requestId: context.locals.requestContext?.requestId ?? 'unknown',
       });
-      return { ok: true };
     }, context.locals.requestContext?.requestId),
 });
 const removeUserScope = defineAction({

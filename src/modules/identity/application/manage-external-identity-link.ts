@@ -1,7 +1,7 @@
 import { authorize } from '../../../shared/authorization/authorize.js';
 import type { ActorContext } from '../../../shared/authorization/types.js';
 import { AppError } from '../../../shared/errors/app-error.js';
-import { SYSTEM_OWNER_LOGIN_IDENTITY } from '../../../shared/authorization/p05-authority.js';
+import { isCanonicalSystemOwnerId } from '../../../shared/authorization/p05-authority.js';
 import type { ServerEnv } from '../../../config/env.js';
 import type { PasswordHasher } from '../security/password-hasher.js';
 import type { UserRepository } from '../ports/user-repository.js';
@@ -72,7 +72,7 @@ export class LinkExternalIdentityUseCase {
     const target = await this.users.findById(input.userId);
     if (!target) throw new AppError('RESOURCE_NOT_FOUND', { userSafe: true });
     assertManagePermission(input.actor, target);
-    if (target.accountState !== 'ACTIVE' || target.id === input.actor.id || target.loginIdentity === SYSTEM_OWNER_LOGIN_IDENTITY)
+    if (target.accountState !== 'ACTIVE' || target.id === input.actor.id || isCanonicalSystemOwnerId(target.id))
       throw new AppError('AUTHZ_DENIED', { userSafe: true });
     const localAccess = await this.resolveLocalActor(target.id);
     if (
@@ -130,7 +130,7 @@ export class DeactivateExternalIdentityLinkUseCase {
     const target = await this.users.findById(link.userId);
     if (!target) throw new AppError('RESOURCE_NOT_FOUND', { userSafe: true });
     assertManagePermission(input.actor, target);
-    if (target.id === input.actor.id || target.loginIdentity === SYSTEM_OWNER_LOGIN_IDENTITY)
+    if (target.id === input.actor.id || (target.accountState === 'ACTIVE' && isCanonicalSystemOwnerId(target.id)))
       throw new AppError('AUTHZ_DENIED', { userSafe: true });
     await assertReauthenticated(input.actor, input.currentPassword, this.users, this.passwords);
     const note = input.note.trim();

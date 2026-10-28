@@ -44,7 +44,7 @@ if (role) {
 }
 
 const granted = new Set((grants ?? []).map(String));
-const canAssign = hasAdminCapability(actor, 'assignRolePermissions') && (role?.active ?? false);
+const canAssign = hasAdminCapability(actor, 'assignRolePermissions') && hasAdminCapability(actor, 'assignUserScope') && (role?.active ?? false);
 const canViewAudit = hasAdminCapability(actor, 'viewAudit');
 const version = role?.version.toString() ?? '0';
 ---
@@ -127,7 +127,7 @@ const version = role?.version.toString() ?? '0';
           <div class="section-heading">
             <div><p class="eyebrow">RECORDED CHANGES</p><h2 id="history-heading">Audit history</h2></div>
           </div>
-          <p class="note">Permission changes are recorded in the audit trail. This page does not load or reproduce audit payloads.</p>
+          <p class="note">Matrix change requests are recorded in the role audit trail as pending requests. This page does not load or reproduce audit payloads.</p>
           {canViewAudit ? (
             <a class="audit-link" href={`/audit?subjectType=ROLE&subjectId=${encodeURIComponent(role.id)}`}>Open role audit history</a>
           ) : (
@@ -138,19 +138,19 @@ const version = role?.version.toString() ?? '0';
 
         {catalogRestricted || !catalog || !grants ? (
           <section class="panel edit-panel" aria-labelledby="grant-edit-heading">
-            <div class="section-heading"><div><p class="eyebrow">CONTROLLED ACTION</p><h2 id="grant-edit-heading">Edit permission grants</h2></div></div>
-            <p class="note" role="status">Grant editing is unavailable because the current permission data could not be read.</p>
+            <div class="section-heading"><div><p class="eyebrow">CONTROLLED ACTION</p><h2 id="grant-edit-heading">Request matrix change</h2></div></div>
+            <p class="note" role="status">The current permission data could not be read, so a change request is unavailable.</p>
           </section>
         ) : canAssign ? (
           <section class="panel edit-panel" aria-labelledby="grant-edit-heading">
             <div class="section-heading">
-              <div><p class="eyebrow">CONTROLLED ACTION</p><h2 id="grant-edit-heading">Edit permission grants</h2></div>
-              <span class="edit-label">Replace grants</span>
+              <div><p class="eyebrow">CONTROLLED ACTION</p><h2 id="grant-edit-heading">Request matrix change</h2></div>
+              <span class="edit-label">Pending policy review</span>
             </div>
             <p class="note">
-              Replacing grants is a high-risk, audited mutation. The current role version is required; stale versions are rejected without overwriting.
+              No approved source defines role-to-permission scope assignments. Submitting creates an audited pending request only; it never changes active grants. The current role version is required.
             </p>
-            <form method="post" class="form" data-role-grants data-role={role.id} data-version={version}>
+            <form method="post" class="form" data-role-grants data-role={role.id} data-version={version} data-idempotency-key={crypto.randomUUID()}>
               <fieldset class="grant-options">
                 <legend>Available permissions</legend>
                 <div class="grants">
@@ -174,15 +174,28 @@ const version = role?.version.toString() ?? '0';
                   ))}
                 </div>
               </fieldset>
-              <div class="actions"><button type="submit" data-submit>Replace grants</button></div>
+              <fieldset class="grant-options scope-proposals">
+                <legend>Proposed scope values</legend>
+                <p class="note">Use controlled identifiers supplied by your organization. Separate multiple identifiers with commas. Shift names and times are not inferred.</p>
+                {(['AREA', 'SITE', 'DEPARTMENT', 'SHIFT', 'FUNCTION'] as const).map((kind) => (
+                  <label for={`scope-${kind}`}>
+                    {kind.charAt(0) + kind.slice(1).toLowerCase()} identifiers
+                    <input id={`scope-${kind}`} type="text" data-scope-proposal={kind} maxlength="2000" autocomplete="off" />
+                  </label>
+                ))}
+              </fieldset>
+              <label for="matrix-request-reason">Reason (8–500 characters)<span aria-hidden="true"> *</span>
+                <textarea id="matrix-request-reason" name="reason" required minlength="8" maxlength="500"></textarea>
+              </label>
+              <div class="actions"><button type="submit" data-submit>Submit pending request</button></div>
               <p class="mutation-result" role="status" aria-live="polite" data-result tabindex="-1"></p>
             </form>
           </section>
         ) : (
           <section class="panel edit-panel" aria-labelledby="grant-edit-heading">
-            <div class="section-heading"><div><p class="eyebrow">CONTROLLED ACTION</p><h2 id="grant-edit-heading">Edit permission grants</h2></div></div>
-            <p class="note">Changing grants requires the explicit permission-assignment grant on an active role.</p>
-            <p class="muted-note">Grant editing is read-only for this account or this inactive role.</p>
+            <div class="section-heading"><div><p class="eyebrow">CONTROLLED ACTION</p><h2 id="grant-edit-heading">Request matrix change</h2></div></div>
+            <p class="note">Submitting a matrix change requires the explicit permission-assignment grant on an active role.</p>
+            <p class="muted-note">Request submission is unavailable for this account or this inactive role.</p>
           </section>
         )}
       </div>
@@ -203,19 +216,29 @@ const version = role?.version.toString() ?? '0';
     if (submit) submit.disabled = true;
     output.setAttribute('role', 'status');
     output.setAttribute('aria-live', 'polite');
-    output.textContent = 'Replacing grants…';
+    output.textContent = 'Submitting pending request…';
     try {
       const permissionCodes = [...form.querySelectorAll<HTMLInputElement>('input[name="permission"]')].filter((input) => input.checked).map((input) => String(input.value));
-      const result = await actions.admin.updateRolePermissions({ roleId: form.dataset.role ?? '', permissionCodes, expectedVersion: BigInt(form.dataset.version ?? '0') });
+      const scopeAssignments = [...form.querySelectorAll<HTMLInputElement>('[data-scope-proposal]')].flatMap((input) =>
+        input.value.split(',').map((value) => value.trim()).filter(Boolean).map((value) => ({
+          kind: input.dataset.scopeProposal as 'AREA' | 'SITE' | 'DEPARTMENT' | 'SHIFT' | 'FUNCTION',
+          value,
+        })),
+      );
+      const reason = form.querySelector<HTMLTextAreaElement>('[name="reason"]')?.value ?? '';
+      const result = await actions.admin.updateRolePermissions({ roleId: form.dataset.role ?? '', permissionCodes, scopeAssignments, reason, idempotencyKey: form.dataset.idempotencyKey ?? '', expectedVersion: BigInt(form.dataset.version ?? '0') });
       const outcome = classifyActionResult(result as unknown as { data?: { id?: string }; error?: unknown });
-      // updateRolePermissions returns grants (no id): SUCCESS means reload.
-      if (!result.error) { location.reload(); return; }
+      if (!result.error && result.data?.status === 'PENDING_POLICY') {
+        output.textContent = `Request ${result.data.id} is pending policy review. No active permissions or scopes changed.`;
+        output.focus?.();
+        return;
+      }
       const copy: Record<string,string> = {
-        VALIDATION_ERROR: 'Grants were not replaced. Review the selected permissions and try again.',
+        VALIDATION_ERROR: 'The request was not recorded. Review the selected permissions, scope identifiers and reason.',
         CONFLICT_STALE: 'The role changed while you were editing it. Refresh the role detail and try again if still permitted.',
-        AUTHORIZATION_CHANGED: 'Your authorization changed. Replacing grants needs the explicit role-administration permission.',
+        AUTHORIZATION_CHANGED: 'Your authorization changed. Requesting a matrix update needs the explicit permission-assignment grant.',
         DEPENDENCY_UNAVAILABLE: 'The role or permission catalog is no longer available. Refresh before trying again.',
-        UNKNOWN_SAFE_ERROR: 'Grant replacement is unconfirmed. Review the role and its history before deciding whether to try again.',
+        UNKNOWN_SAFE_ERROR: 'The request result is unconfirmed. Review the role and its history before deciding whether to retry.',
       };
       output.textContent = copy[outcome.state] ?? copy.UNKNOWN_SAFE_ERROR;
       output.setAttribute('role', 'alert');

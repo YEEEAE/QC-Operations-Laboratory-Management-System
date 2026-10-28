@@ -224,8 +224,8 @@ export const onRequest = defineMiddleware(
     const rateLimitResolution = isLoginActionPost
       ? undefined
       : resolveHighRiskRateLimitPolicy(url.pathname, request.method, process.env, env.NODE_ENV);
-    if (pageAccess === 'YAZEED_ONLY') {
-      // Do not disclose owner-private routes to authenticated non-owners.
+    if (pageAccess === 'YAZEED_ONLY' || pageAccess === 'ADMIN_ONLY') {
+      // Do not disclose owner/admin routes to unauthorized accounts.
       response = new Response(null, { status: 404 });
     } else if (rateLimitResolution === 'FAIL_CLOSED') {
       // Production without configured thresholds: fail closed (§142).

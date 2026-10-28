@@ -18,7 +18,6 @@ import { stableJson } from '../../../shared/json/stable-stringify.js';
 import type { ActorContext } from '../../../shared/authorization/types.js';
 import {
   isNamedSystemOwner,
-  SYSTEM_OWNER_LOGIN_IDENTITY,
 } from '../../../shared/authorization/p05-authority.js';
 import type { ReauthenticationVerifier } from '../../e-signatures/ports/repository.js';
 import type {
@@ -55,17 +54,13 @@ export function assertUatAcceptanceAuthority(actor: ActorContext): void {
 
 /** Only the named system owner may register formal scenario/defect evidence. */
 export function assertUatEvidenceRecorder(actor: IngestionActor): void {
-  const isOwner =
-    actor.accountState === 'ACTIVE' &&
-    actor.roles.includes('SYSTEM_OWNER') &&
-    actor.loginIdentity === SYSTEM_OWNER_LOGIN_IDENTITY;
-  if (!isOwner) throw new AppError('AUTHZ_DENIED', { userSafe: true });
+  if (!isNamedSystemOwner(actor)) throw new AppError('AUTHZ_DENIED', { userSafe: true });
 }
 
 /** A signed-in UAT participant may record only their own role-bound session. */
 export function assertUatSessionParticipant(actor: IngestionActor, session: UatSessionInput): void {
   const expectedRole =
-    actor.roles.includes('SYSTEM_OWNER') && actor.loginIdentity === SYSTEM_OWNER_LOGIN_IDENTITY
+    isNamedSystemOwner(actor)
       ? 'SYSTEM_OWNER'
       : actor.roles.includes('MANAGER')
         ? 'Manager'

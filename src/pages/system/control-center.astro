@@ -262,7 +262,7 @@ const releaseBanner = {
                       <tr>
                         <th scope="row">
                           {user.loginIdentity}{' '}
-                          {isProtectedOwnerRoleGrant(user.loginIdentity, 'SYSTEM_OWNER') && (
+                          {isProtectedOwnerRoleGrant(user.id, user.accountState, 'SYSTEM_OWNER') && (
                             <span class="pill protected">PROTECTED OWNER</span>
                           )}
                         </th>

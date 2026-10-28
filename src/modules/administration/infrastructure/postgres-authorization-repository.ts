@@ -12,12 +12,14 @@ import type {
 } from '../ports/authorization-repository.js';
 import type { PermissionCode } from '../../../shared/authorization/permissions.js';
 import {
+  isCanonicalSystemOwnerId,
   isProtectedOwnerRoleGrant,
   isProtectedOwnerScope,
 } from '../../../shared/authorization/p05-authority.js';
 import {
   isScopeKind,
   normalizeScopeValue,
+  scopeKindNeedsApprovedDirectory,
   type ScopeKind,
 } from '../../../shared/authorization/types.js';
 
@@ -167,7 +169,7 @@ export class PostgresAuthorizationRepository implements AuthorizationRepository 
       const [target, assignedRole] = await Promise.all([
         tx
           .selectFrom('users')
-          .select(['id', 'login_identity'])
+          .select(['id', 'account_state'])
           .where('id', '=', input.userId)
           .executeTakeFirst(),
         tx
@@ -180,7 +182,7 @@ export class PostgresAuthorizationRepository implements AuthorizationRepository 
         throw new AppError('RESOURCE_NOT_FOUND', { userSafe: true });
       if (
         assignedRole.code === 'SYSTEM_OWNER' &&
-        !isProtectedOwnerRoleGrant(target.login_identity, assignedRole.code)
+        (!isCanonicalSystemOwnerId(target.id) || target.account_state !== 'ACTIVE')
       )
         throw new AppError('AUTHZ_DENIED', { userSafe: true });
       const result = await tx
@@ -220,14 +222,15 @@ export class PostgresAuthorizationRepository implements AuthorizationRepository 
         .selectFrom('user_roles')
         .innerJoin('users', 'users.id', 'user_roles.user_id')
         .innerJoin('roles', 'roles.id', 'user_roles.role_id')
-        .select('users.id')
+        .select(['users.id', 'users.account_state'])
         .where('user_roles.user_id', '=', input.userId)
         .where('user_roles.role_id', '=', input.roleId)
-        .where('users.login_identity', '=', 'yazeed')
         .where('roles.code', '=', 'SYSTEM_OWNER')
+        .where('roles.active', '=', true)
         .where('user_roles.revoked_at', 'is', null)
         .executeTakeFirst();
-      if (protectedOwner) throw new AppError('AUTHZ_DENIED', { userSafe: true });
+      if (protectedOwner && isProtectedOwnerRoleGrant(protectedOwner.id, protectedOwner.account_state, 'SYSTEM_OWNER'))
+        throw new AppError('AUTHZ_DENIED', { userSafe: true });
       const result = await tx
         .updateTable('user_roles')
         .set({ revoked_at: new Date(), revoked_by: input.actorId })
@@ -297,10 +300,133 @@ export class PostgresAuthorizationRepository implements AuthorizationRepository 
       return role(r);
     });
   }
+  async createRoleMatrixChangeRequest(
+    input: Parameters<AuthorizationRepository['createRoleMatrixChangeRequest']>[0],
+  ) {
+    if (!this.audit) throw new AppError('DEPENDENCY_UNAVAILABLE', { userSafe: true });
+    return this.db.transaction().execute(async (tx) => {
+      const roleRow = await tx
+        .selectFrom('roles')
+        .select(['id', 'active', 'version'])
+        .where('id', '=', input.roleId)
+        .forUpdate()
+        .executeTakeFirst();
+      if (!roleRow || !roleRow.active)
+        throw new AppError('RESOURCE_NOT_FOUND', { userSafe: true });
+      if (BigInt(roleRow.version) !== input.expectedVersion)
+        throw new AppError('CONFLICT_STALE_VERSION', { userSafe: true });
+
+      const permissions = [...new Set(input.permissionCodes)].sort();
+      const known = permissions.length
+        ? await tx.selectFrom('permissions').select('code')
+            .where('code', 'in', permissions as string[]).where('active', '=', true).execute()
+        : [];
+      if (known.length !== permissions.length)
+        throw new AppError('VALIDATION_FAILED', { userSafe: true });
+      const scopeAssignments = [...input.scopeAssignments]
+        .sort((left, right) => `${left.kind}:${left.value ?? ''}`.localeCompare(`${right.kind}:${right.value ?? ''}`));
+      const proposedPermissionCodes = permissions;
+      const proposedScopeAssignments = scopeAssignments;
+
+      const inserted = await tx
+        .insertInto('authorization_matrix_change_requests')
+        .values({
+          id: uuidv7(),
+          role_id: input.roleId,
+          requested_by: input.actorId,
+          request_id: input.requestId,
+          idempotency_key: input.idempotencyKey,
+          expected_role_version: input.expectedVersion,
+          reason: input.reason,
+          proposed_permission_codes: proposedPermissionCodes,
+          proposed_scope_assignments: proposedScopeAssignments,
+          status: 'PENDING_POLICY',
+        })
+        .onConflict((oc) => oc.doNothing())
+        .returning(['id', 'status'])
+        .executeTakeFirst();
+
+      if (!inserted) {
+        const previous = await tx
+          .selectFrom('authorization_matrix_change_requests')
+          .selectAll()
+          .where('requested_by', '=', input.actorId)
+          .where('idempotency_key', '=', input.idempotencyKey)
+          .executeTakeFirst();
+        if (
+          previous && previous.requested_by === input.actorId && previous.role_id === input.roleId &&
+          BigInt(previous.expected_role_version) === input.expectedVersion && previous.reason === input.reason &&
+          JSON.stringify(previous.proposed_permission_codes) === JSON.stringify(proposedPermissionCodes) &&
+          JSON.stringify(previous.proposed_scope_assignments) === JSON.stringify(proposedScopeAssignments)
+        ) return { id: previous.id, status: 'PENDING_POLICY' as const };
+        throw new AppError('DUPLICATE_COMMAND', { userSafe: true });
+      }
+
+      await this.auditFor(tx).append({
+          actorType: 'USER',
+          actorId: input.actorId,
+          subjectType: 'ROLE',
+          subjectId: input.roleId,
+          action: 'REQUEST_ROLE_MATRIX_CHANGE',
+          requestId: input.requestId,
+          reason: input.reason,
+          payload: {
+            roleId: input.roleId,
+            requestRecordId: inserted.id,
+            expectedRoleVersion: input.expectedVersion.toString(),
+            permissionCodes: proposedPermissionCodes,
+            scopeAssignments: proposedScopeAssignments,
+            status: 'PENDING_POLICY',
+          },
+      });
+      return { id: inserted.id, status: 'PENDING_POLICY' as const };
+    });
+  }
+  async createUserScopeChangeRequest(
+    input: Parameters<AuthorizationRepository['createUserScopeChangeRequest']>[0],
+  ) {
+    if (!this.audit) throw new AppError('DEPENDENCY_UNAVAILABLE', { userSafe: true });
+    return this.db.transaction().execute(async (tx) => {
+      const target = await tx.selectFrom('users').select('id')
+        .where('id', '=', input.userId).executeTakeFirst();
+      if (!target) throw new AppError('RESOURCE_NOT_FOUND', { userSafe: true });
+      const scopeAssignments = [...input.scopeAssignments]
+        .sort((left, right) => `${left.kind}:${left.value ?? ''}`.localeCompare(`${right.kind}:${right.value ?? ''}`));
+      const inserted = await tx.insertInto('authorization_scope_change_requests').values({
+        id: uuidv7(),
+        user_id: input.userId,
+        requested_by: input.actorId,
+        request_id: input.requestId,
+        reason: input.reason,
+        proposed_scope_assignments: scopeAssignments,
+        status: 'PENDING_POLICY',
+      }).onConflict((oc) => oc.column('request_id').doNothing())
+        .returning(['id', 'status']).executeTakeFirst();
+      if (!inserted) {
+        const previous = await tx.selectFrom('authorization_scope_change_requests').selectAll()
+          .where('request_id', '=', input.requestId).executeTakeFirst();
+        if (previous && previous.requested_by === input.actorId && previous.user_id === input.userId &&
+          previous.reason === input.reason &&
+          JSON.stringify(previous.proposed_scope_assignments) === JSON.stringify(scopeAssignments))
+          return { id: previous.id, status: 'PENDING_POLICY' as const };
+        throw new AppError('DUPLICATE_COMMAND', { userSafe: true });
+      }
+      await this.auditFor(tx).append({
+          actorType: 'USER', actorId: input.actorId,
+          subjectType: 'USER', subjectId: input.userId,
+          action: 'REQUEST_USER_SCOPE_CHANGE', requestId: input.requestId,
+          reason: input.reason,
+          payload: { userId: input.userId, requestRecordId: inserted.id, scopeAssignments, status: 'PENDING_POLICY' },
+        });
+      return { id: inserted.id, status: 'PENDING_POLICY' as const };
+    });
+  }
   async replaceUserScopes(input: Parameters<AuthorizationRepository['replaceUserScopes']>[0]) {
     return this.db.transaction().execute(async (tx) => {
       const scopes = input.scopes.map((scope) => {
         if (!isScopeKind(scope.kind)) throw new AppError('VALIDATION_FAILED', { userSafe: true });
+        if (scopeKindNeedsApprovedDirectory(scope.kind))
+          throw new AppError('POLICY_SOURCE_REQUIRED', { userSafe: true });
         const normalized = normalizeScopeValue(scope.kind, scope.value);
         if (!normalized.ok) throw new AppError('VALIDATION_FAILED', { userSafe: true });
         return { kind: scope.kind, ...(normalized.value ? { value: normalized.value } : {}) };
@@ -311,11 +437,20 @@ export class PostgresAuthorizationRepository implements AuthorizationRepository 
         throw new AppError('VALIDATION_FAILED', { userSafe: true });
       const target = await tx
         .selectFrom('users')
-        .select(['id', 'login_identity'])
+        .select(['id', 'account_state'])
         .where('id', '=', input.userId)
         .executeTakeFirst();
       if (!target) throw new AppError('RESOURCE_NOT_FOUND', { userSafe: true });
-      if (target.login_identity === 'yazeed' && !scopes.some((scope) => scope.kind === 'GLOBAL'))
+      const activeOwnerRole = await tx
+        .selectFrom('user_roles')
+        .innerJoin('roles', 'roles.id', 'user_roles.role_id')
+        .select('user_roles.id')
+        .where('user_roles.user_id', '=', target.id)
+        .where('user_roles.revoked_at', 'is', null)
+        .where('roles.code', '=', 'SYSTEM_OWNER')
+        .where('roles.active', '=', true)
+        .executeTakeFirst();
+      if (activeOwnerRole && isProtectedOwnerRoleGrant(target.id, target.account_state, 'SYSTEM_OWNER') && !scopes.some((scope) => scope.kind === 'GLOBAL'))
         throw new AppError('AUTHZ_DENIED', { userSafe: true });
       await tx
         .updateTable('user_scopes')
@@ -358,12 +493,14 @@ export class PostgresAuthorizationRepository implements AuthorizationRepository 
     });
   }
   async assignUserScope(input: Parameters<AuthorizationRepository['assignUserScope']>[0]) {
+    if (scopeKindNeedsApprovedDirectory(input.kind))
+      throw new AppError('POLICY_SOURCE_REQUIRED', { userSafe: true });
     const normalized = normalizeScopeValue(input.kind, input.value);
     if (!normalized.ok) throw new AppError('VALIDATION_FAILED', { userSafe: true });
     return this.db.transaction().execute(async (tx) => {
       const target = await tx
         .selectFrom('users')
-        .select(['id', 'login_identity'])
+        .select(['id', 'account_state'])
         .where('id', '=', input.userId)
         .executeTakeFirst();
       if (!target) throw new AppError('RESOURCE_NOT_FOUND', { userSafe: true });
@@ -402,11 +539,20 @@ export class PostgresAuthorizationRepository implements AuthorizationRepository 
     return this.db.transaction().execute(async (tx) => {
       const target = await tx
         .selectFrom('users')
-        .select(['id', 'login_identity'])
+        .select(['id', 'account_state'])
         .where('id', '=', input.userId)
         .executeTakeFirst();
       if (!target) throw new AppError('RESOURCE_NOT_FOUND', { userSafe: true });
-      if (isProtectedOwnerScope(target.login_identity, input.kind))
+      const activeOwnerRole = await tx
+        .selectFrom('user_roles')
+        .innerJoin('roles', 'roles.id', 'user_roles.role_id')
+        .select('user_roles.id')
+        .where('user_roles.user_id', '=', target.id)
+        .where('user_roles.revoked_at', 'is', null)
+        .where('roles.code', '=', 'SYSTEM_OWNER')
+        .where('roles.active', '=', true)
+        .executeTakeFirst();
+      if (activeOwnerRole && isProtectedOwnerScope(target.id, target.account_state, input.kind))
         throw new AppError('AUTHZ_DENIED', { userSafe: true });
       const removed = await tx
         .updateTable('user_scopes')

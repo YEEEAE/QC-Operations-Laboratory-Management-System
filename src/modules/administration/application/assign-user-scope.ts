@@ -7,6 +7,7 @@ import {
 } from '../../../shared/authorization/types.js';
 import type { ActorContext } from '../../../shared/authorization/types.js';
 import type { AuthorizationRepository } from '../ports/authorization-repository.js';
+import { scopeKindNeedsApprovedDirectory } from '../../../shared/authorization/types.js';
 
 /**
  * Explicit, incremental scope grant.
@@ -29,6 +30,18 @@ export class AssignUserScopeUseCase {
     const normalized = normalizeScopeValue(input.kind, input.value);
     if (!normalized.ok) throw new AppError('VALIDATION_FAILED', { userSafe: true });
     this.authorize(input);
+    if (scopeKindNeedsApprovedDirectory(input.kind)) {
+      const reason = input.reason?.trim() ?? '';
+      if (reason.length < 8 || reason.length > 500)
+        throw new AppError('VALIDATION_FAILED', { userSafe: true });
+      return this.repository.createUserScopeChangeRequest({
+        userId: input.userId,
+        scopeAssignments: [{ kind: input.kind, ...(normalized.value ? { value: normalized.value } : {}) }],
+        actorId: input.actor.id,
+        requestId: input.requestId,
+        reason,
+      });
+    }
     return this.repository.assignUserScope({
       userId: input.userId,
       kind: input.kind,

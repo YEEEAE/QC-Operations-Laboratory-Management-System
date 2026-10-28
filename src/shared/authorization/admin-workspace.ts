@@ -1,4 +1,6 @@
 import type { PermissionCode } from './permissions';
+import { AppError } from '../errors/app-error.js';
+import { isAdminOrCanonicalOwner } from './p05-authority.js';
 import type { ActorContext, ScopeKind } from './types';
 
 /**
@@ -40,4 +42,9 @@ export function hasAdminCapability(
       grant.active !== false &&
       grant.scopes.includes(required.scope),
   );
+}
+
+/** Safe administration projections must keep the same server boundary as /admin pages. */
+export function requireAdminWorkspaceRead(actor: ActorContext): void {
+  if (!isAdminOrCanonicalOwner(actor)) throw new AppError('AUTHZ_DENIED', { userSafe: true });
 }

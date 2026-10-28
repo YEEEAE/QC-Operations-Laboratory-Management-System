@@ -1,11 +1,13 @@
-import { AppError } from '../../../shared/errors/app-error.js';
 import type { ActorContext } from '../../../shared/authorization/types.js';
 import type { AuthorizationRepository } from '../ports/authorization-repository.js';
+import { authorize } from '../../../shared/authorization/authorize.js';
 export class ListRolesUseCase {
   constructor(private readonly repository: AuthorizationRepository) {}
   async execute(input: { actor: ActorContext }) {
-    if (input.actor.accountState !== 'ACTIVE')
-      throw new AppError('AUTHZ_DENIED', { userSafe: true });
+    authorize(
+      { actor: input.actor, permission: 'PERM-ADM-ROLE-VIEW', action: 'VIEW', entity: { type: 'ROLE', id: 'catalog', state: 'ACTIVE' }, scope: {}, currentVersion: 1, expectedVersion: 1, businessCondition: true },
+      { throwOnDeny: true },
+    );
     return this.repository.listRoles();
   }
 }

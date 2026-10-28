@@ -45,6 +45,10 @@ if (!actor) return Astro.redirect(`/login?returnTo=${encodeURIComponent(Astro.ur
           <span>Records of the member's team</span>
         </li>
         <li>
+          <strong>{uxVocabulary.scopeKindLabels.AREA} <small>AREA</small></strong>
+          <span>Records associated with one explicitly assigned area. Multiple area grants stay separate.</span>
+        </li>
+        <li>
           <strong>{uxVocabulary.scopeKindLabels.DEPARTMENT} <small>DEPARTMENT</small></strong>
           <span>Records of the member's department</span>
         </li>
@@ -57,6 +61,14 @@ if (!actor) return Astro.redirect(`/login?returnTo=${encodeURIComponent(Astro.ur
           <span>Wide visibility inside one domain only</span>
         </li>
         <li>
+          <strong>{uxVocabulary.scopeKindLabels.SHIFT} <small>SHIFT</small></strong>
+          <span>Records associated with one controlled shift identifier. Shift names and times are not defined here.</span>
+        </li>
+        <li>
+          <strong>{uxVocabulary.scopeKindLabels.FUNCTION} <small>FUNCTION</small></strong>
+          <span>Records associated with one controlled function identifier</span>
+        </li>
+        <li>
           <strong>{uxVocabulary.scopeKindLabels.GLOBAL} <small>GLOBAL</small></strong>
           <span>System-wide visibility for this grant</span>
         </li>
@@ -64,6 +76,11 @@ if (!actor) return Astro.redirect(`/login?returnTo=${encodeURIComponent(Astro.ur
       <p class="note safety-note">
         Scope alone never authorizes an action. Every mutation still requires the matching
         explicit permission plus entity, state, SoD, version, and business rule.
+      </p>
+      <p class="note safety-note">
+        Area, department, site, shift, and function values must match server-resolved record context.
+        Area, shift, and function grants remain unavailable until an approved identifier directory
+        exists. This scope editor does not create a shift schedule or a formal cross-area work assignment.
       </p>
     </section>
   </div>

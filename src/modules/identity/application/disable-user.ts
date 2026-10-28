@@ -3,7 +3,7 @@ import { AppError } from '../../../shared/errors/app-error.js';
 import type { ActorContext } from '../../../shared/authorization/types.js';
 import type { AuditService } from '../../../shared/audit/audit-service.js';
 import type { UserRepository } from '../ports/user-repository.js';
-import { isNamedSystemOwner } from '../../../shared/authorization/p05-authority.js';
+import { isCanonicalSystemOwnerId, isNamedSystemOwner } from '../../../shared/authorization/p05-authority.js';
 import type { SessionService } from './session-service.js';
 export class DisableUserUseCase {
   constructor(
@@ -30,7 +30,7 @@ export class DisableUserUseCase {
         expectedVersion: input.expectedVersion,
         businessCondition:
           target.id !== input.actor.id &&
-          !(target.loginIdentity === 'yazeed' && !isNamedSystemOwner(input.actor)),
+          !(target.accountState === 'ACTIVE' && isCanonicalSystemOwnerId(target.id) && !isNamedSystemOwner(input.actor)),
       },
       { throwOnDeny: true },
     );

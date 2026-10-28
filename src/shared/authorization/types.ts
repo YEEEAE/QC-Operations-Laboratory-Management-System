@@ -9,12 +9,19 @@ export const SCOPE_KINDS = [
   'OWN',
   'ASSIGNED',
   'TEAM',
+  'AREA',
   'DEPARTMENT',
   'SITE',
   'DOMAIN',
+  'SHIFT',
+  'FUNCTION',
   'GLOBAL',
 ] as const satisfies readonly string[];
 export type ScopeKind = (typeof SCOPE_KINDS)[number];
+export const SOURCE_REQUIRED_SCOPE_KINDS = ['AREA', 'SHIFT', 'FUNCTION'] as const;
+export function scopeKindNeedsApprovedDirectory(kind: ScopeKind): boolean {
+  return (SOURCE_REQUIRED_SCOPE_KINDS as readonly string[]).includes(kind);
+}
 
 /**
  * Scope kinds that always name a collection, so a non-empty value is required
@@ -22,9 +29,12 @@ export type ScopeKind = (typeof SCOPE_KINDS)[number];
  */
 export const NAMED_SCOPE_KINDS = [
   'TEAM',
+  'AREA',
   'DEPARTMENT',
   'SITE',
   'DOMAIN',
+  'SHIFT',
+  'FUNCTION',
 ] as const satisfies readonly ScopeKind[];
 
 /** These scopes derive their target from actor/entity, so stored values are invalid. */
@@ -71,6 +81,8 @@ export interface ActorContext {
   accountState: AccountState;
   roles: readonly string[];
   permissions: readonly PermissionGrant[];
+  /** Server-resolved, value-bearing assignments. Missing data never widens access. */
+  scopeAssignments?: readonly { kind: ScopeKind; value?: string }[];
 }
 export interface EntityContext {
   type: string;
@@ -84,6 +96,9 @@ export interface EntityContext {
   departmentId?: string;
   siteId?: string;
   domain?: string;
+  areaId?: string;
+  shiftId?: string;
+  functionCode?: string;
 }
 export interface ScopeContext {
   ownerId?: string;
@@ -92,6 +107,9 @@ export interface ScopeContext {
   departmentId?: string;
   siteId?: string;
   domain?: string;
+  areaId?: string;
+  shiftId?: string;
+  functionCode?: string;
 }
 export interface SodContext {
   actorId: string;

@@ -108,6 +108,9 @@ const envSchema = z.object({
   PILOT_REAL_MASTER_DATA_ENABLED: z.enum(['true', 'false']).default('false'),
   PILOT_MASTER_DATA_APPROVAL_REFERENCE: optionalEnv(z.string().trim()),
   SESSION_SECRET: optionalEnv(z.string().min(32)),
+  // Provisioned from the controlled canonical-owner account record. When
+  // absent, owner-only access fails closed; login display names are not used.
+  QC_SYSTEM_OWNER_USER_ID: optionalEnv(z.string().uuid()),
   SERVICE_VERSION: z.string().trim().min(1).default('0.1.0'),
   LOG_LEVEL: optionalEnv(z.enum(SERVER_LOG_LEVELS)),
   // Render platform metadata is runtime-derived; never accept a browser copy.

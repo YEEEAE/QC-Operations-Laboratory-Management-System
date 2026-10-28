@@ -1,8 +1,8 @@
-import { isNamedSystemOwner } from '../authorization/p05-authority.js';
+import { isAdminOrCanonicalOwner, isNamedSystemOwner } from '../authorization/p05-authority.js';
 import type { ActorContext } from '../authorization/types.js';
 import { getRouteByPathname } from './routes.js';
 
-export type PageAccessDecision = 'ALLOWED' | 'AUTHENTICATION_REQUIRED' | 'YAZEED_ONLY';
+export type PageAccessDecision = 'ALLOWED' | 'AUTHENTICATION_REQUIRED' | 'YAZEED_ONLY' | 'ADMIN_ONLY';
 
 /**
  * Single server-side visibility decision for registered browser pages.
@@ -15,8 +15,14 @@ export function pageAccessDecision(
   pathname: string,
 ): PageAccessDecision {
   const route = getRouteByPathname(pathname);
+  const administrationRoute = pathname === '/admin' || pathname.startsWith('/admin/');
+  if (administrationRoute) {
+    if (!actor || actor.accountState !== 'ACTIVE') return 'AUTHENTICATION_REQUIRED';
+    return isAdminOrCanonicalOwner(actor) ? 'ALLOWED' : 'ADMIN_ONLY';
+  }
+  if (!actor || actor.accountState !== 'ACTIVE')
+    return route?.visibility === 'PUBLIC' || !route ? 'ALLOWED' : 'AUTHENTICATION_REQUIRED';
   if (!route || route.visibility === 'PUBLIC') return 'ALLOWED';
-  if (!actor || actor.accountState !== 'ACTIVE') return 'AUTHENTICATION_REQUIRED';
   if (route.visibility === 'YAZEED_ONLY' && !isNamedSystemOwner(actor)) return 'YAZEED_ONLY';
   return 'ALLOWED';
 }

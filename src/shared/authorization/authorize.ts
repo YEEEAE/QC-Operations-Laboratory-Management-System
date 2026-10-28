@@ -5,6 +5,7 @@ import { actorHasScope } from './scope-evaluator';
 import { evaluateSeparationOfDuties } from './sod';
 import { getAuthorizationPolicy } from './policy-registry';
 import type { AuthorizationDecision, AuthorizationInput } from './types';
+import { RECOGNIZED_ROLE_CODES } from './p05-authority.js';
 export function authorize(
   input: AuthorizationInput,
   options: { throwOnDeny?: boolean } = {},
@@ -15,6 +16,8 @@ export function authorize(
   };
   if (input.actor.accountState !== 'ACTIVE')
     return fail(deny('AUTHZ_DENIED', 'Actor account is not active.'));
+  if (input.actor.roles.some((role) => !RECOGNIZED_ROLE_CODES.has(role)))
+    return fail(deny('AUTHZ_DENIED', 'Actor has an unrecognized role.'));
   if (!isPermissionCode(input.permission))
     return fail(deny('AUTHZ_PERMISSION_MISSING', 'Permission is not canonical.'));
   const grant = input.actor.permissions.find(
