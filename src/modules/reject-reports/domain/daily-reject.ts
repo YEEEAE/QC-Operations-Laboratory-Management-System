@@ -6,7 +6,11 @@ import {
   assertOptionalNonNegativeNumberString,
   optionalTrimmed,
 } from './reject-report.js';
-import { addDecimalStrings, computeRejectPercent } from './reject-percentage.js';
+import {
+  addDecimalStrings,
+  computePercentage,
+  computeRejectPercent,
+} from './reject-percentage.js';
 
 export interface DailyRejectEntryInput {
   machineName?: string;
@@ -21,6 +25,12 @@ export interface DailyRejectEntryInput {
   pumpOutQty?: string;
   rejectQty: string;
   goodQty: string;
+  /** Same entered unit applies to rejectQty, goodQty, totalProducedQty, reworkQty and holdQty. */
+  totalProducedQty?: string;
+  reworkQty?: string;
+  holdQty?: string;
+  quantityUnit?: string;
+  quantitySourceReference?: string;
   rejectLimit?: string;
   productionFormula?: string;
   rejectReason: string;
@@ -33,6 +43,15 @@ export interface DailyRejectEntry extends DailyRejectEntryInput {
   position: number;
   /** Server-computed: rejectQty / goodQty * 100, null when goodQty = 0. */
   rejectPct: string | null;
+  /** Independent Reject / Total Produced metric; never substitutes rejectPct. */
+  operationalRejectPct: string | null;
+  operationalRejectPctStatus: 'AVAILABLE' | 'NOT_AVAILABLE' | 'ZERO_DENOMINATOR';
+  paperFormulaId?: string;
+  paperFormulaVersion?: number;
+  operationalFormulaId?: string;
+  operationalFormulaVersion?: number;
+  quantityProvenance?: 'USER_RECORDED';
+  productionBalanceStatus?: 'NOT_CONFIGURED';
   version: bigint;
 }
 
@@ -56,6 +75,15 @@ export interface DailyReject {
 }
 
 export function validateDailyRejectEntry(input: DailyRejectEntryInput): DailyRejectEntryInput {
+  const totalProducedQty = assertOptionalNonNegativeNumberString(input.totalProducedQty, 'totalProducedQty');
+  const reworkQty = assertOptionalNonNegativeNumberString(input.reworkQty, 'reworkQty');
+  const holdQty = assertOptionalNonNegativeNumberString(input.holdQty, 'holdQty');
+  const quantityUnit = optionalTrimmed(input.quantityUnit);
+  if ((totalProducedQty !== undefined || reworkQty !== undefined || holdQty !== undefined) && !quantityUnit)
+    throw new AppError('VALIDATION_FAILED', {
+      userSafe: true,
+      fieldErrors: { quantityUnit: ['required when produced, rework, or hold quantity is recorded'] },
+    });
   return {
     machineName: optionalTrimmed(input.machineName),
     itemCode: optionalTrimmed(input.itemCode),
@@ -69,11 +97,33 @@ export function validateDailyRejectEntry(input: DailyRejectEntryInput): DailyRej
     pumpOutQty: assertOptionalNonNegativeNumberString(input.pumpOutQty, 'pumpOutQty'),
     rejectQty: assertNonNegativeNumberString(input.rejectQty, 'rejectQty'),
     goodQty: assertNonNegativeNumberString(input.goodQty, 'goodQty'),
+    totalProducedQty,
+    reworkQty,
+    holdQty,
+    quantityUnit,
+    quantitySourceReference: optionalTrimmed(input.quantitySourceReference),
     rejectLimit: assertOptionalNonNegativeNumberString(input.rejectLimit, 'rejectLimit'),
     productionFormula: optionalTrimmed(input.productionFormula),
     rejectReason: assertNonBlank(input.rejectReason, 'rejectReason'),
     analysis: optionalTrimmed(input.analysis),
   };
+}
+
+export function entryOperationalRejectPct(
+  entry: Pick<DailyRejectEntryInput, 'rejectQty' | 'totalProducedQty'>,
+): string | null {
+  return entry.totalProducedQty === undefined
+    ? null
+    : computePercentage(entry.rejectQty, entry.totalProducedQty);
+}
+
+export function entryOperationalRejectPctStatus(
+  entry: Pick<DailyRejectEntryInput, 'totalProducedQty'>,
+): 'AVAILABLE' | 'NOT_AVAILABLE' | 'ZERO_DENOMINATOR' {
+  if (entry.totalProducedQty === undefined) return 'NOT_AVAILABLE';
+  return computePercentage('0', entry.totalProducedQty) === null
+    ? 'ZERO_DENOMINATOR'
+    : 'AVAILABLE';
 }
 
 export function entryRejectPct(entry: Pick<DailyRejectEntryInput, 'rejectQty' | 'goodQty'>) {
@@ -96,6 +146,14 @@ export function dailyRejectTotals(entries: readonly DailyRejectEntry[]): {
     rejectPct: string | null;
     entryCount: number;
   }[];
+  byQuantityUnit: readonly {
+    unit: string;
+    totalRejectQty: string | null;
+    totalProducedQty: string | null;
+    operationalRejectPct: string | null;
+    operationalRejectPctStatus: 'AVAILABLE' | 'NOT_AVAILABLE' | 'ZERO_DENOMINATOR';
+    entryCount: number;
+  }[];
 } {
   const groups = new Map<string, DailyRejectEntry[]>();
   for (const entry of entries) {
@@ -103,6 +161,13 @@ export function dailyRejectTotals(entries: readonly DailyRejectEntry[]): {
     const group = groups.get(unit) ?? [];
     group.push(entry);
     groups.set(unit, group);
+  }
+  const quantityGroups = new Map<string, DailyRejectEntry[]>();
+  for (const entry of entries) {
+    const unit = entry.quantityUnit?.trim() ?? '';
+    const group = quantityGroups.get(unit) ?? [];
+    group.push(entry);
+    quantityGroups.set(unit, group);
   }
   return {
     byRecordedUnit: [...groups.entries()].map(([unit, group]) => {
@@ -113,6 +178,29 @@ export function dailyRejectTotals(entries: readonly DailyRejectEntry[]): {
         totalRejectQty,
         totalGoodQty,
         rejectPct: computeRejectPercent(totalRejectQty, totalGoodQty),
+        entryCount: group.length,
+      };
+    }),
+    byQuantityUnit: [...quantityGroups.entries()].map(([unit, group]) => {
+      const totalRejectQty = unit
+        ? addDecimalStrings(group.map((entry) => entry.rejectQty))
+        : null;
+      const hasTotalProduced = Boolean(unit) && group.every((entry) => entry.totalProducedQty !== undefined);
+      const totalProducedQty = hasTotalProduced
+        ? addDecimalStrings(group.map((entry) => entry.totalProducedQty!))
+        : null;
+      return {
+        unit: unit || 'Unit not recorded',
+        totalRejectQty,
+        totalProducedQty,
+        operationalRejectPct: totalProducedQty === null
+          ? null
+          : computePercentage(totalRejectQty, totalProducedQty),
+        operationalRejectPctStatus: totalProducedQty === null
+          ? 'NOT_AVAILABLE' as const
+          : computePercentage('0', totalProducedQty) === null
+            ? 'ZERO_DENOMINATOR' as const
+            : 'AVAILABLE' as const,
         entryCount: group.length,
       };
     }),

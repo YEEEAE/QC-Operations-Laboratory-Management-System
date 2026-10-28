@@ -1,3 +1,13 @@
+export const PAPER_REJECT_PERCENTAGE_FORMULA = {
+  id: 'REJECT_OVER_GOOD',
+  version: 1,
+} as const;
+
+export const PRODUCED_REJECT_PERCENTAGE_FORMULA = {
+  id: 'REJECT_OVER_TOTAL_PRODUCED',
+  version: 1,
+} as const;
+
 function parts(value: string): { coefficient: bigint; scale: number } | null {
   if (!/^\d+(?:\.\d+)?$/.test(value)) return null;
   const [whole, fraction = ''] = value.split('.');
@@ -42,9 +52,9 @@ export function compareDecimalStrings(left: string, right: string): number {
  * PostgreSQL NUMERIC values never pass through IEEE-754. A zero good quantity
  * remains undefined (NULL), never infinity or a divide-by-zero error.
  */
-export function computeRejectPercent(rejectQty: string, goodQty: string): string | null {
-  const reject = parts(rejectQty);
-  const good = parts(goodQty);
+export function computePercentage(numerator: string, denominator: string): string | null {
+  const reject = parts(numerator);
+  const good = parts(denominator);
   if (!reject || !good) return null;
   if (good.coefficient === 0n) return null;
   const scale = Math.max(reject.scale, good.scale);
@@ -55,4 +65,9 @@ export function computeRejectPercent(rejectQty: string, goodQty: string): string
   const remainder = scaledNumerator % goodValue;
   const rounded = quotient + (remainder * 2n >= goodValue ? 1n : 0n);
   return normalized(rounded, 4);
+}
+
+/** Preserved paper-form rule: rejectQty / goodQty * 100. */
+export function computeRejectPercent(rejectQty: string, goodQty: string): string | null {
+  return computePercentage(rejectQty, goodQty);
 }

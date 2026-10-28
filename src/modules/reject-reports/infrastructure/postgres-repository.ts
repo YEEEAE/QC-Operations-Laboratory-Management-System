@@ -11,7 +11,12 @@ import { PostgresOutboxRepository } from '../../../shared/outbox/postgres-outbox
 import type { ActorContext } from '../../../shared/authorization/types.js';
 import type { Page } from '../../../shared/pagination/page.js';
 import { formatReportNo, reportNoDateKey, reportNoPrefix } from '../domain/report-number.js';
-import { computeRejectPercent } from '../domain/reject-percentage.js';
+import {
+  computeRejectPercent,
+  PAPER_REJECT_PERCENTAGE_FORMULA,
+  PRODUCED_REJECT_PERCENTAGE_FORMULA,
+} from '../domain/reject-percentage.js';
+import { entryOperationalRejectPct, entryOperationalRejectPctStatus } from '../domain/daily-reject.js';
 import type {
   DailyReject,
   DailyRejectEntry,
@@ -197,6 +202,19 @@ function mapEntry(row: EntryRow): DailyRejectEntry {
     rejectQty: String(row.reject_qty),
     goodQty: String(row.good_qty),
     rejectPct: row.reject_pct === null ? null : String(row.reject_pct),
+    totalProducedQty: row.total_produced_qty === null ? undefined : String(row.total_produced_qty),
+    reworkQty: row.rework_qty === null ? undefined : String(row.rework_qty),
+    holdQty: row.hold_qty === null ? undefined : String(row.hold_qty),
+    quantityUnit: row.quantity_unit ?? undefined,
+    quantitySourceReference: row.quantity_source_reference ?? undefined,
+    operationalRejectPct: row.operational_reject_pct === null ? null : String(row.operational_reject_pct),
+    operationalRejectPctStatus: row.operational_reject_pct_status as DailyRejectEntry['operationalRejectPctStatus'],
+    paperFormulaId: row.paper_formula_id ?? undefined,
+    paperFormulaVersion: row.paper_formula_version ?? undefined,
+    operationalFormulaId: row.operational_formula_id ?? undefined,
+    operationalFormulaVersion: row.operational_formula_version ?? undefined,
+    quantityProvenance: row.quantity_provenance as DailyRejectEntry['quantityProvenance'],
+    productionBalanceStatus: row.production_balance_status as DailyRejectEntry['productionBalanceStatus'],
     rejectLimit: row.reject_limit === null ? undefined : String(row.reject_limit),
     productionFormula: row.production_formula ?? undefined,
     rejectReason: row.reject_reason,
@@ -237,6 +255,7 @@ function entryValues(
   version: bigint;
 } {
   const rejectPct = computeRejectPercent(entry.rejectQty, entry.goodQty);
+  const operationalRejectPct = entryOperationalRejectPct(entry);
   return {
     id: uuidv7(),
     report_id: reportId,
@@ -254,6 +273,19 @@ function entryValues(
     reject_qty: entry.rejectQty,
     good_qty: entry.goodQty,
     reject_pct: rejectPct,
+    total_produced_qty: entry.totalProducedQty ?? null,
+    rework_qty: entry.reworkQty ?? null,
+    hold_qty: entry.holdQty ?? null,
+    quantity_unit: entry.quantityUnit ?? null,
+    quantity_source_reference: entry.quantitySourceReference ?? null,
+    operational_reject_pct: operationalRejectPct,
+    operational_reject_pct_status: entryOperationalRejectPctStatus(entry),
+    paper_formula_id: PAPER_REJECT_PERCENTAGE_FORMULA.id,
+    paper_formula_version: PAPER_REJECT_PERCENTAGE_FORMULA.version,
+    operational_formula_id: PRODUCED_REJECT_PERCENTAGE_FORMULA.id,
+    operational_formula_version: PRODUCED_REJECT_PERCENTAGE_FORMULA.version,
+    quantity_provenance: 'USER_RECORDED',
+    production_balance_status: 'NOT_CONFIGURED',
     reject_limit: entry.rejectLimit ?? null,
     production_formula: entry.productionFormula ?? null,
     reject_reason: entry.rejectReason,
@@ -318,6 +350,14 @@ export class PostgresRejectReportRepository implements RejectReportRepository {
             ('daily_reject_entries', 'rm_lot_no'), ('daily_reject_entries', 'rm_type'),
             ('daily_reject_entries', 'pump_out_qty'), ('daily_reject_entries', 'reject_qty'),
             ('daily_reject_entries', 'good_qty'), ('daily_reject_entries', 'reject_pct'),
+            ('daily_reject_entries', 'total_produced_qty'), ('daily_reject_entries', 'rework_qty'),
+            ('daily_reject_entries', 'hold_qty'), ('daily_reject_entries', 'quantity_unit'),
+            ('daily_reject_entries', 'quantity_source_reference'),
+            ('daily_reject_entries', 'operational_reject_pct'),
+            ('daily_reject_entries', 'operational_reject_pct_status'),
+            ('daily_reject_entries', 'paper_formula_id'), ('daily_reject_entries', 'paper_formula_version'),
+            ('daily_reject_entries', 'operational_formula_id'), ('daily_reject_entries', 'operational_formula_version'),
+            ('daily_reject_entries', 'quantity_provenance'), ('daily_reject_entries', 'production_balance_status'),
             ('daily_reject_entries', 'reject_limit'), ('daily_reject_entries', 'production_formula'),
             ('daily_reject_entries', 'reject_reason'), ('daily_reject_entries', 'analysis'),
             ('daily_reject_entries', 'version')
@@ -335,7 +375,17 @@ export class PostgresRejectReportRepository implements RejectReportRepository {
             ('issue_slip_approval_confirmations', 'fk_issue_slip_approvals__reversed_by'),
             ('issue_slip_approval_confirmations', 'fk_issue_slip_approvals__evidence_file'),
             ('daily_reject_entries', 'uq_daily_reject_entries__report_position'),
-            ('daily_reject_entries', 'fk_daily_reject_entries__report_id')
+            ('daily_reject_entries', 'fk_daily_reject_entries__report_id'),
+            ('daily_reject_entries', 'daily_reject_entries__total_produced_nonnegative'),
+            ('daily_reject_entries', 'daily_reject_entries__rework_nonnegative'),
+            ('daily_reject_entries', 'daily_reject_entries__hold_nonnegative'),
+            ('daily_reject_entries', 'daily_reject_entries__quantity_unit_required'),
+            ('daily_reject_entries', 'daily_reject_entries__operational_pct_state'),
+            ('daily_reject_entries', 'daily_reject_entries__formula_versions_positive'),
+            ('daily_reject_entries', 'daily_reject_entries__formula_identity'),
+            ('daily_reject_entries', 'daily_reject_entries__operational_formula_identity'),
+            ('daily_reject_entries', 'daily_reject_entries__balance_status_vocabulary'),
+            ('daily_reject_entries', 'daily_reject_entries__quantity_provenance_vocabulary')
         ), expected_tables (table_name) AS (
           VALUES
             ('reject_reports'), ('reject_issue_slips'),
@@ -350,6 +400,10 @@ export class PostgresRejectReportRepository implements RejectReportRepository {
           AND EXISTS (
             SELECT 1 FROM qc.schema_migrations
             WHERE version = '0058' AND name = '0058_outbox_delivery_and_focus_compliance'
+          )
+          AND EXISTS (
+            SELECT 1 FROM qc.schema_migrations
+            WHERE version = '0071' AND name = '0071_reject_percentage_denominators'
           )
           AND NOT EXISTS (
             SELECT 1 FROM expected_tables t

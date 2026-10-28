@@ -1,3 +1,8 @@
+- **2026-10-28 — REJ-01 / Version rejection percentage denominators**
+  - Changed: Kept `reject_pct` on Reject / Good; added separately versioned Reject / Total Produced with raw quantity provenance, `NOT_AVAILABLE` for missing production, and no historical recalculation.
+  - Evidence: Source and diff review only; no tests, builds, lint, scripts, SQL, migration execution, database access, or deployment.
+  - State: PARTIAL — approved production-balance rules and an approved threshold source are absent; balance is `NOT_CONFIGURED`, and entered limits are reference-only.
+  - Key files: `db/migrations/0071_reject_percentage_denominators.sql`, `src/modules/reject-reports/`, `src/pages/reject-reports/`.
 - **2026-10-28 — DOC-02 / Pin effective document version into execution evidence**
   - Changed: Added append-only inspection/lab document-context captures at create/submit and source-version links in record detail; no historical backfill.
   - Evidence: Source and diff review only; no tests, builds, lint, scripts, SQL, migrations, database access, or deployment.
@@ -491,6 +496,7 @@
 - **تحديث التحقق بعد الاستمرار 2026-10-16:** authenticated selected E2E 40/0/5; axe 0 violations في sweep 88 render requests؛ E2E responsive 320–1920 + 200/400% وforced-colors selected checks PASS. قارئ شاشة فعلي NOT VERIFIED؛ full `pnpm run test:e2e` skipped per user instruction. Batches 3–7 باقية PARTIAL؛ انظر السجل الأعلى وتقرير continuation. No WCAG AA conformance claim.
 
 ### Reporting copies
+- Reject Reports preserve the legacy paper-form metric `Reject / Good * 100` in `reject_pct`. New daily entries may record total-produced/rework/hold quantities with one explicit shared quantity unit; `Reject / Total Produced * 100` is stored separately with formula ID/version and user-recorded provenance. Historical total-produced values are not backfilled. Production balance rules and approved threshold authority remain unavailable; show balance `NOT_CONFIGURED` and do not present entered limits as official decisions.
 - `/reports/[reportCode]` binds CSV/XLSX downloads to the displayed dataset digest; a changed dataset returns stale conflict and requires refresh. This is request-local, not a durable snapshot. Print output and Reject Reports print views are labeled unapproved/informational; laboratory template print remains transcription-only.
 - No report-run/artifact retention behavior is inferred. `REQ-RPT-005` persistence semantics and retention remain Reporting/QMS-owner decisions; current candidate evidence is `audit/2026-09-30/handoff-QC-ADP26-30.md`.
 

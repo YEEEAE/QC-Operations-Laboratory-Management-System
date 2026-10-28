@@ -71,6 +71,9 @@ if (Astro.request.method === 'POST' && record && !printMode) {
           buRmProductName: optional('buRmProductName'), rmDescription: optional('rmDescription'),
           rmUnit: optional('rmUnit'), rmLotNo: optional('rmLotNo'), rmType: optional('rmType'),
           pumpOutQty: optional('pumpOutQty'), rejectQty: value('rejectQty'), goodQty: value('goodQty'),
+          totalProducedQty: optional('totalProducedQty'), reworkQty: optional('reworkQty'),
+          holdQty: optional('holdQty'), quantityUnit: optional('quantityUnit'),
+          quantitySourceReference: optional('quantitySourceReference'),
           rejectLimit: optional('rejectLimit'), productionFormula: optional('productionFormula'),
           rejectReason: value('rejectReason'), analysis: optional('analysis'),
         },
@@ -89,8 +92,8 @@ if (Astro.request.method === 'POST' && record && !printMode) {
   }
 }
 const totals = dailyRejectTotals(record?.entries ?? []);
-const overLimit = (rejectPct: string | null, rejectLimit?: string) =>
-  rejectPct !== null && rejectLimit !== undefined && compareRejectDecimalStrings(rejectPct, rejectLimit) > 0;
+const overLimit = (operationalRejectPct: string | null, rejectLimit?: string) =>
+  operationalRejectPct !== null && rejectLimit !== undefined && compareRejectDecimalStrings(operationalRejectPct, rejectLimit) > 0;
 const fmtDate = (d?: Date) =>
   d ? d.toLocaleDateString('en-SA', { timeZone: 'Asia/Riyadh' }) : '—';
 const fmtDateTime = (d?: Date) =>
@@ -148,20 +151,31 @@ const fmtDateTime = (d?: Date) =>
             <dl>
               <dt>Reject quantity · {group.unit}</dt><dd>{group.totalRejectQty}</dd>
               <dt>Good production quantity · {group.unit}</dt><dd>{group.totalGoodQty}</dd>
-              <dt>Reject % · {group.unit}</dt><dd>{group.rejectPct === null ? '—' : `${group.rejectPct}%`}</dd>
+              <dt>Paper-form Reject % · {group.unit}</dt><dd>{group.rejectPct === null ? '—' : `${group.rejectPct}%`}</dd>
               <dt>Entries · {group.unit}</dt><dd>{group.entryCount}</dd>
             </dl>
           ))}
-          <p class="hint">Quantities are grouped by the raw-material unit recorded on each entry. Different unit labels are never added together; confirm the unit’s meaning with QC/QMS before interpreting these totals.</p>
+          <p class="hint">Paper-form totals retain the raw-material unit grouping used by existing reports. Different unit labels are never added together.</p>
         </>
       ) : <p class="empty">No quantity totals yet.</p>}
-      <p class="hint">Reject % = reject quantity ÷ good production quantity × 100, rounded to four decimal places on the server. A good quantity of zero has no percentage.</p>
+      <p class="hint">Paper-form Reject % = reject quantity ÷ good quantity × 100. Operational Reject-to-Produced % = reject quantity ÷ total produced quantity × 100, rounded to four decimal places. Missing total produced is NOT_AVAILABLE; zero total produced has no percentage. Production balance rules are NOT_CONFIGURED.</p>
+    </section>
+    <section class="panel" aria-labelledby="operational-totals-title">
+      <h2 id="operational-totals-title">Operational Reject-to-Produced totals</h2>
+      {totals.byQuantityUnit.length ? totals.byQuantityUnit.map((group) => (
+        <dl>
+          <dt>Total rejected · {group.unit}</dt><dd>{group.totalRejectQty ?? 'NOT_AVAILABLE (unit not recorded)'}</dd>
+          <dt>Total produced · {group.unit}</dt><dd>{group.totalProducedQty ?? 'NOT_AVAILABLE'}</dd>
+          <dt>Operational Reject-to-Produced % · {group.unit}</dt><dd>{group.operationalRejectPctStatus === 'ZERO_DENOMINATOR' ? 'NOT_AVAILABLE (zero denominator)' : group.operationalRejectPct === null ? 'NOT_AVAILABLE' : `${group.operationalRejectPct}%`}</dd>
+        </dl>
+      )) : <p class="empty">No quantity totals yet.</p>}
     </section>
   </div>
 
   <section class="panel evidence-panel" id="entries" aria-labelledby="entries-title">
     <h2 id="entries-title">Recorded evidence</h2>
     <p class="hint">No controlled/effective Reject Reports source, approver e-signature, or QMS linkage is supplied by this daily-report record.</p>
+    <p class="hint">The row highlight compares Operational Reject-to-Produced % with the entered limit for reference only. No approved threshold source is available, so this is not an official limit decision.</p>
     {record.entries.length ? (
       <div class="table-wrap" role="region" aria-label="Production and rejection entries" tabindex="0">
         <table>
@@ -178,7 +192,11 @@ const fmtDateTime = (d?: Date) =>
               <th scope="col">Pump out</th>
               <th scope="col">Reject qty</th>
               <th scope="col">Good qty</th>
-              <th scope="col">Reject %</th>
+              <th scope="col">Paper-form Reject % (Reject / Good)</th>
+              <th scope="col">Total produced</th>
+              <th scope="col">Operational Reject-to-Produced %</th>
+              <th scope="col">Formula provenance</th>
+              <th scope="col">Quantity provenance</th>
               <th scope="col">Limit</th>
               <th scope="col">Formula/BOM</th>
               <th scope="col">Reason</th>
@@ -187,7 +205,7 @@ const fmtDateTime = (d?: Date) =>
           <tbody>
             {record.entries.map((entry) => (
               <tr
-                class={overLimit(entry.rejectPct, entry.rejectLimit) ? 'over-limit' : ''}
+                class={overLimit(entry.operationalRejectPct, entry.rejectLimit) ? 'over-limit' : ''}
               >
                 <td>{entry.position}</td>
                 <td>{entry.machineName ?? '—'}</td>
@@ -202,6 +220,10 @@ const fmtDateTime = (d?: Date) =>
                 <td>{entry.rejectQty}</td>
                 <td>{entry.goodQty}</td>
                 <td>{entry.rejectPct === null ? '—' : `${entry.rejectPct}%`}</td>
+                <td>{entry.totalProducedQty ?? 'NOT_AVAILABLE'} {entry.quantityUnit ?? ''}</td>
+                <td>{entry.operationalRejectPctStatus === 'ZERO_DENOMINATOR' ? 'NOT_AVAILABLE (zero denominator)' : entry.operationalRejectPct === null ? 'NOT_AVAILABLE' : `${entry.operationalRejectPct}%`}</td>
+                <td>Paper {entry.paperFormulaId ?? 'NOT_RECORDED'} v{entry.paperFormulaVersion ?? '—'}; operational {entry.operationalFormulaId ?? 'NOT_RECORDED'} v{entry.operationalFormulaVersion ?? '—'}</td>
+                <td>{entry.quantityProvenance ?? 'NOT_RECORDED'}{entry.quantitySourceReference ? ` · ${entry.quantitySourceReference}` : ''}; balance {entry.productionBalanceStatus ?? 'NOT_RECORDED'}</td>
                 <td>{entry.rejectLimit ?? '—'}</td>
                 <td>{entry.productionFormula ?? '—'}</td>
                 <td>{entry.rejectReason}{entry.analysis ? ` — ${entry.analysis}` : ''}</td>
@@ -266,6 +288,11 @@ const fmtDateTime = (d?: Date) =>
           <div><label for="pumpOutQty">Pump out quantity<input id="pumpOutQty" name="pumpOutQty" type="text" inputmode="decimal" pattern="[0-9]+(\.[0-9]+)?" value={postedValues.pumpOutQty ?? ''} /></label></div>
           <div><label for="rejectQty">Reject quantity<input id="rejectQty" name="rejectQty" type="text" inputmode="decimal" pattern="[0-9]+(\.[0-9]+)?" required value={postedValues.rejectQty ?? ''} /></label></div>
           <div><label for="goodQty">Good production quantity<input id="goodQty" name="goodQty" type="text" inputmode="decimal" pattern="[0-9]+(\.[0-9]+)?" required value={postedValues.goodQty ?? ''} /></label></div>
+          <div><label for="totalProducedQty">Total produced quantity<input id="totalProducedQty" name="totalProducedQty" type="text" inputmode="decimal" pattern="[0-9]+(\.[0-9]+)?" value={postedValues.totalProducedQty ?? ''} /></label></div>
+          <div><label for="quantityUnit">Production quantity unit<input id="quantityUnit" name="quantityUnit" maxlength="50" value={postedValues.quantityUnit ?? ''} /></label></div>
+          <div><label for="reworkQty">Rework quantity (optional)<input id="reworkQty" name="reworkQty" type="text" inputmode="decimal" pattern="[0-9]+(\.[0-9]+)?" value={postedValues.reworkQty ?? ''} /></label></div>
+          <div><label for="holdQty">Hold quantity (optional)<input id="holdQty" name="holdQty" type="text" inputmode="decimal" pattern="[0-9]+(\.[0-9]+)?" value={postedValues.holdQty ?? ''} /></label></div>
+          <div class="wide"><label for="quantitySourceReference">Production quantity source reference<input id="quantitySourceReference" name="quantitySourceReference" maxlength="500" value={postedValues.quantitySourceReference ?? ''} /></label></div>
           <div><label for="rejectLimit">Reject limit (%)<input id="rejectLimit" name="rejectLimit" type="text" inputmode="decimal" pattern="[0-9]+(\.[0-9]+)?" value={postedValues.rejectLimit ?? ''} /></label></div>
           <div><label for="productionFormula">Production formula / BOM<input id="productionFormula" name="productionFormula" maxlength="500" value={postedValues.productionFormula ?? ''} /></label></div>
           <div class="wide"><label for="rejectReason">Reject / defect reason<input id="rejectReason" name="rejectReason" required maxlength="2000" value={postedValues.rejectReason ?? ''} /></label></div>
@@ -402,7 +429,9 @@ const fmtDateTime = (d?: Date) =>
       buRmProductName: opt('buRmProductName'), rmDescription: opt('rmDescription'),
       rmUnit: opt('rmUnit'), rmLotNo: opt('rmLotNo'), rmType: opt('rmType'),
       pumpOutQty: opt('pumpOutQty'), rejectQty: text('rejectQty'),
-      goodQty: text('goodQty'), rejectLimit: opt('rejectLimit'),
+      goodQty: text('goodQty'), totalProducedQty: opt('totalProducedQty'),
+      reworkQty: opt('reworkQty'), holdQty: opt('holdQty'), quantityUnit: opt('quantityUnit'),
+      quantitySourceReference: opt('quantitySourceReference'), rejectLimit: opt('rejectLimit'),
       productionFormula: opt('productionFormula'), rejectReason: text('rejectReason'),
       analysis: opt('analysis'),
     };

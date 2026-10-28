@@ -47,7 +47,8 @@ const EMPTY_DAILY = {
   reportDate: '', department: '', shift: '',
   machineName: '', itemCode: '', itemDescription: '', lotNo: '', buRmProductName: '',
   rmDescription: '', rmUnit: '', rmLotNo: '', rmType: '', pumpOutQty: '',
-  rejectQty: '', goodQty: '', rejectLimit: '', productionFormula: '',
+  rejectQty: '', goodQty: '', totalProducedQty: '', reworkQty: '', holdQty: '',
+  quantityUnit: '', quantitySourceReference: '', rejectLimit: '', productionFormula: '',
   rejectReason: '', analysis: '',
 };
 let slipValues = { ...EMPTY_SLIP };
@@ -69,7 +70,10 @@ if (Astro.request.method === 'POST' && canCreate && availability.available) {
       rmDescription: field(formData, 'rmDescription'), rmUnit: field(formData, 'rmUnit'),
       rmLotNo: field(formData, 'rmLotNo'), rmType: field(formData, 'rmType'),
       pumpOutQty: field(formData, 'pumpOutQty'), rejectQty: field(formData, 'rejectQty'),
-      goodQty: field(formData, 'goodQty'), rejectLimit: field(formData, 'rejectLimit'),
+      goodQty: field(formData, 'goodQty'), totalProducedQty: field(formData, 'totalProducedQty'),
+      reworkQty: field(formData, 'reworkQty'), holdQty: field(formData, 'holdQty'),
+      quantityUnit: field(formData, 'quantityUnit'), quantitySourceReference: field(formData, 'quantitySourceReference'),
+      rejectLimit: field(formData, 'rejectLimit'),
       productionFormula: field(formData, 'productionFormula'),
       rejectReason: field(formData, 'rejectReason'), analysis: field(formData, 'analysis'),
     };
@@ -91,6 +95,11 @@ if (Astro.request.method === 'POST' && canCreate && availability.available) {
           pumpOutQty: dailyValues.pumpOutQty || undefined,
           rejectQty: dailyValues.rejectQty,
           goodQty: dailyValues.goodQty,
+          totalProducedQty: dailyValues.totalProducedQty || undefined,
+          reworkQty: dailyValues.reworkQty || undefined,
+          holdQty: dailyValues.holdQty || undefined,
+          quantityUnit: dailyValues.quantityUnit || undefined,
+          quantitySourceReference: dailyValues.quantitySourceReference || undefined,
           rejectLimit: dailyValues.rejectLimit || undefined,
           productionFormula: dailyValues.productionFormula || undefined,
           rejectReason: dailyValues.rejectReason,
@@ -222,12 +231,17 @@ const describedBy = (name: string): string | undefined => (err(name) ? `${name}-
             <div><label for="pumpOutQty">Pump out quantity<input id="pumpOutQty" name="pumpOutQty" type="text" inputmode="decimal" pattern="[0-9]+(\.[0-9]+)?" value={dailyValues.pumpOutQty} /></label></div>
             <div><label for="rejectQty">Total reject quantity<input id="rejectQty" name="rejectQty" type="text" inputmode="decimal" pattern="[0-9]+(\.[0-9]+)?" required value={dailyValues.rejectQty} aria-invalid={invalid('rejectQty')} aria-describedby={describedBy('rejectQty')} /></label>{err('rejectQty') && <p class="field-error" id="rejectQty-error">{err('rejectQty')}</p>}</div>
             <div><label for="goodQty">Total good production quantity<input id="goodQty" name="goodQty" type="text" inputmode="decimal" pattern="[0-9]+(\.[0-9]+)?" required value={dailyValues.goodQty} aria-invalid={invalid('goodQty')} aria-describedby={describedBy('goodQty')} /></label>{err('goodQty') && <p class="field-error" id="goodQty-error">{err('goodQty')}</p>}</div>
+            <div><label for="totalProducedQty">Total produced quantity (optional)<input id="totalProducedQty" name="totalProducedQty" type="text" inputmode="decimal" pattern="[0-9]+(\.[0-9]+)?" value={dailyValues.totalProducedQty} /></label></div>
+            <div><label for="quantityUnit">Production quantity unit<input id="quantityUnit" name="quantityUnit" maxlength="50" value={dailyValues.quantityUnit} aria-invalid={invalid('quantityUnit')} aria-describedby={describedBy('quantityUnit')} /></label>{err('quantityUnit') && <p class="field-error" id="quantityUnit-error">{err('quantityUnit')}</p>}</div>
+            <div><label for="reworkQty">Rework quantity (optional)<input id="reworkQty" name="reworkQty" type="text" inputmode="decimal" pattern="[0-9]+(\.[0-9]+)?" value={dailyValues.reworkQty} /></label></div>
+            <div><label for="holdQty">Hold quantity (optional)<input id="holdQty" name="holdQty" type="text" inputmode="decimal" pattern="[0-9]+(\.[0-9]+)?" value={dailyValues.holdQty} /></label></div>
+            <div class="wide"><label for="quantitySourceReference">Production quantity source reference (optional)<input id="quantitySourceReference" name="quantitySourceReference" maxlength="500" value={dailyValues.quantitySourceReference} /></label></div>
             <div><label for="rejectLimit">Reject limit (%)<input id="rejectLimit" name="rejectLimit" type="text" inputmode="decimal" pattern="[0-9]+(\.[0-9]+)?" value={dailyValues.rejectLimit} /></label></div>
             <div><label for="productionFormula">Production formula / BOM<input id="productionFormula" name="productionFormula" maxlength="500" value={dailyValues.productionFormula} /></label></div>
             <div class="wide"><label for="rejectReason">Reject / defect reason<input id="rejectReason" name="rejectReason" required maxlength="2000" value={dailyValues.rejectReason} aria-invalid={invalid('rejectReason')} aria-describedby={describedBy('rejectReason')} /></label>{err('rejectReason') && <p class="field-error" id="rejectReason-error">{err('rejectReason')}</p>}</div>
             <div class="wide"><label for="analysis">Analysis / notes<textarea id="analysis" name="analysis" maxlength="4000">{dailyValues.analysis}</textarea></label></div>
           </div>
-          <p class="hint">Reject % is computed server-side as reject quantity ÷ good production quantity × 100. You can add more rows from the record page while it is a draft.</p>
+          <p class="hint">Paper-form Reject % = reject quantity ÷ good quantity × 100. Operational Reject-to-Produced % = reject quantity ÷ total produced quantity × 100; it is unavailable when total produced is missing or zero. The example 100 rejected of 1,000 produced is 10.00%, for explanation only. Entered quantities are user-recorded; production balance rules are not configured.</p>
         </fieldset>
       )}
 
@@ -277,7 +291,10 @@ const describedBy = (name: string): string | undefined => (err(name) ? `${name}-
                 buRmProductName: opt('buRmProductName'), rmDescription: opt('rmDescription'),
                 rmUnit: opt('rmUnit'), rmLotNo: opt('rmLotNo'), rmType: opt('rmType'),
                 pumpOutQty: opt('pumpOutQty'), rejectQty: text('rejectQty'),
-                goodQty: text('goodQty'), rejectLimit: opt('rejectLimit'),
+                goodQty: text('goodQty'), totalProducedQty: opt('totalProducedQty'),
+                reworkQty: opt('reworkQty'), holdQty: opt('holdQty'),
+                quantityUnit: opt('quantityUnit'), quantitySourceReference: opt('quantitySourceReference'),
+                rejectLimit: opt('rejectLimit'),
                 productionFormula: opt('productionFormula'), rejectReason: text('rejectReason'),
                 analysis: opt('analysis'),
               }],
