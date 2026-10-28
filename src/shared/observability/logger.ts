@@ -88,13 +88,13 @@ const REDACT_PATHS = [
 ];
 
 const REDACTED = '[REDACTED]';
-const SENSITIVE_KEY = /(?:password|secret|token|api[_-]?key|authorization|cookie|credential|connection[_-]?string|database[_-]?url|^dsn$)/i;
+const SENSITIVE_KEY = /(?:password|secret|token|api[_-]?key|key$|authorization|cookie|credential|connection[_-]?string|database[_-]?url|^dsn$)/i;
 const POSTGRES_URL = /\bpostgres(?:ql)?:\/\/[^\s"'`<>]+/gi;
 const URI_USERINFO = /\b(https?:\/\/)[^/@\s]+@/gi;
 const BEARER_TOKEN = /\bBearer\s+[A-Za-z0-9._~+/=-]+/gi;
 const JWT = /\beyJ[A-Za-z0-9_-]{4,}\.[A-Za-z0-9_-]{4,}\.[A-Za-z0-9_-]{4,}\b/g;
 const SECRET_QUERY_VALUE = /([?&][^=?&#\s]*(?:token|password|api[_-]?key|apikey|secret|credential|signature)[^=]*=)[^&#\s]*/gi;
-const SECRET_HEADER = /\b((?:authorization|proxy-authorization|cookie|set-cookie|x-api-key)\s*[:=]\s*)[^\s,;]+/gi;
+const SECRET_HEADER = /(["']?[A-Za-z0-9_-]*(?:authorization|api[_-]?key|key|token|secret|credential|cookie)[A-Za-z0-9_-]*["']?\s*[:=]\s*["']?)[^\s,;"'}]+/gi;
 const INLINE_SECRET = /\b((?:EXPLABS_API_KEY|DATABASE_URL_UNPOOLED|MIGRATION_DATABASE_URL|password|secret|api[_-]?key)\s*[=:]\s*)[^\s,;]+/gi;
 
 function redactText(value: string): string {

@@ -87,6 +87,13 @@ const envSchema = z.object({
   EXPLABS_API_KEY: optionalEnv(z.string().trim().min(1)),
   STAGING_EXPLABS_API_KEY: optionalEnv(z.string().trim().min(1)),
   PILOT_EXPLABS_API_KEY: optionalEnv(z.string().trim().min(1)),
+  EXPLABS_BASE_URL: optionalEnv(z.string().trim().url().refine((value) => new URL(value).protocol === 'https:', 'must use HTTPS')),
+  EXPLABS_ALLOWED_ORIGIN: optionalEnv(z.string().trim().url().refine((value) => {
+    const url = new URL(value);
+    return url.protocol === 'https:' && url.origin === value && !url.username && !url.password;
+  }, 'must be an exact HTTPS origin without credentials, path, query, or fragment')),
+  EXPLABS_ENABLED: z.enum(['true', 'false']).default('false'),
+  EXPLABS_REQUEST_TIMEOUT_MS: optionalEnv(z.string().regex(/^\d+$/).refine((value) => Number(value) >= 100 && Number(value) <= 30_000, 'must be between 100 and 30000 milliseconds')),
   STAGING_DATABASE_HOST: optionalEnv(z.string().trim()),
   PILOT_DATABASE_HOST: optionalEnv(z.string().trim()),
   PRODUCTION_DATABASE_HOST: optionalEnv(z.string().trim()),
@@ -259,7 +266,10 @@ export function parseServerEnv(input: Record<string, string | undefined>): Serve
       if (profile !== 'staging' && result.data.STAGING_NEON_AUTH_ENABLED === 'true') invalid.push('STAGING_NEON_AUTH_ENABLED');
       if (profile !== 'pilot' && result.data.PILOT_NEON_AUTH_ENABLED === 'true') invalid.push('PILOT_NEON_AUTH_ENABLED');
       if (hasOtherProfileAuth) invalid.push('another profile Neon Auth settings');
-      if (profile !== 'production' && result.data.EXPLABS_API_KEY) invalid.push('EXPLABS_API_KEY');
+      if (profile !== 'production' && (
+        result.data.EXPLABS_API_KEY || result.data.EXPLABS_BASE_URL ||
+        result.data.EXPLABS_ALLOWED_ORIGIN || result.data.EXPLABS_ENABLED === 'true'
+      )) invalid.push('production EXPLABS settings are not valid for a non-production profile');
       if (profile === 'staging' && result.data.PILOT_EXPLABS_API_KEY) invalid.push('PILOT_EXPLABS_API_KEY');
       if (profile === 'pilot' && result.data.STAGING_EXPLABS_API_KEY) invalid.push('STAGING_EXPLABS_API_KEY');
       if (profile === 'production' && (result.data.STAGING_EXPLABS_API_KEY || result.data.PILOT_EXPLABS_API_KEY)) invalid.push('STAGING_EXPLABS_API_KEY', 'PILOT_EXPLABS_API_KEY');

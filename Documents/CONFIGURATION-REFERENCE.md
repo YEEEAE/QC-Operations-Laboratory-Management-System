@@ -36,8 +36,20 @@ Neon pooled connections omit the unsupported `search_path` startup option; appli
 | `NEON_AUTH_ENABLED` | Explicit server-side feature switch; defaults to `false`. Staging and pilot use their matching profile-specific switch. |
 | `LOCAL_PASSWORD_LOGIN_ENABLED` | Explicit switch for the existing QC password login; defaults to `true`. Set to `false` only after an authorized replacement login path is implemented and accepted. |
 | `EXPLABS_API_KEY` | Optional server-only secret. No ExLabs API base URL or provider contract is established by this repository; this value alone does not enable outbound processing. |
+| `EXPLABS_BASE_URL` | Blank until the owner supplies a verified provider specification. Must be HTTPS and share its exact origin with `EXPLABS_ALLOWED_ORIGIN`. |
+| `EXPLABS_ALLOWED_ORIGIN` | Exact HTTPS origin allowlist entry for the server-side adapter. No origin is supplied or approved in this repository. |
+| `EXPLABS_ENABLED` | Explicit switch; defaults to `false`. Setting it to `true` alone cannot activate the adapter. |
+| `EXPLABS_REQUEST_TIMEOUT_MS` | Optional server-side timeout from 100 to 30000 milliseconds; defaults to 8000. This is an application bound, not a provider SLA. |
 | `STAGING_NEON_AUTH_*`, `PILOT_NEON_AUTH_*` | Optional branch-specific Neon Auth validation values and enable switches; each profile's JWKS, issuer, and audience must be configured together. |
 | `STAGING_EXPLABS_API_KEY`, `PILOT_EXPLABS_API_KEY` | Optional profile-specific secret names. No ExLabs API base URL or provider contract is established. |
+
+### ExLabs provider boundary (NDB-09)
+
+Treat any previously supplied `EXPLABS_API_KEY` as potentially exposed. The owner must rotate it out of band before any future provider use; do not copy the value into source, documentation, telemetry, logs, or browser assets. Keep all ExLabs values blank in environment templates except the explicit `EXPLABS_ENABLED=false` default.
+
+The vendor identity, authentication header, base URL, methods, payload/response model, rate limits, pricing, and SDK are not verified or specified here. `EXPLABS_BASE_URL` and `EXPLABS_ALLOWED_ORIGIN` are placeholders only. The server-only adapter is not mounted into AI advisory, QC approval, PASS/FAIL, CAPA closure, material release, or laboratory result paths. It performs no request unless an explicitly supplied provider contract and authorization are both present, in addition to valid enabled configuration.
+
+Hard blockers before any activation: owner decision SYS-11; verified vendor documentation and API contract; owner authorization for the specific use; approved data class and minimization; consent; retention/deletion terms; and provider security/control review. Until these exist, do not send QC, medical, personal, controlled, confidential, or company data to an external service. No provider connection or configuration is verified by this source scaffolding.
 
 If any Neon Auth validation setting is supplied, all three must be present and valid. The JWKS URL is pinned to the owner-supplied public discovery endpoint; issuer and audience must come from separately approved Neon Auth configuration and are never derived from a token. The optional JOSE verifier is server-only and disabled unless the active profile's `*_NEON_AUTH_ENABLED` switch is `true`. This switch does not enable external login: the middleware and login action still accept only the local QC session. `LOCAL_PASSWORD_LOGIN_ENABLED` gates the existing password login and defaults to `true`. External login remains unavailable until a provider client flow, subject proof, session freshness/revocation policy, and role/scope policy are approved and implemented. The verifier checks token cryptography and expected claims only; it does not establish a QC identity, check a Neon session's revocation state, create an application session, or grant roles/permissions/scopes. Keep values scoped per environment in protected settings. Do not expose them through `PUBLIC_*`, `import.meta.env` in browser code, HTML, or client bundles.
 
