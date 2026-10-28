@@ -1721,6 +1721,9 @@ export interface IssueSlipApprovalConfirmationsTable {
   outcome: string | null;
   evidence_confidence: string;
   confirmation_basis: string;
+  recorder_class: string | null;
+  actual_decision_by: string | null;
+  actual_decision_at: Date | null;
   confirmed_by: string | null;
   confirmed_at: Date | null;
   note: string | null;

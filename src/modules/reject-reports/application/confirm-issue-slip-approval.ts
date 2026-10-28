@@ -62,6 +62,7 @@ export class ConfirmIssueSlipApprovalUseCase {
       actor: input.actor,
       requestId: input.requestId,
       role: input.role,
+      reporterClass: isSubmitter ? 'ORIGINAL_SUBMITTER' : 'QC_COMPLIANCE_DATA_ENTRY',
       approverName: input.approverName,
       approverIdentity: input.approverIdentity,
       outcome: input.outcome,

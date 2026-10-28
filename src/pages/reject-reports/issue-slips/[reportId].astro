@@ -204,7 +204,7 @@ const fmtDateTime = (d?: Date) =>
       <section class="panel evidence" id="approval-confirmations" aria-labelledby="approval-history-title">
         <h2 id="approval-history-title">Approval confirmation history</h2>
         <p class="hint">
-          External approval details are reported facts entered by the original submitter or an authorized QC Compliance data-entry recorder. The recorder and named approver are shown separately. These records are not electronic signatures or internal approval decisions.
+          The original submitter or an authorized QC Compliance data-entry recorder may report an external approval fact. The named approver is recorded separately and is not identity-verified by this entry. A report is not an approver decision, electronic signature, material disposition, or product release.
         </p>
         <ol class="tracker">
           {ISSUE_SLIP_APPROVAL_ROLES.map((role) => {
@@ -218,7 +218,7 @@ const fmtDateTime = (d?: Date) =>
                   <strong>{approvalLabel[role]}</strong>
                   <span class="state">
                     {state === 'CONFIRMED'
-                      ? `${presentationState.replaceAll('_', ' ')} (${confirmation?.outcome ?? 'outcome not recorded'}; recorded ${fmtDateTime(confirmation?.confirmedAt)}${confirmation?.approverIdentity || confirmation?.approverName ? ` · approver as reported: ${confirmation.approverIdentity ?? confirmation.approverName}` : ''}; reporter: ${confirmation?.reportedBy === actor.id ? 'You' : 'another authorized user'} (${confirmation?.evidenceReporterRole === 'QC_COMPLIANCE_DATA_ENTRY' ? 'QC Compliance data entry' : 'original submitter'}); evidence confidence: ${confirmation?.evidenceConfidence ?? 'UNASSESSED'})`
+                      ? `${presentationState.replaceAll('_', ' ')} (reported outcome: ${confirmation?.outcome ?? 'not recorded'}; entered ${fmtDateTime(confirmation?.confirmedAt)}${confirmation?.approverIdentity || confirmation?.approverName ? ` · approver identity as recorded: ${confirmation.approverIdentity ?? confirmation.approverName}` : ''}; reporter: ${confirmation?.reportedBy === actor.id ? 'You' : 'another authorized user'} (${confirmation?.evidenceReporterRole === 'QC_COMPLIANCE_DATA_ENTRY' ? 'QC Compliance data entry' : 'original submitter'}); evidence confidence: ${confirmation?.evidenceConfidence ?? 'UNASSESSED'}${confirmation?.actualApproverId ? `; actual decision by authenticated approver recorded at ${fmtDateTime(confirmation.actualDecisionAt)}` : ''})`
                       : state === 'REVERSED'
                         ? `Reversed ${fmtDateTime(confirmation?.reversedAt)} — ${confirmation?.reversalReason}`
                         : 'Pending'}

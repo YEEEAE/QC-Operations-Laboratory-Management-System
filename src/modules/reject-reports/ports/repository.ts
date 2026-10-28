@@ -133,6 +133,7 @@ export interface RejectReportRepository {
     actor: ActorContext;
     requestId: string;
     role: IssueSlipApprovalRole;
+    reporterClass: 'ORIGINAL_SUBMITTER' | 'QC_COMPLIANCE_DATA_ENTRY';
     approverName?: string;
     approverIdentity?: string;
     outcome: 'APPROVED' | 'REJECTED' | 'UNKNOWN';

@@ -133,6 +133,8 @@ function mapApproval(row: ApprovalRow): ApprovalConfirmation {
     status: row.status as ApprovalConfirmation['status'],
     approverName: row.approver_name ?? undefined,
     approverIdentity: row.approver_identity ?? undefined,
+    actualApproverId: row.actual_decision_by ?? undefined,
+    actualDecisionAt: row.actual_decision_at ?? undefined,
     outcome: (row.outcome ?? undefined) as ApprovalConfirmation['outcome'],
     evidenceConfidence: row.evidence_confidence as ApprovalConfirmation['evidenceConfidence'],
     confirmationBasis: row.confirmation_basis as ApprovalConfirmation['confirmationBasis'],
@@ -345,6 +347,8 @@ export class PostgresRejectReportRepository implements RejectReportRepository {
             ('issue_slip_approval_confirmations', 'evidence_confidence'),
             ('issue_slip_approval_confirmations', 'confirmation_basis'),
             ('issue_slip_approval_confirmations', 'recorder_class'),
+            ('issue_slip_approval_confirmations', 'actual_decision_by'),
+            ('issue_slip_approval_confirmations', 'actual_decision_at'),
             ('issue_slip_approval_confirmations', 'confirmed_by'),
             ('issue_slip_approval_confirmations', 'confirmed_at'),
             ('issue_slip_approval_confirmations', 'note'),
@@ -383,6 +387,7 @@ export class PostgresRejectReportRepository implements RejectReportRepository {
             ('issue_slip_approval_confirmations', 'uq_issue_slip_approvals__report_role'),
             ('issue_slip_approval_confirmations', 'fk_issue_slip_approvals__report_id'),
             ('issue_slip_approval_confirmations', 'fk_issue_slip_approvals__confirmed_by'),
+            ('issue_slip_approval_confirmations', 'fk_issue_slip_approvals__actual_decision_by'),
             ('issue_slip_approval_confirmations', 'fk_issue_slip_approvals__reversed_by'),
             ('issue_slip_approval_confirmations', 'fk_issue_slip_approvals__evidence_file'),
             ('issue_slip_approval_confirmations', 'ck_issue_slip_approval_basis'),
@@ -390,6 +395,7 @@ export class PostgresRejectReportRepository implements RejectReportRepository {
             ('issue_slip_approval_confirmations', 'ck_issue_slip_evidence_confidence'),
             ('issue_slip_approval_confirmations', 'ck_issue_slip_recorder_class'),
             ('issue_slip_approval_confirmations', 'ck_issue_slip_confirmed_provenance'),
+            ('issue_slip_approval_confirmations', 'ck_issue_slip_approver_decision_provenance'),
             ('daily_reject_entries', 'uq_daily_reject_entries__report_position'),
             ('daily_reject_entries', 'fk_daily_reject_entries__report_id'),
             ('daily_reject_entries', 'daily_reject_entries__total_produced_nonnegative'),
@@ -856,6 +862,7 @@ export class PostgresRejectReportRepository implements RejectReportRepository {
     actor: ActorContext;
     requestId: string;
     role: IssueSlipApprovalRole;
+    reporterClass: 'ORIGINAL_SUBMITTER' | 'QC_COMPLIANCE_DATA_ENTRY';
     approverName?: string;
     outcome: NonNullable<ApprovalConfirmation['outcome']>;
     evidenceConfidence: ApprovalConfirmation['evidenceConfidence'];
@@ -875,7 +882,7 @@ export class PostgresRejectReportRepository implements RejectReportRepository {
             outcome: input.outcome,
             evidence_confidence: input.evidenceConfidence,
             confirmation_basis: 'SELF_REPORTED',
-            recorder_class: input.actor.roles.includes('QC_COMPLIANCE') ? 'QC_COMPLIANCE_DATA_ENTRY' : 'ORIGINAL_SUBMITTER',
+            recorder_class: input.reporterClass,
             confirmed_by: input.actor.id,
             confirmed_at: now,
             note: input.note ?? null,
@@ -906,9 +913,7 @@ export class PostgresRejectReportRepository implements RejectReportRepository {
             outcome: input.outcome,
             confirmationBasis: 'SELF_REPORTED',
             evidenceConfidence: input.evidenceConfidence,
-            recorderClass: input.actor.roles.includes('QC_COMPLIANCE')
-              ? 'QC_COMPLIANCE_DATA_ENTRY'
-              : 'ORIGINAL_SUBMITTER',
+            recorderClass: input.reporterClass,
             semantics: 'REPORTED_EXTERNAL_FACT_NOT_INTERNAL_APPROVAL',
           },
         });

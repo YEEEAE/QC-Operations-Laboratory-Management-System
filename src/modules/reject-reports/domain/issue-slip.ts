@@ -29,6 +29,9 @@ export interface ApprovalConfirmation {
   approverName?: string;
   /** Identity/name as recorded by the reporter; it is not identity proof. */
   approverIdentity?: string;
+  /** Authenticated approver who made a real decision, when that route is authorized. */
+  actualApproverId?: string;
+  actualDecisionAt?: Date;
   outcome?: ExternalApprovalOutcome;
   evidenceConfidence: EvidenceConfidence;
   /** Actor who entered the factual confirmation, distinct from the approver. */
@@ -99,7 +102,10 @@ export function pendingApprovalRoles(
   approvals: readonly ApprovalConfirmation[],
 ): readonly IssueSlipApprovalRole[] {
   return ISSUE_SLIP_APPROVAL_ROLES.filter(
-    (role) => !approvals.some((a) => a.role === role && a.status === 'CONFIRMED' && a.outcome === 'APPROVED'),
+    (role) => !approvals.some((a) =>
+      a.role === role && a.status === 'CONFIRMED' && a.outcome === 'APPROVED' &&
+      a.confirmationBasis === 'APPROVER_CONFIRMED' && Boolean(a.actualApproverId && a.actualDecisionAt),
+    ),
   );
 }
 
@@ -109,13 +115,15 @@ export function allApprovalsConfirmed(approvals: readonly ApprovalConfirmation[]
 
 export function approvalPresentationState(
   confirmation: ApprovalConfirmation | undefined,
-): 'AWAITING_EXTERNAL_APPROVAL' | 'CONFIRMATION_RECORDED_BY_CREATOR' | 'CONFIRMATION_RECORDED_BY_QC_COMPLIANCE' | 'EVIDENCE_ATTACHED' {
+): 'AWAITING_EXTERNAL_APPROVAL' | 'CONFIRMATION_RECORDED_BY_CREATOR' | 'EVIDENCE_ATTACHED' | 'INTERNAL_APPROVED' {
   if (!confirmation || confirmation.status === 'PENDING' || confirmation.status === 'REVERSED')
     return 'AWAITING_EXTERNAL_APPROVAL';
+  if (
+    confirmation.confirmationBasis === 'APPROVER_CONFIRMED' && confirmation.outcome === 'APPROVED' &&
+    confirmation.actualApproverId && confirmation.actualDecisionAt
+  ) return 'INTERNAL_APPROVED';
   if (confirmation.evidenceFileId) return 'EVIDENCE_ATTACHED';
-  return confirmation.evidenceReporterRole === 'QC_COMPLIANCE_DATA_ENTRY'
-    ? 'CONFIRMATION_RECORDED_BY_QC_COMPLIANCE'
-    : 'CONFIRMATION_RECORDED_BY_CREATOR';
+  return 'CONFIRMATION_RECORDED_BY_CREATOR';
 }
 
 /**
