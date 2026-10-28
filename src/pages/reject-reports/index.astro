@@ -10,6 +10,7 @@ import { parsePageInput } from '../../shared/pagination/page.js';
 import { stateLabel } from '../../shared/copy/ux-vocabulary.js';
 import type { RejectReportListFilter } from '../../modules/reject-reports/ports/repository.js';
 import { REJECT_REPORT_STATUSES } from '../../modules/reject-reports/application/view-model.js';
+import { isNamedSystemOwner } from '../../shared/authorization/p05-authority.js';
 
 const actor = Astro.locals.actor;
 if (!actor) return Astro.redirect('/login?returnTo=%2Freject-reports');
@@ -192,7 +193,7 @@ const filterNotice = invalidDateRange
 <AppLayout title="Reject reports · QC Operations" locale="en" direction="ltr">
   <PageHeader purpose="Issue slips record approval confirmations. Daily rejects need no approval.">
     <Fragment slot="heading"><h1>Reject reports</h1></Fragment>
-    <Fragment slot="actions">{availability.available && canCreate && <a class="button" href="/reject-reports/new">Create report</a>}</Fragment>
+    <Fragment slot="actions">{isNamedSystemOwner(actor) && <a class="button secondary" href="/reject-reports/thresholds">Reject limit profiles</a>}{availability.available && canCreate && <a class="button" href="/reject-reports/new">Create report</a>}</Fragment>
   </PageHeader>
   {
     !availability.available ? (

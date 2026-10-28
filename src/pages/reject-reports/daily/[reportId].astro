@@ -208,6 +208,7 @@ const fmtDateTime = (d?: Date) =>
               <th scope="col">Quantity provenance</th>
               <th scope="col">Limit</th>
               <th scope="col">Reference comparison</th>
+              <th scope="col">Approved threshold decision</th>
               <th scope="col">Formula/BOM</th>
               <th scope="col">Reason</th>
             </tr>
@@ -236,6 +237,7 @@ const fmtDateTime = (d?: Date) =>
                 <td>{entry.quantityProvenance ?? 'NOT_RECORDED'}{entry.quantitySourceReference ? ` · ${entry.quantitySourceReference}` : ''}; balance {entry.productionBalanceStatus ?? 'NOT_RECORDED'}</td>
                 <td>{entry.rejectLimit ?? '—'}</td>
                 <td>{entry.rejectLimit === undefined || entry.operationalRejectPct === null ? 'NOT_AVAILABLE' : overLimit(entry.operationalRejectPct, entry.rejectLimit) ? 'Above entered reference limit' : 'At or below entered reference limit'}</td>
+                <td>{entry.thresholdDecisionState}{entry.thresholdProfileId ? ` · Profile ${entry.thresholdProfileId}` : ''}</td>
                 <td>{entry.productionFormula ?? '—'}</td>
                 <td>{entry.rejectReason}{entry.analysis ? ` — ${entry.analysis}` : ''}</td>
               </tr>

@@ -3,6 +3,7 @@ import type { Page } from '../../../shared/pagination/page.js';
 import type { RejectReportStatus, RejectReportType } from '../domain/reject-report.js';
 import type { IssueSlip, IssueSlipApprovalRole, IssueSlipFields } from '../domain/issue-slip.js';
 import type { DailyReject, DailyRejectEntryInput } from '../domain/daily-reject.js';
+import type { DatabaseTransaction } from '../../../shared/database/transaction.js';
 
 export interface RejectReportListFilter {
   type?: RejectReportType;
@@ -179,6 +180,10 @@ export interface RejectReportRepository {
     id: string; expectedVersion: bigint; actor: ActorContext; requestId: string;
     idempotencyKey: string; action: 'SUBMIT_FOR_QC' | 'QC_REVIEW' | 'QC_RETURN' | 'SUPERVISOR_APPROVE'; reason?: string;
   }): Promise<DailyReject>;
+
+  resolveThresholdApproval(input: { entryId: string; expectedVersion: bigint; actor: ActorContext;
+    action: 'APPROVE' | 'REJECT' | 'RETURN'; reason?: string; requestId: string;
+    transaction: DatabaseTransaction }): Promise<{ subjectId: string; version: bigint; state: string }>;
 
   voidReport(input: {
     id: string;

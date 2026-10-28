@@ -1,0 +1,93 @@
+import AppLayout from '../../ui/layouts/AppLayout.astro';
+import ErrorState from '../../ui/components/feedback/ErrorState.astro';
+import { rejectLimitProfileDependencies } from '../../modules/reject-reports/application/dependencies.js';
+import { isNamedSystemOwner } from '../../shared/authorization/p05-authority.js';
+import { actions } from 'astro:actions';
+
+const actor = Astro.locals.actor;
+if (!actor) return Astro.redirect(`/login?returnTo=${encodeURIComponent(Astro.url.pathname)}`);
+if (!isNamedSystemOwner(actor)) Astro.response.status = 403;
+const profiles = isNamedSystemOwner(actor) ? await rejectLimitProfileDependencies().list() : [];
+let feedback = '';
+let failed = false;
+if (Astro.request.method === 'POST' && isNamedSystemOwner(actor)) {
+  if (Astro.request.headers.get('origin') !== Astro.url.origin) {
+    Astro.response.status = 403;
+    feedback = 'This request must come from this application origin.';
+    failed = true;
+  } else {
+  const form = await Astro.request.formData();
+  try {
+    if (form.get('intent') === 'create') {
+      const sourceFile = form.get('sourceFile');
+      if (!(sourceFile instanceof File)) throw new Error('A source file is required.');
+      const result = await Astro.callAction(actions.rejectReports.createRejectLimitProfile, {
+        itemCode: String(form.get('itemCode') ?? ''), line: String(form.get('line') ?? '') || undefined,
+        site: String(form.get('site') ?? '') || undefined, shift: String(form.get('shift') ?? '') || undefined,
+        formulaId: String(form.get('formulaId') ?? ''), denominator: String(form.get('formulaId') ?? '') === 'REJECT_OVER_TOTAL_PRODUCED' ? 'totalProducedQty' : 'goodQty',
+        limit: String(form.get('limit') ?? ''), unit: String(form.get('unit') ?? ''),
+        baselineStart: String(form.get('baselineStart') ?? ''), baselineEnd: String(form.get('baselineEnd') ?? ''), sourceFile,
+      });
+      if (result.error) throw new Error('The source could not be recorded.');
+      return Astro.redirect(Astro.url.pathname, 303);
+    }
+    const result = await Astro.callAction(actions.rejectReports.transitionRejectLimitProfile, {
+      profileId: String(form.get('profileId') ?? ''), expectedVersion: String(form.get('expectedVersion') ?? ''),
+      action: String(form.get('action') ?? ''), reason: String(form.get('reason') ?? ''),
+      effectiveFrom: String(form.get('effectiveFrom') ?? '') || undefined,
+      effectiveTo: String(form.get('effectiveTo') ?? '') || undefined,
+    });
+    if (result.error) throw new Error('The profile could not be updated.');
+    return Astro.redirect(Astro.url.pathname, 303);
+  } catch {
+    feedback = 'The request was not accepted. Review the source, current version, and required fields.';
+    failed = true;
+  }
+  }
+}
+---
+<AppLayout title="Reject limit profiles" locale="en" direction="ltr">
+  {!isNamedSystemOwner(actor) ? <ErrorState title="Owner access required" description="Only the configured active System Owner can review or activate reject limit profiles." retryHref="/reject-reports" /> : <>
+    <header class="page-head"><div><h1>Reject limit profiles</h1><p class="lede">Historical baselines remain inactive until reviewed and activated by the configured System Owner.</p></div><a href="/reject-reports">Back to reject reports</a></header>
+    <p role={failed ? 'alert' : 'status'} aria-live={failed ? 'assertive' : 'polite'}>{feedback}</p>
+    <section class="panel" aria-labelledby="import-title">
+      <h2 id="import-title">Import a baseline as a draft</h2>
+      <p>Upload the source file. Its SHA-256 digest is recorded with the entered baseline. Uploading does not approve the source or threshold.</p>
+      <form method="post" enctype="multipart/form-data">
+        <input type="hidden" name="intent" value="create" />
+        <label>Item code <input name="itemCode" required maxlength="100" /></label>
+        <label>Line <input name="line" maxlength="200" /></label>
+        <label>Site <input name="site" maxlength="200" /></label>
+        <label>Shift <input name="shift" maxlength="50" /></label>
+        <label>Formula <select name="formulaId" required><option value="REJECT_OVER_GOOD">Reject / Good</option><option value="REJECT_OVER_TOTAL_PRODUCED">Reject / Total Produced</option></select></label>
+        <label>Threshold value <input name="limit" required inputmode="decimal" pattern="[0-9]+(\.[0-9]+)?" /></label>
+        <label>Unit <input name="unit" required maxlength="50" /></label>
+        <label>Baseline period start <input type="date" name="baselineStart" required /></label>
+        <label>Baseline period end <input type="date" name="baselineEnd" required /></label>
+        <label>Source file <input type="file" name="sourceFile" required /></label>
+        <button type="submit">Save draft for review</button>
+      </form>
+    </section>
+    <section class="panel" aria-labelledby="profiles-title">
+      <h2 id="profiles-title">Profile history</h2>
+      {profiles.length ? <div class="table-wrap" role="region" aria-label="Reject limit profile history" tabindex="0"><table><caption>Reject limit profile history</caption><thead><tr><th>Item</th><th>Formula / denominator</th><th>Limit</th><th>Baseline</th><th>Source digest</th><th>Revision / state</th><th>Actions</th></tr></thead><tbody>{profiles.map((profile: any) => <tr>
+        <td>{profile.item_code}<small>{[profile.line, profile.site, profile.shift].filter(Boolean).join(' · ') || 'All unscoped report dimensions'}</small></td>
+        <td>{profile.formula_id} v{profile.formula_version}<small>{profile.denominator}</small></td>
+        <td>{profile.limit_value} {profile.unit}</td>
+        <td>{profile.baseline_period_start.toISOString().slice(0, 10)} – {profile.baseline_period_end.toISOString().slice(0, 10)}</td>
+        <td><small>{profile.source_file_name}</small><code>{profile.source_file_digest}</code></td>
+        <td>{profile.revision} · {profile.state}</td>
+        <td>{profile.state === 'REVIEW_REQUIRED' && <><form method="post"><input type="hidden" name="profileId" value={profile.id} /><input type="hidden" name="expectedVersion" value={String(profile.version)} /><input type="hidden" name="action" value="REVIEW" /><label>Review reason <input name="reason" required /></label><button>Record review</button></form><form method="post"><input type="hidden" name="profileId" value={profile.id} /><input type="hidden" name="expectedVersion" value={String(profile.version)} /><input type="hidden" name="action" value="REJECT" /><label>Rejection reason <input name="reason" required /></label><button>Reject draft</button></form></>}
+          {profile.state === 'REVIEWED' && <form method="post"><input type="hidden" name="profileId" value={profile.id} /><input type="hidden" name="expectedVersion" value={String(profile.version)} /><input type="hidden" name="action" value="ACTIVATE" /><label>Effective from <input type="datetime-local" name="effectiveFrom" required /></label><label>Effective to (optional) <input type="datetime-local" name="effectiveTo" /></label><label>Activation reason <input name="reason" required /></label><button>Activate revision</button></form>}</td>
+      </tr>)}</tbody></table></div> : <p>No baseline profiles have been imported.</p>}
+    </section>
+    <p>Profiles are policy data only. Activation does not create NCRs, determine scrap or rework, or release product.</p>
+  </>}
+</AppLayout>
+
+<style>
+  form { display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,15rem),1fr)); gap:var(--space-4); }
+  label { display:grid; gap:var(--space-2); }
+  input,select,button { min-height:44px; }
+  td small,td code { display:block; overflow-wrap:anywhere; }
+</style>

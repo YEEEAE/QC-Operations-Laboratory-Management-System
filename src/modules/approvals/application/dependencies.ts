@@ -1,5 +1,5 @@
 import { getDatabase } from '../../../shared/database/database.js';
-import { PostgresAuditRepository } from '../../../shared/audit/postgres-audit-repository.js';
+import { rejectReportActionDependencies } from '../../reject-reports/application/dependencies.js';
 import { PostgresOutboxRepository } from '../../../shared/outbox/postgres-outbox-repository.js';
 import { Argon2idPasswordHasher } from '../../identity/security/argon2-password-hasher.js';
 import { PostgresUserRepository } from '../../identity/infrastructure/postgres-user-repository.js';
@@ -21,6 +21,7 @@ import { changeRequestsActionDependencies } from '../../change-requests/applicat
 import { AppError } from '../../../shared/errors/app-error.js';
 import { getDocumentApprovalEvidence } from './document-approval-evidence.js';
 import { OWNER_APPROVAL_DEFERRAL } from './owner-approval-policy.js';
+import { PostgresAuditRepository } from '../../../shared/audit/postgres-audit-repository.js';
 
 const blocked = async (): Promise<never> => {
   throw new AppError('AUTHZ_DENIED', { userSafe: true });
@@ -31,6 +32,7 @@ function transitionDependencies() {
   const laboratory = laboratoryActionDependencies();
   const quarantine = quarantineActionDependencies();
   const changeRequests = changeRequestsActionDependencies();
+  const rejectReports = rejectReportActionDependencies();
   const documentsTransition: SubjectTransition = {
     decisions: ['APPROVE'],
     execute: async (input) => {
@@ -108,11 +110,21 @@ function transitionDependencies() {
       };
     },
   };
+  const rejectThresholdTransition: SubjectTransition = {
+    decisions: ['APPROVE', 'REJECT', 'RETURN'],
+    execute: async (input) => {
+      return rejectReports.resolveThresholdApproval.execute({
+        entryId: input.subjectId, expectedVersion: input.expectedVersion, actor: input.actor,
+        action: input.action, reason: input.reason, requestId: input.requestId, transaction: input.transaction,
+      });
+    },
+  };
   return {
     DOCUMENT_VERSION: documentsTransition,
     LAB_TEST: labTransition,
     INSPECTION_REPORT: inspectionTransition,
     CHANGE_REQUEST: changeRequestTransition,
+    DAILY_REJECT_THRESHOLD: rejectThresholdTransition,
   };
 }
 

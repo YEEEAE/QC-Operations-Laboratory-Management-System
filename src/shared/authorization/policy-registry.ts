@@ -1020,6 +1020,11 @@ const policies: readonly AuthorizationPolicy[] = [
   { permission: 'PERM-RREJ-QC-REVIEW', action: 'QC_REVIEW', entityType: 'REJECT_REPORT', states: ['SUBMITTED_FOR_QC'] },
   { permission: 'PERM-RREJ-QC-REVIEW', action: 'QC_RETURN', entityType: 'REJECT_REPORT', states: ['SUBMITTED_FOR_QC'] },
   { permission: 'PERM-RREJ-SUPERVISOR-APPROVE', action: 'SUPERVISOR_APPROVE', entityType: 'REJECT_REPORT', states: ['QC_REVIEWED'] },
+  // Threshold escalation decisions are explicit and remain assignment, scope,
+  // state, version, and permission gated. No role grants are implied here.
+  { permission: 'PERM-RREJ-APPROVE', action: 'APPROVE', entityType: 'DAILY_REJECT_THRESHOLD', states: ['PENDING'] },
+  { permission: 'PERM-RREJ-REJECT', action: 'REJECT', entityType: 'DAILY_REJECT_THRESHOLD', states: ['PENDING'] },
+  { permission: 'PERM-RREJ-RETURN', action: 'RETURN', entityType: 'DAILY_REJECT_THRESHOLD', states: ['PENDING'] },
   {
     permission: 'PERM-RREJ-VOID',
     action: 'VOID',

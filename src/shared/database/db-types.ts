@@ -1377,6 +1377,23 @@ export interface ApprovalWorkItemsTable {
   completed_at: Date | null;
   version: Generated<bigint>;
 }
+export interface RejectLimitProfilesTable {
+  id: Generated<string>; item_code: string; line: string | null; site: string | null; shift: string | null;
+  formula_id: string; formula_version: number; denominator: string; limit_value: string | number; unit: string;
+  baseline_period_start: Date; baseline_period_end: Date; source_file_name: string; source_file_digest: string;
+  revision: number; state: string; created_by: string; created_at: Generated<Date>; reviewed_by: string | null;
+  reviewed_at: Date | null; approved_by: string | null; effective_from: Date | null; effective_to: Date | null; version: Generated<bigint>;
+}
+export interface RejectLimitProfileEventsTable {
+  id: Generated<string>; profile_id: string; action: string; actor_id: string; occurred_at: Generated<Date>;
+  reason: string; profile_revision: number; snapshot: unknown; snapshot_sha256: string; request_id: string;
+}
+export interface DailyRejectThresholdDecisionsTable {
+  id: Generated<string>; report_id: string; report_version: bigint; entry_id: string; decision_state: string;
+  profile_id: string | null; observed_rate: string | number | null; threshold_value: string | number | null;
+  formula_id: string | null; source_file_digest: string | null; approval_case_id: string | null;
+  approval_state: string; version: Generated<bigint>; snapshot: unknown; snapshot_sha256: string; created_at: Generated<Date>;
+}
 export interface ApprovalDecisionsTable {
   id: Generated<string>;
   approval_case_id: string;
@@ -1870,6 +1887,9 @@ export interface DatabaseSchema {
   change_application_attempts: ChangeApplicationAttemptsTable;
   approval_cases: ApprovalCasesTable;
   approval_work_items: ApprovalWorkItemsTable;
+  reject_limit_profiles: RejectLimitProfilesTable;
+  reject_limit_profile_events: RejectLimitProfileEventsTable;
+  daily_reject_threshold_decisions: DailyRejectThresholdDecisionsTable;
   approval_decisions: ApprovalDecisionsTable;
   approval_decision_events: ApprovalDecisionEventsTable;
   electronic_signatures: ElectronicSignaturesTable;

@@ -18,6 +18,10 @@ import { VoidRejectReportUseCase } from './void-reject-report.js';
 import { GetRejectDashboardUseCase } from './get-reject-dashboard.js';
 import { GetRejectReportAvailabilityUseCase } from './get-reject-report-availability.js';
 import { FocusComplianceService } from './focus-compliance.js';
+import { RejectLimitProfilesUseCase } from './reject-limit-profiles.js';
+import { PostgresRejectLimitProfileRepository } from '../infrastructure/reject-limit-profile-repository.js';
+import { PostgresApprovalRepository } from '../../approvals/infrastructure/postgres-repository.js';
+import { ResolveThresholdApprovalUseCase } from './resolve-threshold-approval.js';
 
 export function rejectReportReadDependencies() {
   const repository = new PostgresRejectReportRepository(getDatabase());
@@ -33,10 +37,13 @@ export function rejectReportReadDependencies() {
 
 export function rejectReportActionDependencies() {
   const database = getDatabase();
+  const audit = new PostgresAuditRepository(database);
+  const outbox = new PostgresOutboxRepository(database);
   const repository = new PostgresRejectReportRepository(
     database,
-    new PostgresAuditRepository(database),
-    new PostgresOutboxRepository(database),
+    audit,
+    outbox,
+    new PostgresApprovalRepository(database, audit, outbox),
   );
   return {
     createIssueSlip: new CreateIssueSlipUseCase(repository),
@@ -47,7 +54,12 @@ export function rejectReportActionDependencies() {
     createDailyReject: new CreateDailyRejectUseCase(repository),
     appendDailyRejectEntry: new AppendDailyRejectEntryUseCase(repository),
     transitionDailyRejectReview: new TransitionDailyRejectReviewUseCase(repository),
+    resolveThresholdApproval: new ResolveThresholdApprovalUseCase(repository),
     voidReport: new VoidRejectReportUseCase(repository),
     focusCompliance: new FocusComplianceService(database),
   };
+}
+
+export function rejectLimitProfileDependencies() {
+  return new RejectLimitProfilesUseCase(new PostgresRejectLimitProfileRepository(getDatabase()));
 }

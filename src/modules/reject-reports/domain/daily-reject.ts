@@ -52,6 +52,8 @@ export interface DailyRejectEntry extends DailyRejectEntryInput {
   operationalFormulaVersion?: number;
   quantityProvenance?: 'USER_RECORDED';
   productionBalanceStatus?: 'NOT_CONFIGURED';
+  thresholdDecisionState: 'REVIEW_REQUIRED' | 'NO_MATCH' | 'CONFLICT' | 'BELOW_LIMIT' | 'ESCALATED';
+  thresholdProfileId?: string;
   version: bigint;
 }
 

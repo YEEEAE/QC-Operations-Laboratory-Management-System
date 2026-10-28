@@ -3,6 +3,7 @@ import { z } from 'astro:schema';
 import { toActionError } from '../shared/errors/action-error.js';
 import { AppError } from '../shared/errors/app-error.js';
 import { rejectReportActionDependencies } from '../modules/reject-reports/application/dependencies.js';
+import { rejectLimitProfileDependencies } from '../modules/reject-reports/application/dependencies.js';
 const ISSUE_SLIP_APPROVAL_ROLES = ['SUPERVISOR', 'QC_MANAGER', 'FACTORY_DIRECTOR'] as const;
 
 const repo = () => rejectReportActionDependencies();
@@ -278,6 +279,31 @@ const transitionDailyRejectReview = defineAction({
   }), context),
 });
 
+const createRejectLimitProfile = defineAction({
+  accept: 'form',
+  input: z.object({ itemCode: z.string().min(1).max(100), line: z.string().max(200).optional(),
+    site: z.string().max(200).optional(), shift: z.string().max(50).optional(),
+    formulaId: z.enum(['REJECT_OVER_GOOD', 'REJECT_OVER_TOTAL_PRODUCED']),
+    denominator: z.string().min(1).max(100), limit: decimalString, unit: z.string().min(1).max(50),
+    baselineStart: z.coerce.date(), baselineEnd: z.coerce.date(), sourceFile: z.file().max(10_000_000) }),
+  handler: (input, context) => run(async () => rejectLimitProfileDependencies().create({
+    itemCode: input.itemCode, line: input.line, site: input.site, shift: input.shift, formulaId: input.formulaId,
+    denominator: input.denominator, limit: input.limit, unit: input.unit, baselineStart: input.baselineStart,
+    baselineEnd: input.baselineEnd, sourceFileName: input.sourceFile.name,
+    sourceBytes: new Uint8Array(await input.sourceFile.arrayBuffer()), actor: actor(context), requestId: requestId(context),
+  }), context),
+});
+
+const transitionRejectLimitProfile = defineAction({
+  accept: 'json',
+  input: z.object({ profileId: z.string().uuid(), expectedVersion: z.coerce.bigint(),
+    action: z.enum(['REVIEW', 'REJECT', 'ACTIVATE']), reason: z.string().min(1).max(2000),
+    effectiveFrom: z.coerce.date().optional(), effectiveTo: z.coerce.date().optional() }),
+  handler: (input, context) => run(() => rejectLimitProfileDependencies().transition({
+    ...input, actor: actor(context), requestId: requestId(context),
+  }), context),
+});
+
 const voidReport = defineAction({
   accept: 'json',
   input: z.object({
@@ -308,5 +334,7 @@ export const rejectReports = {
   createDailyReject,
   appendDailyRejectEntry,
   transitionDailyRejectReview,
+  createRejectLimitProfile,
+  transitionRejectLimitProfile,
   voidReport,
 };

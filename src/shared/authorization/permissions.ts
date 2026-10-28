@@ -208,6 +208,9 @@ export const PERMISSION_CODES = [
   'PERM-RREJ-SUPERVISOR-APPROVE',
   'PERM-RREJ-VOID',
   'PERM-RREJ-ADMIN-CORRECT',
+  'PERM-RREJ-APPROVE',
+  'PERM-RREJ-REJECT',
+  'PERM-RREJ-RETURN',
 ] as const;
 
 export type PermissionCode = (typeof PERMISSION_CODES)[number];

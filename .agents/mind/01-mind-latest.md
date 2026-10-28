@@ -1,3 +1,8 @@
+- **2026-10-29 — REJ-02 / Controlled reject thresholds and escalation**
+  - Changed: Added source-digest-bound 2025 threshold drafts, named-owner review/activation, exact formula/unit matching, finalization snapshots, owner-assigned approval cases/outbox requests, and audited cancellation for pending escalations on report void.
+  - Evidence: Source review only; no tests, builds, lint, scripts, migration execution, SQL, database access, or deployment.
+  - State: PARTIAL — historical baseline source values and Reject Reports approval-role grants remain unresolved; migration `0075` is source only, and outbox delivery is not established.
+  - Key files: `db/migrations/0075_reject_limit_profiles_and_escalation.sql`, `src/modules/reject-reports/`, `src/modules/approvals/`.
 - **2026-10-28 — REJ-05 / Daily reject review workflow**
   - Changed: Added separate submit/QC review-return/Supervisor approval transitions, append-only versioned decision events, durable command keys, and approved snapshots in the approval outbox path. Legacy `FINALIZED` rows remain historical and are not promoted.
   - Evidence: Source diff review only; no tests, builds, lint, scripts, migrations, SQL, database access, or deployment.
@@ -506,7 +511,7 @@
 - **تحديث التحقق بعد الاستمرار 2026-10-16:** authenticated selected E2E 40/0/5; axe 0 violations في sweep 88 render requests؛ E2E responsive 320–1920 + 200/400% وforced-colors selected checks PASS. قارئ شاشة فعلي NOT VERIFIED؛ full `pnpm run test:e2e` skipped per user instruction. Batches 3–7 باقية PARTIAL؛ انظر السجل الأعلى وتقرير continuation. No WCAG AA conformance claim.
 
 ### Reporting copies
-- Reject Reports preserve the legacy paper-form metric `Reject / Good * 100` in `reject_pct`. New daily entries may record total-produced/rework/hold quantities with one explicit shared quantity unit; `Reject / Total Produced * 100` is stored separately with formula ID/version and user-recorded provenance. Historical total-produced values are not backfilled. Production balance rules and approved threshold authority remain unavailable; show balance `NOT_CONFIGURED` and do not present entered limits as official decisions.
+- Reject Reports preserve the legacy paper-form metric `Reject / Good * 100` in `reject_pct`. New daily entries may record total-produced/rework/hold quantities with one explicit shared quantity unit; `Reject / Total Produced * 100` is stored separately with formula ID/version and user-recorded provenance. Historical total-produced values are not backfilled. Production balance rules and approved threshold values remain unavailable; profile drafts are source-digest bound and inactive until named-owner review/activation. Missing, conflicting, or unmatched thresholds remain `REVIEW_REQUIRED`/`CONFLICT`; entered legacy limits remain reference-only. Threshold escalations do not imply NCR, disposition, or release.
 - `/reports/[reportCode]` binds CSV/XLSX downloads to the displayed dataset digest; a changed dataset returns stale conflict and requires refresh. This is request-local, not a durable snapshot. Print output and Reject Reports print views are labeled unapproved/informational; laboratory template print remains transcription-only.
 - No report-run/artifact retention behavior is inferred. `REQ-RPT-005` persistence semantics and retention remain Reporting/QMS-owner decisions; current candidate evidence is `audit/2026-09-30/handoff-QC-ADP26-30.md`.
 

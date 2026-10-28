@@ -58,6 +58,11 @@ export interface RecordApprovalDecisionInput {
 
 export interface ApprovalRepository {
   runDecisionTransaction<T>(work: (transaction: DatabaseTransaction) => Promise<T>): Promise<T>;
+  createRejectThresholdRequest(input: { subjectId: string; subjectVersion: bigint; requestedBy: string;
+    assignedUserId: string; reportId: string; reportNo: string; itemCode?: string; itemDescription: string;
+    lot?: string; rate: string; threshold: string; snapshotHash: string }, transaction: DatabaseTransaction): Promise<string>;
+  cancelPending(input: { approvalCaseId: string; reportId: string; actor: ActorContext; requestId: string; reason: string },
+    transaction: DatabaseTransaction): Promise<void>;
   listActionable(input: {
     actor: ActorContext;
     /**

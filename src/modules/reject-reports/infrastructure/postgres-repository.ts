@@ -9,6 +9,7 @@ import { uuidv7 } from '../../../shared/id/uuid.js';
 import type { AuditRepository } from '../../../shared/audit/audit-repository.js';
 import { PostgresAuditRepository } from '../../../shared/audit/postgres-audit-repository.js';
 import type { OutboxRepository } from '../../../shared/outbox/outbox-repository.js';
+import type { ApprovalRepository } from '../../approvals/ports/repository.js';
 import { PostgresOutboxRepository } from '../../../shared/outbox/postgres-outbox-repository.js';
 import type { ActorContext } from '../../../shared/authorization/types.js';
 import type { Page } from '../../../shared/pagination/page.js';
@@ -16,6 +17,7 @@ import { formatReportNo, reportNoDateKey, reportNoPrefix } from '../domain/repor
 import { transitionDailyRejectStatus } from '../domain/reject-report.js';
 import {
   computeRejectPercent,
+  compareDecimalStrings,
   PAPER_REJECT_PERCENTAGE_FORMULA,
   PRODUCED_REJECT_PERCENTAGE_FORMULA,
 } from '../domain/reject-percentage.js';
@@ -226,6 +228,8 @@ function mapEntry(row: EntryRow): DailyRejectEntry {
     operationalFormulaVersion: row.operational_formula_version ?? undefined,
     quantityProvenance: row.quantity_provenance as DailyRejectEntry['quantityProvenance'],
     productionBalanceStatus: row.production_balance_status as DailyRejectEntry['productionBalanceStatus'],
+    thresholdDecisionState: row.threshold_decision_state as DailyRejectEntry['thresholdDecisionState'],
+    thresholdProfileId: row.threshold_profile_id ?? undefined,
     rejectLimit: row.reject_limit === null ? undefined : String(row.reject_limit),
     productionFormula: row.production_formula ?? undefined,
     rejectReason: row.reject_reason,
@@ -311,6 +315,7 @@ export class PostgresRejectReportRepository implements RejectReportRepository {
     private readonly database: Kysely<DatabaseSchema>,
     private readonly audit?: AuditRepository,
     private readonly outbox?: OutboxRepository,
+    private readonly approvals?: ApprovalRepository,
   ) {}
 
   /**
@@ -1205,10 +1210,108 @@ export class PostgresRejectReportRepository implements RejectReportRepository {
         eventType: 'DAILY_REJECT_SUPERVISOR_APPROVED', aggregateType: 'REJECT_REPORT', aggregateId: input.id,
         payload: { reportNo: updated.report_no, snapshotHash, snapshot }, dedupeKey: `daily-reject-approved:${input.id}:${input.expectedVersion + 1n}`,
       });
+      if (input.action === 'SUPERVISOR_APPROVE') {
+        const configuredOwnerId = process.env.QC_SYSTEM_OWNER_USER_ID?.trim();
+        const configuredOwner = configuredOwnerId ? await tx.selectFrom('users')
+          .innerJoin('user_roles', 'user_roles.user_id', 'users.id')
+          .innerJoin('roles', 'roles.id', 'user_roles.role_id')
+          .select('users.id').where('users.id', '=', configuredOwnerId).where('users.account_state', '=', 'ACTIVE')
+          .where('user_roles.revoked_at', 'is', null).where('roles.code', '=', 'SYSTEM_OWNER')
+          .where('roles.active', '=', true).executeTakeFirst() : undefined;
+        const ownerId = configuredOwner?.id;
+        const effectiveAt = new Date(current.report_date);
+        const entries = await tx.selectFrom('daily_reject_entries').selectAll()
+          .where('report_id', '=', input.id).orderBy('position', 'asc').execute();
+        for (const entry of entries) {
+          const formulaOptions = [
+            { id: PAPER_REJECT_PERCENTAGE_FORMULA.id, denominator: 'goodQty', unit: entry.rm_unit,
+              rate: entry.reject_pct === null ? null : String(entry.reject_pct) },
+            { id: PRODUCED_REJECT_PERCENTAGE_FORMULA.id, denominator: 'totalProducedQty', unit: entry.quantity_unit,
+              rate: entry.operational_reject_pct === null ? null : String(entry.operational_reject_pct) },
+          ];
+          const matchableFormulaOptions = formulaOptions.filter((option) => option.rate !== null && option.unit);
+          const profileRows = entry.item_code && matchableFormulaOptions.length
+            ? await tx.selectFrom('reject_limit_profiles').selectAll()
+                .where('item_code', '=', entry.item_code)
+                .where('formula_id', 'in', formulaOptions.map((option) => option.id))
+                .where('state', '=', 'ACTIVE')
+                .where('effective_from', '<=', effectiveAt)
+                .where((eb) => eb.or([eb('effective_to', 'is', null), eb('effective_to', '>', effectiveAt)]))
+                // The report does not carry controlled line/site identities;
+                // scoped profiles therefore cannot be selected from department text.
+                .where('line', 'is', null).where('site', 'is', null)
+                .where((eb) => eb.or([eb('shift', 'is', null), eb('shift', '=', current.shift)]))
+                .where((eb) => eb.or(matchableFormulaOptions
+                  .map((option) => eb.and([
+                    eb('formula_id', '=', option.id), eb('denominator', '=', option.denominator), eb('unit', '=', option.unit!),
+                  ]))))
+                .execute()
+            : [];
+          const profile = profileRows.length === 1 ? profileRows[0] : undefined;
+          const selectedFormula = profile ? formulaOptions.find((option) => option.id === profile.formula_id) : undefined;
+          const availableFormulas = formulaOptions.filter((option) => option.rate !== null && option.unit);
+          const fallbackFormula = !profile && profileRows.length === 0 && availableFormulas.length === 1
+            ? availableFormulas[0] : undefined;
+          const rate = selectedFormula?.rate ?? fallbackFormula?.rate ?? null;
+          const formulaId = profile?.formula_id ?? fallbackFormula?.id ?? null;
+          const decisionState = profile
+            ? compareDecimalStrings(rate!, String(profile.limit_value)) > 0 ? 'ESCALATED' : 'BELOW_LIMIT'
+            : profileRows.length > 1 ? 'CONFLICT' : 'REVIEW_REQUIRED';
+          const persistedDecisionState = decisionState === 'ESCALATED' && (!ownerId || !this.approvals)
+            ? 'REVIEW_REQUIRED' : decisionState;
+          const snapshot = {
+            reportId: input.id, reportNo: updated.report_no, reportVersion: String(input.expectedVersion + 1n),
+            itemCode: entry.item_code, itemDescription: entry.item_description, lot: entry.lot_no,
+            rate, formulaId, unit: selectedFormula?.unit ?? fallbackFormula?.unit ?? null,
+            candidateRates: formulaOptions.map((option) => ({ formulaId: option.id, denominator: option.denominator,
+              unit: option.unit, observedRate: option.rate })),
+            profile: profile ? { id: profile.id, revision: profile.revision, limit: String(profile.limit_value),
+              sourceFileName: profile.source_file_name, sourceFileDigest: profile.source_file_digest,
+              baselinePeriodStart: profile.baseline_period_start, baselinePeriodEnd: profile.baseline_period_end } : null,
+            resolution: persistedDecisionState,
+          };
+          const snapshotHash = createHash('sha256').update(stableJson(snapshot)).digest('hex');
+          let approvalCaseId: string | null = null;
+          if (decisionState === 'ESCALATED' && ownerId && this.approvals) {
+            approvalCaseId = await this.approvals.createRejectThresholdRequest({ subjectId: entry.id,
+              subjectVersion: BigInt(entry.version), requestedBy: input.actor.id, assignedUserId: ownerId,
+              reportId: input.id, reportNo: updated.report_no, itemCode: entry.item_code ?? undefined,
+              itemDescription: entry.item_description, lot: entry.lot_no ?? undefined, rate: rate!,
+              threshold: String(profile!.limit_value), snapshotHash }, tx);
+          }
+          await tx.insertInto('daily_reject_threshold_decisions').values({
+            report_id: input.id, report_version: input.expectedVersion + 1n, entry_id: entry.id,
+            decision_state: persistedDecisionState,
+            profile_id: profile?.id ?? null, observed_rate: rate, threshold_value: profile?.limit_value ?? null,
+            formula_id: formulaId ?? null, source_file_digest: profile?.source_file_digest ?? null,
+            approval_case_id: approvalCaseId, snapshot, snapshot_sha256: snapshotHash,
+          }).execute();
+          await tx.updateTable('daily_reject_entries').set({
+            threshold_decision_state: persistedDecisionState,
+            threshold_profile_id: profile?.id ?? null,
+          }).where('id', '=', entry.id).execute();
+        }
+      }
       const result = await this.loadDaily(tx, input.id);
       if (!result) throw new AppError('SYSTEM_INTERNAL');
       return result;
     });
+  }
+
+  async resolveThresholdApproval(input: Parameters<RejectReportRepository['resolveThresholdApproval']>[0]) {
+    const state = input.action === 'APPROVE' ? 'APPROVED' : input.action === 'REJECT' ? 'REJECTED' : 'RETURNED';
+    const updated = await input.transaction.updateTable('daily_reject_threshold_decisions')
+      .set({ approval_state: state, version: input.expectedVersion + 1n })
+      .where('entry_id', '=', input.entryId).where('decision_state', '=', 'ESCALATED')
+      .where('approval_state', '=', 'PENDING').where('version', '=', input.expectedVersion)
+      .returning(['report_id', 'report_version', 'version']).executeTakeFirst();
+    if (!updated) throw new AppError('CONFLICT_STALE_VERSION', { userSafe: true });
+    await new PostgresAuditRepository(input.transaction).append({ actorType: 'USER', actorId: input.actor.id,
+      subjectType: 'DAILY_REJECT_THRESHOLD', subjectId: input.entryId, action: `REJECT_THRESHOLD_${state}`,
+      oldState: 'PENDING', newState: state, reason: input.reason, requestId: input.requestId,
+      payload: { reportId: updated.report_id, reportVersion: String(updated.report_version) },
+    });
+    return { subjectId: input.entryId, version: BigInt(updated.version), state };
   }
 
   /** Non-destructive void; COMPLETED slips are rejected by the use case. */
@@ -1245,6 +1348,32 @@ export class PostgresRejectReportRepository implements RejectReportRepository {
           reason: input.reason,
           requestId: input.requestId,
         });
+        if (current.report_type === 'DAILY_REJECT') {
+          const escalations = await tx.selectFrom('daily_reject_threshold_decisions')
+            .select(['entry_id', 'approval_case_id', 'approval_state']).where('report_id', '=', input.id)
+            .where('approval_case_id', 'is not', null).execute();
+          for (const escalation of escalations) {
+            if (!escalation.approval_case_id) continue;
+            if (escalation.approval_state === 'PENDING') {
+              if (!this.approvals) throw new AppError('SYSTEM_INTERNAL');
+              await this.approvals.cancelPending({ approvalCaseId: escalation.approval_case_id,
+                reportId: input.id, actor: input.actor, requestId: input.requestId, reason: input.reason }, tx);
+              await tx.updateTable('daily_reject_threshold_decisions').set((eb) => ({ approval_state: 'CANCELLED',
+                version: eb('version', '+', 1n) })).where('entry_id', '=', escalation.entry_id)
+                .where('approval_state', '=', 'PENDING').execute();
+            } else {
+              // Preserve an already recorded approval decision. Link the later
+              // report void as a separate audit event rather than rewriting it.
+              await this.auditFor(tx as Transaction<DatabaseSchema>)?.append({ actorType: 'USER',
+                actorId: input.actor.id, subjectType: 'DAILY_REJECT_THRESHOLD', subjectId: escalation.entry_id,
+                action: 'REJECT_THRESHOLD_ESCALATION_INVALIDATED_BY_REPORT_VOID',
+                oldState: escalation.approval_state, newState: escalation.approval_state,
+                reason: input.reason, requestId: input.requestId,
+                payload: { reportId: input.id, approvalCaseId: escalation.approval_case_id },
+              });
+            }
+          }
+        }
         await this.outboxFor(tx)?.enqueue({
           eventType: 'REJECT_REPORT_VOIDED',
           aggregateType: 'REJECT_REPORT',

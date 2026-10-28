@@ -19,6 +19,7 @@ const domainPrefix: Record<ApprovalRecord['approvalCase']['subjectType'], string
   RELEASE_CANDIDATE: 'REL',
   // QC-100-FINAL-004 Task 5: UAT acceptance rides the final-approval grant.
   UAT_CYCLE: 'APR',
+  DAILY_REJECT_THRESHOLD: 'RREJ',
 };
 
 export function isAssignedToActor(record: ApprovalRecord, actor: ActorContext): boolean {

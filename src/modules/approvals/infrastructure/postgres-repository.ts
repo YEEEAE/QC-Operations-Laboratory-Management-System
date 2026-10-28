@@ -89,6 +89,47 @@ export class PostgresApprovalRepository implements ApprovalRepository {
     return inTransaction(this.database, work);
   }
 
+  async createRejectThresholdRequest(input: Parameters<ApprovalRepository['createRejectThresholdRequest']>[0], transaction: DatabaseTransaction): Promise<string> {
+    const existing = await transaction.selectFrom('approval_cases').select('id')
+      .where('subject_type', '=', 'DAILY_REJECT_THRESHOLD').where('subject_id', '=', input.subjectId)
+      .where('subject_version', '=', input.subjectVersion).where('workflow_type', '=', 'REJECT_THRESHOLD_ESCALATION')
+      .executeTakeFirst();
+    if (existing) return existing.id;
+    const id = uuidv7();
+    await transaction.insertInto('approval_cases').values({ id, subject_type: 'DAILY_REJECT_THRESHOLD',
+      subject_id: input.subjectId, subject_version: input.subjectVersion, workflow_type: 'REJECT_THRESHOLD_ESCALATION',
+      state: 'PENDING', requested_by: input.requestedBy }).execute();
+    await transaction.insertInto('approval_work_items').values({ approval_case_id: id, step_no: 1,
+      work_type: 'APPROVAL', assigned_user_id: input.assignedUserId, assigned_role_requirement: null,
+      state: 'PENDING', assigned_at: new Date() }).execute();
+    await this.outboxFor(transaction as Transaction<DatabaseSchema>)?.enqueue({
+      eventType: 'REJECT_THRESHOLD_APPROVAL_REQUESTED', aggregateType: 'APPROVAL_CASE', aggregateId: id,
+      payload: { approvalCaseId: id, reportId: input.reportId, reportNo: input.reportNo,
+        itemCode: input.itemCode, itemDescription: input.itemDescription, lot: input.lot,
+        rate: input.rate, threshold: input.threshold, snapshotHash: input.snapshotHash },
+      dedupeKey: `reject-threshold-approval:${input.reportId}:${input.subjectId}:${input.subjectVersion}`,
+    });
+    return id;
+  }
+
+  async cancelPending(input: Parameters<ApprovalRepository['cancelPending']>[0], transaction: DatabaseTransaction): Promise<void> {
+    const row = await transaction.selectFrom('approval_cases').select(['state', 'subject_type', 'subject_id'])
+      .where('id', '=', input.approvalCaseId).forUpdate().executeTakeFirst();
+    if (!row || !['PENDING', 'IN_PROGRESS'].includes(row.state)) return;
+    const now = new Date();
+    await transaction.updateTable('approval_work_items').set((eb) => ({ state: 'CANCELLED',
+      completed_at: now, version: eb('version', '+', 1n) }))
+      .where('approval_case_id', '=', input.approvalCaseId).where('state', 'in', ['PENDING', 'IN_PROGRESS']).execute();
+    await transaction.updateTable('approval_cases').set((eb) => ({ state: 'CANCELLED',
+      completed_at: now, version: eb('version', '+', 1n) })).where('id', '=', input.approvalCaseId)
+      .where('state', 'in', ['PENDING', 'IN_PROGRESS']).execute();
+    await this.auditFor(transaction as Transaction<DatabaseSchema>)?.append({ actorType: 'USER', actorId: input.actor.id,
+      subjectType: row.subject_type, subjectId: row.subject_id, action: 'APPROVAL_CASE_CANCELLED',
+      oldState: row.state, newState: 'CANCELLED', reason: input.reason, requestId: input.requestId,
+      payload: { approvalCaseId: input.approvalCaseId, reportId: input.reportId },
+    });
+  }
+
   async listActionable(input: {
     actor: ActorContext;
     includeAllActionable?: boolean;
@@ -475,6 +516,25 @@ export class PostgresApprovalRepository implements ApprovalRepository {
               },
             }
           : undefined;
+      }
+      case 'DAILY_REJECT_THRESHOLD': {
+        const row = await this.database.selectFrom('daily_reject_threshold_decisions')
+          .innerJoin('daily_reject_entries', 'daily_reject_entries.id', 'daily_reject_threshold_decisions.entry_id')
+          .innerJoin('reject_reports', 'reject_reports.id', 'daily_reject_threshold_decisions.report_id')
+          .select(['daily_reject_threshold_decisions.report_version', 'daily_reject_threshold_decisions.snapshot',
+            'daily_reject_threshold_decisions.snapshot_sha256', 'reject_reports.created_by',
+            'reject_reports.status', 'daily_reject_entries.version as entry_version',
+            'daily_reject_threshold_decisions.version as decision_version',
+            'daily_reject_threshold_decisions.approval_state'])
+          .where('daily_reject_threshold_decisions.entry_id', '=', subjectId)
+          .where('daily_reject_threshold_decisions.decision_state', '=', 'ESCALATED')
+          .orderBy('daily_reject_threshold_decisions.report_version', 'desc').executeTakeFirst();
+        return row ? {
+          subjectType, subjectId, state: row.approval_state, version: BigInt(row.decision_version),
+          ownerId: row.created_by, authorId: row.created_by,
+          snapshotHash: row.snapshot_sha256, domain: 'REJECT_REPORTS',
+          reviewContext: { thresholdEscalation: row.snapshot },
+        } : undefined;
       }
       case 'LAB_TEST': {
         const row = await this.database
