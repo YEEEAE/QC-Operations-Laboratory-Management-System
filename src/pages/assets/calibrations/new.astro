@@ -51,7 +51,7 @@ if (canCreate) {
         label: identity,
         sourceStatus: equipmentEligibilityOptionLabel(
           identity,
-          eligibility.get(item.id) ?? { eligible: false, reason: 'NOT_ACTIVE' },
+          eligibility.get(item.id) ?? { eligible: false, status: 'Unknown source', reason: 'NOT_ACTIVE' },
           { includeSourceStates: true },
         ),
       };

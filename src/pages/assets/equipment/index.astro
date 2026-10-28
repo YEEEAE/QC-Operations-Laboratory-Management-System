@@ -198,9 +198,7 @@ const eligibilityReason = (reason: string | undefined) => {
                 <td><span class="state">{stateLabel(item.state)}</span></td>
                 <td>
                   {assessment
-                    ? assessment.eligible
-                      ? <span class="assessment">Eligible</span>
-                      : <span class="assessment">Not eligible: {eligibilityReason(assessment.reason)}</span>
+                    ? <span class="assessment">{assessment.status}{assessment.eligible ? '' : ` — ${eligibilityReason(assessment.reason)}`}</span>
                     : <span class="assessment">
                         {cell?.kind === 'DENIED' ? 'Not available in your authorized scope' : 'Not confirmed'}
                       </span>}

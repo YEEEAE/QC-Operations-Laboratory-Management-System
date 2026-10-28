@@ -28,6 +28,7 @@ export interface EquipmentUsageRequest {
 }
 export interface EquipmentEligibilityAssessment {
   eligible: boolean;
+  status: 'Available' | 'Calibration due' | 'Expired' | 'Out of service' | 'Under maintenance' | 'Unknown source';
   reason?:
     | 'UNDER_MAINTENANCE'
     | 'OUT_OF_SERVICE'
@@ -51,9 +52,9 @@ export class GetEquipmentEligibilityUseCase implements EquipmentEligibility {
     private readonly now = () => new Date(),
   ) {}
   async assess(actor: ActorContext, equipmentId: string): Promise<EquipmentEligibilityAssessment> {
-    if (!isUuid(equipmentId)) return { eligible: false, reason: 'NOT_ACTIVE' };
+    if (!isUuid(equipmentId)) return { eligible: false, status: 'Unknown source', reason: 'NOT_ACTIVE' };
     const equipment = await this.reader.getEquipment(equipmentId);
-    if (!equipment) return { eligible: false, reason: 'NOT_ACTIVE' };
+    if (!equipment) return { eligible: false, status: 'Unknown source', reason: 'NOT_ACTIVE' };
     const calibration = equipment.currentCalibrationId
       ? await this.reader.getCalibration(equipment.currentCalibrationId)
       : undefined;
@@ -74,9 +75,9 @@ export class GetEquipmentEligibilityUseCase implements EquipmentEligibility {
     const records = await this.reader.getAssessmentRecords(validIds);
     return new Map(
       equipmentIds.map((id) => {
-        if (!isUuid(id)) return [id, { eligible: false, reason: 'NOT_ACTIVE' } as const];
+        if (!isUuid(id)) return [id, { eligible: false, status: 'Unknown source', reason: 'NOT_ACTIVE' } as const];
         const record = records.get(id);
-        if (!record?.equipment) return [id, { eligible: false, reason: 'NOT_ACTIVE' } as const];
+        if (!record?.equipment) return [id, { eligible: false, status: 'Unknown source', reason: 'NOT_ACTIVE' } as const];
         return [
           id,
           this.assessment(actor, record.equipment, record.calibration, record.maintenance),
@@ -110,24 +111,29 @@ export class GetEquipmentEligibilityUseCase implements EquipmentEligibility {
           }
         : {}),
     };
-    if (equipment.state !== 'ACTIVE')
+    if (equipment.state === 'OUT_OF_SERVICE')
+      return { ...base, eligible: false, status: 'Out of service', reason: 'OUT_OF_SERVICE' };
+    if (equipment.state === 'UNDER_MAINTENANCE' || maintenance?.state === 'IN_PROGRESS')
       return {
         ...base,
         eligible: false,
-        reason:
-          equipment.state === 'UNDER_MAINTENANCE'
-            ? 'UNDER_MAINTENANCE'
-            : equipment.state === 'OUT_OF_SERVICE'
-              ? 'OUT_OF_SERVICE'
-              : 'NOT_ACTIVE',
+        status: 'Under maintenance',
+        reason: 'UNDER_MAINTENANCE',
       };
+    if (equipment.sourceState !== 'APPROVED' || !equipment.siteCode || !equipment.serialNo || !equipment.sourceEvidence?.length || !equipment.sourceRevisionId)
+      return { ...base, eligible: false, status: 'Unknown source' };
+    if (equipment.state !== 'ACTIVE') return { ...base, eligible: false, status: 'Unknown source', reason: 'NOT_ACTIVE' };
     if (!equipment.currentCalibrationId || !calibration)
-      return { ...base, eligible: false, reason: 'NO_CURRENT_CALIBRATION' };
-    if (calibration.equipmentId !== equipment.id || calibration.state !== 'CURRENT')
-      return { ...base, eligible: false, reason: 'CALIBRATION_NOT_CURRENT' };
-    if (isCalibrationOverdue(calibration, this.now()))
-      return { ...base, eligible: false, reason: 'CALIBRATION_EXPIRED' };
-    return { ...base, eligible: true };
+      return { ...base, eligible: false, status: 'Unknown source', reason: 'NO_CURRENT_CALIBRATION' };
+    if (calibration.equipmentId !== equipment.id)
+      return { ...base, eligible: false, status: 'Unknown source', reason: 'CALIBRATION_NOT_CURRENT' };
+    if (calibration.state === 'OVERDUE' || isCalibrationOverdue(calibration, this.now()))
+      return { ...base, eligible: false, status: 'Expired', reason: 'CALIBRATION_EXPIRED' };
+    if (calibration.state === 'DUE')
+      return { ...base, eligible: false, status: 'Calibration due', reason: 'CALIBRATION_NOT_CURRENT' };
+    if (calibration.state !== 'CURRENT')
+      return { ...base, eligible: false, status: 'Unknown source', reason: 'CALIBRATION_NOT_CURRENT' };
+    return { ...base, eligible: true, status: 'Available' };
   }
   async verify(input: {
     actor: ActorContext;
@@ -149,30 +155,46 @@ export class GetEquipmentEligibilityUseCase implements EquipmentEligibility {
       const maintenance = equipment
         ? await this.reader.getCurrentMaintenance?.(equipment.id)
         : undefined;
-      if (equipment && calibration)
-        this.authorizeSourceReads(input.actor, equipment, calibration, maintenance);
+      if (!equipment || !calibration || calibration.equipmentId !== equipment.id)
+        throw new AppError('AUTHZ_DENIED', {
+          userSafe: true,
+          messageKey: 'assets.eligibility.invalidContext',
+        });
+      this.authorizeSourceReads(input.actor, equipment, calibration, maintenance);
+      const equipmentSnapshot = usage.equipmentSnapshot;
+      const calibrationSnapshot = usage.calibrationSnapshot;
+      const observedAt = new Date(usage.usedAt);
+      const dueDate = calibrationSnapshot.dueDate
+        ? new Date(`${String(calibrationSnapshot.dueDate).slice(0, 10)}T00:00:00.000Z`)
+        : undefined;
       if (
-        !equipment ||
-        !calibration ||
-        calibration.equipmentId !== equipment.id ||
-        equipment.state !== 'ACTIVE' ||
-        equipment.currentCalibrationId !== calibration.id ||
-        calibration.state !== 'CURRENT'
+        !Number.isFinite(observedAt.getTime()) ||
+        equipmentSnapshot.equipmentId !== equipment.id ||
+        equipmentSnapshot.capturedAt !== usage.usedAt ||
+        equipmentSnapshot.state !== 'ACTIVE' ||
+        equipmentSnapshot.sourceState !== 'APPROVED' ||
+        !equipmentSnapshot.siteCode ||
+        !equipmentSnapshot.serialNo ||
+        !equipmentSnapshot.sourceRevisionId ||
+        !Array.isArray(equipmentSnapshot.sourceEvidence) ||
+        equipmentSnapshot.sourceEvidence.length === 0 ||
+        equipmentSnapshot.maintenanceState === 'IN_PROGRESS' ||
+        calibrationSnapshot.calibrationRecordId !== calibration.id ||
+        calibrationSnapshot.capturedAt !== usage.usedAt ||
+        calibrationSnapshot.state !== 'CURRENT'
       )
         throw new AppError('AUTHZ_DENIED', {
           userSafe: true,
           messageKey: 'assets.eligibility.invalidContext',
         });
-      if (isCalibrationOverdue(calibration, this.now()))
+      if (dueDate && isCalibrationOverdue({ dueDate }, observedAt))
         throw new AppError('AUTHZ_DENIED', {
           userSafe: true,
           messageKey: 'assets.eligibility.calibrationExpired',
         });
       if (
-        !Object.keys(usage.equipmentSnapshot).length ||
-        usage.equipmentSnapshot.equipmentId !== equipment.id ||
-        !Object.keys(usage.calibrationSnapshot).length ||
-        usage.calibrationSnapshot.calibrationRecordId !== calibration.id
+        !Object.keys(equipmentSnapshot).length ||
+        !Object.keys(calibrationSnapshot).length
       )
         throw new AppError('AUTHZ_DENIED', {
           userSafe: true,
@@ -206,7 +228,9 @@ export class GetEquipmentEligibilityUseCase implements EquipmentEligibility {
       calibration.equipmentId !== equipment.id ||
       equipment.state !== 'ACTIVE' ||
       equipment.currentCalibrationId !== calibration.id ||
-      calibration.state !== 'CURRENT'
+      calibration.state !== 'CURRENT' ||
+      equipment.sourceState !== 'APPROVED' || !equipment.siteCode || !equipment.serialNo || !equipment.sourceEvidence?.length ||
+      !equipment.sourceRevisionId || maintenance?.state === 'IN_PROGRESS'
     )
       throw new AppError('AUTHZ_DENIED', {
         userSafe: true,
@@ -231,6 +255,14 @@ export class GetEquipmentEligibilityUseCase implements EquipmentEligibility {
         model: equipment.model ?? null,
         serialNo: equipment.serialNo ?? null,
         state: equipment.state,
+        sourceState: equipment.sourceState ?? 'UNKNOWN_SOURCE',
+        sourceRevisionId: equipment.sourceRevisionId ?? null,
+        siteCode: equipment.siteCode ?? null,
+        allowedMethodCodes: equipment.allowedMethodCodes ?? [],
+        allowedAreaCodes: equipment.allowedAreaCodes ?? [],
+        sourceEvidence: equipment.sourceEvidence ?? [],
+        maintenanceRecordId: maintenance?.id ?? null,
+        maintenanceState: maintenance?.state ?? null,
         currentCalibrationId: equipment.currentCalibrationId ?? null,
         calibrationRequired: equipment.calibrationRequired ?? null,
         maintenanceRequired: equipment.maintenanceRequired ?? null,
@@ -247,6 +279,7 @@ export class GetEquipmentEligibilityUseCase implements EquipmentEligibility {
         provider: calibration.provider ?? null,
         certificateNo: calibration.certificateNo ?? null,
         result: calibration.result ?? null,
+        expiryStatus: calibration.state === 'DUE' ? 'Calibration due' : null,
         version: calibration.version.toString(),
         capturedAt,
       }),

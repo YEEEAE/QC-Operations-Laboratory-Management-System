@@ -18,8 +18,8 @@ export function equipmentEligibilityOptionLabel(
   options: { includeSourceStates?: boolean } = {},
 ) {
   const eligibility = assessment.eligible
-    ? 'Eligible for laboratory use'
-    : `Not eligible: ${reasonText[assessment.reason ?? 'NOT_ACTIVE']}`;
+    ? assessment.status
+    : `${assessment.status}: ${reasonText[assessment.reason ?? 'NOT_ACTIVE']}`;
   const calibration = assessment.calibrationNo
     ? `Calibration ${assessment.calibrationNo}, calibrated ${date(assessment.calibrationDate)}, due ${date(assessment.dueDate)}`
     : 'No current calibration record';

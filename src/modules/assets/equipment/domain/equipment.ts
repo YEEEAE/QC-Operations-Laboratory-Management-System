@@ -30,6 +30,12 @@ export interface Equipment {
   version: bigint;
   calibrationRequired?: boolean;
   maintenanceRequired?: boolean;
+  sourceState?: 'UNKNOWN_SOURCE' | 'PENDING_SOURCE_APPROVAL' | 'APPROVED' | 'REJECTED';
+  siteCode?: string;
+  allowedMethodCodes?: readonly string[];
+  allowedAreaCodes?: readonly string[];
+  sourceEvidence?: readonly Readonly<Record<string, unknown>>[];
+  sourceRevisionId?: string;
 }
 
 export interface NewEquipmentInput {

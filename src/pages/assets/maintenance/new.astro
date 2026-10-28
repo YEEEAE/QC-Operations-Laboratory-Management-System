@@ -48,7 +48,7 @@ if (canCreate) {
       value: item.id,
       label: equipmentEligibilityOptionLabel(
         `${item.equipmentNo} · ${item.name}`,
-        eligibility.get(item.id) ?? { eligible: false, reason: 'NOT_ACTIVE' },
+        eligibility.get(item.id) ?? { eligible: false, status: 'Unknown source', reason: 'NOT_ACTIVE' },
       ),
     }));
   } catch {

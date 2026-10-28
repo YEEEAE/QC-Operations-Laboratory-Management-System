@@ -1050,6 +1050,12 @@ export interface EquipmentTable {
   version: Generated<bigint>;
   calibration_required: boolean | null;
   maintenance_required: boolean | null;
+  source_state: string;
+  site_code: string | null;
+  allowed_method_codes: string[];
+  allowed_area_codes: string[];
+  source_evidence: unknown;
+  source_revision_id: string | null;
 }
 export interface CalibrationRecordsTable {
   id: Generated<string>;

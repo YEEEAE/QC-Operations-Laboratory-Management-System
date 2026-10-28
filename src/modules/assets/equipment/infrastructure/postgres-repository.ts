@@ -35,6 +35,14 @@ const map = (row: DatabaseRow<'equipment'>): Equipment => ({
   version: BigInt(row.version),
   calibrationRequired: row.calibration_required ?? undefined,
   maintenanceRequired: row.maintenance_required ?? undefined,
+  sourceState: row.source_state as Equipment['sourceState'],
+  siteCode: row.site_code ?? undefined,
+  allowedMethodCodes: row.allowed_method_codes,
+  allowedAreaCodes: row.allowed_area_codes,
+  sourceEvidence: Array.isArray(row.source_evidence)
+    ? (row.source_evidence as Readonly<Record<string, unknown>>[])
+    : [],
+  sourceRevisionId: row.source_revision_id ?? undefined,
 });
 const entity = (x: Equipment) => ({
   type: 'EQUIPMENT',
