@@ -1,5 +1,6 @@
 ---
 import PageHeader from "../../../ui/components/PageHeader.astro";
+import { actions } from 'astro:actions';
 import AppLayout from '../../../ui/layouts/AppLayout.astro';
 import ConfirmDialog from '../../../ui/components/feedback/ConfirmDialog.astro';
 import { identityAdminReadDependencies } from '../../../modules/identity/application/admin-dependencies.js';
@@ -14,6 +15,9 @@ import {
 import { SCOPE_KINDS, scopeRequiresValue } from '../../../shared/authorization/types.js';
 import { stateLabel, uxVocabulary } from '../../../shared/copy/ux-vocabulary.js';
 import { AppError } from '../../../shared/errors/app-error.js';
+import { getServerEnv } from '../../../config/env.js';
+import type { ExternalIdentityLink } from '../../../modules/identity/domain/external-identity-link.js';
+import { SYSTEM_OWNER_LOGIN_IDENTITY } from '../../../shared/authorization/p05-authority.js';
 
 const actor = Astro.locals.actor;
 if (!actor) return Astro.redirect(`/login?returnTo=${encodeURIComponent(Astro.url.pathname)}`);
@@ -58,12 +62,28 @@ const canRemoveRoles = hasAdminCapability(actor, 'removeUserRole');
 const canAssignScopes = hasAdminCapability(actor, 'assignUserScope');
 const canRemoveScopes = hasAdminCapability(actor, 'removeUserScope');
 const canReplaceScopes = hasAdminCapability(actor, 'replaceUserScopes');
+const canManageExternalIdentity = hasAdminCapability(actor, 'updateUserProfile') && !isSelf;
 const canManageRoles = canAssignRoles && !isSelf;
 const canManageScopes = canAssignScopes && !isSelf;
+const activeEnv = getServerEnv();
+const externalIdentityAvailable = activeEnv.NEON_AUTH_ENABLED === 'true' && Boolean(activeEnv.NEON_AUTH_ISSUER);
+const linkIdentityResult = Astro.getActionResult(actions.admin.linkExternalIdentity);
+const deactivateIdentityResult = Astro.getActionResult(actions.admin.deactivateExternalIdentity);
+const identityOperationSucceeded = Boolean(linkIdentityResult?.data?.ok || deactivateIdentityResult?.data?.ok);
+let externalIdentityLink: ExternalIdentityLink | undefined;
+let externalIdentityReadUnavailable = false;
 
 // These application queries return the same safe, read-only projections used
 // by the administration register. Reading a projection never grants a write.
 if (user) {
+  if (canManageExternalIdentity) {
+    try {
+      externalIdentityLink = await identityAdminReadDependencies().getExternalIdentityLink.execute({ actor, userId });
+    } catch (error) {
+      externalIdentityReadUnavailable = error instanceof AppError;
+      if (!externalIdentityReadUnavailable) throw error;
+    }
+  }
   try {
     roles = await administrationDependencies().listUserRoles.execute({ actor, userId });
   } catch (error) {
@@ -197,6 +217,68 @@ const scopeLabel = (scope: { kind: string; value: string | null }) => {
               <p class="note">This is your own account. Profile edits here are disabled.</p>
             )
           )}
+        </section>
+
+        <section class="panel" id="external-identity">
+          <h2>Neon Auth subject link</h2>
+          {!canManageExternalIdentity ? (
+            <p class="note">External identity links are restricted to authorized user administrators and cannot be managed on your own account.</p>
+          ) : externalIdentityReadUnavailable ? (
+            <p class="note" role="status">The external identity projection is unavailable. No link action is available until the record can be read.</p>
+          ) : !externalIdentityAvailable ? (
+            <p class="note">External identity management is disabled until the server-side Neon Auth verifier has an explicitly approved issuer, audience and JWKS configuration.</p>
+          ) : user.loginIdentity === SYSTEM_OWNER_LOGIN_IDENTITY ? (
+            <p class="note">External identity binding is unavailable for the canonical named system owner. The local owner identity and approved role remain the authority.</p>
+          ) : externalIdentityLink ? (
+            <div class="stack">
+              <dl>
+                <div><dt>Issuer</dt><dd><code>{externalIdentityLink.issuer}</code></dd></div>
+                <div><dt>Subject</dt><dd><code>{externalIdentityLink.subject}</code></dd></div>
+                <div><dt>State</dt><dd>{externalIdentityLink.state}</dd></div>
+                <div><dt>Linked by</dt><dd><code>{externalIdentityLink.createdBy}</code></dd></div>
+                <div><dt>Approved by</dt><dd><code>{externalIdentityLink.approvedBy}</code></dd></div>
+                {externalIdentityLink.deactivationReason && <div><dt>Deactivation reason</dt><dd>{externalIdentityLink.deactivationReason}</dd></div>}
+              </dl>
+              {externalIdentityLink.state === 'ACTIVE' ? <form class="form" method="POST" action={actions.admin.deactivateExternalIdentity}>
+                <input type="hidden" name="linkId" value={externalIdentityLink.id} />
+                <label for="externalIdentityDeactivatePassword">Your current password<span aria-hidden="true"> *</span>
+                  <input id="externalIdentityDeactivatePassword" name="currentPassword" type="password" autocomplete="current-password" required maxlength="512" />
+                </label>
+                <label for="externalIdentityDeactivateReason">Deactivation reason<span aria-hidden="true"> *</span>
+                  <select id="externalIdentityDeactivateReason" name="reason" required>
+                    <option value="REVOKED">External identity revoked</option>
+                    <option value="MERGED">Identity merged into another account</option>
+                    <option value="DUPLICATE_IDENTITY">Duplicate identity record</option>
+                    <option value="OPERATOR_REMOVAL">Operator removal</option>
+                  </select>
+                </label>
+                <label for="externalIdentityDeactivateNote">Reason note (8–500 characters)<span aria-hidden="true"> *</span>
+                  <textarea id="externalIdentityDeactivateNote" name="note" minlength="8" maxlength="500" required></textarea>
+                </label>
+                <button type="submit" class="danger">Deactivate external identity link</button>
+              </form> : <p class="note">This subject remains reserved in history and cannot be linked to another QC account.</p>}
+            </div>
+          ) : user.accountState !== 'ACTIVE' ? (
+            <p class="note">Linking requires an existing ACTIVE QC user. This page never creates or activates accounts.</p>
+          ) : (
+            <form class="form" method="POST" action={actions.admin.linkExternalIdentity}>
+              <input type="hidden" name="userId" value={user.id} />
+              <p class="note">Enter the stable subject from the owner-approved Neon Auth issuer after verifying it in the approved operator workflow. Email is not used for matching. This action requires your QC password and stores an explicit operator attestation.</p>
+              <label for="externalIdentitySubject">External subject<span aria-hidden="true"> *</span>
+                <input id="externalIdentitySubject" name="subject" required maxlength="512" autocomplete="off" />
+              </label>
+              <label for="externalIdentityLinkPassword">Your current password<span aria-hidden="true"> *</span>
+                <input id="externalIdentityLinkPassword" name="currentPassword" type="password" autocomplete="current-password" required maxlength="512" />
+              </label>
+              <label for="externalIdentityLinkNote">Approval note (8–500 characters)<span aria-hidden="true"> *</span>
+                <textarea id="externalIdentityLinkNote" name="note" minlength="8" maxlength="500" required></textarea>
+              </label>
+              <button type="submit">Approve and link subject</button>
+            </form>
+          )}
+          {identityOperationSucceeded && <p role="status">External identity link change recorded.</p>}
+          {(linkIdentityResult?.error || deactivateIdentityResult?.error) && <p role="alert">The external identity change could not be completed. Reload the record and check authorization, duplicate identity state, and the local password.</p>}
+          <p class="note">A link never copies roles or scopes. Any future external login must resolve this exact issuer/subject to this existing local user, then derive current state, roles and scopes from QC. Deactivation reserves the identity key, so a merged or duplicate identity cannot silently move to another user.</p>
         </section>
 
         <section class="panel" id="security">

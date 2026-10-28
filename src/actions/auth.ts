@@ -24,6 +24,9 @@ const login = defineAction({
   handler: async (input, context) => {
     try {
       const env = getServerEnv();
+      if (env.LOCAL_PASSWORD_LOGIN_ENABLED !== 'true') {
+        throw new ActionError({ code: 'BAD_REQUEST', message: 'AUTH_LOGIN_METHOD_DISABLED' });
+      }
       const policy = resolveHighRiskRateLimitPolicy('/login', 'POST', process.env, env.NODE_ENV);
       if (policy === 'FAIL_CLOSED') {
         requestLogger.error(

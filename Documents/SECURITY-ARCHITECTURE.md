@@ -2,7 +2,7 @@
 
 ## Status
 
-The server has an optional JWT verification adapter. It is disabled by default and does not replace the application's current password login, `__Host-qc_session` cookie, server-persisted session, CSRF protection, reauthentication, or session-revocation behavior. No Neon Auth issuer, audience, token, or user mapping has been approved or runtime-verified by this source change.
+The server has an optional JWT verification adapter and an additive operator-managed subject-link record. Verification is disabled by default and does not replace the application's current password login, `__Host-qc_session` cookie, server-persisted session, CSRF protection, reauthentication, or session-revocation behavior. No external login path is wired. Provider issuer/audience values, each real user binding, and runtime behavior remain unapproved or unverified.
 
 The supplied JWKS endpoint is public key discovery only. It is not a database connection, a user directory, a write API, or proof that a token is acceptable. The adapter does not call it at startup; the first explicit verification request would trigger a fetch only when the feature is enabled and a caller invokes the adapter.
 
@@ -16,13 +16,16 @@ The adapter returns only the external subject and minimal verified claim metadat
 
 ## Session and authorization boundary
 
-The existing middleware continues to resolve only the application session cookie through `ResolveSessionUseCase`; `LoginUseCase` is unchanged. The optional verifier is exposed from `identityDependencies` but is not invoked by middleware or login. A valid signature therefore does not authenticate a QC account or authorize an application request.
+The existing middleware continues to resolve only the application session cookie through `ResolveSessionUseCase`. The optional verifier is not invoked by middleware or login. A valid signature therefore does not authenticate a QC account or authorize an application request. `NEON_AUTH_ENABLED` controls the server-side verifier; it is not an external-login switch. `LOCAL_PASSWORD_LOGIN_ENABLED` controls the existing password path and defaults to `true`.
 
-Neon Auth sign-out/revocation behavior for already-issued tokens is not established by this repository. Before any transition, an approved policy must define external-subject-to-local-user binding, active local account checks, revocation/session freshness checks, local session creation and rotation, CSRF/re-authentication behavior, audit semantics, and rollback. No such callback or transition is wired here, so the adapter cannot presently accept an external token for an application request. Existing QC session revocation remains authoritative for current application sessions.
+`qc.external_identity_links` is a forward-only, additive mapping to an existing QC user. `(issuer, subject)` is unique for the lifetime of the record; a deactivated key stays reserved and cannot silently move to another QC user. Link and unlink actions require `PERM-IDN-MANAGE-USERS`, target scope, an ACTIVE operator, local-password reauthentication (and no forced password change), a non-self target, and CSRF-checked Astro Action submission. Linking is limited to an existing ACTIVE QC account that already resolves to an ACTIVE local role and scoped permission; it records the operator attestation and local approver, and writes the event with the local actor plus the non-secret issuer/subject reference in one transaction. It does not query mutable email, create users, transfer roles/scopes, or support binding the canonical named system owner. Duplicate external identities fail closed. Disabled local accounts are not made ACTIVE by a link; current QC sessions continue to resolve state and permissions from local records.
+
+The operator attestation records an externally reviewed subject reference; this workflow does not prove control of that external identity. Before enabling an external login path, owner-approved policy must define how the external account proves possession, active local role/scope eligibility, external revocation/session freshness, local session creation and rotation, audit semantics, rollback, and merge/rebinding disposition. No external token is accepted by the application request path today.
 
 ## Required protected configuration and owner decisions
 
 - Keep `NEON_AUTH_ENABLED=false` (or the matching staging/pilot variable) until the profile is explicitly approved for the integration.
+- Keep the existing password login enabled by default. Do not treat the verifier switch as an external login feature flag; external login remains unavailable until its client and session policy are implemented.
 - Configure the pinned `NEON_AUTH_JWKS_URL` only in server-side protected settings.
 - Obtain the exact `NEON_AUTH_ISSUER` and `NEON_AUTH_AUDIENCE` from the approved provider configuration. Do not infer them from the JWKS URL, token, branch label, or database URL.
 - Keep staging and pilot values isolated to their matching profiles; do not reuse production credentials or assume their identity state is isolated without owner provisioning.

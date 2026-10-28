@@ -239,6 +239,44 @@ export const admin = {
         return toSafeUserView(updated);
       }, context.locals.requestContext?.requestId),
   }),
+  linkExternalIdentity: defineAction({
+    accept: 'form',
+    input: z.object({
+      userId: z.string().uuid(),
+      subject: z.string().trim().min(1).max(512),
+      currentPassword: z.string().min(1).max(512),
+      note: z.string().trim().min(8).max(500),
+    }),
+    handler: (input, context) =>
+      withErrors(async () => {
+        requireActor(context.locals.actor);
+        await identity().linkExternalIdentity.execute({
+          actor: context.locals.actor!,
+          ...input,
+          requestId: context.locals.requestContext?.requestId ?? 'unknown',
+        });
+        return { ok: true };
+      }, context.locals.requestContext?.requestId),
+  }),
+  deactivateExternalIdentity: defineAction({
+    accept: 'form',
+    input: z.object({
+      linkId: z.string().uuid(),
+      currentPassword: z.string().min(1).max(512),
+      reason: z.enum(['REVOKED', 'MERGED', 'DUPLICATE_IDENTITY', 'OPERATOR_REMOVAL']),
+      note: z.string().trim().min(8).max(500),
+    }),
+    handler: (input, context) =>
+      withErrors(async () => {
+        requireActor(context.locals.actor);
+        await identity().deactivateExternalIdentity.execute({
+          actor: context.locals.actor!,
+          ...input,
+          requestId: context.locals.requestContext?.requestId ?? 'unknown',
+        });
+        return { ok: true };
+      }, context.locals.requestContext?.requestId),
+  }),
   disableUser: defineAction({
     accept: 'json',
     input: z.object({ userId: z.string().uuid(), expectedVersion: z.coerce.bigint() }),

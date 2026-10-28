@@ -72,6 +72,7 @@ const envSchema = z.object({
   DATABASE_URL_UNPOOLED: optionalEnv(z.string().trim()),
   NEON_BRANCH: optionalEnv(z.string().trim().min(1)),
   NEON_AUTH_ENABLED: z.enum(['true', 'false']).default('false'),
+  LOCAL_PASSWORD_LOGIN_ENABLED: z.enum(['true', 'false']).default('true'),
   NEON_AUTH_JWKS_URL: optionalEnv(z.string().trim().url().refine((value) => value === APPROVED_NEON_AUTH_JWKS_URL, 'must match the owner-approved Neon Auth JWKS URL')),
   NEON_AUTH_ISSUER: optionalEnv(z.string().trim().url().refine((value) => new URL(value).protocol === 'https:', 'must use HTTPS')),
   NEON_AUTH_AUDIENCE: optionalEnv(z.string().trim().min(1)),

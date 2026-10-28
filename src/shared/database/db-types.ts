@@ -37,6 +37,23 @@ export interface SessionsTable {
   version: Generated<bigint>;
 }
 
+export interface ExternalIdentityLinksTable {
+  id: Generated<string>;
+  user_id: string;
+  issuer: string;
+  subject: string;
+  state: 'ACTIVE' | 'DEACTIVATED';
+  source: 'OPERATOR_VERIFIED';
+  created_by: string;
+  created_at: Generated<Date>;
+  approved_by: string;
+  approved_at: Generated<Date>;
+  deactivated_by: string | null;
+  deactivated_at: Date | null;
+  deactivation_reason: 'REVOKED' | 'MERGED' | 'DUPLICATE_IDENTITY' | 'OPERATOR_REMOVAL' | null;
+  deactivation_note: string | null;
+}
+
 export interface AuditEventsTable {
   id: Generated<string>;
   event_no: Generated<bigint>;
@@ -1413,6 +1430,7 @@ export interface DatabaseSchema {
   schema_migrations: SchemaMigrationsTable;
   users: UsersTable;
   sessions: SessionsTable;
+  external_identity_links: ExternalIdentityLinksTable;
   audit_events: AuditEventsTable;
   outbox_events: OutboxEventsTable;
   idempotency_records: IdempotencyRecordsTable;
