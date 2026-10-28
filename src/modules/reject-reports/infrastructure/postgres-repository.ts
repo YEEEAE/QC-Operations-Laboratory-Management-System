@@ -23,6 +23,7 @@ import type {
   IssueSlipApprovalRole,
   IssueSlipFields,
 } from '../domain/issue-slip.js';
+import type { EventDeliveryStatus, FocusComplianceEntry } from '../domain/focus-compliance.js';
 import type {
   PagedResult,
   RejectReportAnalytics,
@@ -137,7 +138,13 @@ function mapApproval(row: ApprovalRow): ApprovalConfirmation {
   };
 }
 
-function mapSlip(report: ReportRow, slip: SlipRow, approvals: readonly ApprovalRow[]): IssueSlip {
+function mapSlip(
+  report: ReportRow,
+  slip: SlipRow,
+  approvals: readonly ApprovalRow[],
+  focusCompliance?: FocusComplianceEntry,
+  eventDeliveryStatuses?: readonly EventDeliveryStatus[],
+): IssueSlip {
   return {
     id: report.id,
     reportNo: report.report_no,
@@ -157,6 +164,8 @@ function mapSlip(report: ReportRow, slip: SlipRow, approvals: readonly ApprovalR
       remarks: slip.remarks ?? undefined,
     },
     approvals: approvals.map(mapApproval),
+    ...(focusCompliance ? { focusCompliance } : {}),
+    ...(eventDeliveryStatuses ? { eventDeliveryStatuses } : {}),
     issuedAt: report.issued_at ?? undefined,
     completedAt: report.completed_at ?? undefined,
     voidedAt: report.voided_at ?? undefined,
@@ -330,12 +339,17 @@ export class PostgresRejectReportRepository implements RejectReportRepository {
         ), expected_tables (table_name) AS (
           VALUES
             ('reject_reports'), ('reject_issue_slips'),
-            ('issue_slip_approval_confirmations'), ('daily_reject_entries')
+            ('issue_slip_approval_confirmations'), ('daily_reject_entries'),
+            ('event_delivery_statuses'), ('focus_compliance_entries')
         )
         SELECT (
           EXISTS (
             SELECT 1 FROM qc.schema_migrations
             WHERE version = '0026' AND name = '0026_reject_reports'
+          )
+          AND EXISTS (
+            SELECT 1 FROM qc.schema_migrations
+            WHERE version = '0058' AND name = '0058_outbox_delivery_and_focus_compliance'
           )
           AND NOT EXISTS (
             SELECT 1 FROM expected_tables t
@@ -424,7 +438,7 @@ export class PostgresRejectReportRepository implements RejectReportRepository {
       .where('report_type', '=', 'ISSUE_SLIP')
       .executeTakeFirst();
     if (!report) return undefined;
-    const [slip, approvals] = await Promise.all([
+    const [slip, approvals, focusRow] = await Promise.all([
       executor
         .selectFrom('reject_issue_slips')
         .selectAll()
@@ -442,8 +456,48 @@ export class PostgresRejectReportRepository implements RejectReportRepository {
           sql`array_position(array['SUPERVISOR','QC_MANAGER','FACTORY_DIRECTOR'], approval_role)`,
         )
         .execute(),
+      executor
+        .selectFrom('focus_compliance_entries')
+        .selectAll()
+        .where('report_id', '=', id)
+        .executeTakeFirst(),
     ]);
-    return mapSlip(report, slip, approvals);
+    const focusCompliance: FocusComplianceEntry | undefined = focusRow
+      ? {
+          id: focusRow.id,
+          sourceEventId: focusRow.source_event_id,
+          reportId: focusRow.report_id,
+          status: focusRow.status,
+          entryEvidenceNote: focusRow.entry_evidence_note ?? undefined,
+          entryEvidenceFileId: focusRow.entry_evidence_file_id ?? undefined,
+          enteredBy: focusRow.entered_by ?? undefined,
+          enteredAt: focusRow.entered_at ?? undefined,
+          verificationEvidenceNote: focusRow.verification_evidence_note ?? undefined,
+          verificationEvidenceFileId: focusRow.verification_evidence_file_id ?? undefined,
+          verifiedBy: focusRow.verified_by ?? undefined,
+          verifiedAt: focusRow.verified_at ?? undefined,
+          version: BigInt(focusRow.version),
+        }
+      : undefined;
+    const deliveryRows = focusRow
+      ? await executor
+          .selectFrom('event_delivery_statuses')
+          .selectAll()
+          .where('source_event_id', '=', focusRow.source_event_id)
+          .orderBy('recorded_at')
+          .orderBy('id')
+          .execute()
+      : undefined;
+    const deliveryStatuses: EventDeliveryStatus[] | undefined = deliveryRows?.map((delivery) => ({
+      sourceEventId: delivery.source_event_id,
+      deliveryTarget: delivery.delivery_target,
+      status: delivery.status as EventDeliveryStatus['status'],
+      sourceEventReference: delivery.source_event_reference,
+      evidenceNote: delivery.evidence_note ?? undefined,
+      evidenceFileId: delivery.evidence_file_id ?? undefined,
+      recordedAt: delivery.recorded_at,
+    }));
+    return mapSlip(report, slip, approvals, focusCompliance, deliveryStatuses);
   }
 
   private async loadDaily(
@@ -677,6 +731,45 @@ export class PostgresRejectReportRepository implements RejectReportRepository {
           payload: { reportNo: row.report_no },
           dedupeKey: `issue-slip-issued:${input.id}`,
         });
+        const sourceEvent = await tx
+          .selectFrom('outbox_events')
+          .select('id')
+          .where('dedupe_key', '=', `issue-slip-issued:${input.id}`)
+          .executeTakeFirst();
+        if (sourceEvent) {
+          await tx
+            .insertInto('event_delivery_statuses')
+            .values({
+              source_event_id: sourceEvent.id,
+              delivery_target: 'FOCUS_MANUAL',
+              status: 'PENDING',
+              source_event_reference: sourceEvent.id,
+              evidence_note: null,
+              evidence_file_id: null,
+              recorded_by: input.actor.id,
+            })
+            .onConflict((conflict) =>
+              conflict.columns(['source_event_id', 'delivery_target', 'status']).doNothing(),
+            )
+            .execute();
+          await tx
+            .insertInto('focus_compliance_entries')
+            .values({
+              source_event_id: sourceEvent.id,
+              report_id: input.id,
+              status: 'PENDING_FOCUS_ENTRY',
+              entry_evidence_note: null,
+              entry_evidence_file_id: null,
+              entered_by: null,
+              entered_at: null,
+              verification_evidence_note: null,
+              verification_evidence_file_id: null,
+              verified_by: null,
+              verified_at: null,
+            })
+            .onConflict((conflict) => conflict.column('source_event_id').doNothing())
+            .execute();
+        }
         const updated = await this.loadSlip(tx, input.id);
         if (!updated) throw new AppError('SYSTEM_INTERNAL');
         return updated;

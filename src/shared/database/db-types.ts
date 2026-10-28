@@ -84,6 +84,40 @@ export interface OutboxEventsTable {
   attempt_count: Generated<number>;
   last_error: string | null;
   dedupe_key: string | null;
+  lease_token: Generated<string | null>;
+  lease_until: Generated<Date | null>;
+  dead_lettered_at: Generated<Date | null>;
+  last_failure_class: Generated<string | null>;
+  retention_review_state: Generated<string>;
+  retention_policy_reference: Generated<string | null>;
+}
+
+export interface EventDeliveryStatusesTable {
+  id: Generated<string>;
+  source_event_id: string;
+  delivery_target: string;
+  status: string;
+  source_event_reference: string;
+  evidence_note: string | null;
+  evidence_file_id: string | null;
+  recorded_by: string;
+  recorded_at: Generated<Date>;
+}
+
+export interface FocusComplianceEntriesTable {
+  id: Generated<string>;
+  source_event_id: string;
+  report_id: string;
+  status: 'PENDING_FOCUS_ENTRY' | 'ENTERED_IN_FOCUS' | 'VERIFIED';
+  entry_evidence_note: string | null;
+  entry_evidence_file_id: string | null;
+  entered_by: string | null;
+  entered_at: Date | null;
+  verification_evidence_note: string | null;
+  verification_evidence_file_id: string | null;
+  verified_by: string | null;
+  verified_at: Date | null;
+  version: Generated<bigint>;
 }
 
 export interface IdempotencyRecordsTable {
@@ -1460,6 +1494,8 @@ export interface DatabaseSchema {
   external_identity_links: ExternalIdentityLinksTable;
   audit_events: AuditEventsTable;
   outbox_events: OutboxEventsTable;
+  event_delivery_statuses: EventDeliveryStatusesTable;
+  focus_compliance_entries: FocusComplianceEntriesTable;
   idempotency_records: IdempotencyRecordsTable;
   files: FilesTable;
   evidence_links: EvidenceLinksTable;

@@ -1,5 +1,6 @@
 import { AppError } from '../../../shared/errors/app-error.js';
 import type { IssueSlipStatus } from './reject-report.js';
+import type { EventDeliveryStatus, FocusComplianceEntry } from './focus-compliance.js';
 import {
   assertNonBlank,
   assertOptionalNonNegativeNumberString,
@@ -55,6 +56,8 @@ export interface IssueSlip {
   status: IssueSlipStatus;
   fields: IssueSlipFields;
   approvals: readonly ApprovalConfirmation[];
+  focusCompliance?: FocusComplianceEntry;
+  eventDeliveryStatuses?: readonly EventDeliveryStatus[];
   issuedAt?: Date;
   completedAt?: Date;
   voidedAt?: Date;

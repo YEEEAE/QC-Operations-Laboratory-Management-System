@@ -45,6 +45,9 @@ const hasPermission = (code: string) =>
 const isCreator = slip?.createdBy === actor.id;
 const canManage = isCreator && hasPermission('PERM-RREJ-EDIT');
 const canConfirm = isCreator && hasPermission('PERM-RREJ-CONFIRM-APPROVAL');
+const canVerifyFocus = actor.permissions.some(
+  (grant) => grant.code === 'PERM-RREJ-CONFIRM-APPROVAL' && grant.active !== false && grant.scopes.includes('GLOBAL'),
+);
 let postError = '';
 let postedValues: Record<string, string> = {};
 if (Astro.request.method === 'POST' && slip && !printMode) {
@@ -57,6 +60,8 @@ if (Astro.request.method === 'POST' && slip && !printMode) {
     if (intent === 'confirm' && canConfirm) result = await Astro.callAction(actions.rejectReports.confirmApproval, { reportId, expectedVersion, role: field(form, 'role') as 'SUPERVISOR' | 'QC_MANAGER' | 'FACTORY_DIRECTOR', approverName: field(form, 'approverName') || undefined });
     else if (intent === 'reverse' && (canConfirm || hasPermission('PERM-RREJ-ADMIN-CORRECT'))) result = await Astro.callAction(actions.rejectReports.reverseApproval, { reportId, expectedVersion, role: field(form, 'role') as 'SUPERVISOR' | 'QC_MANAGER' | 'FACTORY_DIRECTOR', reason: field(form, 'reason') });
     else if (intent === 'issue' && canManage) result = await Astro.callAction(actions.rejectReports.issueIssueSlip, { reportId, expectedVersion });
+    else if (intent === 'focus-entered' && canManage) result = await Astro.callAction(actions.rejectReports.recordFocusEntry, { reportId, expectedVersion, evidenceNote: field(form, 'evidenceNote') });
+    else if (intent === 'focus-verified' && canConfirm) result = await Astro.callAction(actions.rejectReports.verifyFocusEntry, { reportId, expectedVersion, evidenceNote: field(form, 'evidenceNote') });
     else if (intent === 'void' && isCreator && hasPermission('PERM-RREJ-VOID')) result = await Astro.callAction(actions.rejectReports.voidReport, { reportId, expectedVersion, reason: field(form, 'reason') });
     else postError = 'This action is not available. Refresh the report and review its current state.';
     if (result && !result.error) return Astro.redirect(Astro.url.pathname, 303);
@@ -149,6 +154,48 @@ const fmtDateTime = (d?: Date) =>
           <dt>Reject reason</dt><dd>{slip.fields.rejectReason}</dd>
           <dt>Remarks</dt><dd>{slip.fields.remarks ?? '—'}</dd>
         </dl>
+      </section>
+
+      <section class="panel facts" aria-labelledby="focus-entry-title">
+        <h2 id="focus-entry-title">QC Compliance — manual Focus entry</h2>
+        <p>This record tracks a human-entered step. It does not connect to or sync with Focus.</p>
+        {slip.focusCompliance ? (
+          <dl>
+            <dt>Status</dt><dd>{slip.focusCompliance.status === 'PENDING_FOCUS_ENTRY' ? 'Pending Focus Entry' : slip.focusCompliance.status === 'ENTERED_IN_FOCUS' ? 'Entered in Focus' : 'Verified'}</dd>
+            <dt>Source event</dt><dd><code>{slip.focusCompliance.sourceEventId}</code></dd>
+            {slip.focusCompliance.entryEvidenceNote && <><dt>Entry evidence</dt><dd>{slip.focusCompliance.entryEvidenceNote}</dd></>}
+            {slip.focusCompliance.verificationEvidenceNote && <><dt>Verification evidence</dt><dd>{slip.focusCompliance.verificationEvidenceNote}</dd></>}
+          </dl>
+        ) : <p>No source event reference is available for manual tracking.</p>}
+        {slip.eventDeliveryStatuses?.length ? (
+          <ol aria-label="Manual delivery status history">
+            {slip.eventDeliveryStatuses.map((delivery) => (
+              <li>
+                <strong>{delivery.status}</strong> · source event <code>{delivery.sourceEventReference}</code>
+                {delivery.evidenceNote && <p>{delivery.evidenceNote}</p>}
+                {delivery.evidenceFileId && <p>Evidence file reference: <code>{delivery.evidenceFileId}</code></p>}
+              </li>
+            ))}
+          </ol>
+        ) : null}
+        {!printMode && slip.focusCompliance?.status === 'PENDING_FOCUS_ENTRY' && canManage && (
+          <form method="post" class="focus-form">
+            <input type="hidden" name="intent" value="focus-entered" />
+            <input type="hidden" name="expectedVersion" value={slip.focusCompliance.version.toString()} />
+            <label for="focus-entry-evidence">Manual entry evidence</label>
+            <textarea id="focus-entry-evidence" name="evidenceNote" required maxlength="2000"></textarea>
+            <button type="submit">Record entered in Focus</button>
+          </form>
+        )}
+        {!printMode && slip.focusCompliance?.status === 'ENTERED_IN_FOCUS' && canVerifyFocus && slip.focusCompliance.enteredBy !== actor.id && (
+          <form method="post" class="focus-form">
+            <input type="hidden" name="intent" value="focus-verified" />
+            <input type="hidden" name="expectedVersion" value={slip.focusCompliance.version.toString()} />
+            <label for="focus-verification-evidence">Verification evidence</label>
+            <textarea id="focus-verification-evidence" name="evidenceNote" required maxlength="2000"></textarea>
+            <button type="submit">Verify manual entry</button>
+          </form>
+        )}
       </section>
 
       <section class="panel evidence" id="approval-confirmations" aria-labelledby="approval-history-title">

@@ -17,6 +17,7 @@ import { ListDailyRejectsUseCase } from './list-daily-rejects.js';
 import { VoidRejectReportUseCase } from './void-reject-report.js';
 import { GetRejectDashboardUseCase } from './get-reject-dashboard.js';
 import { GetRejectReportAvailabilityUseCase } from './get-reject-report-availability.js';
+import { FocusComplianceService } from './focus-compliance.js';
 
 export function rejectReportReadDependencies() {
   const repository = new PostgresRejectReportRepository(getDatabase());
@@ -47,5 +48,6 @@ export function rejectReportActionDependencies() {
     appendDailyRejectEntry: new AppendDailyRejectEntryUseCase(repository),
     finalizeDailyReject: new FinalizeDailyRejectUseCase(repository),
     voidReport: new VoidRejectReportUseCase(repository),
+    focusCompliance: new FocusComplianceService(database),
   };
 }

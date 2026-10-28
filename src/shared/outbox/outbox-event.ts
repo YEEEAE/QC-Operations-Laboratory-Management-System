@@ -9,4 +9,14 @@ export interface OutboxEvent extends OutboxEventInput {
   id: string;
   attemptCount: number;
   availableAt: Date;
+  leaseToken: string;
+  leaseUntil: Date;
 }
+
+export type OutboxFailureClass =
+  | 'VALIDATION'
+  | 'AUTHORIZATION'
+  | 'STALE_STATE'
+  | 'DUPLICATE'
+  | 'DEPENDENCY'
+  | 'UNKNOWN';

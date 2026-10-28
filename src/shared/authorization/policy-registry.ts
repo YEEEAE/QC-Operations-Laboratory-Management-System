@@ -1035,6 +1035,18 @@ const policies: readonly AuthorizationPolicy[] = [
     states: ['PENDING'],
   },
   {
+    permission: 'PERM-RREJ-EDIT',
+    action: 'RECORD_FOCUS_ENTRY',
+    entityType: 'FOCUS_COMPLIANCE_ENTRY',
+    states: ['PENDING_FOCUS_ENTRY'],
+  },
+  {
+    permission: 'PERM-RREJ-CONFIRM-APPROVAL',
+    action: 'VERIFY_FOCUS_ENTRY',
+    entityType: 'FOCUS_COMPLIANCE_ENTRY',
+    states: ['ENTERED_IN_FOCUS'],
+  },
+  {
     permission: 'PERM-RREJ-ADMIN-CORRECT',
     action: 'CORRECT',
     entityType: 'ISSUE_SLIP_APPROVAL',

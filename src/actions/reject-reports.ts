@@ -182,6 +182,44 @@ const reverseApproval = defineAction({
     ),
 });
 
+const recordFocusEntry = defineAction({
+  accept: 'json',
+  input: z.object({
+    reportId: z.string().uuid(),
+    expectedVersion: z.coerce.bigint(),
+    evidenceNote: z.string().max(2000).optional(),
+    evidenceFileId: z.string().uuid().optional(),
+  }),
+  handler: (input, context) =>
+    run(
+      () => repo().focusCompliance.recordEntered({
+        ...input,
+        actor: actor(context),
+        requestId: requestId(context),
+      }),
+      context,
+    ),
+});
+
+const verifyFocusEntry = defineAction({
+  accept: 'json',
+  input: z.object({
+    reportId: z.string().uuid(),
+    expectedVersion: z.coerce.bigint(),
+    evidenceNote: z.string().max(2000).optional(),
+    evidenceFileId: z.string().uuid().optional(),
+  }),
+  handler: (input, context) =>
+    run(
+      () => repo().focusCompliance.verify({
+        ...input,
+        actor: actor(context),
+        requestId: requestId(context),
+      }),
+      context,
+    ),
+});
+
 const createDailyReject = defineAction({
   accept: 'json',
   input: z.object({
@@ -264,6 +302,8 @@ export const rejectReports = {
   issueIssueSlip,
   confirmApproval,
   reverseApproval,
+  recordFocusEntry,
+  verifyFocusEntry,
   createDailyReject,
   appendDailyRejectEntry,
   finalizeDailyReject,
