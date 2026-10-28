@@ -38,7 +38,7 @@ export interface RejectReportSummary {
   totalDailyRejects: number;
   awaitingApprovals: number;
   completedIssueSlips: number;
-  finalizedDailyRejects: number;
+  supervisorApprovedDailyRejects: number;
 }
 
 export interface RejectReportAnalytics {
@@ -175,11 +175,9 @@ export interface RejectReportRepository {
     entry: DailyRejectEntryInput;
   }): Promise<DailyReject>;
 
-  finalizeDailyReject(input: {
-    id: string;
-    expectedVersion: bigint;
-    actor: ActorContext;
-    requestId: string;
+  transitionDailyRejectReview(input: {
+    id: string; expectedVersion: bigint; actor: ActorContext; requestId: string;
+    idempotencyKey: string; action: 'SUBMIT_FOR_QC' | 'QC_REVIEW' | 'QC_RETURN' | 'SUPERVISOR_APPROVE'; reason?: string;
   }): Promise<DailyReject>;
 
   voidReport(input: {

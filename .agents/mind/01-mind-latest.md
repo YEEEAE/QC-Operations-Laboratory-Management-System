@@ -1,3 +1,8 @@
+- **2026-10-28 — REJ-05 / Daily reject review workflow**
+  - Changed: Added separate submit/QC review-return/Supervisor approval transitions, append-only versioned decision events, durable command keys, and approved snapshots in the approval outbox path. Legacy `FINALIZED` rows remain historical and are not promoted.
+  - Evidence: Source diff review only; no tests, builds, lint, scripts, migrations, SQL, database access, or deployment.
+  - State: PARTIAL — no approved Reject Reports role/area mapping, correction-record route, approved F-7-5-3-12-2 source, threshold decision consumer, or daily-reject Focus queue integration.
+  - Key files: `src/modules/reject-reports/`, `src/actions/reject-reports.ts`, `db/migrations/0074_daily_reject_three_stage_review.sql`.
 - **2026-10-28 — REJ-04 / Issue Slip approval provenance**
   - Changed: External approval reports remain self-reported facts; only authenticated actual-approver decision provenance can satisfy the sequential approval gate. Added actor/time fields and preserved reversal reasons.
   - Evidence: Source edits and textual review only; no tests, builds, lint, scripts, SQL, migrations, database operations, or deployment.

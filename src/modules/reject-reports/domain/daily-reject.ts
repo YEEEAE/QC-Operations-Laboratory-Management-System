@@ -62,6 +62,7 @@ export interface DailyReject {
   department: string;
   shift?: string;
   status: DailyRejectStatus;
+  reviewEvents?: readonly DailyRejectReviewEvent[];
   entries: readonly DailyRejectEntry[];
   finalizedAt?: Date;
   voidedAt?: Date;
@@ -72,6 +73,21 @@ export interface DailyReject {
   updatedBy?: string;
   updatedAt: Date;
   version: bigint;
+}
+
+export interface DailyRejectReviewEvent {
+  id: string;
+  reportId: string;
+  action: 'SUBMIT_FOR_QC' | 'QC_REVIEW' | 'QC_RETURN' | 'SUPERVISOR_APPROVE';
+  fromState: DailyRejectStatus;
+  toState: DailyRejectStatus;
+  actorId: string;
+  permissionCode: string;
+  reason?: string;
+  occurredAt: Date;
+  reportVersion: bigint;
+  snapshot?: unknown;
+  snapshotHash?: string;
 }
 
 export function validateDailyRejectEntry(input: DailyRejectEntryInput): DailyRejectEntryInput {

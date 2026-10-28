@@ -7,6 +7,7 @@ import { compareRejectDecimalStrings, dailyRejectTotals } from '../../../modules
 import { stateLabel } from '../../../shared/copy/ux-vocabulary.js';
 import { actions } from 'astro:actions';
 import { field, parseExpectedVersionField } from '../../../ui/forms/mutation-post.js';
+import { randomUUID } from 'node:crypto';
 
 const actor = Astro.locals.actor;
 if (!actor)
@@ -44,7 +45,10 @@ const hasPermission = (code: string) =>
 const isCreator = record?.createdBy === actor.id;
 const canEditDraft = isCreator && record?.status === 'DRAFT';
 const canAppend = canEditDraft && hasPermission('PERM-RREJ-EDIT');
-const canFinalize = canEditDraft && hasPermission('PERM-RREJ-FINALIZE');
+const canSubmitForQc = isCreator && record?.status === 'DRAFT' && hasPermission('PERM-RREJ-SUBMIT-QC');
+const canQcReview = !!record && record.status === 'SUBMITTED_FOR_QC' && !isCreator && hasPermission('PERM-RREJ-QC-REVIEW');
+const qcReviewerId = [...(record?.reviewEvents ?? [])].reverse().find((event) => event.action === 'QC_REVIEW')?.actorId;
+const canSupervisorApprove = !!record && record.status === 'QC_REVIEWED' && !isCreator && qcReviewerId !== actor.id && hasPermission('PERM-RREJ-SUPERVISOR-APPROVE');
 const canVoid =
   !!record &&
   record.status !== 'VOID' &&
@@ -78,8 +82,12 @@ if (Astro.request.method === 'POST' && record && !printMode) {
           rejectReason: value('rejectReason'), analysis: optional('analysis'),
         },
       });
-    } else if (intent === 'finalize' && canFinalize && record.entries.length > 0) {
-      result = await Astro.callAction(actions.rejectReports.finalizeDailyReject, { reportId, expectedVersion });
+    } else if (intent === 'review' && field(form, 'reviewAction')) {
+      result = await Astro.callAction(actions.rejectReports.transitionDailyRejectReview, {
+        reportId, expectedVersion, idempotencyKey: field(form, 'idempotencyKey'),
+        action: field(form, 'reviewAction') as 'SUBMIT_FOR_QC' | 'QC_REVIEW' | 'QC_RETURN' | 'SUPERVISOR_APPROVE',
+        reason: field(form, 'reason') || undefined,
+      });
     } else if (intent === 'void' && canVoid) {
       result = await Astro.callAction(actions.rejectReports.voidReport, { reportId, expectedVersion, reason: field(form, 'reason') });
     } else {
@@ -133,14 +141,15 @@ const fmtDateTime = (d?: Date) =>
 
   {printMode && <p class="print-copy-watermark">UNAPPROVED INFORMATIONAL COPY — NOT A CONTROLLED RECORD</p>}
   <p class="mutation-feedback" role={postError ? 'alert' : 'status'} aria-live={postError ? 'assertive' : 'polite'} tabindex="-1" data-result>{postError}{postError && <> <a href={`${Astro.url.pathname}#entries`}>Review this report</a></>}</p>
+  {record.status === 'RETURNED' && <p class="hint">This report is returned for correction. A controlled correction record cannot be created until the applicable correction authority and versioning rules are approved.</p>}
   <div class="grid">
     <section class="panel" aria-labelledby="facts-title">
       <h2 id="facts-title">Record facts</h2>
       <dl>
         <dt>Record date</dt><dd>{fmtDate(record.reportDate)}</dd>
-        <dt>Department / section</dt><dd>{record.department}</dd>
         <dt>Shift</dt><dd>{record.shift ?? '—'}</dd>
         <dt>Recorded by</dt><dd>{creatorLabel}</dd>
+        <dt>Department / section</dt><dd>{record.department}</dd>
       </dl>
     </section>
     <section class="panel" aria-labelledby="totals-title">
@@ -198,6 +207,7 @@ const fmtDateTime = (d?: Date) =>
               <th scope="col">Formula provenance</th>
               <th scope="col">Quantity provenance</th>
               <th scope="col">Limit</th>
+              <th scope="col">Reference comparison</th>
               <th scope="col">Formula/BOM</th>
               <th scope="col">Reason</th>
             </tr>
@@ -225,6 +235,7 @@ const fmtDateTime = (d?: Date) =>
                 <td>Paper {entry.paperFormulaId ?? 'NOT_RECORDED'} v{entry.paperFormulaVersion ?? '—'}; operational {entry.operationalFormulaId ?? 'NOT_RECORDED'} v{entry.operationalFormulaVersion ?? '—'}</td>
                 <td>{entry.quantityProvenance ?? 'NOT_RECORDED'}{entry.quantitySourceReference ? ` · ${entry.quantitySourceReference}` : ''}; balance {entry.productionBalanceStatus ?? 'NOT_RECORDED'}</td>
                 <td>{entry.rejectLimit ?? '—'}</td>
+                <td>{entry.rejectLimit === undefined || entry.operationalRejectPct === null ? 'NOT_AVAILABLE' : overLimit(entry.operationalRejectPct, entry.rejectLimit) ? 'Above entered reference limit' : 'At or below entered reference limit'}</td>
                 <td>{entry.productionFormula ?? '—'}</td>
                 <td>{entry.rejectReason}{entry.analysis ? ` — ${entry.analysis}` : ''}</td>
               </tr>
@@ -245,7 +256,7 @@ const fmtDateTime = (d?: Date) =>
         <dt>Voided</dt><dd>{record.voidedAt ? fmtDateTime(record.voidedAt) : '—'}</dd>
         {record.voidedAt && <><dt>Void reason</dt><dd class="long-value">{record.voidReason ?? '—'}</dd></>}
       </dl>
-      <p class="hint">Event-by-event audit history is not included in this read model.</p>
+      {record.reviewEvents?.map((event) => <div class="review-event"><strong>{stateLabel(event.toState)}</strong><span>{event.action.replaceAll('_', ' ')}</span><span>{fmtDateTime(event.occurredAt)}</span><span>{event.actorId === actor.id ? 'You' : 'Another authorized user'}</span>{event.reason && <p>{event.reason}</p>}</div>)}
     </section>
 
     <section class="panel" aria-labelledby="relationships-title">
@@ -261,7 +272,7 @@ const fmtDateTime = (d?: Date) =>
     </section>
   </div>
 
-  {!printMode && (canAppend || canFinalize || canVoid) && (
+  {!printMode && (canAppend || canSubmitForQc || canQcReview || canSupervisorApprove || canVoid) && (
     <section class="action-rail" aria-labelledby="actions-title">
       <h2 id="actions-title">Available actions</h2>
       {canAppend && (
@@ -304,17 +315,23 @@ const fmtDateTime = (d?: Date) =>
       </form>
       </section>
       )}
-      {canFinalize && record.entries.length > 0 && (
+      {canSubmitForQc && record.entries.length > 0 && (
         <section class="panel" aria-labelledby="finalize-title">
-          <h3 id="finalize-title">Finalize record</h3>
-          <p class="hint">The server rechecks the record state, version, and finalization permission when you submit.</p>
-          <form id="finalize-daily" method="post">
-            <input type="hidden" name="intent" value="finalize" />
+          <h3 id="finalize-title">Submit for QC review</h3>
+          <p class="hint">Submission preserves the production entry. QC review and area Supervisor approval are separate decisions.</p>
+          <form method="post" data-review-form data-action="SUBMIT_FOR_QC">
+            <input type="hidden" name="intent" value="review" /><input type="hidden" name="reviewAction" value="SUBMIT_FOR_QC" />
             <input type="hidden" name="expectedVersion" value={record.version.toString()} />
-            <button type="submit" data-finalize data-version={record.version.toString()}>Finalize record</button>
+            <input type="hidden" name="idempotencyKey" value={randomUUID()} />
+            <button type="submit">Submit for QC</button>
           </form>
         </section>
       )}
+      {(canQcReview || canSupervisorApprove) && <section class="panel" aria-labelledby="review-title"><h3 id="review-title">{canQcReview ? 'QC review' : 'Area Supervisor approval'}</h3><p class="hint">The review reason is retained with the actor, permission, record version, and timestamp.</p>
+        {canQcReview && <><form method="post" data-review-form data-action="QC_REVIEW"><input type="hidden" name="intent" value="review"/><input type="hidden" name="reviewAction" value="QC_REVIEW"/><input type="hidden" name="expectedVersion" value={record.version.toString()}/><input type="hidden" name="idempotencyKey" value={randomUUID()}/><label for="qcReviewReason">QC review note<input id="qcReviewReason" name="reason" required maxlength="2000"/></label><button type="submit">Record QC review</button></form>
+        <form method="post" data-review-form data-action="QC_RETURN"><input type="hidden" name="intent" value="review"/><input type="hidden" name="reviewAction" value="QC_RETURN"/><input type="hidden" name="expectedVersion" value={record.version.toString()}/><input type="hidden" name="idempotencyKey" value={randomUUID()}/><label for="qcReturnReason">Return reason<input id="qcReturnReason" name="reason" required maxlength="2000"/></label><button type="submit">Return to production</button></form></>}
+        {canSupervisorApprove && <form method="post" data-review-form data-action="SUPERVISOR_APPROVE"><input type="hidden" name="intent" value="review"/><input type="hidden" name="reviewAction" value="SUPERVISOR_APPROVE"/><input type="hidden" name="expectedVersion" value={record.version.toString()}/><input type="hidden" name="idempotencyKey" value={randomUUID()}/><label for="supervisorReason">Supervisor decision note<input id="supervisorReason" name="reason" required maxlength="2000"/></label><button type="submit">Approve daily reject report</button></form>}
+      </section>}
       {canVoid && (
       <section class="panel" aria-labelledby="void-title">
         <h3 id="void-title">Void record</h3>
@@ -469,11 +486,15 @@ const fmtDateTime = (d?: Date) =>
     };
     void submitEntry();
   });
-  document.querySelector<HTMLButtonElement>('[data-finalize]')?.addEventListener('click', (event) => {
+  document.querySelectorAll<HTMLFormElement>('[data-review-form]').forEach((form) => form.addEventListener('submit', (event) => {
     event.preventDefault();
-    const button = event.currentTarget as HTMLElement;
-    run(actions.rejectReports.finalizeDailyReject({ reportId, expectedVersion: BigInt(button.dataset.version || '0') }));
-  });
+    const values = new FormData(form);
+    const reason = String(values.get('reason') ?? '').trim();
+    const action = String(values.get('reviewAction') ?? '') as 'SUBMIT_FOR_QC' | 'QC_REVIEW' | 'QC_RETURN' | 'SUPERVISOR_APPROVE';
+    run(actions.rejectReports.transitionDailyRejectReview({ reportId,
+      expectedVersion: BigInt(String(values.get('expectedVersion') ?? '0')),
+      idempotencyKey: String(values.get('idempotencyKey') ?? ''), action, reason: reason || undefined }));
+  }));
   document.querySelector<HTMLFormElement>('[data-void-form]')?.addEventListener('submit', (event) => {
     event.preventDefault();
     const form = event.currentTarget as HTMLFormElement;

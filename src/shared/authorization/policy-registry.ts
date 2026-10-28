@@ -1001,7 +1001,7 @@ const policies: readonly AuthorizationPolicy[] = [
     permission: 'PERM-RREJ-VIEW',
     action: 'VIEW',
     entityType: 'REJECT_REPORT',
-    states: ['DRAFT', 'ISSUED', 'APPROVAL_TRACKING', 'COMPLETED', 'FINALIZED', 'VOID'],
+    states: ['DRAFT', 'ISSUED', 'APPROVAL_TRACKING', 'COMPLETED', 'SUBMITTED_FOR_QC', 'QC_REVIEWED', 'RETURNED', 'SUPERVISOR_APPROVED', 'CORRECTED', 'FINALIZED', 'VOID'],
   },
   {
     permission: 'PERM-RREJ-CREATE',
@@ -1016,17 +1016,15 @@ const policies: readonly AuthorizationPolicy[] = [
     states: ['DRAFT'],
   },
   { permission: 'PERM-RREJ-EDIT', action: 'ISSUE', entityType: 'REJECT_REPORT', states: ['DRAFT'] },
-  {
-    permission: 'PERM-RREJ-FINALIZE',
-    action: 'FINALIZE',
-    entityType: 'REJECT_REPORT',
-    states: ['DRAFT'],
-  },
+  { permission: 'PERM-RREJ-SUBMIT-QC', action: 'SUBMIT_FOR_QC', entityType: 'REJECT_REPORT', states: ['DRAFT'] },
+  { permission: 'PERM-RREJ-QC-REVIEW', action: 'QC_REVIEW', entityType: 'REJECT_REPORT', states: ['SUBMITTED_FOR_QC'] },
+  { permission: 'PERM-RREJ-QC-REVIEW', action: 'QC_RETURN', entityType: 'REJECT_REPORT', states: ['SUBMITTED_FOR_QC'] },
+  { permission: 'PERM-RREJ-SUPERVISOR-APPROVE', action: 'SUPERVISOR_APPROVE', entityType: 'REJECT_REPORT', states: ['QC_REVIEWED'] },
   {
     permission: 'PERM-RREJ-VOID',
     action: 'VOID',
     entityType: 'REJECT_REPORT',
-    states: ['DRAFT', 'ISSUED', 'APPROVAL_TRACKING', 'FINALIZED'],
+    states: ['DRAFT', 'ISSUED', 'APPROVAL_TRACKING', 'SUBMITTED_FOR_QC', 'QC_REVIEWED', 'RETURNED', 'SUPERVISOR_APPROVED', 'CORRECTED'],
   },
   {
     permission: 'PERM-RREJ-CONFIRM-APPROVAL',

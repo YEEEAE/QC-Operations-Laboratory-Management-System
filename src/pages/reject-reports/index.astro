@@ -81,7 +81,7 @@ const { summary, analytics, recent } = dashboard ?? {
     totalDailyRejects: 0,
     awaitingApprovals: 0,
     completedIssueSlips: 0,
-    finalizedDailyRejects: 0,
+    supervisorApprovedDailyRejects: 0,
   },
   analytics: {
     trendByDate: [],
@@ -342,7 +342,7 @@ const filterNotice = invalidDateRange
             <div class="card"><span>Daily reject records</span><strong>{summary.totalDailyRejects}</strong></div>
             <div class="card warn"><span>Awaiting approvals</span><strong>{summary.awaitingApprovals}</strong></div>
             <div class="card"><span>Completed Issue slips</span><strong>{summary.completedIssueSlips}</strong></div>
-            <div class="card"><span>Finalized Daily reject</span><strong>{summary.finalizedDailyRejects}</strong></div>
+            <div class="card"><span>Supervisor-approved Daily rejects</span><strong>{summary.supervisorApprovedDailyRejects}</strong></div>
           </div>
         </section>
 

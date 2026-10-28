@@ -12,13 +12,15 @@ export const ISSUE_SLIP_STATUSES = [
 ] as const;
 export type IssueSlipStatus = (typeof ISSUE_SLIP_STATUSES)[number];
 
-export const DAILY_REJECT_STATUSES = ['DRAFT', 'FINALIZED', 'VOID'] as const;
+export const DAILY_REJECT_STATUSES = [
+  'DRAFT', 'SUBMITTED_FOR_QC', 'QC_REVIEWED', 'RETURNED', 'SUPERVISOR_APPROVED', 'CORRECTED', 'FINALIZED', 'VOID',
+] as const;
 export type DailyRejectStatus = (typeof DAILY_REJECT_STATUSES)[number];
 
 export type RejectReportStatus = IssueSlipStatus | DailyRejectStatus;
 
 export type IssueSlipAction = 'ISSUE' | 'VOID';
-export type DailyRejectAction = 'FINALIZE' | 'VOID';
+export type DailyRejectAction = 'SUBMIT_FOR_QC' | 'QC_REVIEW' | 'QC_RETURN' | 'SUPERVISOR_APPROVE' | 'VOID';
 
 const issueSlipTransitions: Record<IssueSlipAction, readonly [IssueSlipStatus, IssueSlipStatus][]> =
   {
@@ -34,10 +36,14 @@ const dailyRejectTransitions: Record<
   DailyRejectAction,
   readonly [DailyRejectStatus, DailyRejectStatus][]
 > = {
-  FINALIZE: [['DRAFT', 'FINALIZED']],
+  SUBMIT_FOR_QC: [['DRAFT', 'SUBMITTED_FOR_QC']],
+  QC_REVIEW: [['SUBMITTED_FOR_QC', 'QC_REVIEWED']],
+  QC_RETURN: [['SUBMITTED_FOR_QC', 'RETURNED']],
+  SUPERVISOR_APPROVE: [['QC_REVIEWED', 'SUPERVISOR_APPROVED']],
   VOID: [
     ['DRAFT', 'VOID'],
-    ['FINALIZED', 'VOID'],
+    ['SUBMITTED_FOR_QC', 'VOID'], ['QC_REVIEWED', 'VOID'],
+    ['RETURNED', 'VOID'], ['SUPERVISOR_APPROVED', 'VOID'], ['CORRECTED', 'VOID'],
   ],
 };
 

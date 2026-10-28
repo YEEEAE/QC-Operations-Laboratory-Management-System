@@ -1,5 +1,7 @@
 import type { Kysely, Transaction } from 'kysely';
 import { sql } from 'kysely';
+import { createHash } from 'node:crypto';
+import { stableJson } from '../../../shared/json/stable-stringify.js';
 import type { DatabaseSchema, DatabaseRow } from '../../../shared/database/db-types.js';
 import { translateDatabaseError } from '../../../shared/database/database.js';
 import { AppError } from '../../../shared/errors/app-error.js';
@@ -11,6 +13,7 @@ import { PostgresOutboxRepository } from '../../../shared/outbox/postgres-outbox
 import type { ActorContext } from '../../../shared/authorization/types.js';
 import type { Page } from '../../../shared/pagination/page.js';
 import { formatReportNo, reportNoDateKey, reportNoPrefix } from '../domain/report-number.js';
+import { transitionDailyRejectStatus } from '../domain/reject-report.js';
 import {
   computeRejectPercent,
   PAPER_REJECT_PERCENTAGE_FORMULA,
@@ -231,7 +234,7 @@ function mapEntry(row: EntryRow): DailyRejectEntry {
   };
 }
 
-function mapDaily(report: ReportRow, entries: readonly EntryRow[]): DailyReject {
+function mapDaily(report: ReportRow, entries: readonly EntryRow[], reviewEvents: DailyReject['reviewEvents'] = []): DailyReject {
   return {
     id: report.id,
     reportNo: report.report_no,
@@ -239,6 +242,7 @@ function mapDaily(report: ReportRow, entries: readonly EntryRow[]): DailyReject 
     department: report.department,
     shift: report.shift ?? undefined,
     status: report.status as DailyReject['status'],
+    reviewEvents,
     entries: entries.map(mapEntry),
     finalizedAt: report.finalized_at ?? undefined,
     voidedAt: report.voided_at ?? undefined,
@@ -375,7 +379,12 @@ export class PostgresRejectReportRepository implements RejectReportRepository {
             ('daily_reject_entries', 'quantity_provenance'), ('daily_reject_entries', 'production_balance_status'),
             ('daily_reject_entries', 'reject_limit'), ('daily_reject_entries', 'production_formula'),
             ('daily_reject_entries', 'reject_reason'), ('daily_reject_entries', 'analysis'),
-            ('daily_reject_entries', 'version')
+            ('daily_reject_entries', 'version'),
+            ('daily_reject_review_events', 'id'), ('daily_reject_review_events', 'report_id'),
+            ('daily_reject_review_events', 'action'), ('daily_reject_review_events', 'actor_id'),
+            ('daily_reject_review_events', 'permission_code'), ('daily_reject_review_events', 'report_version'),
+            ('daily_reject_review_events', 'idempotency_key'), ('daily_reject_review_events', 'approved_snapshot'),
+            ('daily_reject_review_events', 'snapshot_sha256')
         ), expected_constraints (table_name, constraint_name) AS (
           VALUES
             ('reject_reports', 'uq_reject_reports__report_no'),
@@ -594,7 +603,15 @@ export class PostgresRejectReportRepository implements RejectReportRepository {
       .where('report_id', '=', id)
       .orderBy('position')
       .execute();
-    return mapDaily(report, entries);
+    const reviewEvents = await executor.selectFrom('daily_reject_review_events').selectAll()
+      .where('report_id', '=', id).orderBy('report_version').execute();
+    return mapDaily(report, entries, reviewEvents.map((event) => ({
+      id: event.id, reportId: event.report_id, action: event.action as NonNullable<DailyReject['reviewEvents']>[number]['action'],
+      fromState: event.from_state as DailyReject['status'], toState: event.to_state as DailyReject['status'],
+      actorId: event.actor_id, permissionCode: event.permission_code, reason: event.reason ?? undefined,
+      occurredAt: event.occurred_at, reportVersion: BigInt(event.report_version),
+      snapshot: event.approved_snapshot ?? undefined, snapshotHash: event.snapshot_sha256 ?? undefined,
+    })));
   }
 
   private async bumpReport(
@@ -1120,43 +1137,78 @@ export class PostgresRejectReportRepository implements RejectReportRepository {
     }
   }
 
-  async finalizeDailyReject(input: {
-    id: string;
-    expectedVersion: bigint;
-    actor: ActorContext;
-    requestId: string;
-  }): Promise<DailyReject> {
-    try {
-      return await this.database.transaction().execute(async (tx) => {
-        const now = new Date();
-        const row = await this.bumpReport(tx, input.id, input.expectedVersion, input.actor, {
-          status: 'FINALIZED',
-          finalized_at: now,
-        });
-        await this.auditFor(tx)?.append({
-          actorType: 'USER',
-          actorId: input.actor.id,
-          subjectType: 'REJECT_REPORT',
-          subjectId: input.id,
-          action: 'DAILY_REJECT_FINALIZED',
-          oldState: 'DRAFT',
-          newState: 'FINALIZED',
-          requestId: input.requestId,
-        });
-        await this.outboxFor(tx)?.enqueue({
-          eventType: 'DAILY_REJECT_FINALIZED',
-          aggregateType: 'REJECT_REPORT',
-          aggregateId: input.id,
-          payload: { reportNo: row.report_no },
-          dedupeKey: `daily-reject-finalized:${input.id}`,
-        });
-        const updated = await this.loadDaily(tx, input.id);
-        if (!updated) throw new AppError('SYSTEM_INTERNAL');
-        return updated;
+  async transitionDailyRejectReview(input: Parameters<RejectReportRepository['transitionDailyRejectReview']>[0]): Promise<DailyReject> {
+    const permission = {
+      SUBMIT_FOR_QC: 'PERM-RREJ-SUBMIT-QC', QC_REVIEW: 'PERM-RREJ-QC-REVIEW',
+      QC_RETURN: 'PERM-RREJ-QC-REVIEW', SUPERVISOR_APPROVE: 'PERM-RREJ-SUPERVISOR-APPROVE',
+    }[input.action];
+    const fingerprint = createHash('sha256').update(stableJson({
+      id: input.id, actorId: input.actor.id, action: input.action,
+      expectedVersion: input.expectedVersion, reason: input.reason ?? null,
+    })).digest('hex');
+    return this.database.transaction().execute(async (tx) => {
+      await sql`select pg_advisory_xact_lock(hashtextextended(${input.idempotencyKey}, 0))`.execute(tx);
+      const prior = await tx.selectFrom('daily_reject_review_events').selectAll()
+        .where('idempotency_key', '=', input.idempotencyKey).executeTakeFirst();
+      if (prior) {
+        if (prior.command_fingerprint !== fingerprint) throw new AppError('CONFLICT_DUPLICATE_COMMAND', { userSafe: true });
+        const replay = await this.loadDaily(tx, input.id);
+        if (!replay) throw new AppError('RESOURCE_NOT_FOUND', { userSafe: true });
+        return replay;
+      }
+      const current = await tx.selectFrom('reject_reports').selectAll().where('id', '=', input.id)
+        .where('report_type', '=', 'DAILY_REJECT').forUpdate().executeTakeFirst();
+      if (!current) throw new AppError('RESOURCE_NOT_FOUND', { userSafe: true });
+      if (BigInt(current.version) !== input.expectedVersion) throw new AppError('CONFLICT_STALE_VERSION', { userSafe: true });
+      if (input.action === 'SUBMIT_FOR_QC' ? current.created_by !== input.actor.id : current.created_by === input.actor.id)
+        throw new AppError('AUTHZ_DENIED', { userSafe: true });
+      const fromState = current.status as DailyReject['status'];
+      if (input.action === 'SUPERVISOR_APPROVE') {
+        const qcDecision = await tx.selectFrom('daily_reject_review_events').select('actor_id')
+          .where('report_id', '=', input.id).where('action', '=', 'QC_REVIEW')
+          .orderBy('report_version', 'desc').executeTakeFirst();
+        if (!qcDecision || qcDecision.actor_id === input.actor.id) throw new AppError('AUTHZ_DENIED', { userSafe: true });
+      }
+      authorize({ actor: input.actor, permission: permission as import('../../../shared/authorization/permissions.js').PermissionCode,
+        action: input.action, entity: { type: 'REJECT_REPORT', id: input.id, state: current.status,
+          ownerId: current.created_by, departmentId: current.department, shiftId: current.shift ?? undefined },
+        scope: { ownerId: current.created_by, departmentId: current.department, shiftId: current.shift ?? undefined },
+        currentVersion: BigInt(current.version), expectedVersion: input.expectedVersion, businessCondition: true },
+      { throwOnDeny: true });
+      const toState = transitionDailyRejectStatus(fromState, input.action);
+      const now = new Date();
+      let snapshot: unknown = null;
+      let snapshotHash: string | null = null;
+      if (input.action === 'SUPERVISOR_APPROVE') {
+        const approved = await this.loadDaily(tx, input.id);
+        if (!approved) throw new AppError('RESOURCE_NOT_FOUND', { userSafe: true });
+        snapshot = JSON.parse(stableJson({ ...approved, status: toState, updatedBy: input.actor.id, updatedAt: now, version: input.expectedVersion + 1n }));
+        snapshotHash = createHash('sha256').update(stableJson(snapshot)).digest('hex');
+      }
+      const updated = await tx.updateTable('reject_reports').set({ status: toState,
+        updated_by: input.actor.id, updated_at: now, version: input.expectedVersion + 1n,
+        ...(input.action === 'SUPERVISOR_APPROVE' ? { finalized_at: now } : {}),
+      }).where('id', '=', input.id).where('version', '=', input.expectedVersion).returningAll().executeTakeFirst();
+      if (!updated) throw new AppError('CONFLICT_STALE_VERSION', { userSafe: true });
+      await tx.insertInto('daily_reject_review_events').values({
+        report_id: input.id, action: input.action, from_state: fromState, to_state: toState,
+        actor_id: input.actor.id, permission_code: permission, reason: input.reason ?? null,
+        report_version: input.expectedVersion + 1n, idempotency_key: input.idempotencyKey,
+        command_fingerprint: fingerprint, approved_snapshot: snapshot, snapshot_sha256: snapshotHash,
+      }).execute();
+      await this.auditFor(tx)?.append({ actorType: 'USER', actorId: input.actor.id,
+        subjectType: 'REJECT_REPORT', subjectId: input.id, action: `DAILY_REJECT_${input.action}`,
+        oldState: fromState, newState: toState, reason: input.reason, requestId: input.requestId,
+        payload: { permission, reportVersion: String(input.expectedVersion + 1n), snapshotHash },
       });
-    } catch (error) {
-      throw translateDatabaseError(error);
-    }
+      if (input.action === 'SUPERVISOR_APPROVE') await this.outboxFor(tx)?.enqueue({
+        eventType: 'DAILY_REJECT_SUPERVISOR_APPROVED', aggregateType: 'REJECT_REPORT', aggregateId: input.id,
+        payload: { reportNo: updated.report_no, snapshotHash, snapshot }, dedupeKey: `daily-reject-approved:${input.id}:${input.expectedVersion + 1n}`,
+      });
+      const result = await this.loadDaily(tx, input.id);
+      if (!result) throw new AppError('SYSTEM_INTERNAL');
+      return result;
+    });
   }
 
   /** Non-destructive void; COMPLETED slips are rejected by the use case. */
@@ -1220,6 +1272,7 @@ export class PostgresRejectReportRepository implements RejectReportRepository {
       SELECT r.* FROM qc.reject_reports r
       WHERE ${filter.status === 'VOID' ? sql`TRUE` : sql`r.status <> 'VOID'`}
         AND ${reportFilterSql(filter)}
+        AND (r.report_type <> 'DAILY_REJECT' OR r.status = 'SUPERVISOR_APPROVED')
     )`;
     const counts = await sql<{
       reports_today: string;
@@ -1228,17 +1281,17 @@ export class PostgresRejectReportRepository implements RejectReportRepository {
       total_daily_rejects: string;
       awaiting_approvals: string;
       completed_issue_slips: string;
-      finalized_daily_rejects: string;
+      supervisor_approved_daily_rejects: string;
     }>`
       ${filtered}
       SELECT
         COUNT(*) FILTER (WHERE report_date = ${today}::date) AS reports_today,
         COUNT(*) FILTER (WHERE report_date >= ${monthStart}::date) AS reports_this_month,
         COUNT(*) FILTER (WHERE report_type = 'ISSUE_SLIP') AS total_issue_slips,
-        COUNT(*) FILTER (WHERE report_type = 'DAILY_REJECT') AS total_daily_rejects,
+        COUNT(*) FILTER (WHERE report_type = 'DAILY_REJECT' AND status = 'SUPERVISOR_APPROVED') AS total_daily_rejects,
         COUNT(*) FILTER (WHERE report_type = 'ISSUE_SLIP' AND status IN ('ISSUED', 'APPROVAL_TRACKING')) AS awaiting_approvals,
         COUNT(*) FILTER (WHERE report_type = 'ISSUE_SLIP' AND status = 'COMPLETED') AS completed_issue_slips,
-        COUNT(*) FILTER (WHERE report_type = 'DAILY_REJECT' AND status = 'FINALIZED') AS finalized_daily_rejects
+        COUNT(*) FILTER (WHERE report_type = 'DAILY_REJECT' AND status = 'SUPERVISOR_APPROVED') AS supervisor_approved_daily_rejects
       FROM filtered_reports r
     `.execute(this.database);
     const quantities = await sql<{
@@ -1282,7 +1335,7 @@ export class PostgresRejectReportRepository implements RejectReportRepository {
       totalDailyRejects: Number(row?.total_daily_rejects ?? 0),
       awaitingApprovals: Number(row?.awaiting_approvals ?? 0),
       completedIssueSlips: Number(row?.completed_issue_slips ?? 0),
-      finalizedDailyRejects: Number(row?.finalized_daily_rejects ?? 0),
+      supervisorApprovedDailyRejects: Number(row?.supervisor_approved_daily_rejects ?? 0),
     };
   }
 
@@ -1295,6 +1348,7 @@ export class PostgresRejectReportRepository implements RejectReportRepository {
     const filtered = sql`WITH filtered_reports AS (
       SELECT r.* FROM qc.reject_reports r
       WHERE ${filter.status === 'VOID' ? sql`TRUE` : sql`r.status <> 'VOID'`}
+        AND (r.report_type <> 'DAILY_REJECT' OR r.status = 'SUPERVISOR_APPROVED')
         AND ${reportFilterSql(filter)}
     )`;
     const [trend, byItem, byDepartment, byReason, approvalStatus, pctTrend] = await Promise.all([

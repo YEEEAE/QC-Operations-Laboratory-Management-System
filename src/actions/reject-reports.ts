@@ -267,22 +267,15 @@ const appendDailyRejectEntry = defineAction({
     ),
 });
 
-const finalizeDailyReject = defineAction({
+const transitionDailyRejectReview = defineAction({
   accept: 'json',
-  input: z.object({
-    reportId: z.string().uuid(),
-    expectedVersion: z.coerce.bigint(),
-  }),
-  handler: (input, context) =>
-    run(
-      () =>
-        repo().finalizeDailyReject.execute({
-          ...input,
-          actor: actor(context),
-          requestId: requestId(context),
-        }),
-      context,
-    ),
+  input: z.object({ reportId: z.string().uuid(), expectedVersion: z.coerce.bigint(),
+    idempotencyKey: z.string().uuid(),
+    action: z.enum(['SUBMIT_FOR_QC', 'QC_REVIEW', 'QC_RETURN', 'SUPERVISOR_APPROVE']),
+    reason: z.string().max(2000).optional() }),
+  handler: (input, context) => run(() => repo().transitionDailyRejectReview.execute({
+    ...input, actor: actor(context), requestId: requestId(context),
+  }), context),
 });
 
 const voidReport = defineAction({
@@ -314,6 +307,6 @@ export const rejectReports = {
   verifyFocusEntry,
   createDailyReject,
   appendDailyRejectEntry,
-  finalizeDailyReject,
+  transitionDailyRejectReview,
   voidReport,
 };

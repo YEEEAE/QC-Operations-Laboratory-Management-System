@@ -11,7 +11,7 @@ import { GetIssueSlipUseCase } from './get-issue-slip.js';
 import { ListIssueSlipsUseCase } from './list-issue-slips.js';
 import { CreateDailyRejectUseCase } from './create-daily-reject.js';
 import { AppendDailyRejectEntryUseCase } from './append-daily-reject-entry.js';
-import { FinalizeDailyRejectUseCase } from './finalize-daily-reject.js';
+import { TransitionDailyRejectReviewUseCase } from './transition-daily-reject-review.js';
 import { GetDailyRejectUseCase } from './get-daily-reject.js';
 import { ListDailyRejectsUseCase } from './list-daily-rejects.js';
 import { VoidRejectReportUseCase } from './void-reject-report.js';
@@ -46,7 +46,7 @@ export function rejectReportActionDependencies() {
     reverseApproval: new ReverseIssueSlipApprovalUseCase(repository),
     createDailyReject: new CreateDailyRejectUseCase(repository),
     appendDailyRejectEntry: new AppendDailyRejectEntryUseCase(repository),
-    finalizeDailyReject: new FinalizeDailyRejectUseCase(repository),
+    transitionDailyRejectReview: new TransitionDailyRejectReviewUseCase(repository),
     voidReport: new VoidRejectReportUseCase(repository),
     focusCompliance: new FocusComplianceService(database),
   };

@@ -1696,6 +1696,12 @@ export interface RejectReportsTable {
   updated_at: Generated<Date>;
   version: Generated<bigint>;
 }
+export interface DailyRejectReviewEventsTable {
+  id: Generated<string>; report_id: string; action: string; from_state: string; to_state: string;
+  actor_id: string; permission_code: string; reason: string | null; occurred_at: Generated<Date>;
+  report_version: bigint; idempotency_key: string; command_fingerprint: string;
+  approved_snapshot: unknown | null; snapshot_sha256: string | null;
+}
 
 export interface RejectIssueSlipsTable {
   report_id: string;
@@ -1881,6 +1887,7 @@ export interface DatabaseSchema {
   uat_defects: UatDefectsTable;
   uat_acceptances: UatAcceptancesTable;
   reject_reports: RejectReportsTable;
+  daily_reject_review_events: DailyRejectReviewEventsTable;
   reject_issue_slips: RejectIssueSlipsTable;
   issue_slip_approval_confirmations: IssueSlipApprovalConfirmationsTable;
   daily_reject_entries: DailyRejectEntriesTable;
