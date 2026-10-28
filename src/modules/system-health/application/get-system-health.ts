@@ -4,6 +4,7 @@ import type { PermissionCode } from '../../../shared/authorization/permissions.j
 import {
   describeBackupPosture,
   type BackupRunState,
+  type RestoreRunType,
   type RestoreVerificationStatus,
 } from '../../backup-recovery/domain/backup-record.js';
 import type { BackupCatalogRepository } from '../../backup-recovery/ports/repository.js';
@@ -43,13 +44,45 @@ export interface SystemHealthBackupPosture {
   lastBackupAt?: Date;
   artifactVerified: boolean;
   restoreVerification: RestoreVerificationStatus | 'UNKNOWN';
+  verifiedRestoreEvidence?: {
+    restoreRunId: string;
+    restoreType: RestoreRunType;
+    verifiedAt?: Date;
+  };
   postureStatus: HealthStatus;
   knownGaps: readonly string[];
+}
+
+export type DatabaseReachabilityClass =
+  | 'REACHABLE'
+  | 'CONFIGURATION_MISSING'
+  | 'CONFIGURATION_INVALID'
+  | 'PROVIDER_UNAVAILABLE'
+  | 'NOT_VERIFIED';
+
+export interface SystemHealthMigrationPosture {
+  /** Expected release head, falling back only to the migration head in this build. */
+  expectedHead: string;
+  /** Database ledger head; UNKNOWN when the ledger could not be read. */
+  appliedHead: string;
+  /** Shipped source head for comparison; UNKNOWN when source is unavailable. */
+  buildHead: string;
+  pendingCount: number | null;
+  status: HealthStatus;
+}
+
+export interface SystemHealthEnvironment {
+  profile: string;
+  neonBranchLabel?: string;
 }
 
 export interface SystemHealthView {
   /** Application and PostgreSQL connectivity only; excludes business schemas. */
   dependencyReadiness: CoreSystemStatus;
+  /** Sanitized database reachability class; no host or connection data. */
+  databaseReachability: DatabaseReachabilityClass;
+  migration: SystemHealthMigrationPosture;
+  environment: { profile: string; neonBranchLabel: string };
   /** Mirrors the same repository probe used by /reject-reports. */
   rejectReportsReadiness: WorkflowReadiness;
   /** This view lacks CI/UAT/recovery evidence and never grants release approval. */
@@ -92,6 +125,10 @@ export class GetSystemHealthUseCase {
     private readonly readiness: SystemHealthReadinessDependencies,
     private readonly release: ConfiguredReleaseIdentity = { status: 'UNVERIFIED' },
     private readonly now = () => new Date(),
+    private readonly environment: SystemHealthEnvironment = {
+      profile: 'UNKNOWN',
+      neonBranchLabel: undefined,
+    },
   ) {}
 
   async execute(input: { actor: ActorContext }): Promise<SystemHealthView> {
@@ -142,6 +179,16 @@ export class GetSystemHealthUseCase {
     const application = byStatus.get('application');
     const dependencyReadiness: CoreSystemStatus =
       application?.status === 'HEALTHY' && database?.status === 'HEALTHY' ? 'READY' : 'NOT_READY';
+    const databaseReachability: DatabaseReachabilityClass =
+      database?.status === 'HEALTHY'
+        ? 'REACHABLE'
+        : database?.detail === 'CONFIGURATION_MISSING'
+          ? 'CONFIGURATION_MISSING'
+          : database?.detail === 'CONFIGURATION_INVALID'
+            ? 'CONFIGURATION_INVALID'
+            : database?.status === 'UNAVAILABLE'
+              ? 'PROVIDER_UNAVAILABLE'
+              : 'NOT_VERIFIED';
 
     const rejectReportsHealth: DependencyHealth = !rejectReportsResult.ok
       ? { dependency: 'reject-reports', status: 'UNKNOWN', checkedAt: generatedAt }
@@ -171,6 +218,18 @@ export class GetSystemHealthUseCase {
             checkedAt: generatedAt,
             detail: `${migrationData.appliedHead} applied; ${migrationData.buildHead} shipped; ${migrationData.pending.length} pending${integrityMismatches.length ? `; ledger identity mismatch at ${integrityMismatches.join(', ')}` : ''}`,
           };
+    const expectedMigrationHead =
+      this.release.migrationHead ??
+      (migrationData?.buildHead && migrationData.buildHead !== 'NONE'
+        ? migrationData.buildHead
+        : 'UNKNOWN');
+    const migration: SystemHealthMigrationPosture = {
+      expectedHead: expectedMigrationHead,
+      appliedHead: migrationData?.appliedHead ?? 'UNKNOWN',
+      buildHead: migrationData?.buildHead ?? 'UNKNOWN',
+      pendingCount: migrationData ? migrationData.pending.length : null,
+      status: migrationStatus.status,
+    };
 
     const rejectReportsReadiness: WorkflowReadiness =
       rejectReportsHealth.status === 'HEALTHY'
@@ -217,6 +276,12 @@ export class GetSystemHealthUseCase {
 
     const view: SystemHealthView = {
       dependencyReadiness,
+      databaseReachability,
+      migration,
+      environment: {
+        profile: this.environment.profile,
+        neonBranchLabel: this.environment.neonBranchLabel ?? 'NOT CONFIGURED',
+      },
       rejectReportsReadiness,
       qcReleaseReadiness,
       aiCapability: byStatus.get('ai-provider')?.status ?? 'UNKNOWN',
@@ -245,6 +310,13 @@ export class GetSystemHealthUseCase {
       }
       const restoreRuns = await this.catalog.listRestoreRuns(latest.id);
       const posture = describeBackupPosture(latest, restoreRuns);
+      const verifiedRestore = restoreRuns
+        .filter((run) => run.state === 'SUCCEEDED' && run.verificationOutcome === 'VERIFIED')
+        .sort(
+          (left, right) =>
+            (right.verifiedAt ?? right.completedAt ?? right.requestedAt).getTime() -
+            (left.verifiedAt ?? left.completedAt ?? left.requestedAt).getTime(),
+        )[0];
       const postureStatus: HealthStatus =
         latest.state === 'VERIFIED' && posture.restoreVerification === 'VERIFIED'
           ? 'HEALTHY'
@@ -258,6 +330,15 @@ export class GetSystemHealthUseCase {
         lastBackupAt: latest.requestedAt,
         artifactVerified: posture.artifactVerified,
         restoreVerification: posture.restoreVerification,
+        ...(verifiedRestore
+          ? {
+              verifiedRestoreEvidence: {
+                restoreRunId: verifiedRestore.id,
+                restoreType: verifiedRestore.restoreType,
+                ...(verifiedRestore.verifiedAt ? { verifiedAt: verifiedRestore.verifiedAt } : {}),
+              },
+            }
+          : {}),
         postureStatus,
         knownGaps: posture.knownGaps,
       };

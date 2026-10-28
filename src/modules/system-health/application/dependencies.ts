@@ -15,6 +15,7 @@ import { NodePerformanceSnapshotReader } from '../infrastructure/node-performanc
 
 export function systemHealthReadDependencies() {
   const database = getDatabase();
+  const runtime = getRuntimeConfig();
   const rejectReports = new PostgresRejectReportRepository(database);
   return {
     health: new GetSystemHealthUseCase(
@@ -24,7 +25,9 @@ export function systemHealthReadDependencies() {
         migrationStatus: createPostgresMigrationStatus(database),
         rejectReportsAvailability: () => rejectReports.availability(),
       },
-      getRuntimeConfig().release,
+      runtime.release,
+      undefined,
+      { profile: runtime.profile, neonBranchLabel: runtime.neonBranchLabel },
     ),
   };
 }

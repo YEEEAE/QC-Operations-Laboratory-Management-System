@@ -30,13 +30,12 @@ URL removes the current deployment but does not clear the source setting.
 - `Documents/ENVIRONMENT-DRIFT-REGISTER.md` — known environment differences and operator actions.
 - `Documents/RENDER-DEPLOYMENT.md` — application deployment instructions.
 - `Documents/RENDER-MIGRATION-RUNBOOK.md` — database migration procedure for Render.
-- `Documents/RELEASE-RUNBOOK.md` — release sequence and gates.
-- `Documents/PRODUCTION-READINESS-CHECKLIST.md` — readiness evidence requirements.
 - `Documents/BACKUP-RECOVERY-PLAN.md` — backup and recovery design.
 - `Documents/RESTORE-DRILL-RUNBOOK.md` — restore validation procedure.
-- `Documents/INCIDENT-QUICK-REFERENCE.md` — immediate incident response steps.
-- `Documents/SUPPORT-OWNERSHIP-REGISTER.md` — support owners and escalation.
+- `Documents/NDB-13-OPERATIONS-AND-OBSERVABILITY.md` — readiness boundaries, non-secret observability definitions, tenant-scope protections, and current runbook inventory.
 - `render.yaml` — Render service definition.
 - `.github/workflows/ci.yml` — CI verification workflow.
 - `scripts/release/` — release identity and evidence checks.
 - `scripts/recovery/` — backup and restore checks.
+
+The source-level runbook inventory identifies the dedicated Neon branch/grant, user enrollment, incident response, controlled GO/NO-GO, and production-readiness checklist documents as missing. A missing runbook is a governance/configuration gap; do not infer owner approval or operational readiness from this index or a successful health probe.

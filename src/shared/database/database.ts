@@ -2,7 +2,7 @@ import { Kysely, PostgresDialect } from 'kysely';
 
 import { AppError } from '../errors/app-error.js';
 import { createTelemetryQueryPlugin } from '../observability/db-telemetry.js';
-import { recordCounter } from '../observability/telemetry.js';
+import { recordCounter, recordHistogram } from '../observability/telemetry.js';
 import type { DatabaseSchema } from './db-types.js';
 import { getPool } from './pool.js';
 
@@ -12,7 +12,16 @@ export function createDatabase(): Kysely<DatabaseSchema> {
     plugins: [createTelemetryQueryPlugin()],
     log: (event) => {
       if (event.level === 'error') {
-        recordCounter('qc_db_queries_total', 1, { dependency: 'postgres', outcome: 'error' });
+        recordCounter('qc_db_queries_total', 1, {
+          dependency: 'postgres',
+          outcome: 'error',
+          error_family: classifyDatabaseFailure(event.error),
+        });
+        recordHistogram('qc_db_query_duration_ms', event.queryDurationMillis, {
+          dependency: 'postgres',
+          outcome: 'error',
+          error_family: classifyDatabaseFailure(event.error),
+        });
       }
     },
   }).withSchema('qc');
