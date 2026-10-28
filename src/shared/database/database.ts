@@ -15,7 +15,7 @@ export function createDatabase(): Kysely<DatabaseSchema> {
         recordCounter('qc_db_queries_total', 1, { dependency: 'postgres', outcome: 'error' });
       }
     },
-  });
+  }).withSchema('qc');
 }
 
 let sharedDatabase: Kysely<DatabaseSchema> | undefined;

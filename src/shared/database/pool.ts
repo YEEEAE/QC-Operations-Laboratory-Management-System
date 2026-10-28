@@ -110,7 +110,12 @@ function withDatabaseStartupOptions(config: PoolConfig): PoolConfig {
   const defaults = '-c timezone=UTC -c search_path=qc,pg_catalog';
   if (config.connectionString) {
     const url = new URL(config.connectionString);
-    const options = [url.searchParams.get('options'), config.options, defaults]
+    const isNeonPooled =
+      url.hostname.endsWith('.neon.tech') && url.hostname.split('.')[0]?.endsWith('-pooler');
+    // Neon PgBouncer rejects search_path in startup options. Runtime Kysely
+    // queries qualify the qc schema explicitly instead of session state.
+    const startupDefaults = isNeonPooled ? '-c timezone=UTC' : defaults;
+    const options = [url.searchParams.get('options'), config.options, startupDefaults]
       .filter((value): value is string => Boolean(value?.trim()))
       .join(' ');
     url.searchParams.set('options', options);

@@ -15,12 +15,14 @@ The web service is Astro SSR on Node and reads runtime configuration on the serv
 | `PILOT_DATABASE_URL` | Pilot runtime | Dedicated pilot application connection; retained as the established profile-specific name. |
 | `PRODUCTION_DATABASE_HOST` | Production, staging, pilot | Host identity metadata. Required for production and non-production profile separation. |
 | `PRODUCTION_DATABASE_NAME` | Production, staging, pilot | Expected production database name; must match the production URL identity. |
-| `STAGING_DATABASE_HOST` / `STAGING_DATABASE_NAME` | Production, staging, pilot | Owner-approved staging identity allowlist. |
-| `PILOT_DATABASE_HOST` / `PILOT_DATABASE_NAME` | Production, staging, pilot | Owner-approved pilot identity allowlist. |
+| `STAGING_DATABASE_HOST` / `STAGING_DATABASE_NAME` | Staging; optional metadata elsewhere | Owner-approved staging identity allowlist. If either field is supplied, both are required. |
+| `PILOT_DATABASE_HOST` / `PILOT_DATABASE_NAME` | Pilot; optional metadata elsewhere | Owner-approved pilot identity allowlist. If either field is supplied, both are required. |
 | `DATABASE_URL_UNPOOLED` | Explicit operator migration tooling only | Direct migration/admin connection. The web runtime rejects a nonblank value and never selects it for its pool. |
 | `MIGRATION_DATABASE_URL` | Existing operator migration tooling | Legacy direct-URL name retained for compatibility. If both direct names are set, they must be identical. |
 
 The server-side allowlist maps each profile to exactly one URL variable, branch label, expected host, and expected database name. Production, staging, and pilot hosts must be distinct. A staging/pilot process rejects the generic production `DATABASE_URL`, production branch label, mismatched host/database, or another profile's URL. Development/test runtime and CLI targets are restricted to loopback PostgreSQL, and local development/test file-store credentials are rejected. Neon web-service URLs must use the pooled hostname; direct Neon endpoints are reserved for operator migration work. Do not configure another profile's URL or credentials in a web service. Provision distinct PostgreSQL resources and principals through the approved owner-controlled secret manager.
+
+Neon pooled connections omit the unsupported `search_path` startup option; application Kysely queries explicitly qualify the `qc` schema, and raw application SQL uses qualified table names. UTC remains a startup setting. Direct maintenance/local connections retain the `qc,pg_catalog` search path. Use driver-supported connection parameters: this `pg` version supports `channel_binding=prefer` and rejects `channel_binding=require`; keep certificate verification enabled (`sslmode=verify-full`).
 
 `DATABASE_URL_UNPOOLED` is only read by the migration CLI after the operator-only environment loader runs and the operator explicitly passes `--direct`. Without that selection, the CLI fails closed; it never falls back to the runtime pool. The CLI checks that the URL is direct, uses a database principal distinct from the runtime principal, and targets the active runtime database (treating Neon pooled/direct endpoint labels as the same target only when removing the `-pooler` suffix). The web pool only uses the selected pooled runtime URL. Do not add the direct URL to Render web-service environment settings.
 
@@ -47,8 +49,10 @@ Production requires an explicit profile, its exact branch label, matching expect
 
 1. Choose the profile explicitly with `APP_ENVIRONMENT_PROFILE`; never infer it from `NEON_BRANCH`.
 2. Have an operator create each Neon branch and its PostgreSQL resources out-of-band; this repository does not create or clone branches. Never copy unmasked company user data into a sandbox. Use only an approved sanitized snapshot or a schema-only source prepared outside this change.
-3. Record all three owner-approved host/database identities in protected settings, then configure only the active profile's pooled URL and dedicated session/storage credentials in that service.
+3. Record the active profile's owner-approved host/database identity in protected settings. Staging and pilot also require the production identity so separation can be checked. An unprovisioned inactive profile does not block startup; any additional identity metadata must be complete and its host distinct. Configure only the active profile's pooled URL and dedicated session/storage credentials in that service.
 4. Keep branch-specific Auth and optional vendor credentials in their profile's protected settings. Do not copy production credentials into staging or pilot.
 5. Keep Auth and ExLabs capabilities disabled unless their provider contract, owner approval, and server-side integration are separately established.
+
+For an existing Render service, verify its actual environment settings before deploying a changed runtime contract. A checked-in `render.yaml` does not update a service that is not managed by that Blueprint. Production needs `APP_ENVIRONMENT_PROFILE=production`, `NEON_BRANCH=production`, the verified pooled `DATABASE_URL`, and matching `PRODUCTION_DATABASE_HOST` / `PRODUCTION_DATABASE_NAME` in addition to its existing session/version/rate-limit settings.
 
 See [NEON-CREDENTIAL-ROTATION-RUNBOOK.md](NEON-CREDENTIAL-ROTATION-RUNBOOK.md) for handling the credentials disclosed during the configuration request.

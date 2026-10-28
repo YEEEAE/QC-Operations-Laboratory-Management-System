@@ -202,6 +202,13 @@ export function parseServerEnv(input: Record<string, string | undefined>): Serve
       if (input.NEON_BRANCH?.trim() !== profileBinding.branch) invalid.push(ENV_KEYS.neonBranch);
       if (!profileDatabaseUrl) missing.push(profileBinding.urlKey);
       for (const binding of Object.values(APPROVED_DATABASE_IDENTITIES)) {
+        // An unprovisioned, inactive environment must not prevent production
+        // from starting. Validate every supplied identity pair; non-production
+        // still requires production's identity to enforce separation.
+        const required = binding === profileBinding
+          || binding === APPROVED_DATABASE_IDENTITIES.production
+          || Boolean(result.data[binding.hostKey] || result.data[binding.databaseKey]);
+        if (!required) continue;
         if (!result.data[binding.hostKey]) missing.push(binding.hostKey);
         if (!result.data[binding.databaseKey]) missing.push(binding.databaseKey);
       }

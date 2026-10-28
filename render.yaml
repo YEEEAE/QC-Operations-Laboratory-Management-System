@@ -37,14 +37,6 @@ services:
         sync: false
       - key: PRODUCTION_DATABASE_NAME
         sync: false
-      - key: STAGING_DATABASE_HOST
-        sync: false
-      - key: STAGING_DATABASE_NAME
-        sync: false
-      - key: PILOT_DATABASE_HOST
-        sync: false
-      - key: PILOT_DATABASE_NAME
-        sync: false
       - key: NEON_BRANCH
         value: production
       - key: NEON_AUTH_JWKS_URL
@@ -110,10 +102,6 @@ services:
         sync: false
       - key: PRODUCTION_DATABASE_NAME
         sync: false
-      - key: PILOT_DATABASE_HOST
-        sync: false
-      - key: PILOT_DATABASE_NAME
-        sync: false
       - key: NEON_BRANCH
         value: staging
       - key: STAGING_NEON_AUTH_JWKS_URL
@@ -171,10 +159,6 @@ services:
       - key: PRODUCTION_DATABASE_HOST
         sync: false
       - key: PRODUCTION_DATABASE_NAME
-        sync: false
-      - key: STAGING_DATABASE_HOST
-        sync: false
-      - key: STAGING_DATABASE_NAME
         sync: false
       - key: NEON_BRANCH
         value: pilot
