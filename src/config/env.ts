@@ -108,6 +108,9 @@ const envSchema = z.object({
   PILOT_REAL_MASTER_DATA_ENABLED: z.enum(['true', 'false']).default('false'),
   PILOT_MASTER_DATA_APPROVAL_REFERENCE: optionalEnv(z.string().trim()),
   SESSION_SECRET: optionalEnv(z.string().min(32)),
+  SESSION_IDLE_TIMEOUT_SECONDS: optionalEnv(z.string().regex(/^[1-9]\d*$/).transform(Number).refine(Number.isSafeInteger)),
+  SESSION_ABSOLUTE_TIMEOUT_SECONDS: optionalEnv(z.string().regex(/^[1-9]\d*$/).transform(Number).refine(Number.isSafeInteger)),
+  SESSION_SIGN_OUT_SCOPE: z.enum(['CURRENT_SESSION', 'ALL_SESSIONS']).optional(),
   // Provisioned from the controlled canonical-owner account record. When
   // absent, owner-only access fails closed; login display names are not used.
   QC_SYSTEM_OWNER_USER_ID: optionalEnv(z.string().uuid()),
@@ -138,7 +141,15 @@ const envSchema = z.object({
   PILOT_R2_REGION: optionalEnv(z.string().trim().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/)),
 });
 
-export type ServerEnv = z.infer<typeof envSchema> & { APP_ENVIRONMENT_PROFILE: 'development' | 'test' | 'production' | 'staging' | 'pilot'; DATABASE_URL?: string };
+export type ServerEnv = Omit<z.infer<typeof envSchema>,
+  'SESSION_IDLE_TIMEOUT_SECONDS' | 'SESSION_ABSOLUTE_TIMEOUT_SECONDS' | 'SESSION_SIGN_OUT_SCOPE'
+> & {
+  APP_ENVIRONMENT_PROFILE: 'development' | 'test' | 'production' | 'staging' | 'pilot';
+  DATABASE_URL?: string;
+  SESSION_IDLE_TIMEOUT_SECONDS: number;
+  SESSION_ABSOLUTE_TIMEOUT_SECONDS: number;
+  SESSION_SIGN_OUT_SCOPE: 'CURRENT_SESSION' | 'ALL_SESSIONS';
+};
 
 export class InvalidEnvironmentError extends Error {
   readonly missing: readonly string[];
@@ -190,8 +201,16 @@ export function parseServerEnv(input: Record<string, string | undefined>): Serve
       : profile === 'pilot'
         ? result.data.PILOT_SESSION_SECRET
         : result.data.SESSION_SECRET;
+    const sessionIdleTimeout = result.data.SESSION_IDLE_TIMEOUT_SECONDS;
+    const sessionAbsoluteTimeout = result.data.SESSION_ABSOLUTE_TIMEOUT_SECONDS;
     const invalid: string[] = [];
     const missing: string[] = [];
+    if (Boolean(sessionIdleTimeout) !== Boolean(sessionAbsoluteTimeout)) {
+      invalid.push(ENV_KEYS.sessionIdleTimeoutSeconds, ENV_KEYS.sessionAbsoluteTimeoutSeconds);
+    }
+    if (sessionIdleTimeout && sessionAbsoluteTimeout && sessionIdleTimeout >= sessionAbsoluteTimeout) {
+      invalid.push(ENV_KEYS.sessionIdleTimeoutSeconds, ENV_KEYS.sessionAbsoluteTimeoutSeconds);
+    }
     if (input.DATABASE_URL_UNPOOLED?.trim()) invalid.push(ENV_KEYS.databaseUrlUnpooled);
     if (input.MIGRATION_DATABASE_URL?.trim()) invalid.push(ENV_KEYS.migrationDatabaseUrl);
     const neonAuthValues = profile === 'staging'
@@ -332,6 +351,9 @@ export function parseServerEnv(input: Record<string, string | undefined>): Serve
         ? [
             !selectedDatabase ? (profile === 'staging' ? ENV_KEYS.stagingDatabaseUrl : profile === 'pilot' ? ENV_KEYS.pilotDatabaseUrl : ENV_KEYS.databaseUrl) : '',
             !profileSessionSecret ? (profile === 'staging' ? 'STAGING_SESSION_SECRET' : profile === 'pilot' ? 'PILOT_SESSION_SECRET' : ENV_KEYS.sessionSecret) : '',
+            !sessionIdleTimeout ? ENV_KEYS.sessionIdleTimeoutSeconds : '',
+            !sessionAbsoluteTimeout ? ENV_KEYS.sessionAbsoluteTimeoutSeconds : '',
+            !result.data.SESSION_SIGN_OUT_SCOPE ? ENV_KEYS.sessionSignOutScope : '',
             !input.SERVICE_VERSION?.trim() ? ENV_KEYS.serviceVersion : '',
             profile === 'production' && !result.data.PRODUCTION_DATABASE_HOST ? ENV_KEYS.productionDatabaseHost : '',
             // SECURITY-ARCHITECTURE §142: no unlimited-abuse exposure on login.
@@ -380,6 +402,9 @@ export function parseServerEnv(input: Record<string, string | undefined>): Serve
     if (productionMissing.length) throw new InvalidEnvironmentError(productionMissing, []);
     return {
       ...result.data,
+      SESSION_IDLE_TIMEOUT_SECONDS: sessionIdleTimeout ?? 1800,
+      SESSION_ABSOLUTE_TIMEOUT_SECONDS: sessionAbsoluteTimeout ?? 28800,
+      SESSION_SIGN_OUT_SCOPE: result.data.SESSION_SIGN_OUT_SCOPE ?? 'CURRENT_SESSION',
       APP_ENVIRONMENT_PROFILE: profile,
       DATABASE_URL: selectedDatabase,
       SESSION_SECRET: profileSessionSecret,

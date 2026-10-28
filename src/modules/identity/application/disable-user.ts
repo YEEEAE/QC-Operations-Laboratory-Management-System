@@ -4,11 +4,9 @@ import type { ActorContext } from '../../../shared/authorization/types.js';
 import type { AuditService } from '../../../shared/audit/audit-service.js';
 import type { UserRepository } from '../ports/user-repository.js';
 import { isCanonicalSystemOwnerId, isNamedSystemOwner } from '../../../shared/authorization/p05-authority.js';
-import type { SessionService } from './session-service.js';
 export class DisableUserUseCase {
   constructor(
     private readonly users: UserRepository,
-    private readonly sessions: SessionService,
     private readonly audit?: AuditService,
   ) {}
   async execute(input: {
@@ -41,7 +39,6 @@ export class DisableUserUseCase {
       input.actor.id,
       new Date(),
     );
-    await this.sessions.revokeAllForUser(target.id, 'ACCOUNT_DISABLED');
     if (this.audit)
       await this.audit.record({
         actorType: 'USER',

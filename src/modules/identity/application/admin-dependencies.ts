@@ -42,9 +42,20 @@ export function identityAdminActionDependencies() {
   const externalIdentityLinks = new PostgresExternalIdentityLinkRepository(base.database);
   const env = getServerEnv();
   return {
+    revokeSessionsAfterRoleRemoval: async (input: { actorId: string; userId: string; requestId: string }) => {
+      await base.sessionService.revokeAllForUser(input.userId, 'ROLE_REMOVED');
+      await audit.record({
+        actorType: 'USER',
+        actorId: input.actorId,
+        subjectType: 'USER',
+        subjectId: input.userId,
+        action: 'REVOKE_SESSIONS_ROLE_REMOVED',
+        requestId: input.requestId,
+      });
+    },
     createUser: new CreateUserUseCase(base.users, base.passwords, audit),
     updateUser: new UpdateUserUseCase(base.users, audit),
-    disableUser: new DisableUserUseCase(base.users, base.sessionService, audit),
+    disableUser: new DisableUserUseCase(base.users, audit),
     resetPassword: new AdminResetPasswordUseCase(
       base.users,
       base.passwords,

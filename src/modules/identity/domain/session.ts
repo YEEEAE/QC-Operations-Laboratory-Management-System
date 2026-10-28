@@ -10,6 +10,9 @@ export interface Session {
   readonly version: bigint;
 }
 
-export function isSessionUsable(session: Session, now: Date): boolean {
-  return !session.revokedAt && session.expiresAt.getTime() > now.getTime();
+export function isSessionUsable(session: Session, now: Date, idleTimeoutMs: number): boolean {
+  const lastActivity = session.lastSeenAt ?? session.createdAt;
+  return !session.revokedAt &&
+    session.expiresAt.getTime() > now.getTime() &&
+    now.getTime() - lastActivity.getTime() < idleTimeoutMs;
 }

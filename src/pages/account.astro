@@ -5,9 +5,14 @@ import AppLayout from '../ui/layouts/AppLayout.astro';
 import { GetAccountUseCase } from '../modules/identity/application/get-account.js';
 import { identityDependencies } from '../modules/identity/application/identity-dependencies.js';
 import { stateLabel } from '../shared/copy/ux-vocabulary.js';
+import { getServerEnv } from '../config/env.js';
 const actor = Astro.locals.actor;
 if (!actor) return Astro.redirect(`/login?returnTo=${encodeURIComponent(Astro.url.pathname)}`);
 const account = await new GetAccountUseCase(identityDependencies().users).execute(actor);
+const sessionConfig = getServerEnv();
+const idleMinutes = Math.ceil(sessionConfig.SESSION_IDLE_TIMEOUT_SECONDS / 60);
+const absoluteHours = Math.ceil(sessionConfig.SESSION_ABSOLUTE_TIMEOUT_SECONDS / 3600);
+const signOutAllSessions = sessionConfig.SESSION_SIGN_OUT_SCOPE === 'ALL_SESSIONS';
 const actionResult = Astro.getActionResult(actions.account.changePassword);
 if (actionResult?.data?.ok) return Astro.redirect(actionResult.data.redirectTo, 303);
 const changeError = actionResult?.data && !actionResult.data.ok ? actionResult.data : undefined;
@@ -56,6 +61,7 @@ const newPasswordError = changeError?.fieldErrors?.newPassword?.[0];
         </section>
         <section class="panel account-panel" aria-labelledby="security">
           <h2 id="security">Password and security</h2>
+          <p class="muted">Multi-factor authentication is not configured for this system.</p>
           <form class="form account-form" method="POST" action={actions.account.changePassword}>
             {changeError?.formError && <p role="alert" id="password-form-error" tabindex="-1">{changeError.formError === 'missing' ? 'This account is no longer available for password changes. Sign in again or contact an administrator.' : changeError.formError === 'denied' ? 'You no longer have permission to change this password. Contact an administrator.' : changeError.formError === 'stale' ? 'Account security details changed before this request completed. Reload the page before trying again.' : changeError.formError === 'provider' ? 'The password change is unconfirmed. Contact an administrator before submitting it again.' : 'We could not confirm whether the password change completed. Do not submit it again yet. Contact an administrator for help.'}</p>}
             <div class="field">
@@ -115,8 +121,9 @@ const newPasswordError = changeError?.fieldErrors?.newPassword?.[0];
         </section>
         <section class="panel account-panel" aria-labelledby="session">
           <h2 id="session">Session</h2>
+          <p class="muted">This session expires after {idleMinutes} minutes without activity or {absoluteHours} hours after sign-in, whichever comes first. On a shared workstation, sign out before leaving and do not save credentials.</p>
           <p class="muted">
-            Signing out ends this browser session. Sessions revoked by an administrator end
+            {signOutAllSessions ? 'Signing out ends all active sessions for this account.' : 'Signing out ends this browser session.'} Sessions revoked by an administrator end
             immediately on their next request.
           </p>
           {logoutError && <p role="alert" id="logout-error" tabindex="-1">We could not confirm that you were signed out. Check your session before continuing.</p>}

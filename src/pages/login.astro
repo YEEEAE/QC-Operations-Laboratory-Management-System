@@ -45,21 +45,22 @@ const copy = {
           action accepts only loginIdentity, password and returnTo. Signed-in
           success leaves this page; logout belongs to the account surface. */}
       <p id="form-error" data-login-feedback role={error ? 'alert' : 'status'} aria-live={error ? 'assertive' : 'polite'} aria-atomic="true" hidden={!error}>{error && (retryAfterSeconds ? copy.throttledFor(retryAfterSeconds) : error.startsWith('AUTH_RATE_LIMITED') ? copy.throttled : error === 'AUTH_RATE_LIMIT_STORE_UNAVAILABLE' ? copy.unavailable : copy.error)}</p>
-      {passwordLoginEnabled ? <form class="login-form" method="POST" action={actions.login} aria-describedby={error ? 'form-error' : undefined}>
+      {passwordLoginEnabled ? <form class="login-form" method="POST" action={actions.login} autocomplete="off" aria-describedby={error ? 'form-error' : undefined}>
         <input type="hidden" name="returnTo" value={returnTo} />
         <div class="login-field">
           <label for="loginIdentity">{copy.identity}</label>
-          <input id="loginIdentity" name="loginIdentity" type="text" autocomplete="username" required autofocus />
+          <input id="loginIdentity" name="loginIdentity" type="text" autocomplete="off" required autofocus />
         </div>
         <div class="login-field">
           <label for="password">{copy.password}</label>
           <div class="password-field">
-            <input id="password" name="password" type="password" autocomplete="current-password" required />
+            <input id="password" name="password" type="password" autocomplete="off" required />
             <button type="button" data-password-toggle aria-pressed="false" aria-controls="password" aria-label="Show password">Show</button>
           </div>
         </div>
         <button type="submit" data-login-submit>{copy.submit}</button>
       </form> : <p role="status">QC password sign-in is disabled by server policy. No replacement sign-in method is currently available.</p>}
+      <p class="session-reminder">MFA is not configured. On shared workstations, do not save credentials and sign out before leaving.</p>
       <script>
         const toggle = document.querySelector<HTMLButtonElement>('[data-password-toggle]');
         const input = document.getElementById('password') as HTMLInputElement | null;
@@ -107,6 +108,7 @@ const copy = {
   .login-application { padding-block-end: var(--space-4); color: var(--color-accent-primary-hover); font-size: var(--font-size-sm); font-weight: 600; }
   .login-panel h1 { margin: 0; font-size: 2rem; font-weight: 600; line-height: var(--line-height-tight); }
   .login-description { color: var(--text-secondary); }
+  .session-reminder { margin: 0; color: var(--text-secondary); font-size: var(--font-size-sm); }
   #form-error, #session-recovery { margin: 0; padding: var(--space-4); border: 1px solid var(--status-review); border-radius: var(--radius-sm); color: var(--text-primary); background: var(--status-review-bg); font-size: var(--font-size-sm); }
   #form-error[role="alert"] { border-color: var(--status-danger); color: var(--status-danger); background: var(--status-danger-bg); }
   .login-form { display: grid; gap: var(--space-5); min-inline-size: 0; }

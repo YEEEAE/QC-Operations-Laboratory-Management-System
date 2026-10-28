@@ -274,18 +274,28 @@ export class PostgresUserRepository implements UserRepository {
     actorId: string,
     at: Date,
   ) {
-    const r = await this.db
-      .updateTable('users')
-      .set({
-        account_state: state,
-        updated_at: at,
-        updated_by: actorId,
-        version: expectedVersion + 1n,
-      })
-      .where('id', '=', id)
-      .where('version', '=', expectedVersion)
-      .returning('id')
-      .executeTakeFirst();
-    if (!r) throw new AppError('CONFLICT_STALE_VERSION');
+    await this.db.transaction().execute(async (tx) => {
+      const r = await tx
+        .updateTable('users')
+        .set({
+          account_state: state,
+          updated_at: at,
+          updated_by: actorId,
+          version: expectedVersion + 1n,
+        })
+        .where('id', '=', id)
+        .where('version', '=', expectedVersion)
+        .returning('id')
+        .executeTakeFirst();
+      if (!r) throw new AppError('CONFLICT_STALE_VERSION');
+      if (state === 'DISABLED') {
+        await tx
+          .updateTable('sessions')
+          .set({ revoked_at: at, revoked_reason: 'ACCOUNT_DISABLED' })
+          .where('user_id', '=', id)
+          .where('revoked_at', 'is', null)
+          .execute();
+      }
+    });
   }
 }

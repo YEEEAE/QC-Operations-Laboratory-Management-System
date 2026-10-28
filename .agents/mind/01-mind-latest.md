@@ -1,3 +1,8 @@
+- **2026-10-28 — SEC-02 / Session and shared-terminal hardening**
+  - Changed: Added environment-bound idle/absolute expiry and sign-out scope, activity tracking, atomic disable/credential session revocation, role-removal revocation, and explicit MFA `NOT_CONFIGURED` copy.
+  - Evidence: Source edits only; no tests, builds, lint, migrations, database or sign-in operations.
+  - State: PARTIAL — production must provision timeout/sign-out values; no approved usable MFA enrollment/recovery provider exists.
+  - Key files: `src/modules/identity/`, `src/config/env.ts`, `src/pages/{login,account}.astro`.
 - **2026-10-28 — NDB-14.2 / Isolated Neon staging fully migrated**
   - Changed: Owner selected `super-dream-61259417`; renamed its branch staging, rotated its owner password, provisioned private storage on Free, isolated credentials, and applied migrations0001–0059. Earlier NDB-14/14.1 blockers superseded for this target.
   - Evidence: 59/59 exact checksums, 97 qc tables, zero orphans, NDB-05 exceptions 0/0; Node24.20/pnpm11.25 build and focused unit27/27 PASS; local login/register/logout and private object round trip PASS. Pre-migration recovery verified (report).
@@ -286,6 +291,8 @@
 - **رفض قبل التصريح ليس دليلًا:** رفض بسبب تحقق مدخلات أو سجل غير موجود (`BAD_REQUEST`) لا يُحتسب أبدًا كإثبات رفض صلاحية؛ يُسجَّل `INCONCLUSIVE/NOT RUN`. اختبار سلبي بلا سجل حقيقي أو بلا ضابط موجب = لا دليل.
 
 ## 3) الهوية والتفويض — قرارات ثابتة
+
+- **SEC-02 source state (2026-10-28):** Authenticated sessions now enforce environment-configured idle and absolute expiry using `sessions.last_seen_at`/`expires_at`; production startup requires both limits and an explicit `SESSION_SIGN_OUT_SCOPE`. Account disable and credential changes revoke sessions in the same transaction as the account mutation; removing a user-role grant revokes the target's active sessions. Browser actions continue to derive current roles/scopes from local records. MFA remains `NOT_CONFIGURED` pending a usable owner-approved enrollment and recovery flow; no production runtime/config verification is inferred.
 
 ### Actor / SYSTEM_OWNER
 - `ActorContext` يفرق بين `id` الداخلي الثابت و`loginIdentity`.

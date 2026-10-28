@@ -189,6 +189,11 @@ const removeUserRole = defineAction({
         ...input,
         requestId: context.locals.requestContext?.requestId ?? 'unknown',
       });
+      await identity().revokeSessionsAfterRoleRemoval({
+        actorId: context.locals.actor!.id,
+        userId: input.userId,
+        requestId: context.locals.requestContext?.requestId ?? 'unknown',
+      });
       return { ok: true };
     }, context.locals.requestContext?.requestId),
 });

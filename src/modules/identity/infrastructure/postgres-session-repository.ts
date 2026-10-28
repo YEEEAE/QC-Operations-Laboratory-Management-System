@@ -40,6 +40,16 @@ export class PostgresSessionRepository implements SessionRepository {
       .executeTakeFirst();
     return r ? map(r) : undefined;
   }
+  async touchActivity(id: string, at: Date): Promise<boolean> {
+    const result = await this.db
+      .updateTable('sessions')
+      .set({ last_seen_at: at })
+      .where('id', '=', id)
+      .where('revoked_at', 'is', null)
+      .returning('id')
+      .executeTakeFirst();
+    return Boolean(result);
+  }
   async revoke(id: string, at: Date, reason: string) {
     await this.db
       .updateTable('sessions')

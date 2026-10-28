@@ -105,7 +105,10 @@ const logout = defineAction({
   handler: async (_, context) => {
     try {
       const deps = identityDependencies();
-      const cookie = await new LogoutUseCase(deps.sessionService).execute(
+      const cookie = await new LogoutUseCase(
+        deps.sessionService,
+        getServerEnv().SESSION_SIGN_OUT_SCOPE === 'ALL_SESSIONS',
+      ).execute(
         context.cookies.get(SESSION_COOKIE_NAME)?.value,
       );
       const [name, value] = cookie.split(';', 1)[0].split('=');
@@ -116,6 +119,7 @@ const logout = defineAction({
       );
       return { ok: true, redirectTo: '/login' };
     } catch (error) {
+      context.cookies.set(SESSION_COOKIE_NAME, '', sessionCookieOptions({ expired: true }));
       const mapped = toActionError(error, context.locals.requestContext?.requestId);
       throw new ActionError({ code: 'BAD_REQUEST', message: mapped.error.messageKey });
     }

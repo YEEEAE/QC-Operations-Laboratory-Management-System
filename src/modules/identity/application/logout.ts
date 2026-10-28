@@ -1,15 +1,11 @@
 import { expiredCookie, SessionService } from './session-service.js';
 export class LogoutUseCase {
-  constructor(private readonly sessions: SessionService) {}
+  constructor(
+    private readonly sessions: SessionService,
+    private readonly revokeAllSessions = false,
+  ) {}
   async execute(token: string | undefined): Promise<string> {
-    if (token) {
-      try {
-        const { session } = await this.sessions.resolve(token);
-        await this.sessions.revoke(session.id);
-      } catch {
-        /* logout is intentionally idempotent */
-      }
-    }
+    if (token) await this.sessions.signOut(token, this.revokeAllSessions);
     return expiredCookie();
   }
 }

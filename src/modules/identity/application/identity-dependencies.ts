@@ -15,16 +15,23 @@ import { createNeonAuthJwtVerifier } from '../security/neon-auth-jwt-verifier.js
 export function identityDependencies(database: Kysely<DatabaseSchema> = getDatabase()) {
   const users = new PostgresUserRepository(database);
   const sessions = new PostgresSessionRepository(database);
+  const env = getServerEnv();
   return {
     database,
     users,
     sessions,
     passwords: new Argon2idPasswordHasher(),
     credentialMutation: new PostgresCredentialMutationCommit(database),
-    sessionService: new SessionService(users, sessions, systemClock, 8 * 60 * 60 * 1000),
+    sessionService: new SessionService(
+      users,
+      sessions,
+      systemClock,
+      env.SESSION_ABSOLUTE_TIMEOUT_SECONDS * 1000,
+      env.SESSION_IDLE_TIMEOUT_SECONDS * 1000,
+    ),
     // Optional cryptographic adapter only; middleware and LoginUseCase keep
     // using the existing locally persisted, revocable QC session.
-    neonAuthJwtVerifier: createNeonAuthJwtVerifier(getServerEnv()),
+    neonAuthJwtVerifier: createNeonAuthJwtVerifier(env),
   };
 }
 

@@ -27,7 +27,8 @@ export class SessionService {
     private readonly users: UserRepository,
     private readonly sessions: SessionRepository,
     private readonly clock: Clock = systemClock,
-    private readonly lifetimeMs: number,
+    private readonly absoluteLifetimeMs = 8 * 60 * 60 * 1000,
+    private readonly idleTimeoutMs = 30 * 60 * 1000,
   ) {}
   async createForUser(userId: string): Promise<{ session: Session; token: string }> {
     const user = await this.users.findById(userId);
@@ -40,7 +41,8 @@ export class SessionService {
       userId,
       tokenHash: hashSessionToken(token),
       createdAt: now,
-      expiresAt: new Date(now.getTime() + this.lifetimeMs),
+      lastSeenAt: now,
+      expiresAt: new Date(now.getTime() + this.absoluteLifetimeMs),
     });
     return { session, token };
   }
@@ -52,14 +54,26 @@ export class SessionService {
     const user = session ? await this.users.findById(session.userId) : undefined;
     if (!session || !user) throw new AppError('AUTH_SESSION_EXPIRED', { userSafe: true });
     if (session.revokedAt) throw new AppError('AUTH_SESSION_REVOKED', { userSafe: true });
-    if (!isSessionUsable(session, this.clock.now()))
+    const now = this.clock.now();
+    if (!isSessionUsable(session, now, this.idleTimeoutMs))
       throw new AppError('AUTH_SESSION_EXPIRED', { userSafe: true });
     if (!canAuthenticate(user.accountState))
       throw new AppError('AUTH_ACCOUNT_DISABLED', { userSafe: true });
-    return { session, user };
+    const touched = await this.sessions.touchActivity(session.id, now);
+    if (!touched) throw new AppError('AUTH_SESSION_REVOKED', { userSafe: true });
+    return {
+      session: { ...session, lastSeenAt: now },
+      user,
+    };
   }
   async revoke(sessionId: string): Promise<void> {
     await this.sessions.revoke(sessionId, this.clock.now(), 'LOGOUT');
+  }
+  async signOut(token: string, allSessions: boolean): Promise<void> {
+    const session = await this.sessions.findByTokenHash(hashSessionToken(token));
+    if (!session) return;
+    if (allSessions) await this.revokeAllForUser(session.userId, 'LOGOUT');
+    else await this.revoke(session.id);
   }
   async revokeAllForUser(userId: string, reason = 'PASSWORD_RESET'): Promise<void> {
     await this.sessions.revokeAllForUser(userId, this.clock.now(), reason);
