@@ -59,6 +59,14 @@ const canReview =
   actor.permissions.some(
     (permission) => permission.code === 'PERM-DOC-REVIEW' && permission.active !== false,
   );
+const canRequestEffectivity = ['APPROVED', 'EFFECTIVE', 'SUPERSEDED'].includes(version.state) && !['PENDING_POLICY', 'APPROVED', 'EXECUTED'].includes(version.effectivityRequestStatus ?? '');
+const canRequestEffectivityPermission = actor.permissions.some((permission) => permission.code === 'PERM-DOC-SUPERSEDE' && permission.active !== false);
+const lifecycleLabel = version.state === 'DRAFT' ? 'Draft'
+  : version.state === 'IN_REVIEW' ? 'In review'
+    : version.state === 'APPROVED' && version.effectivityRequestStatus === 'APPROVED' && version.effectivityRequestAction === 'SCHEDULE_ACTIVATION' ? 'Scheduled'
+      : version.state === 'APPROVED' ? 'Approved not effective'
+        : version.state === 'EFFECTIVE' ? 'Effective'
+          : version.state === 'SUPERSEDED' ? 'Superseded' : stateLabel(version.state);
 const nextAction =
   version.state === 'DRAFT'
     ? editable
@@ -70,7 +78,8 @@ const nextAction =
       ? canReview
         ? 'Open review workspace'
         : 'Awaiting reviewer'
-      : version.state === 'APPROVED'
+        : version.state === 'APPROVED' && version.effectivityRequestStatus === 'PENDING_POLICY' ? 'Pending effectivity policy decision'
+        : version.state === 'APPROVED'
         ? 'Awaiting an approved activation policy'
         : version.state === 'EFFECTIVE'
           ? 'Create a new revision through Change Request when needed'
@@ -80,7 +89,9 @@ const nextOwner =
     ? 'Document author'
     : version.state === 'IN_REVIEW'
       ? 'Document reviewer'
-      : version.state === 'APPROVED'
+        : version.state === 'APPROVED' && version.effectivityRequestStatus === 'PENDING_POLICY'
+          ? 'Waiting for Document Control / QMS policy review'
+        : version.state === 'APPROVED'
         ? 'Document owner / effective-date owner'
         : version.state === 'EFFECTIVE'
           ? 'Authorized change requester'
@@ -163,7 +174,7 @@ const effectiveRecorded =
 const supersessionRecorded =
   version.supersededAt !== undefined || ['SUPERSEDED', 'ARCHIVED'].includes(version.state);
 
-const hasAnyAction = editable || canSubmit || canReview;
+const hasAnyAction = editable || canSubmit || canReview || (canRequestEffectivity && canRequestEffectivityPermission);
 const actionHeading =
   version.state === 'DRAFT'
     ? hasAnyAction
@@ -174,7 +185,7 @@ const actionHeading =
         ? 'Review this revision'
         : 'Awaiting reviewer'
       : version.state === 'APPROVED'
-        ? 'Approved — not effective'
+        ? version.effectivityRequestStatus === 'PENDING_POLICY' ? 'Effectivity decision request pending' : 'Approved — not effective'
         : version.state === 'EFFECTIVE'
           ? 'Effective revision'
           : 'No action is offered';
@@ -221,14 +232,14 @@ const actionSummary =
           <span class="meta-label">Record version</span>
           <strong class="numeric">{version.version.toString()}</strong>
         </span>
-        <span><span class="meta-label">Lifecycle state</span> {stateLabel(version.state)}</span>
+        <span><span class="meta-label">Lifecycle state</span> {lifecycleLabel}</span>
         <span>
           <span class="meta-label">Document identity version</span>
           <strong class="numeric">{document.version.toString()}</strong>
         </span>
       </p>
       <Fragment slot="actions">
-        <StatusBadge status={badgeStatus(version.state)} label={stateLabel(version.state)} />
+      <StatusBadge status={badgeStatus(version.state)} label={lifecycleLabel} />
       </Fragment>
     </PageHeader>
 
@@ -303,7 +314,9 @@ const actionSummary =
             <div><dt>Revision</dt><dd>{version.revision}</dd></div>
             <div class="fact-wide"><dt>Document title</dt><dd>{document.title}</dd></div>
             <div><dt>Document type</dt><dd>{document.documentType}</dd></div>
-            <div><dt>Lifecycle state</dt><dd>{stateLabel(version.state)}</dd></div>
+            <div><dt>Lifecycle state</dt><dd>{lifecycleLabel}</dd></div>
+            <div><dt>Effectivity decision</dt><dd>{version.effectivityRequestStatus === 'PENDING_POLICY' ? 'Pending policy review' : version.effectivityRequestStatus === 'APPROVED' && version.effectivityRequestAction === 'SCHEDULE_ACTIVATION' ? 'Scheduled' : lifecycleLabel}</dd></div>
+            {version.scheduledEffectiveAt && version.effectivityRequestStatus !== 'EXECUTED' && <div><dt>Requested effective time</dt><dd>{timestamp(version.scheduledEffectiveAt)}</dd></div>}
             <div>
               <dt>Record version</dt>
               <dd class="numeric">{version.version.toString()}</dd>
@@ -320,6 +333,8 @@ const actionSummary =
               </dd>
             </div>
             <div><dt>Created at</dt><dd>{timestamp(version.createdAt)}</dd></div>
+            <div><dt>Reviewed by</dt><dd>{version.reviewedBy ? <>{accountLabel(version.reviewedBy)} <span class="account-id">{version.reviewedBy}</span></> : 'No independent review recorded'}</dd></div>
+            <div><dt>Reviewed at</dt><dd>{version.reviewedAt ? timestamp(version.reviewedAt) : 'No independent review recorded'}</dd></div>
             <div>
               <dt>Last recorded change</dt>
               <dd>{version.updatedAt ? timestamp(version.updatedAt) : 'Not recorded'}</dd>
@@ -716,13 +731,31 @@ const actionSummary =
                 Open review workspace
               </a>
             )}
+            {canRequestEffectivity && canRequestEffectivityPermission && (
+              <form class="effectivity-request" method="post" data-effectivity-request data-document-id={document.id} data-version-id={version.id} data-expected-version={version.version.toString()} data-content-hash={version.contentHash ?? ''}>
+                <label for="effectivity-action">Request a controlled decision</label>
+                <select id="effectivity-action" name="action" required>
+                  {version.state === 'APPROVED' && <><option value="">Choose an action</option><option value="ACTIVATE_NOW">Activate now</option><option value="SCHEDULE_ACTIVATION">Schedule activation</option></>}
+                  {version.state === 'EFFECTIVE' && <option value="SUPERSEDE">Supersede this effective revision</option>}
+                  {version.state === 'SUPERSEDED' && <option value="ARCHIVE">Archive this superseded revision</option>}
+                </select>
+                {version.state === 'EFFECTIVE' && <><label for="replacement-version">Approved replacement revision</label><select id="replacement-version" name="replacementVersionId" required><option value="">Choose a replacement</option>{document.versions.filter((item) => item.state === 'APPROVED').map((item) => <option value={item.id} data-version={item.version.toString()} data-content-hash={item.contentHash ?? ''}>Rev {item.revision} · version {item.version.toString()}</option>)}</select></>}
+                <label for="requested-effective-at">Requested effective time (schedule only)</label>
+                <input id="requested-effective-at" name="effectiveAt" type="datetime-local" />
+                <label for="effectivity-reason">Reason</label>
+                <textarea id="effectivity-reason" name="reason" required maxlength="4000"></textarea>
+                <button class="button secondary" type="submit">Submit decision request</button>
+              </form>
+            )}
+            {canRequestEffectivity && !canRequestEffectivityPermission && <p class="note">Document effectivity requests require PERM-DOC-SUPERSEDE. Activation remains blocked until an approved Document Control / QMS source is available.</p>}
+            {version.effectivityRequestStatus === 'PENDING_POLICY' && <p class="note">A decision request is pending Document Control / QMS policy review. No activation or supersession has occurred.</p>}
+            {version.state === 'APPROVED' && version.effectivityRequestStatus !== 'PENDING_POLICY' && <p class="note">Activation is not authorized: the approved effective-date policy source is missing. This request records intent only.</p>}
             <p class="action-status" data-result role="status" tabindex="-1"></p>
           </div>
           <p class="note">
-            This record view does not upload files, approve, make a revision effective, supersede,
-            archive, or void a version. The controls above submit only the transition offered by the
-            current state; the server rechecks the current state, record version, permissions, and
-            source evidence when an action is submitted.
+            This record view does not directly activate, supersede, or archive a version. The request
+            above records a pending controlled decision only. Server actions recheck state, version,
+            permissions, file state, and the server-derived content digest.
           </p>
         </section>
       </aside>
@@ -772,6 +805,43 @@ const actionSummary =
         section?.removeAttribute('aria-busy');
       }
     });
+
+  document.querySelector<HTMLFormElement>('[data-effectivity-request]')?.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    const form = event.currentTarget as HTMLFormElement;
+    if (form.closest('[aria-busy="true"]')) return;
+    const values = new FormData(form);
+    const action = String(values.get('action') ?? '');
+    const effectiveAtValue = String(values.get('effectiveAt') ?? '');
+    const reason = String(values.get('reason') ?? '').trim();
+    const replacementVersionId = String(values.get('replacementVersionId') ?? '');
+    const replacementOption = form.querySelector<HTMLOptionElement>(`option[value="${CSS.escape(replacementVersionId)}"]`);
+    if (!action || !reason || (action === 'SCHEDULE_ACTIVATION' && !effectiveAtValue)) {
+      status.textContent = 'Choose a decision, enter a reason, and provide a future time for a scheduled activation.';
+      status.focus?.();
+      return;
+    }
+    form.setAttribute('aria-busy', 'true');
+    status.textContent = 'Submitting a pending policy decision request…';
+    try {
+      const result = await actions.documents.requestEffectivity({
+        documentId: form.dataset.documentId!,
+        versionId: form.dataset.versionId!,
+        expectedVersion: BigInt(form.dataset.expectedVersion!),
+        expectedContentHash: form.dataset.contentHash!,
+        action: action as 'ACTIVATE_NOW' | 'SCHEDULE_ACTIVATION' | 'SUPERSEDE' | 'ARCHIVE',
+        ...(effectiveAtValue ? { effectiveAt: new Date(effectiveAtValue) } : {}),
+        ...(replacementVersionId && replacementOption ? { replacementVersionId, expectedReplacementVersion: BigInt(replacementOption.dataset.version!), replacementContentHash: replacementOption.dataset.contentHash! } : {}),
+        reason,
+      });
+      if (result.data) { window.location.reload(); return; }
+      status.textContent = 'The request was not accepted. Refresh the version and review its current state and permissions.';
+      status.focus?.();
+    } catch {
+      status.textContent = 'The service did not confirm the request. Refresh this version and its history before retrying.';
+      status.focus?.();
+    } finally { form.removeAttribute('aria-busy'); }
+  });
 </script>
 
 <style>
@@ -779,6 +849,9 @@ const actionSummary =
     --detail-gap: var(--space-5);
     min-inline-size: 0;
   }
+  .effectivity-request { display: grid; gap: var(--space-2); min-inline-size: 100%; padding-block: var(--space-3); }
+  .effectivity-request label { font-size: var(--font-size-sm); font-weight: 700; }
+  .effectivity-request input, .effectivity-request select, .effectivity-request textarea { min-block-size: 44px; max-inline-size: 100%; padding: var(--space-2); border: 1px solid var(--color-border-subtle); border-radius: var(--radius-sm); background: var(--surface-panel); color: var(--text-primary); font: inherit; }
   .crumb {
     display: flex;
     flex-wrap: wrap;
@@ -924,7 +997,7 @@ const actionSummary =
   .notice {
     margin: 0 0 var(--space-5);
     padding: var(--space-3) var(--space-4);
-    border-inline-start: 3px solid var(--status-warning);
+    border: 1px solid var(--color-border-subtle);
     border-radius: var(--radius-sm);
     background: var(--surface-raised);
     color: var(--text-primary);
@@ -1070,9 +1143,6 @@ const actionSummary =
   .related-static {
     display: block;
     padding-block: var(--space-2);
-  }
-  .action-panel {
-    border-inline-start: 3px solid var(--color-accent-primary);
   }
   .action-panel h2 {
     margin: 0;

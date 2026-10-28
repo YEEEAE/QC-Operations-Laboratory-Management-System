@@ -13,6 +13,7 @@ export class ApproveVersionUseCase {
     const version = await this.repository.getVersion(input.versionId);
     if (!version) throw new AppError('RESOURCE_NOT_FOUND', { userSafe: true });
     if (version.state !== 'IN_REVIEW') throw new AppError('DOMAIN_INVALID_TRANSITION', { userSafe: true });
+    if (!version.reviewedAt || !version.reviewedBy || version.reviewedBy === version.createdBy) throw new AppError('DOMAIN_INVALID_TRANSITION', { userSafe: true, messageKey: 'documents.independentReviewRequired' });
     const document = await this.repository.getDocument(version.documentId);
     if (!document) throw new AppError('RESOURCE_NOT_FOUND', { userSafe: true });
     if (!isOwnerApprovalPath(input.actor)) {

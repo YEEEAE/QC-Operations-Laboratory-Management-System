@@ -857,7 +857,7 @@ const policies: readonly AuthorizationPolicy[] = [
     permission: 'PERM-DOC-SUPERSEDE',
     action: 'SUPERSEDE',
     entityType: 'DOCUMENT_VERSION',
-    states: ['EFFECTIVE', 'APPROVED'],
+    states: ['EFFECTIVE', 'APPROVED', 'SUPERSEDED'],
   },
   {
     permission: 'PERM-APR-VIEW-ASSIGNED',

@@ -29,6 +29,8 @@ export interface DocumentRepository {
   recordReview(input: { id: string; expectedVersion: bigint; actor: ActorContext; now: Date; requestId: string }): Promise<DocumentVersion>;
   transition(input: { id: string; expectedVersion: bigint; actor: ActorContext; action: DocumentVersionAction; toState: DocumentVersion['state']; reason?: string; now: Date; requestId: string; approvalDecisionEvent?: ApprovalDecisionEvent }, transaction?: DatabaseTransaction): Promise<DocumentVersion>;
   supersede(input: { currentId: string; currentExpectedVersion: bigint; replacementId: string; replacementExpectedVersion: bigint; actor: ActorContext; effectiveAt: Date; requestId: string }): Promise<{ current: DocumentVersion; replacement: DocumentVersion }>;
+  requestEffectivity(input: { documentId: string; versionId: string; expectedVersion: bigint; expectedContentHash: string; action: 'ACTIVATE_NOW' | 'SCHEDULE_ACTIVATION' | 'SUPERSEDE' | 'ARCHIVE'; effectiveAt?: Date; replacementVersionId?: string; expectedReplacementVersion?: bigint; replacementContentHash?: string; reason: string; actor: ActorContext; requestId: string; requestedAt: Date }): Promise<{ id: string; status: string; action: string; requestedAt: Date }>;
+  activateApprovedSchedules(input: { now: Date; limit: number }): Promise<{ activated: number }>;
 }
 
 export interface DocumentReviewQueueItem {

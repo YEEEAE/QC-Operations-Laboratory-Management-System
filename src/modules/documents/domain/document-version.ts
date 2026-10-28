@@ -23,8 +23,14 @@ export interface DocumentVersion {
   revision: string;
   state: DocumentVersionState;
   effectiveAt?: Date;
+  effectiveUntil?: Date;
+  scheduledEffectiveAt?: Date;
+  effectivityRequestStatus?: 'PENDING_POLICY' | 'APPROVED' | 'REJECTED' | 'CANCELLED' | 'EXECUTED';
+  effectivityRequestAction?: 'ACTIVATE_NOW' | 'SCHEDULE_ACTIVATION' | 'SUPERSEDE' | 'ARCHIVE';
   approvedAt?: Date;
   approvedBy?: string;
+  reviewedAt?: Date;
+  reviewedBy?: string;
   supersededAt?: Date;
   archivedAt?: Date;
   voidedAt?: Date;

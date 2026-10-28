@@ -15,6 +15,8 @@ import { UpdateVersionDraftUseCase } from './update-version-draft.js';
 import { VoidVersionUseCase } from './void-version.js';
 import { ListDocumentReviewQueueUseCase } from './list-review-queue.js';
 import { ListDocumentSourceFilesUseCase } from './list-source-files.js';
+import { RequestEffectivityDecisionUseCase } from './request-effectivity-decision.js';
+import { ActivateApprovedDocumentSchedulesUseCase } from './activate-approved-schedules.js';
 
 export function documentsReadDependencies() {
   const database = getDatabase();
@@ -38,6 +40,8 @@ export function documentsActionDependencies() {
     review: new ReviewVersionUseCase(repository),
     approve: new ApproveVersionUseCase(repository),
     supersede: new SupersedeVersionUseCase(repository),
+    requestEffectivity: new RequestEffectivityDecisionUseCase(repository),
+    activateApprovedSchedules: new ActivateApprovedDocumentSchedulesUseCase(repository),
     void: new VoidVersionUseCase(repository),
   };
 }

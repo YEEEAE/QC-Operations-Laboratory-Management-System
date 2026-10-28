@@ -1048,8 +1048,12 @@ export interface DocumentVersionsTable {
   revision: string;
   state: string;
   effective_at: Date | null;
+  effective_until: Date | null;
+  scheduled_effective_at: Date | null;
   approved_at: Date | null;
   approved_by: string | null;
+  reviewed_at: Date | null;
+  reviewed_by: string | null;
   superseded_at: Date | null;
   archived_at: Date | null;
   voided_at: Date | null;
@@ -1061,6 +1065,50 @@ export interface DocumentVersionsTable {
   created_by: string;
   created_at: Generated<Date>;
   version: Generated<bigint>;
+}
+export interface DocumentEffectivityRequestsTable {
+  id: Generated<string>;
+  document_id: string;
+  document_version_id: string;
+  requested_action: string;
+  replacement_version_id: string | null;
+  expected_replacement_version: bigint | null;
+  replacement_content_hash: string | null;
+  requested_effective_at: Date | null;
+  expected_document_version: bigint;
+  expected_content_hash: string;
+  request_reason: string;
+  requested_by: string;
+  requested_at: Generated<Date>;
+  status: Generated<string>;
+  policy_reference: string | null;
+  policy_revision: string | null;
+  policy_digest: string | null;
+  decided_at: Date | null;
+  decided_by: string | null;
+  decision_audit_event_id: string | null;
+  decision_reason: string | null;
+  executed_at: Date | null;
+  request_id: string;
+}
+export interface DocumentEffectivityDecisionsTable {
+  id: Generated<string>;
+  document_id: string;
+  document_version_id: string;
+  decision: string;
+  decided_at: Date;
+  effective_at: Date | null;
+  previous_revision: string | null;
+  reason: string;
+  actor_id: string;
+  policy_reference: string;
+  policy_revision: string;
+  policy_digest: string;
+  source_revision: string;
+  source_digest: string;
+  audit_event_id: string;
+  request_id: string;
+  created_at: Generated<Date>;
 }
 export interface DocumentVersionSectionsTable {
   id: Generated<string>;
@@ -1599,6 +1647,8 @@ export interface DatabaseSchema {
   maintenance_history: MaintenanceHistoryTable;
   document_identities: DocumentIdentitiesTable;
   document_versions: DocumentVersionsTable;
+  document_effectivity_requests: DocumentEffectivityRequestsTable;
+  document_effectivity_decisions: DocumentEffectivityDecisionsTable;
   document_version_files: DocumentVersionFilesTable;
   document_version_sections: DocumentVersionSectionsTable;
   change_requests: ChangeRequestsTable;

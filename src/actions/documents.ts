@@ -176,4 +176,31 @@ const supersede = defineAction({
     ),
 });
 
-export const documents = { create, createVersion, updateDraft, submit, review, approve, supersede };
+const requestEffectivity = defineAction({
+  accept: 'json',
+  input: z.object({
+    documentId: id,
+    versionId: id,
+    expectedVersion: version.positive(),
+    expectedContentHash: z.string().regex(/^[0-9a-f]{64}$/),
+    action: z.enum(['ACTIVATE_NOW', 'SCHEDULE_ACTIVATION', 'SUPERSEDE', 'ARCHIVE']),
+    effectiveAt: z.coerce.date().optional(),
+    replacementVersionId: id.optional(),
+    expectedReplacementVersion: version.positive().optional(),
+    replacementContentHash: z.string().regex(/^[0-9a-f]{64}$/).optional(),
+    reason: z.string().trim().min(1).max(4000),
+  }).superRefine((input, context) => {
+    const replacementFields = [input.replacementVersionId, input.expectedReplacementVersion, input.replacementContentHash];
+    if ((input.action === 'SUPERSEDE' && replacementFields.some((value) => value === undefined)) || (input.action !== 'SUPERSEDE' && replacementFields.some((value) => value !== undefined))) {
+      context.addIssue({ code: 'custom', path: ['replacementVersionId'], message: 'An approved replacement version is required only for supersession.' });
+    }
+  }),
+  handler: (input, context) =>
+    run(() => documentsActionDependencies().requestEffectivity.execute({
+      ...input,
+      actor: actor(context),
+      requestId: requestId(context),
+    }), context),
+});
+
+export const documents = { create, createVersion, updateDraft, submit, review, approve, supersede, requestEffectivity };
