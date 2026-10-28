@@ -40,6 +40,9 @@ export class PostgresControlledLabSources implements ControlledLabSources {
       .selectAll()
       .where('id', '=', templateVersionId)
       .where('state', '=', 'APPROVED')
+      .where('approved_at', 'is not', null)
+      .where('effective_at', 'is not', null)
+      .where('effective_at', '<=', new Date())
       .executeTakeFirst();
     if (!version || !version.method_reference || !version.content_hash)
       throw new AppError('AUTHZ_DENIED', { userSafe: true });
@@ -56,19 +59,31 @@ export class PostgresControlledLabSources implements ControlledLabSources {
       .select([
         'source.document_version_id as documentVersionId',
         'source.usage_type as usageType',
+        'identity.id as documentId',
         'identity.document_no as documentNo',
         'identity.document_type as documentType',
         'identity.title as title',
         'version.revision as revision',
         'version.effective_at as effectiveAt',
         'version.content_hash as contentHash',
+        'version.approved_at as approvedAt',
+        'version.reviewed_at as reviewedAt',
+        'version.effective_until as effectiveUntil',
+        'version.source_binding_verified as sourceBindingVerified',
         'version.state as state',
       ])
       .where('source.template_version_id', '=', version.id)
+      .where('identity.active', '=', true)
+      .where('version.approved_at', 'is not', null)
+      .where('version.reviewed_at', 'is not', null)
+      .where('version.source_binding_verified', '=', true)
+      .where('version.effective_at', '<=', new Date())
+      .where((eb) => eb.or([eb('version.effective_until', 'is', null), eb('version.effective_until', '>', new Date())]))
       .orderBy('identity.document_no')
       .orderBy('version.id')
       .execute();
-    if (linkedDocuments.some((document) => document.state !== 'EFFECTIVE'))
+    if (!linkedDocuments.length || linkedDocuments.some((document) => document.state !== 'EFFECTIVE'
+      || !document.approvedAt || !document.reviewedAt || !document.effectiveAt || !document.contentHash))
       throw new AppError('AUTHZ_DENIED', { userSafe: true });
     if (
       !parameters.length ||
@@ -104,8 +119,10 @@ export class PostgresControlledLabSources implements ControlledLabSources {
       },
       documents: linkedDocuments.map((document) => ({
         documentVersionId: document.documentVersionId,
+        documentId: document.documentId,
         usageType: document.usageType,
         snapshot: {
+          documentId: document.documentId,
           documentNo: document.documentNo,
           documentType: document.documentType,
           title: document.title,

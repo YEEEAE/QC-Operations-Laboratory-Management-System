@@ -25,6 +25,7 @@ import { createHash } from 'node:crypto';
 import { insertSignatureEvidence } from '../../../../shared/e-signatures/insert-signature-evidence.js';
 import type { DatabaseTransaction } from '../../../../shared/database/transaction.js';
 import { persistApprovalDecisionEvent } from '../../../../shared/approval-decision-event.js';
+import { captureExecutionDocuments, repeatExecutionDocumentsAtSubmission } from '../../../documents/application/capture-execution-context.js';
 
 function reviveReceivingSnapshot(input: unknown): Inspection['receiving'] {
  const s=input as Inspection['receiving'];
@@ -340,8 +341,8 @@ export class PostgresInspectionRepository implements InspectionRepository {
         authorize({actor:i.actor,permission:'PERM-INSP-CREATE',action:'CREATE',entity:{type:'INSPECTION_REPORT',id:x.id,state:'DRAFT',authorId:i.actor.id},scope:{ownerId:i.actor.id},currentVersion:1n,expectedVersion:1n,businessCondition:x.authorId===i.actor.id},{throwOnDeny:true});
         const receivingRow=await tx.selectFrom('receiving_items').selectAll().where('id','=',x.receiving.receivingId).forUpdate().executeTakeFirstOrThrow();
         const capturedReceiving: Inspection['receiving']={receivingId:receivingRow.id,receivingNo:receivingRow.receiving_no,docNo:receivingRow.doc_no,itemCode:receivingRow.item_code,description:receivingRow.description,lot:receivingRow.lot,qty:String(receivingRow.qty),supplier:receivingRow.supplier_name ?? undefined,purchaseOrderNo:receivingRow.purchase_order_no ?? undefined,quantityUnit:receivingRow.quantity_unit ?? undefined,receivingDate:new Date(receivingRow.receiving_date),expiryDate:receivingRow.expiry_date ? new Date(receivingRow.expiry_date) : undefined};
-        const controlled = await tx.selectFrom('inspection_template_versions as v').innerJoin('inspection_templates as t','t.id','v.template_id').innerJoin('inspection_report_catalog as c','c.id','t.catalog_id').select(['v.template_id','v.version_no','v.digital_form','v.report_revision','v.content_hash','v.source_document','c.id as catalogId','c.doc_code','c.official_title','c.master_revision','c.source_list_revision','c.source_sha256']).where('v.id','=',x.template.templateVersionId).forShare('v').executeTakeFirst();
-        if(!controlled)throw new AppError('VALIDATION_FAILED',{userSafe:true});
+        const controlled = await tx.selectFrom('inspection_template_versions as v').innerJoin('inspection_templates as t','t.id','v.template_id').innerJoin('inspection_report_catalog as c','c.id','t.catalog_id').select(['v.template_id','v.version_no','v.state','v.approved_at','v.effective_at','v.digital_form','v.report_revision','v.content_hash','v.source_document','c.id as catalogId','c.doc_code','c.official_title','c.master_revision','c.source_list_revision','c.source_sha256']).where('v.id','=',x.template.templateVersionId).forShare('v').executeTakeFirst();
+        if(!controlled || controlled.state !== 'APPROVED' || !controlled.approved_at || !controlled.effective_at || controlled.effective_at > new Date())throw new AppError('POLICY_SOURCE_REQUIRED',{userSafe:true});
         const digitalForm=controlledFormSchema.parse(controlled.digital_form);
         if(createHash('sha256').update(stableJson(digitalForm)).digest('hex')!==controlled.content_hash)throw new AppError('VALIDATION_FAILED',{userSafe:true});
         await tx
@@ -364,6 +365,7 @@ export class PostgresInspectionRepository implements InspectionRepository {
             void_reason: null,
             snapshot_id: null,
             created_by: x.authorId,
+            created_at: new Date(x.createdAt),
             updated_by: x.authorId,
             updated_at: x.updatedAt,
             version: 1n,
@@ -379,27 +381,14 @@ export class PostgresInspectionRepository implements InspectionRepository {
           templateVersionId: x.template.templateVersionId,
           versionNo: controlled.version_no,
         };
-        const controlledSources = await tx
-          .selectFrom('inspection_template_document_sources as source')
-          .innerJoin('document_versions as version', 'version.id', 'source.document_version_id')
-          .innerJoin('document_identities as identity', 'identity.id', 'version.document_id')
-          .select([
-            'source.document_version_id as documentVersionId',
-            'source.usage_type as usageType',
-            'identity.document_no as documentNo',
-            'identity.document_type as documentType',
-            'identity.title as title',
-            'version.revision as revision',
-            'version.effective_at as effectiveAt',
-            'version.content_hash as contentHash',
-            'version.state as state',
-          ])
-          .where('source.template_version_id', '=', x.template.templateVersionId)
-          .orderBy('identity.document_no')
-          .orderBy('version.id')
-          .execute();
-        if (controlledSources.some((source) => source.state !== 'EFFECTIVE'))
-          throw new AppError('AUTHZ_DENIED', { userSafe: true });
+        const executionAt = new Date(x.createdAt);
+        const controlledSources = await captureExecutionDocuments(tx, {
+          executionType: 'INSPECTION_REPORT', executionId: x.id,
+          templateVersionId: x.template.templateVersionId, checkpoint: 'CREATE',
+          executionAt, capturedAt: executionAt, itemCode: capturedReceiving.itemCode,
+          lot: capturedReceiving.lot, methodReference: controlled.doc_code,
+          actorId: i.actor.id, requestId: i.requestId,
+        });
         const criteria = await tx
           .selectFrom('inspection_template_sections as section')
           .innerJoin('inspection_template_points as point', 'point.section_id', 'section.id')
@@ -790,6 +779,10 @@ export class PostgresInspectionRepository implements InspectionRepository {
             .where('snapshot_stage', '=', 'CREATION')
             .orderBy('snapshot_version')
             .executeTakeFirst();
+          const executionDocuments = await repeatExecutionDocumentsAtSubmission(tx, {
+            executionType: 'INSPECTION_REPORT', executionId: i.id, actorId: i.actor.id,
+            capturedAt: now, requestId: i.requestId,
+          });
           const resultsSnapshot = old.results.map((entry) => ({
             id: entry.id,
             pointId: entry.pointId,
@@ -799,7 +792,7 @@ export class PostgresInspectionRepository implements InspectionRepository {
             remarks: entry.remarks ?? null,
             version: String(entry.version),
           }));
-          const controlledSources = creationSnapshot?.controlled_source_snapshot ?? [];
+          const controlledSources = executionDocuments;
           const criteria = creationSnapshot?.criteria_snapshot ?? [];
           const equipmentUsage=await tx.selectFrom('inspection_equipment_usage').selectAll().where('inspection_report_id','=',i.id).orderBy('id').execute();
           const aql={aql:r.aql,codeLetter:r.aql_code_letter,inspectionLevel:r.aql_inspection_level,sampleSize:r.aql_sample_size,acceptNumber:r.aql_accept_number,rejectNumber:r.aql_reject_number,samplingResult:r.aql_sampling_result,sourceReference:r.aql_source_reference};
@@ -807,6 +800,7 @@ export class PostgresInspectionRepository implements InspectionRepository {
             receiving: old.receiving,
             template: old.template.templateSnapshot,
             controlledSources,
+            executionDocuments,
             criteria,
             results: resultsSnapshot,
             formValues: old.formValues ?? null, aql,equipmentUsage,

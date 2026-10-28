@@ -68,6 +68,12 @@ const equipmentEvidence = test.context.equipment.map((item) => ({
 }));
 const documentEvidence = test.context.documents.map((item) => ({
   usageType: item.usageType?.trim() || 'Not supplied by source',
+  documentId: item.documentId,
+  documentVersionId: item.documentVersionId,
+  documentNo: String(item.snapshot.documentNo ?? 'Controlled document'),
+  revision: String(item.snapshot.revision ?? 'Revision not recorded'),
+  contentHash: String(item.snapshot.contentHash ?? 'Not recorded'),
+  sourceFileDigest: String(item.snapshot.sourceFileDigest ?? 'Not recorded'),
 }));
 ---
 
@@ -235,19 +241,21 @@ const documentEvidence = test.context.documents.map((item) => ({
             </div>
           ) : null}
 
-          {documentEvidence.length ? (
-            <div class="evidence-block">
-              <h3>Controlled documents</h3>
+          <div class="evidence-block">
+            <h3>Controlled documents used</h3>
+            {documentEvidence.length ? (
               <ul class="evidence-list">
                 {documentEvidence.map((item) => (
                   <li>
-                    <span>Usage type: {item.usageType}</span>
-                    <span>Controlled version context preserved</span>
+                    <span>{item.documentNo} · revision {item.revision} · {item.usageType}</span>
+                    <span>Document SHA-256: {item.contentHash} · source file digest: {item.sourceFileDigest}</span>
+                    {item.documentId && item.documentVersionId ? <a href={`/documents/${encodeURIComponent(item.documentId)}/versions/${encodeURIComponent(item.documentVersionId)}`}>View WI used for this record</a> : <span>Source unavailable for verification</span>}
+                    <span>Source file download is unavailable in this application configuration.</span>
                   </li>
                 ))}
               </ul>
-            </div>
-          ) : null}
+            ) : <p class="muted">Source unavailable for verification — no bound controlled document version is recorded.</p>}
+          </div>
 
           {observations.length ? (
             <div class="table-scroll" role="region" aria-label="Recorded laboratory observations" tabindex="0">
@@ -468,7 +476,7 @@ const documentEvidence = test.context.documents.map((item) => ({
     min-block-size: 44px;
     padding-inline: var(--space-4);
     border: 1px solid var(--color-border-subtle);
-    border-inline-start: 3px solid var(--color-accent-primary);
+    border-color: var(--color-accent-primary);
     border-radius: var(--radius-md);
     background: var(--surface-raised);
     color: var(--text-primary);
@@ -480,11 +488,11 @@ const documentEvidence = test.context.documents.map((item) => ({
   .state[data-state='VOID'],
   .state[data-state='HOLD'],
   .state[data-state='RETURNED'] {
-    border-inline-start-color: var(--status-warning);
+    border-color: var(--status-warning);
   }
 
   .state[data-state='APPROVED'] {
-    border-inline-start-color: var(--status-approved);
+    border-color: var(--status-approved);
   }
 
   .record-layout {
@@ -554,10 +562,6 @@ const documentEvidence = test.context.documents.map((item) => ({
     font-variant-numeric: tabular-nums;
   }
 
-  .result-panel {
-    border-inline-start: 3px solid var(--color-accent-primary);
-  }
-
   .result-value {
     margin: 0;
     color: var(--text-primary);
@@ -570,7 +574,7 @@ const documentEvidence = test.context.documents.map((item) => ({
   .notice {
     margin: var(--space-4) 0 0;
     padding: var(--space-4);
-    border-inline-start: 3px solid var(--color-accent-primary);
+    border: 1px solid var(--color-border-subtle);
     border-radius: var(--radius-sm);
     background: var(--surface-raised);
     color: var(--text-primary);
@@ -633,7 +637,7 @@ const documentEvidence = test.context.documents.map((item) => ({
     margin: var(--space-4) 0 0;
     padding: var(--space-4);
     border: 1px solid var(--color-border-subtle);
-    border-inline-start: 3px solid var(--status-warning);
+    border-color: var(--status-warning);
     border-radius: var(--radius-md);
     background: var(--surface-raised);
     color: var(--text-primary);

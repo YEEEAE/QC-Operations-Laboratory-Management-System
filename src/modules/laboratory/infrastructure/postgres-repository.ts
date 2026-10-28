@@ -13,6 +13,7 @@ import { stableJson } from '../../../shared/json/stable-stringify.js';
 import { insertSignatureEvidence } from '../../../shared/e-signatures/insert-signature-evidence.js';
 import { PostgresOutboxRepository } from '../../../shared/outbox/postgres-outbox-repository.js';
 import { persistApprovalDecisionEvent } from '../../../shared/approval-decision-event.js';
+import { captureExecutionDocuments, repeatExecutionDocumentsAtSubmission, type ExecutionDocument } from '../../documents/application/capture-execution-context.js';
 import type { LabListFilter, LabRepository, Mutation } from '../ports/repository.js';
 import type { LabState } from '../domain/lab-state.js';
 import type { ControlledContext, EquipmentContext, LabTest } from '../domain/lab-test.js';
@@ -52,6 +53,12 @@ type ReadingRow = Selectable<DatabaseSchema['lab_readings']>;
 type MeasurementRow = Selectable<DatabaseSchema['lab_measurements']>;
 type SampleResultRow = Selectable<DatabaseSchema['lab_sample_results']>;
 type ParameterRow = Selectable<DatabaseSchema['lab_test_template_parameters']>;
+const toDocumentContext = (document: ExecutionDocument): ControlledContext['documents'][number] => ({
+  documentId: document.documentId,
+  documentVersionId: document.documentVersionId,
+  usageType: document.usageType,
+  snapshot: document,
+});
 export class PostgresLabRepository implements LabRepository {
   constructor(
     private readonly db: Kysely<DatabaseSchema>,
@@ -542,6 +549,7 @@ export class PostgresLabRepository implements LabRepository {
       throw new AppError('VALIDATION_FAILED', { userSafe: true });
     }
     const commit = async (tx: Transaction<DatabaseSchema>) => {
+      let frozenDocuments: ControlledContext['documents'] = next.context.documents;
       if (!previous) {
         await tx
           .insertInto('lab_tests')
@@ -570,6 +578,7 @@ export class PostgresLabRepository implements LabRepository {
               ? new Date(next.derivedResult.computedAt)
               : null,
             created_by: next.createdBy,
+            created_at: new Date(next.createdAt),
             updated_by: next.authorId,
             updated_at: new Date(next.updatedAt),
             version: next.version,
@@ -591,6 +600,14 @@ export class PostgresLabRepository implements LabRepository {
               })),
             )
             .execute();
+        const executionDocuments = await captureExecutionDocuments(tx, {
+          executionType: 'LAB_TEST', executionId: next.id,
+          templateVersionId: next.context.templateVersionId, checkpoint: 'CREATE',
+          executionAt: new Date(next.createdAt), capturedAt: new Date(next.createdAt),
+          itemCode: null, lot: null, methodReference: next.context.methodReference,
+          actorId: mutation.actor.id, requestId: mutation.requestId,
+        });
+        frozenDocuments = executionDocuments.map(toDocumentContext);
       } else {
         const changed = await tx
           .updateTable('lab_tests')
@@ -621,7 +638,15 @@ export class PostgresLabRepository implements LabRepository {
           await insertSignatureEvidence(tx, mutation.signatureEvidence!);
       }
       await this.reconcileRunContent(tx, next, mutation);
-      const snapshot = { test: next, context: next.context };
+      if (mutation.action === 'SUBMIT') {
+        const executionDocuments = await repeatExecutionDocumentsAtSubmission(tx, {
+          executionType: 'LAB_TEST', executionId: next.id, actorId: mutation.actor.id,
+          capturedAt: new Date(next.submittedAt ?? next.updatedAt), requestId: mutation.requestId,
+        });
+        frozenDocuments = executionDocuments.map(toDocumentContext);
+      }
+      const frozenTest = { ...next, context: { ...next.context, documents: frozenDocuments } };
+      const snapshot = { test: frozenTest, context: frozenTest.context };
       const snap = await tx
         .insertInto('lab_test_snapshots')
         .values({
@@ -635,7 +660,7 @@ export class PostgresLabRepository implements LabRepository {
           calibration_snapshot: stableJson(
             next.context.equipment.map((e) => e.calibrationSnapshot),
           ),
-          document_snapshot: stableJson(next.context.documents),
+          document_snapshot: stableJson(frozenDocuments),
           criteria_snapshot: stableJson(next.context.parameters.map((p) => p.criteria)),
           sample_context_snapshot: stableJson(next.samples),
           created_at: new Date(),

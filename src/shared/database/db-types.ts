@@ -931,6 +931,28 @@ export interface LabDocumentUsageTable {
   source_snapshot_verified: Generated<boolean>;
   created_at: Generated<Date>;
 }
+export interface DocumentExecutionContextsTable {
+  id: Generated<string>;
+  execution_type: string;
+  execution_id: string;
+  checkpoint: string;
+  document_id: string;
+  document_version_id: string;
+  template_version_id: string;
+  usage_type: string;
+  revision: string;
+  content_hash: string;
+  source_file_digest: string;
+  source_files_snapshot: unknown;
+  effective_at: Date;
+  execution_at: Date;
+  captured_at: Date;
+  item_code: string | null;
+  lot: string | null;
+  method_reference: string;
+  captured_by: string;
+  request_id: string;
+}
 export interface EquipmentTable {
   id: Generated<string>;
   equipment_no: string;
@@ -1632,6 +1654,7 @@ export interface DatabaseSchema {
   laboratory_report_drafts: LaboratoryReportDraftsTable;
   lab_equipment_usage: LabEquipmentUsageTable;
   lab_document_usage: LabDocumentUsageTable;
+  document_execution_contexts: DocumentExecutionContextsTable;
   lab_test_template_document_sources: LabTestTemplateDocumentSourcesTable;
   findings: FindingsTable;
   ncrs: NcrsTable;

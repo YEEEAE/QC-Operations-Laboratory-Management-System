@@ -32,6 +32,7 @@ export interface EquipmentContext {
   calibrationSnapshot: Readonly<Record<string, unknown>>;
 }
 export interface DocumentContext {
+  documentId: string;
   documentVersionId: string;
   usageType: string;
   snapshot: Readonly<Record<string, unknown>>;
@@ -107,8 +108,9 @@ export function assertContext(context: ControlledContext) {
     )
       throw new AppError('AUTHZ_DENIED');
   for (const document of context.documents)
-    if (!document.documentVersionId || !document.usageType || !document.snapshot)
+    if (!document.documentId || !document.documentVersionId || !document.usageType || !document.snapshot)
       throw new AppError('AUTHZ_DENIED');
+  if (!context.documents.length) throw new AppError('POLICY_SOURCE_REQUIRED', { userSafe: true });
 }
 export function assertComplete(test: LabTest) {
   assertContext(test.context);
