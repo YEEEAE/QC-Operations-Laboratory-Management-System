@@ -9,6 +9,8 @@ import { PostgresCredentialMutationCommit } from '../infrastructure/postgres-cre
 import type { ActorContext } from '../../../shared/authorization/types.js';
 import { systemClock } from '../../../shared/time/clock.js';
 import { addUniversalOperationalReadPermissions } from '../../../shared/authorization/visibility.js';
+import { getServerEnv } from '../../../config/env.js';
+import { createNeonAuthJwtVerifier } from '../security/neon-auth-jwt-verifier.js';
 
 export function identityDependencies(database: Kysely<DatabaseSchema> = getDatabase()) {
   const users = new PostgresUserRepository(database);
@@ -20,6 +22,9 @@ export function identityDependencies(database: Kysely<DatabaseSchema> = getDatab
     passwords: new Argon2idPasswordHasher(),
     credentialMutation: new PostgresCredentialMutationCommit(database),
     sessionService: new SessionService(users, sessions, systemClock, 8 * 60 * 60 * 1000),
+    // Optional cryptographic adapter only; middleware and LoginUseCase keep
+    // using the existing locally persisted, revocable QC session.
+    neonAuthJwtVerifier: createNeonAuthJwtVerifier(getServerEnv()),
   };
 }
 

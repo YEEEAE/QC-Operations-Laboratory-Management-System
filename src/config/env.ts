@@ -31,6 +31,8 @@ const APPROVED_DATABASE_IDENTITIES = {
 } as const;
 
 const NEON_PROFILE_KEYS = Object.keys(APPROVED_DATABASE_IDENTITIES) as (keyof typeof APPROVED_DATABASE_IDENTITIES)[];
+const APPROVED_NEON_AUTH_JWKS_URL =
+  'https://ep-fragrant-bar-b5ns86ri.neonauth.c-7.us-east-2.aws.neon.tech/neondb/auth/.well-known/jwks.json';
 
 function databaseIdentityFingerprint(value: string): string {
   const url = new URL(value);
@@ -69,15 +71,18 @@ const envSchema = z.object({
   // tooling, never in the web service process.
   DATABASE_URL_UNPOOLED: optionalEnv(z.string().trim()),
   NEON_BRANCH: optionalEnv(z.string().trim().min(1)),
-  NEON_AUTH_JWKS_URL: optionalEnv(z.string().trim().url().refine((value) => new URL(value).protocol === 'https:', 'must use HTTPS')),
+  NEON_AUTH_ENABLED: z.enum(['true', 'false']).default('false'),
+  NEON_AUTH_JWKS_URL: optionalEnv(z.string().trim().url().refine((value) => value === APPROVED_NEON_AUTH_JWKS_URL, 'must match the owner-approved Neon Auth JWKS URL')),
   NEON_AUTH_ISSUER: optionalEnv(z.string().trim().url().refine((value) => new URL(value).protocol === 'https:', 'must use HTTPS')),
   NEON_AUTH_AUDIENCE: optionalEnv(z.string().trim().min(1)),
-  STAGING_NEON_AUTH_JWKS_URL: optionalEnv(z.string().trim().url().refine((value) => new URL(value).protocol === 'https:', 'must use HTTPS')),
+  STAGING_NEON_AUTH_JWKS_URL: optionalEnv(z.string().trim().url().refine((value) => value === APPROVED_NEON_AUTH_JWKS_URL, 'must match the owner-approved Neon Auth JWKS URL')),
   STAGING_NEON_AUTH_ISSUER: optionalEnv(z.string().trim().url().refine((value) => new URL(value).protocol === 'https:', 'must use HTTPS')),
   STAGING_NEON_AUTH_AUDIENCE: optionalEnv(z.string().trim().min(1)),
-  PILOT_NEON_AUTH_JWKS_URL: optionalEnv(z.string().trim().url().refine((value) => new URL(value).protocol === 'https:', 'must use HTTPS')),
+  STAGING_NEON_AUTH_ENABLED: z.enum(['true', 'false']).default('false'),
+  PILOT_NEON_AUTH_JWKS_URL: optionalEnv(z.string().trim().url().refine((value) => value === APPROVED_NEON_AUTH_JWKS_URL, 'must match the owner-approved Neon Auth JWKS URL')),
   PILOT_NEON_AUTH_ISSUER: optionalEnv(z.string().trim().url().refine((value) => new URL(value).protocol === 'https:', 'must use HTTPS')),
   PILOT_NEON_AUTH_AUDIENCE: optionalEnv(z.string().trim().min(1)),
+  PILOT_NEON_AUTH_ENABLED: z.enum(['true', 'false']).default('false'),
   EXPLABS_API_KEY: optionalEnv(z.string().trim().min(1)),
   STAGING_EXPLABS_API_KEY: optionalEnv(z.string().trim().min(1)),
   PILOT_EXPLABS_API_KEY: optionalEnv(z.string().trim().min(1)),
@@ -180,8 +185,20 @@ export function parseServerEnv(input: Record<string, string | undefined>): Serve
       : profile === 'pilot'
         ? [result.data.PILOT_NEON_AUTH_JWKS_URL, result.data.PILOT_NEON_AUTH_ISSUER, result.data.PILOT_NEON_AUTH_AUDIENCE]
         : [result.data.NEON_AUTH_JWKS_URL, result.data.NEON_AUTH_ISSUER, result.data.NEON_AUTH_AUDIENCE];
+    const neonAuthEnabled = profile === 'staging'
+      ? result.data.STAGING_NEON_AUTH_ENABLED
+      : profile === 'pilot'
+        ? result.data.PILOT_NEON_AUTH_ENABLED
+        : result.data.NEON_AUTH_ENABLED;
     if (neonAuthValues.some(Boolean) && neonAuthValues.some((value) => !value)) {
       invalid.push('profile-specific Neon Auth settings');
+    }
+    if (neonAuthEnabled === 'true' && neonAuthValues.some((value) => !value)) {
+      missing.push(...(profile === 'staging'
+        ? ['STAGING_NEON_AUTH_JWKS_URL', 'STAGING_NEON_AUTH_ISSUER', 'STAGING_NEON_AUTH_AUDIENCE'].filter((_, index) => !neonAuthValues[index])
+        : profile === 'pilot'
+          ? ['PILOT_NEON_AUTH_JWKS_URL', 'PILOT_NEON_AUTH_ISSUER', 'PILOT_NEON_AUTH_AUDIENCE'].filter((_, index) => !neonAuthValues[index])
+          : [ENV_KEYS.neonAuthJwksUrl, ENV_KEYS.neonAuthIssuer, ENV_KEYS.neonAuthAudience].filter((_, index) => !neonAuthValues[index])));
     }
 
     const configuredProfileUrls = [
@@ -237,6 +254,9 @@ export function parseServerEnv(input: Record<string, string | undefined>): Serve
           ? Boolean(result.data.STAGING_NEON_AUTH_JWKS_URL || result.data.STAGING_NEON_AUTH_ISSUER || result.data.STAGING_NEON_AUTH_AUDIENCE)
           : Boolean(result.data.STAGING_NEON_AUTH_JWKS_URL || result.data.STAGING_NEON_AUTH_ISSUER || result.data.STAGING_NEON_AUTH_AUDIENCE || result.data.PILOT_NEON_AUTH_JWKS_URL || result.data.PILOT_NEON_AUTH_ISSUER || result.data.PILOT_NEON_AUTH_AUDIENCE);
       if (profile !== 'production' && hasGenericAuth) invalid.push('production Neon Auth settings are not valid for a non-production profile');
+      if (profile !== 'production' && result.data.NEON_AUTH_ENABLED === 'true') invalid.push(ENV_KEYS.neonAuthEnabled);
+      if (profile !== 'staging' && result.data.STAGING_NEON_AUTH_ENABLED === 'true') invalid.push('STAGING_NEON_AUTH_ENABLED');
+      if (profile !== 'pilot' && result.data.PILOT_NEON_AUTH_ENABLED === 'true') invalid.push('PILOT_NEON_AUTH_ENABLED');
       if (hasOtherProfileAuth) invalid.push('another profile Neon Auth settings');
       if (profile !== 'production' && result.data.EXPLABS_API_KEY) invalid.push('EXPLABS_API_KEY');
       if (profile === 'staging' && result.data.PILOT_EXPLABS_API_KEY) invalid.push('PILOT_EXPLABS_API_KEY');
@@ -250,8 +270,13 @@ export function parseServerEnv(input: Record<string, string | undefined>): Serve
           if (!input[key]?.trim()) missing.push(key);
         }
       }
-    } else if (result.data.STAGING_DATABASE_URL || result.data.PILOT_DATABASE_URL || result.data.STAGING_DATABASE_HOST || result.data.PILOT_DATABASE_HOST || result.data.PRODUCTION_DATABASE_HOST || result.data.STAGING_DATABASE_NAME || result.data.PILOT_DATABASE_NAME || result.data.PRODUCTION_DATABASE_NAME || result.data.STAGING_SESSION_SECRET || result.data.PILOT_SESSION_SECRET || result.data.STAGING_NEON_AUTH_JWKS_URL || result.data.STAGING_NEON_AUTH_ISSUER || result.data.STAGING_NEON_AUTH_AUDIENCE || result.data.PILOT_NEON_AUTH_JWKS_URL || result.data.PILOT_NEON_AUTH_ISSUER || result.data.PILOT_NEON_AUTH_AUDIENCE || result.data.STAGING_EXPLABS_API_KEY || result.data.PILOT_EXPLABS_API_KEY) {
-      invalid.push(result.data.STAGING_DATABASE_URL ? ENV_KEYS.stagingDatabaseUrl : ENV_KEYS.pilotDatabaseUrl);
+    } else if (result.data.NEON_AUTH_ENABLED === 'true' || result.data.STAGING_NEON_AUTH_ENABLED === 'true' || result.data.PILOT_NEON_AUTH_ENABLED === 'true' || result.data.STAGING_DATABASE_URL || result.data.PILOT_DATABASE_URL || result.data.STAGING_DATABASE_HOST || result.data.PILOT_DATABASE_HOST || result.data.PRODUCTION_DATABASE_HOST || result.data.STAGING_DATABASE_NAME || result.data.PILOT_DATABASE_NAME || result.data.PRODUCTION_DATABASE_NAME || result.data.STAGING_SESSION_SECRET || result.data.PILOT_SESSION_SECRET || result.data.STAGING_NEON_AUTH_JWKS_URL || result.data.STAGING_NEON_AUTH_ISSUER || result.data.STAGING_NEON_AUTH_AUDIENCE || result.data.PILOT_NEON_AUTH_JWKS_URL || result.data.PILOT_NEON_AUTH_ISSUER || result.data.PILOT_NEON_AUTH_AUDIENCE || result.data.STAGING_EXPLABS_API_KEY || result.data.PILOT_EXPLABS_API_KEY) {
+      invalid.push(
+        result.data.NEON_AUTH_ENABLED === 'true' ? ENV_KEYS.neonAuthEnabled
+          : result.data.STAGING_NEON_AUTH_ENABLED === 'true' ? 'STAGING_NEON_AUTH_ENABLED'
+            : result.data.PILOT_NEON_AUTH_ENABLED === 'true' ? 'PILOT_NEON_AUTH_ENABLED'
+              : result.data.STAGING_DATABASE_URL ? ENV_KEYS.stagingDatabaseUrl : ENV_KEYS.pilotDatabaseUrl,
+      );
     }
     if (result.data.PILOT_REAL_MASTER_DATA_ENABLED === 'true') {
       // No approved source-backed onboarding authority is wired to runtime configuration yet.
@@ -339,6 +364,7 @@ export function parseServerEnv(input: Record<string, string | undefined>): Serve
       NEON_AUTH_JWKS_URL: profile === 'staging' ? result.data.STAGING_NEON_AUTH_JWKS_URL : profile === 'pilot' ? result.data.PILOT_NEON_AUTH_JWKS_URL : result.data.NEON_AUTH_JWKS_URL,
       NEON_AUTH_ISSUER: profile === 'staging' ? result.data.STAGING_NEON_AUTH_ISSUER : profile === 'pilot' ? result.data.PILOT_NEON_AUTH_ISSUER : result.data.NEON_AUTH_ISSUER,
       NEON_AUTH_AUDIENCE: profile === 'staging' ? result.data.STAGING_NEON_AUTH_AUDIENCE : profile === 'pilot' ? result.data.PILOT_NEON_AUTH_AUDIENCE : result.data.NEON_AUTH_AUDIENCE,
+      NEON_AUTH_ENABLED: neonAuthEnabled,
       EXPLABS_API_KEY: profile === 'staging' ? result.data.STAGING_EXPLABS_API_KEY : profile === 'pilot' ? result.data.PILOT_EXPLABS_API_KEY : result.data.EXPLABS_API_KEY,
     };
   }

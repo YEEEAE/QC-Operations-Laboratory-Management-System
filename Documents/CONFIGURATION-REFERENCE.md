@@ -33,11 +33,12 @@ Neon pooled connections omit the unsupported `search_path` startup option; appli
 | `NEON_AUTH_JWKS_URL` | Server-only HTTPS URL for public signing-key discovery. |
 | `NEON_AUTH_ISSUER` | Server-only HTTPS issuer identifier. |
 | `NEON_AUTH_AUDIENCE` | Server-only expected audience. |
+| `NEON_AUTH_ENABLED` | Explicit server-side feature switch; defaults to `false`. Staging and pilot use their matching profile-specific switch. |
 | `EXPLABS_API_KEY` | Optional server-only secret. No ExLabs API base URL or provider contract is established by this repository; this value alone does not enable outbound processing. |
-| `STAGING_NEON_AUTH_*`, `PILOT_NEON_AUTH_*` | Optional branch-specific Neon Auth validation values; each profile's JWKS, issuer, and audience must be configured together. |
+| `STAGING_NEON_AUTH_*`, `PILOT_NEON_AUTH_*` | Optional branch-specific Neon Auth validation values and enable switches; each profile's JWKS, issuer, and audience must be configured together. |
 | `STAGING_EXPLABS_API_KEY`, `PILOT_EXPLABS_API_KEY` | Optional profile-specific secret names. No ExLabs API base URL or provider contract is established. |
 
-If any Neon Auth validation setting is supplied, all three must be present and valid. These settings do not migrate or replace the application's existing identity provider and are not evidence that Neon Auth is wired or operational. Keep values scoped per environment in the service's protected environment settings. Do not expose them through `PUBLIC_*`, `import.meta.env` in browser code, HTML, or client bundles.
+If any Neon Auth validation setting is supplied, all three must be present and valid. The JWKS URL is pinned to the owner-supplied public discovery endpoint; issuer and audience must come from separately approved Neon Auth configuration and are never derived from a token. The optional JOSE verifier is server-only and disabled unless the active profile's `*_NEON_AUTH_ENABLED` switch is `true`. It verifies token cryptography and expected claims only; it does not establish a QC identity, check a Neon session's revocation state, create an application session, or grant roles/permissions/scopes. Keep values scoped per environment in protected settings. Do not expose them through `PUBLIC_*`, `import.meta.env` in browser code, HTML, or client bundles.
 
 ## Other production requirements
 
@@ -51,7 +52,7 @@ Production requires an explicit profile, its exact branch label, matching expect
 2. Have an operator create each Neon branch and its PostgreSQL resources out-of-band; this repository does not create or clone branches. Never copy unmasked company user data into a sandbox. Use only an approved sanitized snapshot or a schema-only source prepared outside this change.
 3. Record the active profile's owner-approved host/database identity in protected settings. Staging and pilot also require the production identity so separation can be checked. An unprovisioned inactive profile does not block startup; any additional identity metadata must be complete and its host distinct. Configure only the active profile's pooled URL and dedicated session/storage credentials in that service.
 4. Keep branch-specific Auth and optional vendor credentials in their profile's protected settings. Do not copy production credentials into staging or pilot.
-5. Keep Auth and ExLabs capabilities disabled unless their provider contract, owner approval, and server-side integration are separately established.
+5. Keep Neon Auth disabled unless its issuer/audience, subject mapping, session-revocation behavior, and transition policy are separately approved. Keep ExLabs disabled unless its provider contract and owner approval are established.
 
 For an existing Render service, verify its actual environment settings before deploying a changed runtime contract. A checked-in `render.yaml` does not update a service that is not managed by that Blueprint. Production needs `APP_ENVIRONMENT_PROFILE=production`, `NEON_BRANCH=production`, the verified pooled `DATABASE_URL`, and matching `PRODUCTION_DATABASE_HOST` / `PRODUCTION_DATABASE_NAME` in addition to its existing session/version/rate-limit settings.
 

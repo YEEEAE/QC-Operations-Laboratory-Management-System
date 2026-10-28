@@ -33,6 +33,7 @@ export const ENV_KEYS = {
   neonAuthJwksUrl: 'NEON_AUTH_JWKS_URL',
   neonAuthIssuer: 'NEON_AUTH_ISSUER',
   neonAuthAudience: 'NEON_AUTH_AUDIENCE',
+  neonAuthEnabled: 'NEON_AUTH_ENABLED',
   explabsApiKey: 'EXPLABS_API_KEY',
   sessionSecret: 'SESSION_SECRET',
   stagingSessionSecret: 'STAGING_SESSION_SECRET',
