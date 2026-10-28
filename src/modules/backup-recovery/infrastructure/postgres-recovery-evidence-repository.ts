@@ -1,6 +1,7 @@
 import type { Kysely } from 'kysely';
 import type { DatabaseSchema } from '../../../shared/database/db-types.js';
 import { translateDatabaseError } from '../../../shared/database/database.js';
+import { AppError } from '../../../shared/errors/app-error.js';
 import { uuidv7 } from '../../../shared/id/uuid.js';
 import type {
   RecoveryEvidenceInput,
@@ -11,9 +12,42 @@ export class PostgresRecoveryEvidenceRepository implements RecoveryEvidenceRepos
   constructor(private readonly database: Kysely<DatabaseSchema>) {}
 
   async append(input: RecoveryEvidenceInput): Promise<{ id: string }> {
+    const validationResults = [
+      input.databaseValidation,
+      input.objectValidation,
+      input.securityValidation,
+      input.businessValidation,
+      input.sessionInvalidation === 'FAIL' ? 'FAIL' : 'PASS',
+    ];
+    if (
+      input.result === 'VERIFIED' &&
+      (!input.restoreRunId ||
+        !input.completedAt ||
+        validationResults.some((result) => result !== 'PASS'))
+    )
+      throw new AppError('VALIDATION_FAILED', { userSafe: true });
+    if (input.result === 'VERIFICATION_FAILED' && !validationResults.includes('FAIL'))
+      throw new AppError('VALIDATION_FAILED', { userSafe: true });
     try {
-      const id = uuidv7();
-      await this.database
+      return await this.database.transaction().execute(async (tx) => {
+        if (input.restoreRunId) {
+          const restore = await tx
+            .selectFrom('restore_runs')
+            .select(['backup_run_id', 'state'])
+            .where('id', '=', input.restoreRunId)
+            .forUpdate()
+            .executeTakeFirst();
+          if (
+            !restore ||
+            restore.backup_run_id !== input.backupRunId ||
+            (input.result === 'VERIFIED' && restore.state !== 'SUCCEEDED')
+          )
+            throw new AppError('VALIDATION_FAILED', { userSafe: true });
+        } else if (input.result === 'VERIFIED') {
+          throw new AppError('VALIDATION_FAILED', { userSafe: true });
+        }
+        const id = uuidv7();
+        await tx
         .insertInto('recovery_evidence')
         .values({
           id,
@@ -45,9 +79,10 @@ export class PostgresRecoveryEvidenceRepository implements RecoveryEvidenceRepos
           created_at: new Date(),
         })
         .execute();
-      return { id };
+        return { id };
+      });
     } catch (error) {
-      throw translateDatabaseError(error);
+      throw error instanceof AppError ? error : translateDatabaseError(error);
     }
   }
 

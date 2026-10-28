@@ -154,7 +154,25 @@ export class PostgresBackupCatalogRepository implements BackupCatalogRepository 
         .where('backup_run_id', '=', backupId)
         .orderBy('requested_at', 'asc')
         .execute();
-      return rows.map(mapRestore);
+      if (rows.length === 0) return [];
+      const evidenceRows = await this.database
+        .selectFrom('recovery_evidence')
+        .select(['restore_run_id', 'result', 'created_at'])
+        .where('restore_run_id', 'in', rows.map((row) => row.id))
+        .orderBy('created_at', 'desc')
+        .execute();
+      const outcomeByRestore = new Map<string, 'VERIFIED' | 'VERIFICATION_FAILED' | 'BLOCKED'>();
+      for (const evidence of evidenceRows) {
+        if (!evidence.restore_run_id || outcomeByRestore.has(evidence.restore_run_id)) continue;
+        if (evidence.result === 'VERIFIED' || evidence.result === 'VERIFICATION_FAILED' || evidence.result === 'BLOCKED')
+          outcomeByRestore.set(evidence.restore_run_id, evidence.result);
+      }
+      return rows.map((row) => ({
+        ...mapRestore(row),
+        ...(outcomeByRestore.has(row.id)
+          ? { verificationOutcome: outcomeByRestore.get(row.id)! }
+          : {}),
+      }));
     } catch (error) {
       throw translateDatabaseError(error);
     }

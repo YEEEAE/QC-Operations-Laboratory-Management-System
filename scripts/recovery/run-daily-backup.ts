@@ -17,9 +17,20 @@ function required(name: string): string {
 
 try {
   loadLocalEnv();
-  assertSafeLocalDatabaseCommand();
-  const databaseUrl = parseServerEnv(process.env).DATABASE_URL;
-  if (!databaseUrl) throw new Error('No profile-bound runtime database is configured.');
+  const profile = process.env.APP_ENVIRONMENT_PROFILE;
+  if (!profile) throw new Error('An explicit backup environment profile is required.');
+  const environment = profile === 'development'
+    ? 'local'
+    : profile as 'test' | 'staging' | 'production';
+  const productionBackupApproved = profile === 'production' &&
+    Boolean(process.env.MIGRATION_PRODUCTION_RELEASE_ID?.trim()) &&
+    Boolean(process.env.MIGRATION_PRODUCTION_APPROVAL_REFERENCE?.trim());
+  const databaseUrl = process.env.DATABASE_URL_UNPOOLED?.trim();
+  if (!databaseUrl) throw new Error('A direct operator database connection is required.');
+  assertSafeLocalDatabaseCommand(process.env, databaseUrl, {
+    productionApproved: productionBackupApproved,
+  });
+  parseServerEnv({ ...process.env, DATABASE_URL_UNPOOLED: undefined });
   const release = {
     gitSha: required('BACKUP_GIT_SHA'),
     buildId: required('BACKUP_BUILD_ID'),
@@ -35,15 +46,24 @@ try {
     release,
     catalogId: randomUUID(),
     requestId: randomUUID(),
+    environment,
   });
+  const recoverySetComplete = Boolean(
+    result.status === 'ARTIFACT_VERIFIED' &&
+      result.manifest &&
+      (result.manifest.knownGaps?.length ?? 0) === 0,
+  );
   process.stdout.write(
     JSON.stringify({
       status: result.status,
+      recoverySetComplete,
       failureCode: result.failureCode,
       catalogId: result.manifest?.catalogId ?? null,
+      manifestReference: result.manifestReference ?? null,
+      knownGaps: result.manifest?.knownGaps ?? [],
     }) + '\n',
   );
-  if (result.status !== 'VERIFIED') process.exitCode = 1;
+  if (!recoverySetComplete) process.exitCode = 1;
 } catch {
   process.stderr.write('BACKUP_JOB_BLOCKED\n');
   process.exitCode = 1;

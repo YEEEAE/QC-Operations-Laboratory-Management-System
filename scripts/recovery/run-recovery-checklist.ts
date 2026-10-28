@@ -42,9 +42,12 @@ export async function runRecoveryChecklist(input: {
   const items: RecoveryChecklistItem[] = [
     {
       id: 'manifest-schema',
-      status: 'PASS',
+      status: manifest.manifestVersion === 2 && manifest.knownGaps.length === 0 ? 'PASS' : 'BLOCKED',
       evidence:
-        'Manifest schema and SHA-256 fields validated; restore status remains NOT_VERIFIED.',
+        manifest.manifestVersion === 2 && manifest.knownGaps.length === 0
+          ? 'Version 2 manifest identity and SHA-256 fields validated; restore status remains NOT_VERIFIED.'
+          : 'Manifest is legacy or has known recovery gaps; restore status remains NOT_VERIFIED.',
+      ...(manifest.knownGaps.length ? { failures: manifest.knownGaps } : {}),
     },
     blocked(
       'render-physical-restore',

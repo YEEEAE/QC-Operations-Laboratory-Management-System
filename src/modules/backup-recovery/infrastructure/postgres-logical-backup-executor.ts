@@ -34,6 +34,46 @@ function run(
   });
 }
 
+function operatorConnectionEnvironment(databaseUrl: string): NodeJS.ProcessEnv {
+  let url: URL;
+  try {
+    url = new URL(databaseUrl);
+  } catch {
+    throw new Error('POSTGRES_OPERATOR_CONNECTION_INVALID');
+  }
+  if (
+    !['postgres:', 'postgresql:'].includes(url.protocol) ||
+    !url.hostname ||
+    !url.username ||
+    !url.pathname.slice(1) ||
+    url.hostname.toLowerCase().split('.')[0]?.endsWith('-pooler')
+  )
+    throw new Error('POSTGRES_DIRECT_OPERATOR_CONNECTION_REQUIRED');
+  for (const key of url.searchParams.keys())
+    if (!['sslmode', 'sslrootcert'].includes(key))
+      throw new Error('POSTGRES_OPERATOR_CONNECTION_OPTION_UNSUPPORTED');
+  const sslMode = url.searchParams.get('sslmode') ?? 'prefer';
+  if (!['disable', 'allow', 'prefer', 'require', 'verify-ca', 'verify-full'].includes(sslMode))
+    throw new Error('POSTGRES_OPERATOR_CONNECTION_INVALID');
+  const local = ['localhost', '127.0.0.1', '::1', '[::1]'].includes(url.hostname.toLowerCase());
+  if (!local && !['require', 'verify-ca', 'verify-full'].includes(sslMode))
+    throw new Error('POSTGRES_OPERATOR_TLS_REQUIRED');
+  return {
+    ...(process.env.PATH ? { PATH: process.env.PATH } : {}),
+    ...(process.env.LANG ? { LANG: process.env.LANG } : {}),
+    PGHOST: url.hostname.replace(/^\[|\]$/g, ''),
+    PGPORT: url.port || '5432',
+    PGDATABASE: decodeURIComponent(url.pathname.slice(1)),
+    PGUSER: decodeURIComponent(url.username),
+    PGPASSWORD: decodeURIComponent(url.password),
+    PGSSLMODE: sslMode,
+    ...(url.searchParams.get('sslrootcert')
+      ? { PGSSLROOTCERT: url.searchParams.get('sslrootcert')! }
+      : {}),
+    PGPASSFILE: '/dev/null',
+  };
+}
+
 export class PostgresLogicalBackupExecutor implements PostgresBackupExecutor {
   async createLogicalBackup(input: {
     databaseUrl: string;
@@ -42,16 +82,87 @@ export class PostgresLogicalBackupExecutor implements PostgresBackupExecutor {
     void input.requestId;
     const directory = await mkdtemp(join(tmpdir(), 'qc-backup-'));
     const output = join(directory, 'database.dump');
+    const schemaOutput = join(directory, 'schema.sql');
     const startedAt = new Date();
+    const environment = operatorConnectionEnvironment(input.databaseUrl);
     try {
-      await run('pg_dump', ['--format=custom', '--file', output, input.databaseUrl], {
-        ...process.env,
-        PGPASSFILE: process.env.PGPASSFILE,
-      });
+      await run('pg_dump', ['--no-password', '--format=custom', '--file', output], environment);
+      await run(
+        'pg_dump',
+        ['--no-password', '--schema-only', '--no-owner', '--no-privileges', '--file', schemaOutput],
+        environment,
+      );
       const bytes = await readFile(output);
+      const schemaBytes = await readFile(schemaOutput);
+      const client = new Client(getDatabaseConnectionConfig(input.databaseUrl));
+      let migrationLedger: { version: string; name: string; checksum: string }[];
+      let fileObjects: BackupExecutionResult['fileObjects'];
+      let controlledDocumentVersions: BackupExecutionResult['controlledDocumentVersions'];
+      let postgresVersion: string;
+      try {
+        await client.connect();
+        await client.query('BEGIN READ ONLY');
+        const version = await client.query<{ version: string }>(
+          'SELECT current_setting(\'server_version\') AS version',
+        );
+        postgresVersion = version.rows[0]?.version ?? 'unknown';
+        const ledger = await client.query<{ version: string; name: string; checksum: string }>(
+          'SELECT version, name, checksum FROM qc.schema_migrations ORDER BY version',
+        );
+        migrationLedger = ledger.rows;
+        const files = await client.query<{
+          fileId: string;
+          storageProvider: string;
+          storageKey: string;
+          sizeBytes: string;
+          sha256: string;
+        }>(
+          `SELECT id::text AS "fileId", storage_provider AS "storageProvider",
+                  storage_key AS "storageKey", size_bytes::text AS "sizeBytes", sha256
+           FROM qc.files WHERE state = 'ACTIVE' ORDER BY id`,
+        );
+        fileObjects = files.rows.map((file) => {
+          const sizeBytes = Number(file.sizeBytes);
+          if (!Number.isSafeInteger(sizeBytes) || sizeBytes < 0 || !/^[0-9a-f]{64}$/i.test(file.sha256))
+            throw new Error('BACKUP_FILE_METADATA_INVALID');
+          return { ...file, sizeBytes };
+        });
+        const versions = await client.query<{
+          documentId: string;
+          documentNo: string;
+          documentType: string;
+          versionId: string;
+          revision: string;
+          state: string;
+          contentHash: string;
+          fileIds: string[];
+        }>(
+          `SELECT identity.id::text AS "documentId", identity.document_no AS "documentNo",
+                  identity.document_type AS "documentType", version.id::text AS "versionId",
+                  version.revision, version.state, version.content_hash AS "contentHash",
+                  COALESCE((SELECT array_agg(link.file_id::text ORDER BY link.file_id)
+                            FROM qc.document_version_files AS link
+                            WHERE link.document_version_id = version.id), ARRAY[]::text[]) AS "fileIds"
+           FROM qc.document_versions AS version
+           JOIN qc.document_identities AS identity ON identity.id = version.document_id
+           WHERE version.content_hash IS NOT NULL
+           ORDER BY identity.document_no, version.revision, version.id`,
+        );
+        controlledDocumentVersions = versions.rows.filter((version) => /^[0-9a-f]{64}$/i.test(version.contentHash));
+        await client.query('COMMIT');
+      } catch (error) {
+        await client.query('ROLLBACK').catch(() => undefined);
+        throw error;
+      } finally {
+        await client.end().catch(() => undefined);
+      }
       return {
         bytes,
-        postgresVersion: process.env.PG_VERSION_CONTEXT ?? 'unknown',
+        postgresVersion,
+        schemaChecksum: checksum(schemaBytes),
+        migrationLedger,
+        fileObjects,
+        controlledDocumentVersions,
         startedAt,
         completedAt: new Date(),
         command: 'pg_dump',

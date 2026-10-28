@@ -88,6 +88,7 @@ export interface RestoreRun {
   targetEnvironment: string;
   errorCode?: string;
   requestId: string;
+  verificationOutcome?: 'VERIFIED' | 'VERIFICATION_FAILED' | 'BLOCKED';
 }
 
 export type RestoreVerificationStatus =
@@ -118,10 +119,14 @@ export function isRestorableBackup(backup: BackupRun): boolean {
 export function restoreVerificationStatus(
   restoreRuns: readonly RestoreRun[],
 ): RestoreVerificationStatus {
-  if (restoreRuns.some((run) => run.state === 'SUCCEEDED')) return 'VERIFIED';
+  if (
+    restoreRuns.some((run) => run.state === 'SUCCEEDED' && run.verificationOutcome === 'VERIFIED')
+  )
+    return 'VERIFIED';
+  if (restoreRuns.some((run) => run.verificationOutcome === 'VERIFICATION_FAILED'))
+    return 'VERIFICATION_FAILED';
   if (restoreRuns.some((run) => run.state === 'VALIDATING' || run.state === 'IN_PROGRESS'))
     return 'VERIFYING';
-  if (restoreRuns.some((run) => run.state === 'FAILED')) return 'VERIFICATION_FAILED';
   return 'NOT_VERIFIED';
 }
 
@@ -142,6 +147,9 @@ export function describeBackupPosture(
     gaps.push('BACKUP_ARTIFACT_NOT_VERIFIED');
   const verification = restoreVerificationStatus(restoreRuns);
   if (verification !== 'VERIFIED') gaps.push(`RESTORE_${verification}`);
+  if (restoreRuns.some((run) => run.state === 'FAILED')) gaps.push('RESTORE_EXECUTION_FAILED');
+  if (restoreRuns.some((run) => run.verificationOutcome === 'BLOCKED'))
+    gaps.push('RESTORE_VERIFICATION_BLOCKED');
   if (!backup.databaseSchemaVersion) gaps.push('MIGRATION_CONTEXT_UNAVAILABLE');
   return {
     backupJobState: backup.state,
