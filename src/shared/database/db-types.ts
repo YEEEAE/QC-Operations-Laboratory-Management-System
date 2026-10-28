@@ -531,12 +531,25 @@ export interface MasterDataApprovalEventsTable {
 export interface InspectionReportCatalogTable {
  id: string; doc_code: string; normalized_doc_code: string; official_title: string; normalized_search_title: string;
  master_revision: string; source_list_revision: number; source_row_no: number; source_sha256: string;
- catalog_state: string; source_document_status: string; created_at: Generated<Date>; updated_at: Generated<Date>;
+ catalog_state: string; source_document_status: string; source_resolution_version: Generated<bigint>; created_at: Generated<Date>; updated_at: Generated<Date>;
 }
 export interface InspectionReportSourceEvidenceTable {
  id: Generated<string>; catalog_id: string|null; doc_code: string|null; source_title: string|null; source_revision: string|null;
  source_file: string; source_page: number|null; source_sha256: string; content_sha256: string; status: string;
  resolution_status: Generated<string>; created_at: Generated<Date>;
+}
+export interface InspectionReportSourceResolutionsTable {
+ id: Generated<string>; catalog_id: string; source_evidence_id: string; resolution_version: bigint;
+ previous_source_status: string; resolution_state: string; evidence_source_file: string;
+ evidence_source_page: number | null; evidence_source_sha256: string; evidence_content_sha256: string;
+ reason: string; actor_id: string; owner_authority: string; owner_login_identity: string;
+ signature_deferred: Generated<boolean>; request_id: string; audit_event_id: string;
+ recorded_at: Generated<Date>;
+}
+export interface InspectionReportSourceEvidenceRequestsTable {
+ id: Generated<string>; catalog_id: string; source_evidence_id: string | null;
+ expected_resolution_version: bigint; requested_source_status: string; request_state: string; reason: string; actor_id: string;
+ request_id: string; audit_event_id: string; recorded_at: Generated<Date>;
 }
 export interface InspectionTemplatesTable {
   catalog_id: Generated<string | null>;
@@ -1630,6 +1643,8 @@ export interface DatabaseSchema {
   master_data_approval_events: MasterDataApprovalEventsTable;
   inspection_report_catalog: InspectionReportCatalogTable;
   inspection_report_source_evidence: InspectionReportSourceEvidenceTable;
+  inspection_report_source_resolutions: InspectionReportSourceResolutionsTable;
+  inspection_report_source_evidence_requests: InspectionReportSourceEvidenceRequestsTable;
   inspection_templates: InspectionTemplatesTable;
   inspection_template_versions: InspectionTemplateVersionsTable;
   inspection_template_sections: InspectionTemplateSectionsTable;

@@ -31,6 +31,7 @@ const itemSourceRead = hasTemplatePermission ? await readOutcome(() => templateA
 const itemMappings = mappingRead?.status === 'AVAILABLE' ? mappingRead.value : [];
 const approvedItemSources = itemSourceRead?.status === 'AVAILABLE' ? itemSourceRead.value : [];
 let mappingError = '';
+let reconciliationError = '';
 let values = { catalogId: '', description: '', templateCode: '', versionNo: '', name: '' };
 let reauthenticationSecret = '';
 let failure: FormFailure | null = null;
@@ -48,6 +49,29 @@ if (Astro.request.method === 'POST' && hasTemplatePermission) {
   };
   reauthenticationSecret = field(formData, 'reauthenticationSecret');
   try {
+    if (formData.get('intent') === 'resolve-source-conflict') {
+      await inspectionCatalogDependencies().resolveSourceConflict.execute({
+        actor,
+        catalogId: field(formData, 'catalogId'),
+        sourceEvidenceId: field(formData, 'sourceEvidenceId'),
+        expectedVersion: BigInt(field(formData, 'expectedVersion')),
+        reason: field(formData, 'reason'),
+        requestId: Astro.locals.requestContext?.requestId ?? 'unknown',
+      });
+      return Astro.redirect('/quarantine/admin?source-resolved=1', 303);
+    }
+    if (formData.get('intent') === 'request-source-evidence') {
+      const sourceEvidenceId = field(formData, 'sourceEvidenceId');
+      await inspectionCatalogDependencies().requestSourceEvidence.execute({
+        actor,
+        catalogId: field(formData, 'catalogId'),
+        ...(sourceEvidenceId ? { sourceEvidenceId } : {}),
+        expectedResolutionVersion: BigInt(field(formData, 'expectedVersion')),
+        reason: field(formData, 'reason'),
+        requestId: Astro.locals.requestContext?.requestId ?? 'unknown',
+      });
+      return Astro.redirect('/quarantine/admin?source-requested=1', 303);
+    }
     if (formData.get('intent') === 'submit-item-mapping') {
       await templateActionDependencies().manageMappings.submit({
         actor, itemCode: field(formData, 'itemCode'),
@@ -106,9 +130,14 @@ if (Astro.request.method === 'POST' && hasTemplatePermission) {
     values = { catalogId: '', description: '', templateCode: '', versionNo: '', name: '' };
     reauthenticationSecret = '';
   } catch (error) {
+    if (formData.get('intent') === 'resolve-source-conflict' || formData.get('intent') === 'request-source-evidence') {
+      reconciliationError = formData.get('intent') === 'request-source-evidence'
+        ? 'The source evidence request could not be recorded. Refresh the queue and current version before retrying.'
+        : 'The source conflict could not be resolved. Refresh the evidence and current version before retrying.';
+    }
     if (['submit-item-mapping', 'approve-item-mapping', 'reject-item-mapping'].includes(String(formData.get('intent') ?? ''))) {
       mappingError = 'The mapping could not be saved or approved. Verify the approved item source, pinned template revision, current mapping state and owner authority.';
-    } else failure = toFormFailure(error, {
+    } else if (!['resolve-source-conflict', 'request-source-evidence'].includes(String(formData.get('intent') ?? ''))) failure = toFormFailure(error, {
       entity: 'Template',
       requiredFields: [
         { name: 'catalogId', label: 'Inspection Report' },
@@ -125,6 +154,11 @@ const mappingSuccess = Astro.url.searchParams.has('mapping-submitted')
   : Astro.url.searchParams.has('mapping-approved')
     ? 'Mapping approved and pinned to the reviewed item source and exact template version.'
     : Astro.url.searchParams.has('mapping-rejected') ? 'Mapping rejected. The submission remains in history and cannot resolve inspections.' : '';
+const reconciliationSuccess = Astro.url.searchParams.has('source-resolved')
+  ? 'Source mapping recorded as a scoped internal System Owner decision. Source evidence remains unchanged; this does not approve or activate a template.'
+  : Astro.url.searchParams.has('source-requested')
+    ? 'Source evidence request recorded as pending. The catalog remains blocked until source evidence is available and reviewed.'
+  : '';
 
 type FieldName = keyof typeof values | 'reauthenticationSecret';
 function describedBy(name: FieldName): string | undefined {
@@ -226,11 +260,52 @@ function disabledReason(state: string, action: 'REVIEW' | 'APPROVE' | 'STOP' | '
         </table></div> : <p>No submitted mapping revisions are available.</p>)}
       </>}
     </section>
-    <section class="panel" aria-labelledby="catalog-title"><h2 id="catalog-title">Inspection Report catalogue · Rev 14</h2>
+    <section class="panel" aria-labelledby="catalog-title"><h2 id="catalog-title">Rev 14 source reconciliation queue</h2>
+      <p class="note">The 194 Rev 14 rows are catalogue identities, not 194 approved or usable inspection templates. Each row keeps master identity, observed source evidence and the actual digitized template separate. Conflicts, DRAFT, STOPPED and not-effective templates remain unavailable for inspection use.</p>
+      {reconciliationSuccess && <p class="success" role="status">{reconciliationSuccess}</p>}
+      {reconciliationError && <p class="field-error" role="alert">{reconciliationError}</p>}
       <form method="get" class="catalog-filters" role="search" aria-label="Filter Inspection Report catalogue"><label for="catalog-search">Search Doc. Code or official title<input id="catalog-search" name="search" type="search" maxlength="120" value={search} /></label><button type="submit">Search catalogue</button><a href="/quarantine/admin">Clear search</a></form>
       {search && <p class="active-filter">Active catalogue filter: <strong>{search}</strong></p>}
-      {catalogResult?.status === 'AVAILABLE' && <p class="register-count" role="status">{catalog.length} identities on catalogue page {page}{search ? ` matching “${search}”` : ''}. Catalogue search does not filter template versions.</p>}
-      {catalogResult?.status === 'UNAVAILABLE' ? <p role="alert">Catalogue is temporarily unavailable. Reload before creating a template.</p> : <div class="table-wrap" role="region" aria-label="Inspection Report catalogue" tabindex="0"><table><caption>Master identities, source status and digital readiness</caption><thead><tr><th scope="col">Doc. Code</th><th scope="col">Official title</th><th scope="col">Master Rev</th><th scope="col">Digital template</th><th scope="col">Version</th><th scope="col">Item mappings</th><th scope="col">Source</th></tr></thead><tbody>{catalog.map(c => <tr><th scope="row">{c.doc_code}</th><td>{c.official_title}</td><td>{c.master_revision}</td><td>{c.digitalTemplateStatus ?? 'NOT_DIGITIZED'}</td><td>{c.templateVersion ?? '—'}</td><td>{c.mappingCount}</td><td>{c.source_document_status}</td></tr>)}</tbody></table></div>}
+      {catalogResult?.status === 'AVAILABLE' && <p class="register-count" role="status">{catalogResult.value.length} identities on queue page {page}{search ? ` matching “${search}”` : ''}. Queue status: catalog source state, including MATCHED and NOT_DIGITIZED.</p>}
+      {catalogResult?.status === 'UNAVAILABLE' ? <p role="alert">Reconciliation queue is temporarily unavailable. Source conflicts remain blocked.</p> : <div class="table-wrap" role="region" aria-label="Rev 14 source reconciliation queue" tabindex="0"><table><caption>Rev 14 catalog identity, controlled document, immutable source observations, resolution history and actual digital template status</caption><thead><tr><th scope="col">Catalog identity</th><th scope="col">Controlled document</th><th scope="col">Observed source evidence</th><th scope="col">Actual digitized template</th><th scope="col">Resolution</th></tr></thead><tbody>{catalog.map(c => {
+        const evidences = (c.sourceEvidenceRecords ?? []) as Array<{id:string;status:string;docCode:string|null;title:string|null;revision:string|null;sourceFile:string;sourcePage:number|null;sourceSha256:string;contentSha256:string}>;
+        const template = c.actualDigitalTemplate as {id:string;state:string;versionNo:string;authoringOrigin:string;reportRevision:string|null;contentHash:string|null;sourceEvidenceId:string|null;approvedAt:string|null;effectiveAt:string|null} | null;
+        const controlledDocument = c.controlledDocument as {id:string;documentNo:string;title:string;revision:string;state:string;contentHash:string|null;effectiveAt:string|null} | null;
+        const resolution = c.latestSourceResolution as {id:string;version:string;reason:string;evidenceSourceFile:string;evidenceSourcePage:number|null;evidenceSourceSha256:string;evidenceContentSha256:string;recordedAt:string;actorId:string;ownerLoginIdentity:string} | null;
+        const pendingEvidenceRequest = c.pendingSourceEvidenceRequest as {id:string;reason:string;recordedAt:string;actorId:string} | null;
+        const conflict = ['SOURCE_TITLE_CONFLICT','SOURCE_REVISION_CONFLICT'].includes(c.source_document_status) && c.catalog_state === 'SOURCE_CONFLICT';
+        return <tr id={`catalog-${c.id}`}>
+          <th scope="row">{c.doc_code}<span class="cell-detail">{c.official_title}</span><span class="cell-detail">Master revision {c.master_revision} · list Rev {c.source_list_revision} · row {c.source_row_no}</span><span class="cell-detail">Catalog source state: {c.source_document_status} · {c.catalog_state}</span><span class="cell-detail">Catalog digest: {c.source_sha256}</span></th>
+          <td>{controlledDocument ? <><a href={`/documents/${controlledDocument.id}`}>{controlledDocument.documentNo} · {controlledDocument.title}</a><span class="cell-detail">Revision {controlledDocument.revision} · {controlledDocument.state}</span><span class="cell-detail">Content digest: {controlledDocument.contentHash ?? 'NOT RECORDED'}</span><span class="cell-detail">Effective at: {controlledDocument.effectiveAt ?? 'NOT EFFECTIVE'}</span></> : <p>NOT AVAILABLE · No controlled document is mapped to this catalog identity.</p>}</td>
+          <td>{evidences.length ? evidences.map(e => <section class="source-evidence" aria-label={`Source evidence ${e.id}`}>
+            <a href={`#source-evidence-${e.id}`}>Open source evidence record</a>
+            <details id={`source-evidence-${e.id}`}><summary>{e.status} · {e.sourceFile}{e.sourcePage ? ` · page ${e.sourcePage}` : ''}</summary>
+              <dl><dt>Observed document code</dt><dd>{e.docCode ?? 'NOT AVAILABLE'}</dd><dt>Observed title</dt><dd>{e.title ?? 'NOT AVAILABLE'}</dd><dt>Observed revision</dt><dd>{e.revision ?? 'NOT AVAILABLE'}</dd><dt>Source file</dt><dd>{e.sourceFile}</dd><dt>Source page</dt><dd>{e.sourcePage ?? 'NOT RECORDED'}</dd><dt>Source file digest</dt><dd><code>{e.sourceSha256}</code></dd><dt>Evidence content digest</dt><dd><code>{e.contentSha256}</code></dd></dl>
+              <p><a href={`/quarantine/admin/source-evidence/${e.id}`} target="_blank" rel="noreferrer">Open verified original source file</a></p>
+              <p class="hint">The source file is served read-only only when its SHA-256 matches this immutable evidence record.</p>
+            </details>
+            {conflict && isSystemOwner && hasTemplatePermission && <form method="post" class="resolve-source-form">
+              <input type="hidden" name="intent" value="resolve-source-conflict"/><input type="hidden" name="catalogId" value={c.id}/><input type="hidden" name="sourceEvidenceId" value={e.id}/><input type="hidden" name="expectedVersion" value={String(c.source_resolution_version)}/>
+              <label for={`resolve-reason-${e.id}`}>Evidence-based mapping reason</label><textarea id={`resolve-reason-${e.id}`} name="reason" maxlength="2000" required></textarea>
+              <button type="submit">Record internal source mapping decision</button>
+              <p class="hint">Named System Owner only. This versioned internal decision preserves the source record, uses no e-signature, and does not approve or activate a template.</p>
+            </form>}
+            {conflict && isSystemOwner && !hasTemplatePermission && <p>Source mapping requires the explicit Quarantine template permission.</p>}
+          </section>) : <p>NOT_DIGITIZED · No source evidence record is available. No source image, revision or content is inferred.</p>}</td>
+          <td>{template ? <><strong>{template.state}</strong><span class="cell-detail">Version {template.versionNo} · {template.authoringOrigin}</span><span class="cell-detail">Template report revision: {template.reportRevision ?? 'NOT RECORDED'}</span><span class="cell-detail">Template digest: {template.contentHash ?? 'NOT RECORDED'}</span><span class="cell-detail">Bound source evidence: {template.sourceEvidenceId ?? 'NOT BOUND'}</span><span class="cell-detail">Approved at: {template.approvedAt ?? 'NOT APPROVED'}</span><span class="cell-detail">Effective at: {template.effectiveAt ?? 'NOT EFFECTIVE'}</span><span class="cell-detail">Item mappings: {c.mappingCount}</span><a href={`/quarantine/admin/${template.id}`}>Open actual template version</a></> : <p>NOT_DIGITIZED · No digital template version exists.</p>}</td>
+          <td>{resolution ? <><strong>Owner mapping decision · v{resolution.version}</strong><span class="cell-detail">Internal scope only; signature deferred.</span><span class="cell-detail">Recorded by: {resolution.ownerLoginIdentity}</span><span class="cell-detail">Reason: {resolution.reason}</span><span class="cell-detail">Evidence: {resolution.evidenceSourceFile}{resolution.evidenceSourcePage ? ` · page ${resolution.evidenceSourcePage}` : ''}</span><span class="cell-detail">Source digest: {resolution.evidenceSourceSha256}</span><span class="cell-detail">Content digest: {resolution.evidenceContentSha256}</span><span class="cell-detail">Recorded at: {resolution.recordedAt}</span></> : conflict ? <p>SOURCE CONFLICT · blocked pending explicit named System Owner decision with evidence and reason.</p> : c.source_document_status === 'NEEDS_SOURCE_RESCAN' ? <p>NEEDS_SOURCE_RESCAN · blocked until readable source evidence is available; no resolution is inferred.</p> : c.source_document_status === 'NOT_DIGITIZED' ? <p>NOT_DIGITIZED · source evidence and digitized template are unavailable.</p> : c.source_document_status === 'MATCHED' ? <p>MATCHED · source identity match recorded; template lifecycle and effectivity gates still apply.</p> : <p>{c.source_document_status} · unresolved facts remain blocked.</p>}
+            {['NEEDS_SOURCE_RESCAN','NOT_DIGITIZED'].includes(c.source_document_status) && <div class="source-request">
+              {pendingEvidenceRequest ? <p role="status">PENDING_SOURCE_EVIDENCE · {pendingEvidenceRequest.reason} · recorded {pendingEvidenceRequest.recordedAt}</p> : hasTemplatePermission ? <form method="post">
+                <input type="hidden" name="intent" value="request-source-evidence"/><input type="hidden" name="catalogId" value={c.id}/><input type="hidden" name="expectedVersion" value={String(c.source_resolution_version)}/>
+                {evidences.length === 1 ? <input type="hidden" name="sourceEvidenceId" value={evidences[0]!.id}/> : evidences.length > 1 ? <label for={`request-evidence-${c.id}`}>Unreadable source evidence record<select id={`request-evidence-${c.id}`} name="sourceEvidenceId" required><option value="">Select evidence record</option>{evidences.map(e => <option value={e.id}>{e.sourceFile}{e.sourcePage ? ` · page ${e.sourcePage}` : ''} · {e.status}</option>)}</select></label> : null}
+                <label for={`source-request-reason-${c.id}`}>Reason for source evidence request</label><textarea id={`source-request-reason-${c.id}`} name="reason" maxlength="2000" required></textarea>
+                <button type="submit">Record pending source evidence request</button>
+                <p class="hint">This request does not change source status or permit template use.</p>
+              </form> : <p>Source evidence request requires the explicit Quarantine template permission.</p>}
+            </div>}
+          </td>
+        </tr>;
+      })}</tbody></table></div>}
       {!catalog.length && catalogResult?.status === 'AVAILABLE' && <p class="empty">No controlled identities match this search.</p>}
       <nav aria-label="Catalogue pages">{page > 1 && <a href={`?search=${encodeURIComponent(search)}&page=${page-1}`}>Previous</a>} {catalog.length === 50 && <a href={`?search=${encodeURIComponent(search)}&page=${page+1}`}>Next</a>}</nav>
     </section>
