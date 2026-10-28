@@ -221,6 +221,7 @@ const draftCountText = `Showing ${drafts.length} saved draft${drafts.length === 
             <p class="entry-kicker">{printReportVisible ? 'Print preview' : 'Draft entry'}</p>
             <h2 id="draft-entry-heading">{reportTypes[data.reportType]}</h2>
             <p class="entry-note">Transcribe each value exactly as recorded on the source report. No calculation, rounding, unit conversion, or scientific evaluation is applied.</p>
+            <p class="entry-note">This instrument report is a transcription record. In-process checks belong to their separately controlled work-instruction workflow.</p>
             <p class="source-review-note">Tested By, Reviewed By, and Approved By are transcribed source text only. They are not electronic signatures or current approvals.</p>
           </div>
           {id && !draftStorageUnavailable && !selectedDraftUnavailable && (

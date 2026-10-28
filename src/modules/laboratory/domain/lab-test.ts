@@ -49,6 +49,10 @@ export interface ControlledContext {
   equipment: readonly EquipmentContext[];
   source: Readonly<Record<string, unknown>>;
   requirementsReference: string;
+  productCode: string;
+  methodSpecificationIds: readonly string[];
+  qualificationPolicy: Readonly<Record<string, unknown>>;
+  samplePlan: Readonly<Record<string, unknown>>;
 }
 export interface LabSample {
   id: string;
@@ -90,7 +94,8 @@ export function assertContext(context: ControlledContext) {
     !context.sourceReference ||
     !context.contentHash ||
     !context.requirementsReference ||
-    !context.parameters.length
+    !context.parameters.length ||
+    !Number.isInteger(context.samplePlan.sampleCount) || Number(context.samplePlan.sampleCount) < 1
   )
     throw new AppError('AUTHZ_DENIED');
   if (
@@ -116,6 +121,8 @@ export function assertComplete(test: LabTest) {
   assertContext(test.context);
   if (!test.samples.length || test.samples.some((s) => !s.identifier.trim()))
     throw new AppError('VALIDATION_FAILED');
+  if (test.samples.length !== Number(test.context.samplePlan.sampleCount))
+    throw new AppError('METHOD_SOURCE_REQUIRED', { userSafe: true });
   const batches = test.batches ?? [];
   assertBatches(batches);
   assertBatchSamples(test.samples, batches);

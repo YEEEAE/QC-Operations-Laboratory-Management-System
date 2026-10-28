@@ -13,10 +13,11 @@ export class CreateLabTestUseCase {
   async execute(input: {
     actor: ActorContext;
     templateVersionId: string;
+    productCode: string;
     labTestNo: string;
     requestId: string;
   }) {
-    const context = await this.sources.resolve(input.templateVersionId, input.actor);
+    const context = await this.sources.resolve(input.templateVersionId, input.actor, input.productCode);
     assertContext(context);
     authorize(
       {

@@ -56,7 +56,14 @@ export class ApproveLabTestUseCase {
       actor: input.actor,
       expectedVersion: input.expectedVersion,
     });
+    const qualificationPolicy = test.context.qualificationPolicy;
+    const qualifiedRoles = qualificationPolicy.qualifiedReviewerRoles;
+    if (!Array.isArray(qualifiedRoles) || !qualifiedRoles.length || !test.context.methodSpecificationIds.length ||
+      !input.actor.roles.some((role) => qualifiedRoles.includes(role)))
+      throw new AppError('METHOD_SOURCE_REQUIRED', { userSafe: true });
     const evaluation = await this.sources.evaluate(test);
+    if (evaluation.result === 'NOT_EVALUATED')
+      throw new AppError('METHOD_SOURCE_REQUIRED', { userSafe: true });
     if (
       evaluation.sourceReference !== test.context.sourceReference ||
       evaluation.contentHash !== test.context.contentHash

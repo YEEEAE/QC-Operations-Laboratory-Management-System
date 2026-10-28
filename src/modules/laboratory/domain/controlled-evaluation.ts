@@ -1,11 +1,11 @@
-import { AppError } from '../../../shared/errors/app-error.js';
 import type { LabTest } from './lab-test.js';
 import { evaluateParameterAcceptance } from './parameter-acceptance.js';
 
 /** Method-declared aggregation only. Missing, unknown or incomplete policy denies. */
 export function evaluateControlledTest(test: LabTest) {
   const policy = test.context.source.evaluationPolicy;
-  if (!policy || typeof policy !== 'object') throw new AppError('AUTHZ_DENIED');
+  const notEvaluated = { result: 'NOT_EVALUATED' as const, sourceReference: test.context.sourceReference, contentHash: test.context.contentHash };
+  if (!policy || typeof policy !== 'object') return notEvaluated;
   const source = policy as Record<string, unknown>;
   if (
     source.ruleType !== 'ALL_PARAMETERS_ALL_SAMPLES' ||
@@ -15,16 +15,15 @@ export function evaluateControlledTest(test: LabTest) {
     source.sourceReference !== test.context.sourceReference ||
     source.version !== test.context.versionNo ||
     !test.context.contentHash ||
-    !test.samples.length
-  )
-    throw new AppError('AUTHZ_DENIED');
+    !test.samples.length || !Array.isArray(test.context.methodSpecificationIds) || !test.context.methodSpecificationIds.length
+  ) return notEvaluated;
   const outcomes: ('PASS' | 'FAIL' | null)[] = [];
   for (const sample of test.samples)
     for (const parameter of test.context.parameters) {
       const rows = test.measurements.filter(
         (row) => row.sampleId === sample.id && row.parameterId === parameter.id,
       );
-      if (rows.length > 1) throw new AppError('AUTHZ_DENIED');
+      if (rows.length > 1) return notEvaluated;
       const measurement = rows[0];
       if (!measurement) {
         outcomes.push(null);
@@ -35,7 +34,7 @@ export function evaluateControlledTest(test: LabTest) {
         measurement.calculatedValue !== null && measurement.calculatedValue !== undefined
           ? measurement.calculatedUnit
           : measurement.unit;
-      if (unit !== parameter.unit) throw new AppError('AUTHZ_DENIED');
+      if (unit !== parameter.unit) return notEvaluated;
       outcomes.push(
         evaluateParameterAcceptance({
           value,
@@ -45,7 +44,7 @@ export function evaluateControlledTest(test: LabTest) {
         }),
       );
     }
-  if (!outcomes.length) throw new AppError('AUTHZ_DENIED');
+  if (!outcomes.length || outcomes.includes(null)) return notEvaluated;
   const result: 'PASS' | 'FAIL' | 'HOLD' = outcomes.includes('FAIL')
     ? 'FAIL'
     : outcomes.includes(null)

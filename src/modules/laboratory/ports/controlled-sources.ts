@@ -27,7 +27,7 @@ export interface ApprovedLabTemplateOption {
 }
 /** An approved provider validates exact documents, criteria, evidence, environment and sample requirements. */
 export interface ControlledLabSources {
-  resolve(templateVersionId: string, actor: ActorContext): Promise<ControlledContext>;
+  resolve(templateVersionId: string, actor: ActorContext | undefined, productCode?: string): Promise<ControlledContext>;
   /**
    * Read-only selector source: approved template versions only. The label
    * carries the human-readable method reference + version number; the value
@@ -38,7 +38,7 @@ export interface ControlledLabSources {
   validateExecution(test: LabTest, actor: ActorContext): Promise<void>;
   evaluate(
     test: LabTest,
-  ): Promise<{ result: 'PASS' | 'FAIL' | 'HOLD'; sourceReference: string; contentHash: string }>;
+  ): Promise<{ result: 'PASS' | 'FAIL' | 'HOLD' | 'NOT_EVALUATED'; sourceReference: string; contentHash: string }>;
 }
 export interface LabApprovalPolicy {
   authorize(input: { test: LabTest; actor: ActorContext; expectedVersion: bigint }): Promise<void>;

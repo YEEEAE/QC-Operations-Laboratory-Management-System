@@ -861,6 +861,31 @@ export interface LabTestTemplateParametersTable {
   calculation_rule_payload: unknown | null;
   position: number;
 }
+export interface LabMethodSpecificationsTable {
+  id: Generated<string>;
+  method_reference: string;
+  product_code: string;
+  parameter_code: string;
+  unit: string;
+  precision_scale: number;
+  sample_plan: unknown;
+  acceptance_expression: unknown;
+  valid_range: unknown | null;
+  calculation_policy: unknown | null;
+  source_document_id: string;
+  source_document_version_id: string;
+  source_revision: string;
+  source_content_hash: string;
+  qualification_policy: unknown;
+  state: string;
+  approved_at: Date | null;
+  approved_by: string | null;
+  effective_at: Date | null;
+  effective_until: Date | null;
+  created_by: string;
+  created_at: Generated<Date>;
+  request_id: string;
+}
 export interface LabTestsTable {
   id: Generated<string>;
   lab_test_no: string;
@@ -1752,6 +1777,7 @@ export interface DatabaseSchema {
   lab_test_templates: LabTestTemplatesTable;
   lab_test_template_versions: LabTestTemplateVersionsTable;
   lab_test_template_parameters: LabTestTemplateParametersTable;
+  lab_method_specifications: LabMethodSpecificationsTable;
   lab_tests: LabTestsTable;
   lab_test_batches: LabTestBatchesTable;
   lab_samples: LabSamplesTable;

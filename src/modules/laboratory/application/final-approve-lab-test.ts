@@ -42,6 +42,10 @@ export class FinalApproveLabTestUseCase {
       throw new AppError('AUTHZ_DENIED', { userSafe: true });
     if (test.scientificResult !== 'PASS')
       throw new AppError('POLICY_SOURCE_REQUIRED', { userSafe: true });
+    const qualificationPolicy = test.context.qualificationPolicy;
+    const qualifiedRoles = qualificationPolicy.qualifiedOwnerRoles;
+    if (!Array.isArray(qualifiedRoles) || !qualifiedRoles.length || !input.actor.roles.some((role) => qualifiedRoles.includes(role)))
+      throw new AppError('METHOD_SOURCE_REQUIRED', { userSafe: true });
     authorizeLab(
       input.actor,
       test,

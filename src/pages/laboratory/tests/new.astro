@@ -28,6 +28,7 @@ const returnHref = safeListHref(Astro.url.searchParams.get('returnTo'), LIST_HRE
 const REQUIRED_FIELDS = [
   { name: 'templateVersionId', label: 'Approved template' },
   { name: 'labTestNo', label: 'Approved laboratory test number' },
+  { name: 'productCode', label: 'Product code' },
 ] as const;
 
 // Authorized selector source (F-06): approved controlled template versions
@@ -58,7 +59,7 @@ const preselected = resolvePreselectedId(
   templateOptions,
 );
 
-let values = { templateVersionId: preselected.id, labTestNo: '' };
+let values = { templateVersionId: preselected.id, labTestNo: '', productCode: '' };
 let failure: FormFailure | null = null;
 let staleSelection = preselected.stale;
 
@@ -72,6 +73,7 @@ if (Astro.request.method === 'POST' && allowed) {
   values = {
     templateVersionId: field(formData, 'templateVersionId'),
     labTestNo: field(formData, 'labTestNo'),
+    productCode: field(formData, 'productCode'),
   };
   // A posted id outside the authorized selector list is never trusted: the
   // server re-verifies the template, and the operator gets a dependency
@@ -83,6 +85,7 @@ if (Astro.request.method === 'POST' && allowed) {
     const data = await Astro.callAction(actions.laboratory.create, {
       templateVersionId: values.templateVersionId,
       labTestNo: values.labTestNo,
+      productCode: values.productCode,
     });
     const id = extractDetailId(data);
     if (id) return Astro.redirect(detailHref(LIST_HREF, id), 303);
@@ -143,6 +146,12 @@ const invalid = (name: keyof typeof values): 'true' | undefined =>
           <p class="section-note">Both fields are required. The approved source and version are assigned automatically.</p>
           <div class="field-grid">
             <div class="field">
+              <label for="productCode">Product code</label>
+              <p class="hint" id="productCode-help">Enter the exact product code from the approved source. A method specification must be effective for this product.</p>
+              <input id="productCode" name="productCode" required value={values.productCode} aria-invalid={invalid('productCode')} aria-describedby={failure?.fieldErrors.productCode ? 'productCode-error productCode-help' : 'productCode-help'} />
+              {failure?.fieldErrors.productCode && <p class="field-error" id="productCode-error">{failure.fieldErrors.productCode}</p>}
+            </div>
+            <div class="field">
               <label for="templateVersionId">Approved template</label>
               <p class="hint" id="templateVersionId-help">Choose a template from the approved controlled list in your scope. The approved source and version are assigned automatically.</p>
               <select
@@ -197,7 +206,7 @@ import{guardUnsavedChanges}from'../../../ui/forms/unsaved-changes';
 const form=document.querySelector<HTMLFormElement>('form[data-lab-create]');
 if(form){enhanceClassifiedForm(form,{
   invoke:(payload)=>actions.laboratory.create(payload as Parameters<typeof actions.laboratory.create>[0]),
-  payload:(data)=>({templateVersionId:String(data.get('templateVersionId')),labTestNo:String(data.get('labTestNo'))}),
+  payload:(data)=>({templateVersionId:String(data.get('templateVersionId')),productCode:String(data.get('productCode')),labTestNo:String(data.get('labTestNo'))}),
   progressText:'Saving…',
   detailBaseHref:'/laboratory/tests',
 });guardUnsavedChanges(form);}</script>

@@ -18,13 +18,16 @@ async function run<T>(work: () => Promise<T>) {
         error instanceof AppError && error.category === 'AUTHORIZATION'
           ? 'FORBIDDEN'
           : 'BAD_REQUEST',
-      message: 'Unable to complete the controlled laboratory action.',
+      message:
+        error instanceof AppError && error.code === 'METHOD_SOURCE_REQUIRED'
+          ? 'METHOD_SOURCE_REQUIRED: No approved effective method specification is available for this product.'
+          : 'Unable to complete the controlled laboratory action.',
     });
   }
 }
 const create = defineAction({
   accept: 'json',
-  input: z.object({ templateVersionId: z.string().uuid(), labTestNo: z.string().trim().min(1) }),
+  input: z.object({ templateVersionId: z.string().uuid(), productCode: z.string().trim().min(1), labTestNo: z.string().trim().min(1) }),
   handler: (input, context) =>
     run(() =>
       laboratoryActionDependencies().create.execute({

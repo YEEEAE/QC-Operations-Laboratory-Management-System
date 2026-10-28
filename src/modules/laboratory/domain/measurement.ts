@@ -21,6 +21,8 @@ export interface Parameter {
   unitConversionRules?: unknown;
   precisionGuidance?: string;
   roundingReference?: string;
+  precisionScale?: number;
+  validRange?: Readonly<Record<string, unknown>> | null;
 }
 export interface MeasurementInput {
   sampleId: string;
@@ -64,7 +66,8 @@ export function validateMeasurement(
     throw new AppError('VALIDATION_FAILED');
   if (
     parameter.dataType === 'NUMERIC' &&
-    (typeof input.raw !== 'string' || !/^[+-]?(?:\d+(?:\.\d*)?|\.\d+)$/.test(input.raw))
+    (typeof input.raw !== 'string' || !/^[+-]?(?:\d+(?:\.\d*)?|\.\d+)$/.test(input.raw) ||
+      (parameter.precisionScale !== undefined && (input.raw.split('.')[1]?.length ?? 0) > parameter.precisionScale))
   )
     throw new AppError('VALIDATION_FAILED');
   if (parameter.dataType === 'TEXT' && (typeof input.raw !== 'string' || !input.raw.trim()))

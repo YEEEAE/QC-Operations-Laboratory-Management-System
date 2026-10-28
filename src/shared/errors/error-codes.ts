@@ -16,6 +16,7 @@ export const ERROR_CODES = [
   'DOMAIN_INVALID_TRANSITION',
   'DOMAIN_SIGNATURE_REQUIRED',
   'POLICY_SOURCE_REQUIRED',
+  'METHOD_SOURCE_REQUIRED',
   'CONFLICT_STALE_VERSION',
   'CONFLICT_DUPLICATE_COMMAND',
   'RESOURCE_NOT_FOUND',
@@ -37,7 +38,9 @@ export type Retryability =
   | 'UNKNOWN';
 
 export function categoryForCode(code: ErrorCode): ErrorCategory {
-  return code.startsWith('AUTHZ_')
+  return code === 'METHOD_SOURCE_REQUIRED'
+    ? 'DOMAIN'
+    : code.startsWith('AUTHZ_')
     ? 'AUTHORIZATION'
     : code.startsWith('AUTH_')
       ? 'AUTHENTICATION'

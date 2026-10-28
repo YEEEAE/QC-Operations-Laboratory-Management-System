@@ -390,28 +390,10 @@ export class PostgresLabRepository implements LabRepository {
         })),
       context: {
         ...ctx.context,
-        parameters: parameters
-          .filter((parameter) => parameter.template_version_id === row.template_version_id)
-          .map((parameter) => ({
-            id: parameter.id,
-            code: parameter.parameter_code,
-            label: parameter.label,
-            dataType: parameter.data_type as 'NUMERIC' | 'TEXT' | 'BOOLEAN',
-            unit: parameter.unit,
-            required: parameter.required,
-            sourceReference: parameter.controlled_source_reference ?? '',
-            criteria: (parameter.acceptance_rule_payload ?? {}) as Readonly<
-              Record<string, unknown>
-            >,
-            acceptanceRuleType: parameter.acceptance_rule_type,
-            // QC-DATA-003 approved calculation rule (migration 0037).
-            calculationRule: parameter.calculation_rule_type
-              ? {
-                  ruleType: parameter.calculation_rule_type,
-                  rulePayload: parameter.calculation_rule_payload,
-                }
-              : null,
-          })),
+        // Scientific facts are frozen in the test snapshot at creation. Re-read
+        // only the live template for lineage/integrity checks; never replace
+        // the product/method specification with mutable template fields.
+        parameters: ctx.context.parameters,
       },
     };
   }
