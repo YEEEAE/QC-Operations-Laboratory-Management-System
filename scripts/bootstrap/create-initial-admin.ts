@@ -1,7 +1,7 @@
 import { fileURLToPath } from 'node:url';
 
 import { Kysely, PostgresDialect } from 'kysely';
-import { Pool } from 'pg';
+import type { Pool } from 'pg';
 
 import {
   BootstrapConfigurationError,
@@ -11,7 +11,9 @@ import {
 import type { DatabaseSchema } from '../../src/shared/database/db-types.js';
 import { Argon2idPasswordHasher } from '../../src/modules/identity/security/argon2-password-hasher.js';
 import { loadMigrations, verifyMigrationIntegrity } from '../db/migrate.js';
-import { getDatabaseConnectionConfig } from '../../src/shared/database/pool.js';
+import { createPool, getDatabaseConnectionConfig } from '../../src/shared/database/pool.js';
+import { parseServerEnv } from '../../src/config/env.js';
+import { getRuntimeDatabaseUrl } from '../../src/config/runtime.js';
 import {
   assertFoundationAuthorizationReady,
   inspectFoundationData,
@@ -42,13 +44,15 @@ async function assertMigrationsApplied(pool: Pool): Promise<void> {
 }
 
 export async function runBootstrap(environment = process.env): Promise<void> {
-  const config = parseBootstrapAdminConfig(environment);
-  const pool = new Pool({
+  const config = parseBootstrapAdminConfig({
+    ...environment,
+    DATABASE_URL: getRuntimeDatabaseUrl(parseServerEnv(environment)),
+  });
+  const pool = createPool({
     ...getDatabaseConnectionConfig(config.databaseUrl),
     application_name: 'qc-initial-admin-bootstrap',
-    options: '-c timezone=UTC -c search_path=qc,pg_catalog',
   });
-  const database = new Kysely<DatabaseSchema>({ dialect: new PostgresDialect({ pool }) });
+  const database = new Kysely<DatabaseSchema>({ dialect: new PostgresDialect({ pool }) }).withSchema('qc');
   try {
     await assertMigrationsApplied(pool);
     assertFoundationAuthorizationReady(await inspectFoundationData(pool));

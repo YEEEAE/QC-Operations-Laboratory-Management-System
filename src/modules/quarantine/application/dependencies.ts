@@ -39,10 +39,10 @@ import {
 } from '../inspection/application/inspection-aql-equipment.js';
 import { assetsEligibilityDependencies } from '../../assets/application/dependencies.js';
 import {
-  ManageItemTemplateMappingUseCase,
   PostgresItemMappingReader,
   ResolveInspectionTemplateUseCase,
 } from '../inspection/application/resolve-inspection-template.js';
+import { ManageItemTemplateMappingsUseCase } from '../inspection/application/manage-item-template-mappings.js';
 
 export function quarantineReadDependencies() {
   const database = getDatabase();
@@ -126,6 +126,6 @@ export function inspectionMappingDependencies() {
   return {
     catalogContext: {execute:async(i:{actor:App.Locals['actor'];itemCode:string})=> {if(!i.actor || i.actor.accountState!=='ACTIVE')return [];return new PostgresItemMappingReader(database).listCatalogContext(i.itemCode);}},
     resolve: new ResolveInspectionTemplateUseCase(new PostgresItemMappingReader(database)),
-    manageMapping: new ManageItemTemplateMappingUseCase(database),
+    manageMapping: new ManageItemTemplateMappingsUseCase(database),
   };
 }

@@ -173,6 +173,7 @@ export const onRequest = defineMiddleware(
     const cleanPagePath = cleanAstroPagePath(url.pathname);
     if (
       env.NODE_ENV === 'production' &&
+      env.APP_ENVIRONMENT_PROFILE === 'production' &&
       !isMachineHealthEndpoint &&
       (url.hostname !== 'qclevel.top' || cleanPagePath)
     ) {

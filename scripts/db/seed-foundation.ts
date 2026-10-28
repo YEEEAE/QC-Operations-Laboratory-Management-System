@@ -5,11 +5,13 @@ import { createPool, getDatabaseConnectionConfig } from '../../src/shared/databa
 import { seedFoundationData } from '../../db/seeds/common.js';
 import { loadLocalEnv } from './load-local-env.js';
 import { assertSafeLocalDatabaseCommand } from './local-target-guard.js';
+import { parseServerEnv } from '../../src/config/env.js';
+import { getRuntimeDatabaseUrl } from '../../src/config/runtime.js';
 
 export async function runFoundationSeed(environment = process.env): Promise<void> {
   loadLocalEnv(environment);
   const pool = createPool({
-    ...getDatabaseConnectionConfig(environment.DATABASE_URL),
+    ...getDatabaseConnectionConfig(getRuntimeDatabaseUrl(parseServerEnv(environment))),
     application_name: 'qc-foundation-seed',
   });
   try {

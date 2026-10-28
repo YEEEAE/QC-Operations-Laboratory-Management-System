@@ -10,6 +10,7 @@ interface R2Config {
   accessKeyId: string;
   secretAccessKey: string;
   bucket: string;
+  region?: string;
 }
 
 const safeBucket = /^[a-z0-9][a-z0-9.-]{1,61}[a-z0-9]$/;
@@ -33,13 +34,14 @@ function publicSafeError(): Error {
 export function parseR2Config(input: Record<string, string | undefined>): R2Config {
   const profile = input.APP_ENVIRONMENT_PROFILE ?? input.NODE_ENV ?? 'development';
   const prefix = profile === 'staging' ? 'STAGING_' : profile === 'pilot' ? 'PILOT_' : '';
-  if (prefix && [input.R2_ENDPOINT, input.R2_ACCESS_KEY_ID, input.R2_SECRET_ACCESS_KEY, input.R2_BUCKET].some(Boolean)) {
+  if (prefix && [input.R2_ENDPOINT, input.R2_ACCESS_KEY_ID, input.R2_SECRET_ACCESS_KEY, input.R2_BUCKET, input.R2_REGION].some(Boolean)) {
     throw new Error('Profile-specific file storage credentials are required.');
   }
   const endpointValue = input[`${prefix}R2_ENDPOINT`]?.trim();
   const accessKeyId = input[`${prefix}R2_ACCESS_KEY_ID`]?.trim();
   const secretAccessKey = input[`${prefix}R2_SECRET_ACCESS_KEY`];
   const bucket = input[`${prefix}R2_BUCKET`]?.trim();
+  const region = input[`${prefix}R2_REGION`]?.trim() || 'auto';
   if (!endpointValue || !accessKeyId || !secretAccessKey || !bucket || !safeBucket.test(bucket))
     throw new Error('R2 configuration is incomplete.');
   let endpoint: URL;
@@ -51,7 +53,8 @@ export function parseR2Config(input: Record<string, string | undefined>): R2Conf
   if (endpoint.protocol !== 'https:') throw new Error('R2 endpoint must use HTTPS.');
   if (profile === 'staging' && !bucket.toLowerCase().includes('staging')) throw new Error('Staging file storage bucket must be labeled staging.');
   if (profile === 'pilot' && !bucket.toLowerCase().includes('pilot')) throw new Error('Pilot file storage bucket must be labeled pilot.');
-  return { endpoint, accessKeyId, secretAccessKey, bucket };
+  if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(region)) throw new Error('Storage signing region is invalid.');
+  return { endpoint, accessKeyId, secretAccessKey, bucket, region };
 }
 
 export class CloudflareR2ArtifactStore implements BackupArtifactStore {
@@ -90,7 +93,8 @@ export class CloudflareR2ArtifactStore implements BackupArtifactStore {
       names.join(';'),
       payloadHash,
     ].join('\n');
-    const credentialScope = `${date}/auto/s3/aws4_request`;
+    const region = this.config.region ?? 'auto';
+    const credentialScope = `${date}/${region}/s3/aws4_request`;
     const stringToSign = [
       'AWS4-HMAC-SHA256',
       amzDate,
@@ -98,7 +102,7 @@ export class CloudflareR2ArtifactStore implements BackupArtifactStore {
       hash(canonicalRequest),
     ].join('\n');
     const signingKey = hmac(
-      hmac(hmac(hmac(`AWS4${this.config.secretAccessKey}`, date), 'auto'), 's3'),
+      hmac(hmac(hmac(`AWS4${this.config.secretAccessKey}`, date), region), 's3'),
       'aws4_request',
     );
     const signature = createHmac('sha256', signingKey).update(stringToSign).digest('hex');

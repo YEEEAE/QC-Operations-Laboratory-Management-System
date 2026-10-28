@@ -122,14 +122,17 @@ const envSchema = z.object({
   R2_ACCESS_KEY_ID: optionalEnv(z.string().trim().min(1)),
   R2_SECRET_ACCESS_KEY: optionalEnv(z.string().min(1)),
   R2_BUCKET: optionalEnv(z.string().trim().min(3)),
+  R2_REGION: optionalEnv(z.string().trim().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/)),
   STAGING_R2_ENDPOINT: optionalEnv(z.string().trim().pipe(z.url())),
   STAGING_R2_ACCESS_KEY_ID: optionalEnv(z.string().trim().min(1)),
   STAGING_R2_SECRET_ACCESS_KEY: optionalEnv(z.string().min(1)),
   STAGING_R2_BUCKET: optionalEnv(z.string().trim().min(3)),
+  STAGING_R2_REGION: optionalEnv(z.string().trim().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/)),
   PILOT_R2_ENDPOINT: optionalEnv(z.string().trim().pipe(z.url())),
   PILOT_R2_ACCESS_KEY_ID: optionalEnv(z.string().trim().min(1)),
   PILOT_R2_SECRET_ACCESS_KEY: optionalEnv(z.string().min(1)),
   PILOT_R2_BUCKET: optionalEnv(z.string().trim().min(3)),
+  PILOT_R2_REGION: optionalEnv(z.string().trim().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/)),
 });
 
 export type ServerEnv = z.infer<typeof envSchema> & { APP_ENVIRONMENT_PROFILE: 'development' | 'test' | 'production' | 'staging' | 'pilot'; DATABASE_URL?: string };
@@ -356,6 +359,11 @@ export function parseServerEnv(input: Record<string, string | undefined>): Serve
     if (profile === 'staging' && PILOT_R2_ENV_KEYS.some((key) => input[key])) invalid.push(...PILOT_R2_ENV_KEYS);
     if (profile === 'pilot' && STAGING_R2_ENV_KEYS.some((key) => input[key])) invalid.push(...STAGING_R2_ENV_KEYS);
     const configuredR2 = r2Values.filter(Boolean).length;
+    const regionKey = profile === 'staging' ? 'STAGING_R2_REGION' : profile === 'pilot' ? 'PILOT_R2_REGION' : 'R2_REGION';
+    for (const key of ['R2_REGION', 'STAGING_R2_REGION', 'PILOT_R2_REGION'] as const) {
+      if (result.data[key] && (key !== regionKey || profile === 'development' || profile === 'test')) invalid.push(key);
+    }
+    if (result.data[regionKey] && configuredR2 !== r2Keys.length) invalid.push(regionKey);
     if (profile === 'staging' || profile === 'pilot') {
       if (configuredR2 < r2Keys.length) missing.push(...r2Keys.filter((_, index) => !r2Values[index]));
       const bucket = String(r2Values[3] ?? '').toLowerCase();

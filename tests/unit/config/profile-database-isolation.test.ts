@@ -80,6 +80,9 @@ describe('runtime database profile isolation', () => {
       STAGING_R2_BUCKET: 'qc-staging',
     };
     expect(parseServerEnv(staging).DATABASE_URL).toBe(staging.STAGING_DATABASE_URL);
+    expect(parseServerEnv({ ...staging, STAGING_R2_REGION: 'us-east-2' }).STAGING_R2_REGION).toBe('us-east-2');
+    expect(configurationFailure({ ...staging, R2_REGION: 'auto' }).invalid).toContain('R2_REGION');
+    expect(configurationFailure({ ...staging, STAGING_R2_REGION: 'bad/region' }).invalid).toContain('STAGING_R2_REGION');
     expect(
       configurationFailure({ ...staging, PRODUCTION_DATABASE_HOST: undefined }).missing,
     ).toContain('PRODUCTION_DATABASE_HOST');

@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { createDatabase } from '../../../src/shared/database/database.js';
-import { createPool, resetPoolForTests } from '../../../src/shared/database/pool.js';
+import { createMaintenancePool, createPool, resetPoolForTests } from '../../../src/shared/database/pool.js';
 
 const { configs } = vi.hoisted(() => ({ configs: [] as Record<string, unknown>[] }));
 const pooledUrl = 'postgresql://runtime:synthetic@ep-example-pooler.us-east-2.aws.neon.tech/qc';
@@ -33,7 +33,13 @@ describe('Neon pooled startup', () => {
     expect(startupOptions(configs[0]!)).toContain('timezone=UTC');
   });
 
-  it('preserves the direct connection session contract for maintenance and local databases', () => {
+  it('omits unsupported startup search_path on the direct Neon maintenance path', () => {
+    createMaintenancePool({ connectionString: pooledUrl.replace('-pooler', '') });
+    expect(startupOptions(configs[0]!)).not.toContain('search_path');
+    expect(startupOptions(configs[0]!)).toContain('timezone=UTC');
+  });
+
+  it('preserves the local database session contract', () => {
     createPool({ connectionString: 'postgresql://runtime:synthetic@localhost/qc' });
     expect(startupOptions(configs[0]!)).toContain('search_path=qc,pg_catalog');
   });

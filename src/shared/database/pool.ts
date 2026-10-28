@@ -29,7 +29,7 @@ export function getDatabaseConnectionConfig(value: string | undefined): PoolConf
 
   if (sslMode === 'disable' || sslMode === 'no-verify') {
     throw new DatabaseConfigurationError(
-      'PostgreSQL connections must verify the server certificate; insecure sslmode values are not allowed.',
+      'PostgreSQL TLS connections must verify the server certificate; insecure sslmode values are not allowed.',
     );
   }
 
@@ -110,11 +110,10 @@ function withDatabaseStartupOptions(config: PoolConfig): PoolConfig {
   const defaults = '-c timezone=UTC -c search_path=qc,pg_catalog';
   if (config.connectionString) {
     const url = new URL(config.connectionString);
-    const isNeonPooled =
-      url.hostname.endsWith('.neon.tech') && url.hostname.split('.')[0]?.endsWith('-pooler');
-    // Neon PgBouncer rejects search_path in startup options. Runtime Kysely
-    // queries qualify the qc schema explicitly instead of session state.
-    const startupDefaults = isNeonPooled ? '-c timezone=UTC' : defaults;
+    const isNeon = url.hostname.endsWith('.neon.tech');
+    // The Neon endpoint rejects search_path in the startup package on both
+    // pooled and direct connections. Application queries qualify qc explicitly.
+    const startupDefaults = isNeon ? '-c timezone=UTC' : defaults;
     const options = [url.searchParams.get('options'), config.options, startupDefaults]
       .filter((value): value is string => Boolean(value?.trim()))
       .join(' ');

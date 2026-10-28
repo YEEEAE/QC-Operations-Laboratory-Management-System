@@ -10,6 +10,7 @@ import {
 
 import { loadLocalEnv } from './load-local-env.js';
 import { assertSafeLocalDatabaseCommand } from './local-target-guard.js';
+import { getRuntimeDatabaseUrl } from '../../src/config/runtime.js';
 
 export interface DatabasePreflightReport {
   connectivity: 'PASS' | 'FAIL';
@@ -49,7 +50,7 @@ export function classifyPreflightError(error: unknown): 'CONFIGURATION' | 'DATAB
 }
 
 export async function runDatabasePreflight(
-  databaseUrl = process.env.DATABASE_URL,
+  databaseUrl = getRuntimeDatabaseUrl(),
 ): Promise<DatabasePreflightReport> {
   const client = new Client(getDatabaseConnectionConfig(databaseUrl));
   const migrations = await loadMigrations();
