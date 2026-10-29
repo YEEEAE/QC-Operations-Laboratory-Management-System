@@ -15,6 +15,7 @@ import {
   RECEIVING_QUANTITY_UNITS,
 } from '../../../modules/quarantine/receiving/application/presentation.js';
 import { stateLabel } from '../../../shared/copy/ux-vocabulary.js';
+import ScanEntry from '../../../ui/components/ScanEntry.astro';
 
 const actor = Astro.locals.actor;
 if (!actor) return Astro.redirect('/login?returnTo=%2Fquarantine%2Freceiving%2Fnew');
@@ -199,6 +200,7 @@ const invalid = (name: keyof typeof values): 'true' | undefined =>
 
         <fieldset>
           <legend>Item and lot</legend>
+          <ScanEntry lotField="lot" />
           <div class="field-grid">
             <div class="field">
               <label for="itemCode">Item code</label>

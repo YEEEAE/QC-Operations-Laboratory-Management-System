@@ -1,0 +1,124 @@
+---
+/** Keyboard-wedge only. This component never opens a camera or makes a request. */
+interface Props {
+  lotField: string;
+}
+
+const { lotField } = Astro.props;
+const id = `scan-entry-${lotField}`;
+---
+
+<section class="scan-entry" data-scan-entry data-lot-field={lotField} aria-labelledby={`${id}-title`}>
+  <h3 id={`${id}-title`}>Barcode or QR input</h3>
+  <p class="scan-help">
+    Use a keyboard-wedge scanner or type the encoded text. Camera scanning is unavailable. GS1-128, GS1 DataMatrix, and GS1 QR
+    identifiers can be parsed locally; the item code still needs a controlled record match.
+  </p>
+  <label for={`${id}-raw`}>Scan data</label>
+  <div class="scan-controls">
+    <input id={`${id}-raw`} data-scan-raw autocomplete="off" spellcheck="false" />
+    <button type="button" data-scan-parse>Parse scan</button>
+  </div>
+  <p class="scan-status" data-scan-status role="status" aria-live="polite">No scan parsed.</p>
+  <dl class="scan-parsed" data-scan-parsed hidden>
+    <div><dt>Format</dt><dd data-scan-format></dd></div>
+    <div><dt>GTIN</dt><dd data-scan-gtin></dd></div>
+    <div><dt>Lot</dt><dd data-scan-lot></dd></div>
+  </dl>
+  <p class="scan-warning" data-scan-warning hidden>
+    Parsed identifiers are not verified against an approved item master. Confirm the lot only after checking the
+    displayed item and lot against an authorized source.
+  </p>
+  <button type="button" data-scan-confirm disabled>Use confirmed lot</button>
+  <details class="scan-history">
+    <summary>Scan history for this draft</summary>
+    <ol data-scan-history></ol>
+  </details>
+</section>
+
+<script>
+  const parseGs1 = (raw) => {
+    const aim = raw.startsWith(']C1') ? 'GS1-128' : raw.startsWith(']d2') ? 'GS1 DataMatrix' : raw.startsWith(']Q3') ? 'GS1 QR' : null;
+    if (!aim) return { status: 'UNSUPPORTED_FORMAT', message: 'Format not recognized. Use a GS1-128, GS1 DataMatrix, or GS1 QR keyboard-wedge value.' };
+    const data = raw.slice(3);
+    const match = /^01(\d{14})10([^\u001d]{1,20})(?:\u001d.*)?$/.exec(data);
+    if (!match) return { status: 'MALFORMED', message: 'The scan must contain GS1 AI (01) followed by AI (10) lot data.' };
+    return { status: 'PARSED_UNVERIFIED', format: aim, gtin: match[1], lot: match[2], message: 'Parsed locally. The GTIN has no approved item-code mapping, so it was not copied into Item code.' };
+  };
+
+  document.querySelectorAll('[data-scan-entry]').forEach((root) => {
+    const rawInput = root.querySelector('[data-scan-raw]');
+    const status = root.querySelector('[data-scan-status]');
+    const parsed = root.querySelector('[data-scan-parsed]');
+    const warning = root.querySelector('[data-scan-warning]');
+    const confirm = root.querySelector('[data-scan-confirm]');
+    const history = root.querySelector('[data-scan-history]');
+    let current = null;
+    const seen = new Set();
+
+    const parse = () => {
+      const raw = rawInput.value.trim();
+      if (!raw) {
+        current = null;
+        status.textContent = 'Enter or scan a value first.';
+        parsed.hidden = true;
+        warning.hidden = true;
+        confirm.disabled = true;
+        return;
+      }
+      const result = parseGs1(raw);
+      const duplicate = seen.has(raw);
+      seen.add(raw);
+      const row = document.createElement('li');
+      row.textContent = `${result.status}${duplicate ? ' — duplicate scan' : ''}: ${raw}`;
+      history.append(row);
+      current = result.status === 'PARSED_UNVERIFIED' ? result : null;
+      status.textContent = `${duplicate ? 'Duplicate scan. ' : ''}${result.message}`;
+      parsed.hidden = !current;
+      warning.hidden = !current;
+      confirm.disabled = !current;
+      if (current) {
+        root.querySelector('[data-scan-format]').textContent = current.format;
+        root.querySelector('[data-scan-gtin]').textContent = current.gtin;
+        root.querySelector('[data-scan-lot]').textContent = current.lot;
+      }
+    };
+
+    root.querySelector('[data-scan-parse]').addEventListener('click', parse);
+    rawInput.addEventListener('keydown', (event) => {
+      if (event.key === 'Enter') {
+        event.preventDefault();
+        parse();
+      }
+    });
+    confirm.addEventListener('click', () => {
+      if (!current) return;
+      const lotInput = document.getElementById(root.dataset.lotField);
+      if (!(lotInput instanceof HTMLInputElement)) {
+        status.textContent = 'The lot field could not be found. Enter the lot manually.';
+        return;
+      }
+      lotInput.value = current.lot;
+      lotInput.dispatchEvent(new Event('input', { bubbles: true }));
+      lotInput.dispatchEvent(new Event('change', { bubbles: true }));
+      status.textContent = 'Lot copied to the form. Verify the item code and lot against the approved source before saving.';
+      lotInput.focus();
+    });
+  });
+</script>
+
+<style>
+  .scan-entry { display: grid; gap: var(--space-2); padding: var(--space-4); border: 1px solid var(--color-border-subtle); border-radius: var(--radius-lg); }
+  .scan-entry h3, .scan-entry p { margin: 0; }
+  .scan-help, .scan-warning { max-inline-size: 78ch; color: var(--text-secondary); font-size: var(--font-size-sm); line-height: 1.5; }
+  .scan-warning { color: var(--status-warning); }
+  .scan-controls { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+  .scan-controls input { flex: 1 1 16rem; min-inline-size: 0; min-block-size: 44px; }
+  .scan-controls button, [data-scan-confirm] { min-block-size: 44px; }
+  .scan-parsed { display: grid; gap: var(--space-1); margin: 0; }
+  .scan-parsed div { display: grid; grid-template-columns: minmax(5rem, 8rem) 1fr; gap: var(--space-2); overflow-wrap: anywhere; }
+  .scan-parsed dt { color: var(--text-muted); }
+  .scan-parsed dd { margin: 0; font-variant-numeric: tabular-nums; }
+  .scan-history ol { max-block-size: 12rem; overflow: auto; overflow-wrap: anywhere; }
+  .scan-entry :focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
+</style>

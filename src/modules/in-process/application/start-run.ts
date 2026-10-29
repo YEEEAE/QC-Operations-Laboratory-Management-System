@@ -25,6 +25,20 @@ export class StartInProcessRunUseCase {
   constructor(private readonly repository: InProcessRepository) {}
 
   async execute(input: StartInProcessRunCommand): Promise<InProcessRun> {
+    const createGrant = input.actor.permissions.find(
+      (grant) => grant.code === 'PERM-INP-CREATE' && grant.active !== false,
+    );
+    const scopedAssignments = input.actor.scopeAssignments ?? [];
+    const hasGlobalScope = createGrant?.scopes.includes('GLOBAL') === true;
+    const hasMatchingShift = createGrant?.scopes.includes('SHIFT') === true &&
+      scopedAssignments.some((assignment) => assignment.kind === 'SHIFT' && assignment.value === input.shiftCode);
+    const hasMatchingProductionLine = createGrant?.scopes.includes('DEPARTMENT') === true &&
+      scopedAssignments.some((assignment) => assignment.kind === 'DEPARTMENT' && assignment.value === input.productionLine);
+    if (createGrant && !hasGlobalScope && !(hasMatchingShift && hasMatchingProductionLine))
+      throw new AppError('AUTHZ_SCOPE_DENIED', {
+        userSafe: true,
+      });
+
     authorize(
       {
         actor: input.actor,
@@ -36,7 +50,11 @@ export class StartInProcessRunUseCase {
           state: 'IN_PROGRESS',
           ownerId: input.actor.id,
         },
-        scope: { ownerId: input.actor.id },
+        scope: {
+          ownerId: input.actor.id,
+          shiftId: input.shiftCode,
+          departmentId: input.productionLine,
+        },
         currentVersion: 1n,
         expectedVersion: 1n,
         businessCondition: true,

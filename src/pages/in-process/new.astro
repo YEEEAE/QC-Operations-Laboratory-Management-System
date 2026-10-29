@@ -7,6 +7,7 @@ import { inProcessReadDependencies } from '../../modules/in-process/application/
 import { uuidv7 } from '../../shared/id/uuid.js';
 import { describeInProcessError } from '../../ui/in-process/labels.js';
 import type { InProcessSourceCatalogue } from '../../modules/in-process/domain/read-model.js';
+import ScanEntry from '../../ui/components/ScanEntry.astro';
 
 const actor = Astro.locals.actor;
 if (!actor) return Astro.redirect(`/login?returnTo=${encodeURIComponent(Astro.url.pathname)}`);
@@ -124,6 +125,7 @@ const wiSourceRequired = catalogue?.state !== 'WI_SOURCE_AVAILABLE';
 
         <fieldset>
           <legend>Product and lot</legend>
+          <ScanEntry lotField="lotNo" />
           <label>Item code <input name="itemCode" required maxlength="100" autocomplete="off" /></label>
           <label>Item name <input name="itemName" required maxlength="500" autocomplete="off" /></label>
           <label>Lot number <input name="lotNo" required maxlength="100" autocomplete="off" /></label>

@@ -1,3 +1,8 @@
+- **2026-10-30 — INP-02 / Barcode and QR workflow source slice**
+  - Changed: Added keyboard-wedge GS1-128/DataMatrix/QR parsing on Receiving and In-Process forms with local parse status, in-draft duplicate history, explicit lot confirmation, and an In-Process create guard requiring matching SHIFT + DEPARTMENT assignments or GLOBAL scope.
+  - Evidence: Source/diff review only. No tests, builds, lint, scripts, migrations, SQL, database, hardware, camera, network lookup, screenshots, production, or deployment operations.
+  - State: PARTIAL — `PERM-INP-CREATE` remains ungranted; no approved GTIN-to-item master crosswalk/server lookup or area directory exists; signed opaque internal QR links lack a configured signing authority/secret and route contract.
+  - Key files: `src/ui/components/ScanEntry.astro`, `src/modules/in-process/application/start-run.ts`, `src/pages/{in-process/new,quarantine/receiving/new}.astro`.
 - **2026-10-30 — TRC-01 / Lot traceability source slice**
   - Changed: Added an authorized read-only lot timeline anchored by exact item code + lot and receiving ID; direct receiving→inspection/lab/retest FK paths and document execution revisions are projected with source IDs and audit sequence. Unlinked In-Process, NCR/CAPA, Reject, site and work-order dimensions remain explicitly unresolved.
   - Evidence: Source inspection only. No tests, builds, lint, scripts, SQL, migration, database, production, or deployment operations.
