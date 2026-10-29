@@ -162,6 +162,10 @@ export const APPROVED_PERMISSION_CODES = [
   'PERM-BKP-DELETE',
   'PERM-BKP-RESTORE-DRILL',
   'PERM-BKP-RESTORE-PRODUCTION',
+  // OPS-01: recovery policy governance. Draft/manage is an administrative
+  // grant; approval stays with the named SYSTEM_OWNER bundle.
+  'PERM-BKP-POLICY-MANAGE',
+  'PERM-BKP-POLICY-APPROVE',
   'PERM-NOT-VIEW-OWN',
   'PERM-NOT-MARK-READ',
   'PERM-NOT-ADMIN',
@@ -514,6 +518,7 @@ export const FOUNDATION_ROLE_PERMISSIONS: Record<
     'PERM-BKP-CREATE',
     'PERM-BKP-VERIFY',
     'PERM-BKP-RESTORE-DRILL',
+    'PERM-BKP-POLICY-MANAGE',
     'PERM-NOT-VIEW-OWN',
     'PERM-NOT-MARK-READ',
     'PERM-NOT-ADMIN',

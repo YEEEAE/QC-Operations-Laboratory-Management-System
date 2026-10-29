@@ -435,6 +435,17 @@ const routeTuples = [
     'permission-bound',
     'required',
   ],
+  // OPS-01: the policy surface is a static page under the backup workspace. It
+  // is registered before the dynamic backup-id route so pathname resolution
+  // cannot mistake "policy" for a backup identifier. It stays out of the
+  // sidebar; the backup register links to it.
+  [
+    'RT-BACKUP-004',
+    '/system/backups/policy',
+    'src/pages/system/backups/policy.astro',
+    'permission-bound',
+    'required',
+  ],
   [
     'RT-BACKUP-002',
     '/system/backups/[backupId]',

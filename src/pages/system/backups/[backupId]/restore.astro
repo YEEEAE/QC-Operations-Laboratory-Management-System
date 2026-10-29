@@ -108,7 +108,7 @@ if (Astro.request.method === 'POST' && (canRequestDrill || canRequestProduction)
   <section class="panel boundary" aria-labelledby="restore-boundary-heading">
     <h2 id="restore-boundary-heading">Restore boundary</h2>
     <p>This action records a planned restore intent only. It does not run a restore, contact a recovery provider, or prove recovery. A verified backup job is not restore evidence.</p>
-    <p class="muted">Restore execution and recovery evidence are not available in this view. Production restore remains unavailable pending approved authority and policy.</p>
+    <p class="muted">Restore execution and recovery evidence are not available in this view. Production restore remains unavailable pending approved authority and policy. Execution would require a separate, environment-scoped approved recovery procedure through the controlled runner; none is recorded, so the runner refuses every request. Recovery objectives and evidence: <a href="/system/backups/policy">recovery policy</a>.</p>
   </section>
 
   {!restorable && <section class="denied" role="alert"><h2>Restore request unavailable</h2><p>The source marks this backup set as ineligible for a restore request. Its current job state is {stateLabel(backup.state)}.</p></section>}

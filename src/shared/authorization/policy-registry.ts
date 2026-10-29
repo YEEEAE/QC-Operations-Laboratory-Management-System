@@ -993,6 +993,26 @@ const policies: readonly AuthorizationPolicy[] = [
     entityType: 'BACKUP_RESTORE',
     states: ['CREATED', 'VERIFIED'],
   },
+  // OPS-01: recovery policy governance. Only a PENDING_APPROVAL version may be
+  // drafted or decided; approved objectives are read-only historical rows.
+  {
+    permission: 'PERM-BKP-POLICY-MANAGE',
+    action: 'CREATE',
+    entityType: 'RECOVERY_POLICY',
+    states: ['PENDING_APPROVAL'],
+  },
+  {
+    permission: 'PERM-BKP-POLICY-MANAGE',
+    action: 'CREATE',
+    entityType: 'RECOVERY_INCIDENT',
+    states: ['OPEN', 'RESOLVED'],
+  },
+  {
+    permission: 'PERM-BKP-POLICY-APPROVE',
+    action: 'APPROVE',
+    entityType: 'RECOVERY_POLICY',
+    states: ['PENDING_APPROVAL'],
+  },
   { permission: 'PERM-HLTH-VIEW', action: 'VIEW', entityType: 'SYSTEM_HEALTH', states: ['ACTIVE'] },
   // QC-REJECT-REPORTS-001: Reject Reports is a normal operational module.
   // Every ACTIVE authenticated user can view (universal read) and create

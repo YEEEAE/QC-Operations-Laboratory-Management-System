@@ -63,9 +63,27 @@ This is an optional operator procedure, not an asserted capability or fixed reco
 
 Retention duration and legal/QMS holds require owner approval. Maintain an operator inventory with approval reference, creation time, environment, artifact/manifest digests, detached object references, hold status, and proposed expiry. The code may calculate review candidates only. Expiration must be reviewed and executed manually through the separately approved provider/storage process; this repository does not delete backup artifacts automatically. Never expire the only known recovery set or any set under hold.
 
+## Governed recovery policy (OPS-01)
+
+Recovery objectives are stored as versioned policy records, not constants:
+
+- `qc.recovery_policy_versions` holds the RPO, RTO, retention duration, immutable copy count, responsible person, exact policy source (type, reference, revision, SHA-256), effective window, status and internal approval reference. A new version is always `PENDING_APPROVAL`; the platform supplies no value and no default.
+- A backup administrator transcribes an approved source into a pending version. The named system owner approves it with an explicit internal approval reference (signatures remain deferred) after the source and every objective are present. Self-approval and incomplete versions are refused. Approval supersedes the previously approved version; an approved version past its end date is reported as expired and is not treated as current.
+- `qc.recovery_policy_events` is append-only and records the draft/approval/rejection/supersession snapshot and digest.
+- Service-level evidence is derived at read time, never stored as an objective: latest backup and age, artifact checksum presence and verification, last verified drill and its outcome, observed restore time, and unresolved exceptions. RPO/RTO comparisons use only the approved values; where a value is absent the comparison is not made.
+- Readiness states are explicit: `NOT_CONFIGURED` (no approved policy in force), `POLICY_EXPIRED`, `BACKUP_MISSING`, `BACKUP_NOT_VERIFIED`, `BACKUP_OUTSIDE_RPO`, `BACKUP_VERIFIED`, `RESTORE_NOT_VERIFIED`, `RESTORE_OUTSIDE_RTO` and `WITHIN_OBJECTIVE`. A verified backup artifact is never reported as a verified restore.
+- `qc.recovery_incidents` is append-only. An incident observation is `OPEN`; closure is a separate `RESOLVED` record that references the original. Open incidents are the unresolved exceptions shown in the readiness panel. Observed RPO/RTO are computed from recorded incident timestamps, not asserted.
+- `qc.recovery_storage_boundaries` records one non-secret boundary label per environment (store kind, isolation state, verification, cross-environment read policy). Bucket names, keys, endpoints and credentials are never stored or rendered. Cross-environment object write is refused by constraint.
+
+## Controlled recovery execution boundary
+
+- A restore request remains a `PLANNED` intent. Planning, approval, verification and execution are separate states.
+- `qc.recovery_procedure_authorizations` is a separate, environment-scoped approval of an actual recovery procedure. There is no creation route in this baseline, so the table is empty and the controlled runner refuses every request with `RECOVERY_PROCEDURE_NOT_APPROVED`; production is prohibited independently.
+- The runner port accepts an intent and returns only `BLOCKED`/`NOT_AVAILABLE`. No adapter connects to a provider, runs `pg_restore`, or writes a receipt. Holding `PERM-BKP-RESTORE-PRODUCTION` never authorizes execution.
+
 ## Current blockers
 
-- RPO/RTO and retention durations are not approved.
+- RPO/RTO and retention durations are not approved; no policy version has been recorded.
 - No named emergency release authority or approved production recovery ceremony is configured.
 - No current provider retention/PITR attestation is recorded; no recovery window is asserted here.
 - R2 credentials, private-bucket policy, encryption configuration, cross-environment isolation, and object-store durability are owner/provider configuration and remain unverified.

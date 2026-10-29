@@ -2,7 +2,14 @@
 import PageHeader from "../../ui/components/PageHeader.astro";
 import AppLayout from '../../ui/layouts/AppLayout.astro';
 import { systemHealthReadDependencies } from '../../modules/system-health/application/dependencies.js';
+import { recoveryGovernanceReadDependencies } from '../../modules/backup-recovery/application/dependencies.js';
 import { formatDateTime } from '../../shared/copy/format.js';
+import {
+  formatRecoveryDuration,
+  formatRecoveryObjective,
+  recoveryReadinessLabel,
+  recoveryReadinessTone,
+} from '../../ui/backup-recovery/recovery-labels.js';
 import ProviderUnavailableState from '../../ui/components/feedback/ProviderUnavailableState.astro';
 
 const actor = Astro.locals.actor;
@@ -19,6 +26,32 @@ if (!view) {
   Astro.response.status = 503;
 }
 const canSeeBackupPosture = actor.permissions.some((permission) => permission.active !== false && permission.code === 'PERM-BKP-VIEW');
+
+// OPS-01: governed recovery readiness (policy in force, service-level evidence,
+// unresolved exceptions). Separate from the backup job/restore posture above.
+// A failed read stays UNKNOWN and never becomes NOT_CONFIGURED or healthy.
+let recoveryReadiness: import('../../modules/backup-recovery/domain/recovery-sla.js').RecoveryReadinessView | undefined;
+let recoveryReadinessUnavailable = false;
+let recoveryPolicyRevision: number | undefined;
+if (canSeeBackupPosture) {
+  try {
+    const posture = await recoveryGovernanceReadDependencies().posture.execute({ actor });
+    recoveryReadiness = posture.readiness;
+    recoveryPolicyRevision = posture.currentPolicy?.revision ?? posture.latestPolicy?.revision;
+  } catch {
+    recoveryReadinessUnavailable = true;
+  }
+}
+const approvedRecoveryPolicy =
+  recoveryReadiness?.policy.effect.state === 'APPROVED' ? recoveryReadiness.policy : undefined;
+const recoveryStatusLabel = recoveryReadinessUnavailable
+  ? 'Not verified'
+  : recoveryReadiness
+    ? recoveryReadinessLabel(recoveryReadiness.status)
+    : 'Not verified';
+const recoveryStatusTone = recoveryReadinessUnavailable || !recoveryReadiness
+  ? 'unknown'
+  : recoveryReadinessTone(recoveryReadiness.status);
 const statusLabel = (status: string) =>
   status === 'HEALTHY' ? 'HEALTHY' : status === 'DEGRADED' ? 'DEGRADED' : status === 'UNAVAILABLE' ? 'UNAVAILABLE' : 'UNKNOWN';
 // UX-001: the header carries the authoritative release readiness, never a
@@ -116,6 +149,26 @@ const restoreLabel = backup
     <div><dt>Public Neon Auth JWKS URL</dt><dd>NOT VERIFIED · NO JWKS PROBE</dd></div>
     <div><dt>ExLabs API key / provider</dt><dd>UNAVAILABLE · NO APPROVED API CONTRACT</dd></div>
   </dl><p class="muted">The public JWKS discovery URL is not a PostgreSQL connection. The pooled <code>DATABASE_URL</code> is server-only secret material; only its sanitized reachability class is shown. <code>EXPLABS_API_KEY</code> availability is not represented here and must never be used as a proxy for production database health.</p></section>
+  {canSeeBackupPosture && (
+    <section class="panel" aria-labelledby="recovery-readiness-title">
+      <h2 id="recovery-readiness-title">Recovery readiness and policy</h2>
+      <p class="muted">Governed RPO/RTO, retention and service-level evidence. Status values are separate facts; this panel does not approve or execute a restore.</p>
+      <p><span class={`pill ${recoveryStatusTone}`}>{recoveryStatusLabel}</span></p>
+      <p class="muted">{recoveryReadinessUnavailable ? 'The recovery policy source did not return a confirmed result. No objective, backup age or exception count is inferred.' : recoveryReadiness?.reason ?? 'No recovery policy read is available for this account.'}</p>
+      <dl>
+        <div><dt>Policy in force</dt><dd>{recoveryReadiness?.policy.effect.state === 'APPROVED' ? `Approved · revision ${recoveryPolicyRevision ?? 'not recorded'}` : recoveryReadiness?.policy.effect.state === 'EXPIRED' ? 'Expired — no objective in force' : 'Not configured'}</dd></div>
+        <div><dt>RPO objective</dt><dd>{formatRecoveryObjective(approvedRecoveryPolicy?.rpoSeconds)}</dd></div>
+        <div><dt>RTO objective</dt><dd>{formatRecoveryObjective(approvedRecoveryPolicy?.rtoSeconds)}</dd></div>
+        <div><dt>Latest backup age</dt><dd>{formatRecoveryDuration(recoveryReadiness?.backupAgeSeconds)}</dd></div>
+        <div><dt>Artifact verification</dt><dd>{recoveryReadiness?.latestBackup ? (recoveryReadiness.latestBackup.artifactVerified ? 'Verified' : 'Not verified') : 'No backup recorded'}</dd></div>
+        <div><dt>Restore drill</dt><dd>{recoveryReadiness?.drill ? 'Verified drill recorded' : 'No verified drill recorded'}</dd></div>
+        <div><dt>Observed restore time</dt><dd>{formatRecoveryDuration(recoveryReadiness?.observedRestoreSeconds)}</dd></div>
+        <div><dt>Unresolved exceptions</dt><dd>{recoveryReadinessUnavailable ? 'Not verified' : recoveryReadiness?.unresolvedExceptionCount ?? 0}</dd></div>
+      </dl>
+      <p class="muted">Owner workflow for status recovery: the backup administrator records a policy version from an approved source and declares incidents; the named system owner approves a complete version; open incidents and out-of-objective evidence stay visible until resolved or superseded. <code>NOT_CONFIGURED</code> means no approved policy is in force; <code>POLICY_EXPIRED</code> means the approved window ended; <code>BACKUP_VERIFIED</code> means the artifact is verified; <code>RESTORE_NOT_VERIFIED</code> means no verified drill exists.</p>
+      <p class="muted">Restore execution remains <strong>NOT AVAILABLE</strong> and production restore remains <strong>BLOCKED</strong>: a planned request is not execution, and an approved recovery procedure is required separately. <a href="/system/backups/policy">Recovery policy and evidence</a></p>
+    </section>
+  )}
   {canSeeBackupPosture && backup && (
     <section class="panel"><h2>Backup &amp; recovery posture</h2><p class="muted">Backup job success never equals a verified restore (BKP-001). These are separate facts and are never merged into a single green badge.</p>
       <dl><div><dt>Last backup job state</dt><dd>{backup.lastBackupJobState ?? 'NO CATALOG DATA'}</dd></div><div><dt>Backup artifact verified</dt><dd>{backup.artifactVerified ? 'YES' : 'NO'}</dd></div><div><dt>Restore verification</dt><dd class={backup.restoreVerification === 'VERIFIED' ? 'good' : 'warn'}>{restoreLabel}</dd></div><div><dt>Verified restore evidence</dt><dd>{backup.verifiedRestoreEvidence ? `Restore ${backup.verifiedRestoreEvidence.restoreRunId} · ${backup.verifiedRestoreEvidence.restoreType} · ${backup.verifiedRestoreEvidence.verifiedAt ? formatDateTime(backup.verifiedRestoreEvidence.verifiedAt) : 'verification date not recorded'}` : 'NOT AVAILABLE'}</dd></div><div><dt>Posture status</dt><dd>{statusLabel(backup.postureStatus)}</dd></div></dl>
@@ -127,4 +180,4 @@ const restoreLabel = backup
   </section></>}
 </AppLayout>
 <style>.decision-note{padding:var(--space-3);border:1px solid var(--color-border-subtle);border-radius:var(--radius-md);background:var(--surface-raised);font-size:.84rem}</style>
-<style>.pill{padding:.2rem .55rem;border-radius:999px;font-size:.72rem;font-weight:700}.pill.ok{color:var(--status-success);border:1px solid var(--status-success)}.pill.warn{color:var(--status-warning);border:1px solid var(--status-warning)}.pill.bad{color:var(--status-error);border:1px solid var(--status-error)}.pill.unknown{color:var(--text-muted);border:1px solid var(--color-border-strong)}h1{margin:.25rem 0}.eyebrow{margin:0;color:var(--text-muted);font-size:.7rem;letter-spacing:.12em;font-weight:700}.lede,.muted{color:var(--text-muted);font-size:.86rem}.page-head{display:flex;justify-content:space-between;gap:var(--space-5);align-items:flex-start;margin-bottom:var(--space-6)}.banner{padding:.45rem .8rem;border-radius:999px;font-size:.78rem;font-weight:700;white-space:nowrap;max-inline-size:100%}.banner.ok{border:1px solid var(--status-success);color:var(--status-success)}.banner.bad{border:1px solid var(--status-error);color:var(--status-error)}.notice,.panel{padding:var(--space-5);margin-bottom:var(--space-5);border:1px solid var(--color-border-subtle);border-radius:var(--radius-lg);background:var(--surface-panel)}.notice{display:grid;gap:.35rem;border-inline-start:3px solid var(--status-warning)}.notice span{color:var(--text-muted);font-size:.85rem}.panel h2{margin-top:0;font-size:1rem}.panel h3{font-size:.85rem;margin-bottom:.35rem}.status-summary{display:grid;grid-template-columns:repeat(auto-fit,minmax(13rem,1fr));gap:var(--space-3);margin-bottom:var(--space-5)}.status-summary>div{display:grid;align-content:start;gap:.35rem;padding:var(--space-4);border:1px solid var(--color-border-subtle);border-radius:var(--radius-md);background:var(--surface-panel)}.status-summary span,.status-summary small{color:var(--text-muted);font-size:.78rem}.status-summary strong{font-size:1rem}.table-wrap{overflow-x:auto}table{width:100%;border-collapse:collapse}caption{text-align:start;padding-bottom:var(--space-3);color:var(--text-muted);font-size:.8rem}th,td{padding:.7rem;text-align:start;border-top:1px solid var(--color-border-subtle);font-size:.82rem}th{font-weight:700}dl{display:grid;gap:var(--space-3);margin:0 0 var(--space-4)}dl div{display:flex;justify-content:space-between;gap:var(--space-4);border-bottom:1px solid var(--color-border-subtle);padding-bottom:.55rem}dt{color:var(--text-muted);font-size:.8rem}dd{margin:0;text-align:end;font-size:.8rem;font-weight:700;min-inline-size:0;overflow-wrap:anywhere}.good{color:var(--status-success)}.warn{color:var(--status-warning)}.gaps{display:flex;gap:.5rem;flex-wrap:wrap;list-style:none;padding:0}code{padding:.2rem .45rem;background:var(--surface-raised);border-radius:var(--radius-sm);font-size:.72rem;overflow-wrap:anywhere}.panel a{color:var(--color-accent-primary-hover)}@media(max-width:650px){.page-head,.status-summary{display:grid;grid-template-columns:1fr}.banner{white-space:normal;justify-self:start}dl div{display:grid;gap:.2rem}dd{text-align:start}.notice,.panel,.status-summary>div{padding:var(--space-4)}}</style>
+<style>.pill{padding:.2rem .55rem;border-radius:999px;font-size:.72rem;font-weight:700}.pill.ok{color:var(--status-success);border:1px solid var(--status-success)}.pill.warn{color:var(--status-warning);border:1px solid var(--status-warning)}.pill.bad{color:var(--status-error);border:1px solid var(--status-error)}.pill.unknown{color:var(--text-muted);border:1px solid var(--color-border-strong)}h1{margin:.25rem 0}.eyebrow{margin:0;color:var(--text-muted);font-size:.7rem;letter-spacing:.12em;font-weight:700}.lede,.muted{color:var(--text-muted);font-size:.86rem}.page-head{display:flex;justify-content:space-between;gap:var(--space-5);align-items:flex-start;margin-bottom:var(--space-6)}.banner{padding:.45rem .8rem;border-radius:999px;font-size:.78rem;font-weight:700;white-space:nowrap;max-inline-size:100%}.banner.ok{border:1px solid var(--status-success);color:var(--status-success)}.banner.bad{border:1px solid var(--status-error);color:var(--status-error)}.notice,.panel{padding:var(--space-5);margin-bottom:var(--space-5);border:1px solid var(--color-border-subtle);border-radius:var(--radius-lg);background:var(--surface-panel)}.notice{display:grid;gap:.35rem;border-inline-start:3px solid var(--status-warning)}.notice span{color:var(--text-muted);font-size:.85rem}.panel h2{margin-top:0;font-size:1rem}.panel h3{font-size:.85rem;margin-bottom:.35rem}.status-summary{display:grid;grid-template-columns:repeat(auto-fit,minmax(13rem,1fr));gap:var(--space-3);margin-bottom:var(--space-5)}.status-summary>div{display:grid;align-content:start;gap:.35rem;padding:var(--space-4);border:1px solid var(--color-border-subtle);border-radius:var(--radius-md);background:var(--surface-panel)}.status-summary span,.status-summary small{color:var(--text-muted);font-size:.78rem}.status-summary strong{font-size:1rem}.table-wrap{overflow-x:auto}table{width:100%;border-collapse:collapse}caption{text-align:start;padding-bottom:var(--space-3);color:var(--text-muted);font-size:.8rem}th,td{padding:.7rem;text-align:start;border-top:1px solid var(--color-border-subtle);font-size:.82rem}th{font-weight:700}dl{display:grid;gap:var(--space-3);margin:0 0 var(--space-4)}dl div{display:flex;justify-content:space-between;gap:var(--space-4);border-bottom:1px solid var(--color-border-subtle);padding-bottom:.55rem}dt{color:var(--text-muted);font-size:.8rem}dd{margin:0;text-align:end;font-size:.8rem;font-weight:700;min-inline-size:0;overflow-wrap:anywhere}.good{color:var(--status-success)}.warn{color:var(--status-warning)}.gaps{display:flex;gap:.5rem;flex-wrap:wrap;list-style:none;padding:0}.pill.ok{color:var(--status-success);border-color:var(--status-success)}.pill.warn{color:var(--status-warning);border-color:var(--status-warning)}.pill.bad{color:var(--status-error);border-color:var(--status-error)}.pill.unknown{color:var(--text-muted);border-color:var(--color-border-strong)}code{padding:.2rem .45rem;background:var(--surface-raised);border-radius:var(--radius-sm);font-size:.72rem;overflow-wrap:anywhere}.panel a{color:var(--color-accent-primary-hover)}@media(max-width:650px){.page-head,.status-summary{display:grid;grid-template-columns:1fr}.banner{white-space:normal;justify-self:start}dl div{display:grid;gap:.2rem}dd{text-align:start}.notice,.panel,.status-summary>div{padding:var(--space-4)}}</style>

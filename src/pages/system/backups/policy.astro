@@ -1,0 +1,578 @@
+---
+import PageHeader from "../../../ui/components/PageHeader.astro";
+import AppLayout from '../../../ui/layouts/AppLayout.astro';
+import FormErrorSummary from '../../../ui/components/FormErrorSummary.astro';
+import { actions } from 'astro:actions';
+import { field, toFormFailure, type FormFailure } from '../../../ui/forms/mutation-post.js';
+import { recoveryGovernanceReadDependencies } from '../../../modules/backup-recovery/application/dependencies.js';
+import { classifyReadFailure, providerUnavailableResponse } from '../../../shared/errors/read-failure.js';
+import { parseFactoryDateTime } from '../../../shared/copy/format.js';
+import {
+  RECOVERY_ENVIRONMENTS,
+  formatRecoveryDuration,
+  formatRecoveryObjective,
+  recoveryEnvironmentLabel,
+  recoveryDrillOutcomeLabel,
+  recoveryIncidentKindLabel,
+  recoveryPolicySourceLabel,
+  recoveryPolicyStatusLabel,
+  recoveryReadinessLabel,
+  recoveryReadinessTone,
+} from '../../../ui/backup-recovery/recovery-labels.js';
+
+const actor = Astro.locals.actor;
+if (!actor) return Astro.redirect(`/login?returnTo=${encodeURIComponent(Astro.url.pathname)}`);
+
+let posture: import('../../../modules/backup-recovery/application/get-recovery-posture.js').RecoveryPostureView | undefined;
+try {
+  posture = await recoveryGovernanceReadDependencies().posture.execute({ actor });
+} catch (error) {
+  if (classifyReadFailure(error) === 'UNAVAILABLE')
+    return providerUnavailableResponse(
+      'Recovery policy records are temporarily unavailable',
+      Astro.url.pathname,
+    );
+  return Astro.redirect('/404');
+}
+if (!posture) return Astro.redirect('/404');
+
+const riyadh = (date: Date) => date.toLocaleString('en-SA', { timeZone: 'Asia/Riyadh' });
+const readiness = posture.readiness;
+const latestPolicy = posture.latestPolicy;
+const currentPolicy = posture.currentPolicy;
+const pendingPolicies = posture.policyHistory.filter((policy) => policy.status === 'PENDING_APPROVAL');
+const openIncidents = posture.unresolvedIncidents;
+const boundaryByEnvironment = new Map(
+  posture.storageBoundaries.map((boundary) => [boundary.environment, boundary] as const),
+);
+const numberOrNull = (value: string): number | null => {
+  if (!value) return null;
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : Number.NaN;
+};
+// datetime-local values are interpreted in the factory timezone (Asia/Riyadh),
+// matching the rest of the operational UI; the stored value is still an absolute
+// timestamp supplied by the operator.
+const isoOrNull = (value: string): string | null => {
+  if (!value) return null;
+  const parsed = parseFactoryDateTime(value);
+  return parsed ? parsed.toISOString() : 'invalid';
+};
+
+let values: Record<string, string> = {
+  decisionReason: '',
+  approvalReference: '',
+  incidentReference: '',
+  incidentSummary: '',
+  incidentKind: 'BACKUP_FAILURE',
+  incidentEnvironment: 'production',
+  incidentDetectedAt: '',
+  resolutionSummary: '',
+  recoveryValidatedAt: '',
+};
+let failure: FormFailure | null = null;
+let notice: string | null = null;
+
+// No-JavaScript baseline: every form posts here with an explicit intent and is
+// re-authorized server-side by the Action and its use case.
+if (Astro.request.method === 'POST') {
+  const form = await Astro.request.formData();
+  const intent = field(form, 'intent');
+  values = {
+    ...values,
+    decisionReason: field(form, 'reason'),
+    approvalReference: field(form, 'approvalReference'),
+    incidentReference: field(form, 'incidentReference'),
+    incidentSummary: field(form, 'incidentSummary'),
+    incidentKind: field(form, 'incidentKind') || 'BACKUP_FAILURE',
+    incidentEnvironment: field(form, 'incidentEnvironment') || 'production',
+    incidentDetectedAt: field(form, 'detectedAt'),
+    resolutionSummary: field(form, 'resolutionSummary'),
+    recoveryValidatedAt: field(form, 'recoveryValidatedAt'),
+  };
+  try {
+    if (intent === 'draft-policy') {
+      values = {
+        ...values,
+        rpoSeconds: field(form, 'rpoSeconds'),
+        rtoSeconds: field(form, 'rtoSeconds'),
+        retentionDays: field(form, 'retentionDays'),
+        immutableBackupCopies: field(form, 'immutableBackupCopies'),
+        responsiblePerson: field(form, 'responsiblePerson'),
+        sourceKind: field(form, 'sourceKind'),
+        policyReference: field(form, 'policyReference'),
+        policyRevision: field(form, 'policyRevision'),
+        policySourceSha256: field(form, 'policySourceSha256'),
+        effectiveFrom: field(form, 'effectiveFrom'),
+        effectiveTo: field(form, 'effectiveTo'),
+      };
+      const result = await Astro.callAction(actions.system.draftRecoveryPolicy, {
+        rpoSeconds: numberOrNull(values.rpoSeconds ?? ''),
+        rtoSeconds: numberOrNull(values.rtoSeconds ?? ''),
+        retentionDays: numberOrNull(values.retentionDays ?? ''),
+        immutableBackupCopies: numberOrNull(values.immutableBackupCopies ?? ''),
+        responsiblePerson: values.responsiblePerson || null,
+        sourceKind: (values.sourceKind || 'CONTROLLED_DOCUMENT') as
+          | 'CONTROLLED_DOCUMENT'
+          | 'QMS_DECISION'
+          | 'OWNER_DECISION',
+        policyReference: values.policyReference || null,
+        policyRevision: values.policyRevision || null,
+        policySourceSha256: values.policySourceSha256 || null,
+        effectiveFrom: isoOrNull(values.effectiveFrom ?? ''),
+        effectiveTo: isoOrNull(values.effectiveTo ?? ''),
+        expectedLatestRevision: latestPolicy?.revision ?? null,
+      });
+      if (result.error) throw result.error;
+      return Astro.redirect('/system/backups/policy', 303);
+    }
+    if (intent === 'decide-policy') {
+      const result = await Astro.callAction(actions.system.decideRecoveryPolicy, {
+        policyId: field(form, 'policyId'),
+        decision: field(form, 'decision') === 'REJECT' ? 'REJECT' : 'APPROVE',
+        reason: values.decisionReason,
+        ...(values.approvalReference ? { approvalReference: values.approvalReference } : {}),
+        expectedVersion: field(form, 'expectedVersion'),
+      });
+      if (result.error) throw result.error;
+      return Astro.redirect('/system/backups/policy', 303);
+    }
+    if (intent === 'record-incident') {
+      const result = await Astro.callAction(actions.system.recordRecoveryIncident, {
+        reference: values.incidentReference,
+        kind: values.incidentKind as
+          | 'BACKUP_FAILURE'
+          | 'RESTORE_FAILURE'
+          | 'POLICY_GAP'
+          | 'PROVIDER_OUTAGE'
+          | 'DATA_LOSS'
+          | 'OBJECT_STORE_GAP',
+        environment: values.incidentEnvironment as 'local' | 'test' | 'staging' | 'production',
+        summary: values.incidentSummary,
+        detectedAt: isoOrNull(values.incidentDetectedAt) ?? '',
+      });
+      if (result.error) throw result.error;
+      return Astro.redirect('/system/backups/policy', 303);
+    }
+    if (intent === 'resolve-incident') {
+      const result = await Astro.callAction(actions.system.resolveRecoveryIncident, {
+        incidentId: field(form, 'incidentId'),
+        resolutionSummary: values.resolutionSummary,
+        ...(isoOrNull(values.recoveryValidatedAt)
+          ? { recoveryValidatedAt: isoOrNull(values.recoveryValidatedAt)! }
+          : {}),
+      });
+      if (result.error) throw result.error;
+      return Astro.redirect('/system/backups/policy', 303);
+    }
+    notice = 'No supported action was selected. Nothing was changed.';
+  } catch (error) {
+    failure = toFormFailure(error, {
+      entity:
+        intent === 'draft-policy'
+          ? 'recovery policy version'
+          : intent === 'decide-policy'
+            ? 'recovery policy decision'
+            : intent === 'resolve-incident'
+              ? 'recovery incident closure'
+              : 'recovery incident',
+      requiredFields: [
+        { name: 'rpoSeconds', label: 'RPO' },
+        { name: 'rtoSeconds', label: 'RTO' },
+        { name: 'retentionDays', label: 'retention' },
+        { name: 'immutableBackupCopies', label: 'immutable backup copies' },
+        { name: 'responsiblePerson', label: 'responsible person' },
+        { name: 'policyReference', label: 'policy source reference' },
+        { name: 'policyRevision', label: 'policy source revision' },
+        { name: 'policySourceSha256', label: 'policy source digest' },
+        { name: 'effectiveFrom', label: 'effective date' },
+        { name: 'reason', label: 'reason' },
+        { name: 'approvalReference', label: 'approval reference' },
+        { name: 'incidentReference', label: 'incident reference' },
+        { name: 'incidentSummary', label: 'incident summary' },
+        { name: 'detectedAt', label: 'detection time' },
+        { name: 'resolutionSummary', label: 'resolution summary' },
+      ],
+      values,
+      listHref: '/system/backups/policy',
+      listLabel: 'recovery policy',
+    });
+  }
+}
+---
+
+<AppLayout title="Recovery policy · QC Operations" locale="en" direction="ltr">
+  <PageHeader>
+    <Fragment slot="heading"><h1>Recovery policy</h1></Fragment>
+    <p class="lede">Governed RPO, RTO, retention and recovery evidence. No objective is supplied by the system.</p>
+    <Fragment slot="actions"><a class="back-link" href="/system/backups">Back to backups</a></Fragment>
+  </PageHeader>
+
+  <section class="status-panel" aria-labelledby="recovery-status-heading">
+    <div class="status-head">
+      <h2 id="recovery-status-heading">Recovery readiness</h2>
+      <span class={`pill ${recoveryReadinessTone(readiness.status)}`}>{recoveryReadinessLabel(readiness.status)}</span>
+    </div>
+    <p>{readiness.reason}</p>
+    <p class="muted">Evaluated {riyadh(posture.checkedAt)} (Asia/Riyadh). This panel reports evidence only. It is not a release decision and does not prove a production recovery.</p>
+  </section>
+
+  {failure && (
+    <FormErrorSummary
+      summary={failure.summary}
+      recovery={failure.recovery}
+      errors={Object.entries(failure.fieldErrors).map(([name, message]) => ({ fieldId: name, message }))}
+      listHref="/system/backups/policy"
+      listLabel="recovery policy"
+    />
+  )}
+  {notice && <p class="notice" role="status">{notice}</p>}
+
+  <section class="panel" aria-labelledby="policy-in-force">
+    <h2 id="policy-in-force">Policy in force</h2>
+    {currentPolicy ? (
+      <dl>
+        <div><dt>Revision</dt><dd>{currentPolicy.revision}</dd></div>
+        <div><dt>RPO</dt><dd>{formatRecoveryObjective(currentPolicy.rpoSeconds)}</dd></div>
+        <div><dt>RTO</dt><dd>{formatRecoveryObjective(currentPolicy.rtoSeconds)}</dd></div>
+        <div><dt>Retention</dt><dd>{currentPolicy.retentionDays ? `${currentPolicy.retentionDays} days` : 'Not approved'}</dd></div>
+        <div><dt>Immutable backup copies</dt><dd>{currentPolicy.immutableBackupCopies ?? 'Not approved'}</dd></div>
+        <div><dt>Responsible person</dt><dd>{currentPolicy.responsiblePerson ?? 'Not recorded'}</dd></div>
+        <div><dt>Policy source</dt><dd>{recoveryPolicySourceLabel(currentPolicy.sourceKind)}</dd></div>
+        <div><dt>Source reference</dt><dd>{currentPolicy.policyReference ?? 'Not recorded'}{currentPolicy.policyRevision ? ` · ${currentPolicy.policyRevision}` : ''}</dd></div>
+        <div><dt>Source digest</dt><dd>{currentPolicy.policySourceSha256 ? 'Recorded (value withheld)' : 'Not recorded'}</dd></div>
+        <div><dt>Effective from</dt><dd>{currentPolicy.effectiveFrom ? riyadh(currentPolicy.effectiveFrom) : 'Not recorded'}</dd></div>
+        <div><dt>Effective to</dt><dd>{currentPolicy.effectiveTo ? riyadh(currentPolicy.effectiveTo) : 'No end date recorded'}</dd></div>
+        <div><dt>Internal approval reference</dt><dd>{currentPolicy.approvalReference ?? 'Not recorded'}</dd></div>
+      </dl>
+    ) : (
+      <div class="empty-state" role="status">
+        <p><strong>No approved recovery policy is in force.</strong></p>
+        <p class="muted">
+          {latestPolicy
+            ? `The newest recorded revision (${latestPolicy.revision}) is ${recoveryPolicyStatusLabel(latestPolicy.status).toLowerCase()}. RPO, RTO, retention and copy count remain unconfigured until the named owner approves a complete version transcribed from an approved source.`
+            : 'No policy version has been recorded. RPO, RTO, retention and copy count remain unconfigured; no duration is assumed.'}
+        </p>
+      </div>
+    )}
+  </section>
+
+  <section class="panel" aria-labelledby="sla-evidence">
+    <h2 id="sla-evidence">Service-level evidence</h2>
+    <p class="muted">Facts are derived from the backup catalog and recovery evidence. Artifact verification never becomes restore evidence.</p>
+    <dl>
+      <div><dt>Latest backup set</dt><dd>{readiness.latestBackup ? `${readiness.latestBackup.state} · ${riyadh(readiness.latestBackup.requestedAt)}` : 'No backup recorded'}</dd></div>
+      <div><dt>Backup age</dt><dd>{formatRecoveryDuration(readiness.backupAgeSeconds)}</dd></div>
+      <div><dt>Artifact checksum</dt><dd>{readiness.latestBackup?.checksumRecorded ? 'Recorded (value withheld)' : 'Not recorded'}</dd></div>
+      <div><dt>Artifact verified</dt><dd>{readiness.latestBackup?.artifactVerified ? 'Yes' : 'No'}</dd></div>
+      <div><dt>Last drill outcome</dt><dd>{readiness.lastDrill ? recoveryDrillOutcomeLabel(readiness.lastDrill.outcome) : 'No drill recorded'}</dd></div>
+      <div><dt>Last verified drill</dt><dd>{readiness.drill ? `${riyadh(readiness.drill.completedAt ?? readiness.drill.startedAt ?? posture.checkedAt)} · ${recoveryEnvironmentLabel(readiness.drill.targetEnvironment ?? 'unknown')}` : 'No verified drill recorded'}</dd></div>
+      <div><dt>Observed restore time</dt><dd>{formatRecoveryDuration(readiness.observedRestoreSeconds)}</dd></div>
+      <div><dt>Unresolved exceptions</dt><dd>{readiness.unresolvedExceptionCount}</dd></div>
+    </dl>
+    {readiness.unresolvedExceptions.length > 0 && (
+      <ul class="exceptions">
+        {readiness.unresolvedExceptions.map((exception) => (
+          <li><strong>{exception.reference}</strong> · {recoveryIncidentKindLabel(exception.kind)} · {recoveryEnvironmentLabel(exception.environment)} · detected {riyadh(exception.detectedAt)}</li>
+        ))}
+      </ul>
+    )}
+    <p class="muted">RPO and RTO comparisons use only the approved values above. Where an objective is absent, the corresponding comparison is not made.</p>
+  </section>
+
+  <section class="panel" aria-labelledby="execution-boundary">
+    <h2 id="execution-boundary">Restore execution boundary</h2>
+    <dl>
+      <div><dt>Restore execution</dt><dd>NOT AVAILABLE</dd></div>
+      <div><dt>Production restore execution</dt><dd>BLOCKED</dd></div>
+      <div><dt>Approved recovery procedure</dt><dd>Not recorded for any environment</dd></div>
+    </dl>
+    <p>Planning a restore request is not execution. A controlled runner may act only after a separate, environment-scoped approved recovery procedure exists; no such approval exists in this baseline, so the runner refuses every request. Holding a restore permission, including production restore, never authorizes execution by itself.</p>
+  </section>
+
+  <section class="panel" aria-labelledby="policy-history">
+    <h2 id="policy-history">Policy version history</h2>
+    {posture.policyHistory.length ? (
+      <div class="table-wrap" role="region" aria-label="Recovery policy versions" tabindex="0">
+        <table>
+          <caption>Recorded policy versions, newest first</caption>
+          <thead><tr><th scope="col">Revision</th><th scope="col">Status</th><th scope="col">RPO</th><th scope="col">RTO</th><th scope="col">Retention</th><th scope="col">Copies</th><th scope="col">Recorded</th></tr></thead>
+          <tbody>
+            {posture.policyHistory.map((policy) => (
+              <tr>
+                <th scope="row">{policy.revision}</th>
+                <td>{recoveryPolicyStatusLabel(policy.status)}</td>
+                <td>{formatRecoveryObjective(policy.rpoSeconds)}</td>
+                <td>{formatRecoveryObjective(policy.rtoSeconds)}</td>
+                <td>{policy.retentionDays ? `${policy.retentionDays} days` : 'Not approved'}</td>
+                <td>{policy.immutableBackupCopies ?? 'Not approved'}</td>
+                <td><time datetime={policy.createdAt.toISOString()}>{riyadh(policy.createdAt)}</time></td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    ) : <p class="muted">No recovery policy version has been recorded.</p>}
+  </section>
+
+  <section class="panel" aria-labelledby="policy-events">
+    <h2 id="policy-events">Recorded policy decisions</h2>
+    <p class="muted">Append-only evidence for the newest policy version. A draft, approval, rejection or supersession is never rewritten.</p>
+    {posture.policyEvents.length ? (
+      <ul class="events">
+        {posture.policyEvents.map((event) => (
+          <li><strong>{event.action.replaceAll('_', ' ').toLowerCase()}</strong> · <time datetime={event.occurredAt.toISOString()}>{riyadh(event.occurredAt)}</time> · {event.reason}{event.approvalReference ? ` · reference ${event.approvalReference}` : ''}</li>
+        ))}
+      </ul>
+    ) : <p class="muted">No policy decision is recorded for the newest version.</p>}
+  </section>
+
+  {posture.actions.canDraftPolicy && (
+    <section class="panel" id="draft-policy" aria-labelledby="draft-policy-heading">
+      <h2 id="draft-policy-heading">Record a policy version</h2>
+      <p class="muted">Transcribe the approved source exactly. Leave a value blank when the source does not state it; a blank value blocks approval and is never defaulted. The new version is saved as Pending approval.</p>
+      <form method="post" class="stack">
+        <input type="hidden" name="intent" value="draft-policy" />
+        <div class="grid">
+          <label for="rpoSeconds">RPO (seconds)
+            <span class="help" id="rpo-help">Maximum acceptable data loss stated by the approved source.</span>
+            <input id="rpoSeconds" name="rpoSeconds" type="number" min="1" step="1" inputmode="numeric" value={values.rpoSeconds ?? ''} aria-describedby="rpo-help" />
+          </label>
+          <label for="rtoSeconds">RTO (seconds)
+            <span class="help" id="rto-help">Maximum acceptable restore duration stated by the approved source.</span>
+            <input id="rtoSeconds" name="rtoSeconds" type="number" min="1" step="1" inputmode="numeric" value={values.rtoSeconds ?? ''} aria-describedby="rto-help" />
+          </label>
+          <label for="retentionDays">Retention (days)
+            <span class="help" id="retention-help">Approved retention duration. No purge period is assumed.</span>
+            <input id="retentionDays" name="retentionDays" type="number" min="1" step="1" inputmode="numeric" value={values.retentionDays ?? ''} aria-describedby="retention-help" />
+          </label>
+          <label for="immutableBackupCopies">Immutable backup copies
+            <span class="help" id="copies-help">Number of immutable copies required by the approved source.</span>
+            <input id="immutableBackupCopies" name="immutableBackupCopies" type="number" min="1" step="1" inputmode="numeric" value={values.immutableBackupCopies ?? ''} aria-describedby="copies-help" />
+          </label>
+          <label for="responsiblePerson">Responsible person
+            <span class="help" id="owner-help">Named recovery owner recorded in the approved source.</span>
+            <input id="responsiblePerson" name="responsiblePerson" maxlength="200" value={values.responsiblePerson ?? ''} aria-describedby="owner-help" />
+          </label>
+          <label for="sourceKind">Source type
+            <select id="sourceKind" name="sourceKind">
+              <option value="CONTROLLED_DOCUMENT" selected={values.sourceKind === 'CONTROLLED_DOCUMENT'}>Controlled document</option>
+              <option value="QMS_DECISION" selected={values.sourceKind === 'QMS_DECISION'}>QMS decision</option>
+              <option value="OWNER_DECISION" selected={values.sourceKind === 'OWNER_DECISION'}>Owner decision</option>
+            </select>
+          </label>
+          <label for="policyReference">Source reference
+            <input id="policyReference" name="policyReference" maxlength="200" value={values.policyReference ?? ''} />
+          </label>
+          <label for="policyRevision">Source revision
+            <input id="policyRevision" name="policyRevision" maxlength="100" value={values.policyRevision ?? ''} />
+          </label>
+          <label for="policySourceSha256">Source SHA-256
+            <span class="help" id="digest-help">64 hexadecimal characters for the approved source file or decision record.</span>
+            <input id="policySourceSha256" name="policySourceSha256" maxlength="64" aria-describedby="digest-help" value={values.policySourceSha256 ?? ''} />
+          </label>
+          <label for="effectiveFrom">Effective from
+            <input id="effectiveFrom" name="effectiveFrom" type="datetime-local" value={values.effectiveFrom ?? ''} />
+          </label>
+          <label for="effectiveTo">Effective to (optional)
+            <input id="effectiveTo" name="effectiveTo" type="datetime-local" value={values.effectiveTo ?? ''} />
+          </label>
+        </div>
+        <div class="form-actions">
+          <button type="submit">Save pending version</button>
+        </div>
+        <p class="muted">Approval is a separate action by the named system owner. Saving here does not approve anything.</p>
+      </form>
+    </section>
+  )}
+
+  {posture.actions.canApprovePolicy && pendingPolicies.length > 0 && (
+    <section class="panel" id="decide-policy" aria-labelledby="decide-policy-heading">
+      <h2 id="decide-policy-heading">Decide a pending version</h2>
+      <p class="muted">Approval records your internal approval reference. Electronic signatures remain deferred; this is not a signature. Approval is refused if any objective or source field is missing, or if you drafted the same version.</p>
+      {pendingPolicies.map((policy) => (
+        <form method="post" class="stack decision-form">
+          <input type="hidden" name="intent" value="decide-policy" />
+          <input type="hidden" name="policyId" value={policy.id} />
+          <input type="hidden" name="expectedVersion" value={policy.version.toString()} />
+          <p><strong>Revision {policy.revision}</strong> · {recoveryPolicyStatusLabel(policy.status)}</p>
+          <label for={`decision-${policy.id}`}>Decision
+            <select id={`decision-${policy.id}`} name="decision">
+              <option value="APPROVE">Approve as the effective policy</option>
+              <option value="REJECT">Reject this version</option>
+            </select>
+          </label>
+          <label for={`approval-${policy.id}`}>Internal approval reference
+            <input id={`approval-${policy.id}`} name="approvalReference" maxlength="200" value={values.approvalReference ?? ''} />
+          </label>
+          <label for={`reason-${policy.id}`}>Reason
+            <textarea id={`reason-${policy.id}`} name="reason" rows="3" required maxlength="2000">{values.decisionReason ?? ''}</textarea>
+          </label>
+          <div class="form-actions"><button type="submit">Record decision</button></div>
+        </form>
+      ))}
+    </section>
+  )}
+
+  <section class="panel" aria-labelledby="storage-boundaries">
+    <h2 id="storage-boundaries">Storage boundaries by environment</h2>
+    <p class="muted">Boundaries are recorded as non-secret identity labels. Bucket names, keys, endpoints and credentials are never shown or stored here. Cross-environment object write is refused.</p>
+    <div class="table-wrap" role="region" aria-label="Recovery storage boundaries" tabindex="0">
+      <table>
+        <caption>Latest recorded storage boundary per environment</caption>
+        <thead><tr><th scope="col">Environment</th><th scope="col">Boundary</th><th scope="col">Store kind</th><th scope="col">Isolation</th><th scope="col">Cross-environment read</th><th scope="col">Verified</th></tr></thead>
+        <tbody>
+          {RECOVERY_ENVIRONMENTS.map((environment) => {
+            const boundary = boundaryByEnvironment.get(environment);
+            return (
+              <tr>
+                <th scope="row">{recoveryEnvironmentLabel(environment)}</th>
+                <td>{boundary ? boundary.boundaryLabel : 'Not configured'}</td>
+                <td>{boundary ? boundary.artifactStoreKind.replaceAll('_', ' ').toLowerCase() : 'Not configured'}</td>
+                <td>{boundary ? boundary.isolationState.replaceAll('_', ' ').toLowerCase() : 'Not configured'}</td>
+                <td>{boundary ? (boundary.crossEnvironmentReadAllowed ? 'Allowed' : 'Not allowed') : 'Not configured'}</td>
+                <td>{boundary?.verifiedAt ? <time datetime={boundary.verifiedAt.toISOString()}>{riyadh(boundary.verifiedAt)}</time> : 'Not verified'}</td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="panel" aria-labelledby="incidents">
+    <h2 id="incidents">Recovery incidents</h2>
+    <p class="muted">Incidents are append-only observations. Closing an incident records a new closure row; the original observation is never rewritten. Open incidents remain unresolved exceptions.</p>
+    {posture.incidents.length ? (
+      <div class="table-wrap" role="region" aria-label="Recovery incidents" tabindex="0">
+        <table>
+          <caption>Recorded recovery incidents, newest first</caption>
+          <thead><tr><th scope="col">Reference</th><th scope="col">Kind</th><th scope="col">Environment</th><th scope="col">Detected</th><th scope="col">State</th><th scope="col">Observation</th></tr></thead>
+          <tbody>
+            {posture.incidents.map((incident) => (
+              <tr>
+                <th scope="row">{incident.reference}</th>
+                <td>{recoveryIncidentKindLabel(incident.kind)}</td>
+                <td>{recoveryEnvironmentLabel(incident.environment)}</td>
+                <td><time datetime={incident.detectedAt.toISOString()}>{riyadh(incident.detectedAt)}</time></td>
+                <td>{incident.state === 'RESOLVED' ? 'Resolved' : 'Open'}</td>
+                <td>{incident.summary}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    ) : <p class="muted">No recovery incident is recorded. An empty log is not evidence that no incident occurred.</p>}
+
+    {posture.actions.canRecordIncident && (
+      <form method="post" class="stack incident-form">
+        <input type="hidden" name="intent" value="record-incident" />
+        <h3>Record an incident</h3>
+        <div class="grid">
+          <label for="incidentReference">Reference
+            <input id="incidentReference" name="incidentReference" maxlength="120" required value={values.incidentReference ?? ''} />
+          </label>
+          <label for="incidentKind">Kind
+            <select id="incidentKind" name="incidentKind">
+              <option value="BACKUP_FAILURE" selected={values.incidentKind === 'BACKUP_FAILURE'}>Backup job failure</option>
+              <option value="RESTORE_FAILURE" selected={values.incidentKind === 'RESTORE_FAILURE'}>Restore failure</option>
+              <option value="POLICY_GAP" selected={values.incidentKind === 'POLICY_GAP'}>Missing or expired recovery policy</option>
+              <option value="PROVIDER_OUTAGE" selected={values.incidentKind === 'PROVIDER_OUTAGE'}>Provider outage</option>
+              <option value="DATA_LOSS" selected={values.incidentKind === 'DATA_LOSS'}>Data loss</option>
+              <option value="OBJECT_STORE_GAP" selected={values.incidentKind === 'OBJECT_STORE_GAP'}>Object-store coverage gap</option>
+            </select>
+          </label>
+          <label for="incidentEnvironment">Environment
+            <select id="incidentEnvironment" name="incidentEnvironment">
+              {RECOVERY_ENVIRONMENTS.map((environment) => (
+                <option value={environment} selected={values.incidentEnvironment === environment}>{recoveryEnvironmentLabel(environment)}</option>
+              ))}
+            </select>
+          </label>
+          <label for="detectedAt">Detected at
+            <input id="detectedAt" name="detectedAt" type="datetime-local" required value={values.incidentDetectedAt ?? ''} />
+          </label>
+        </div>
+        <label for="incidentSummary">What was observed
+          <textarea id="incidentSummary" name="incidentSummary" rows="3" required maxlength="2000">{values.incidentSummary ?? ''}</textarea>
+        </label>
+        <div class="form-actions"><button type="submit">Record incident</button></div>
+      </form>
+    )}
+
+    {posture.actions.canResolveIncident && openIncidents.length > 0 && (
+      <div class="closure">
+        <h3>Close an open incident</h3>
+        {openIncidents.map((incident) => (
+          <details>
+            <summary>{incident.reference} · {recoveryIncidentKindLabel(incident.kind)} · {recoveryEnvironmentLabel(incident.environment)}</summary>
+            <form method="post" class="stack">
+              <input type="hidden" name="intent" value="resolve-incident" />
+              <input type="hidden" name="incidentId" value={incident.id} />
+              <label for={`resolution-${incident.id}`}>Resolution summary
+                <textarea id={`resolution-${incident.id}`} name="resolutionSummary" rows="3" required maxlength="2000">{values.resolutionSummary ?? ''}</textarea>
+              </label>
+              <label for={`validated-${incident.id}`}>Recovery validated at (optional)
+                <input id={`validated-${incident.id}`} name="recoveryValidatedAt" type="datetime-local" value={values.recoveryValidatedAt ?? ''} />
+              </label>
+              <div class="form-actions"><button type="submit">Record closure</button></div>
+            </form>
+          </details>
+        ))}
+      </div>
+    )}
+  </section>
+
+  <section class="panel" aria-labelledby="owner-workflow">
+    <h2 id="owner-workflow">Owner workflow</h2>
+    <ol>
+      <li>The backup administrator transcribes the approved recovery source into a version. Missing values stay blank.</li>
+      <li>The named system owner reviews the complete version and records an internal approval reference.</li>
+      <li>Declared incidents and drill outcomes are recorded as evidence; open incidents remain unresolved exceptions.</li>
+      <li>Replacing an approved version supersedes it. An approved version past its end date is reported as expired, not current.</li>
+    </ol>
+    <p class="muted">The platform never invents an objective, a retention duration, an acceptance criterion or an approval. If the approved source is unavailable, the workflow stays pending.</p>
+  </section>
+</AppLayout>
+
+<style>
+  .lede,.muted,.help{color:var(--text-muted);font-size:.86rem}
+  .back-link{color:var(--color-accent-primary-hover)}
+  .status-panel,.panel,.notice,.form-error{padding:var(--space-5);margin-block-end:var(--space-5);border:1px solid var(--color-border-subtle);border-radius:var(--radius-lg);background:var(--surface-panel)}
+  .status-head{display:flex;justify-content:space-between;align-items:center;gap:var(--space-3);flex-wrap:wrap}
+  .status-panel h2,.panel h2{margin:0 0 var(--space-3);font-size:1.05rem}
+  .status-panel p{margin:0 0 var(--space-2);max-inline-size:80ch}
+  .pill{padding:.3rem .65rem;border-radius:999px;font-size:var(--font-size-xs);font-weight:700;white-space:nowrap;border:1px solid currentColor}
+  .pill.ok{color:var(--status-success)}
+  .pill.warn{color:var(--status-warning)}
+  .pill.bad{color:var(--status-error)}
+  .pill.unknown{color:var(--text-muted)}
+  dl{display:grid;gap:var(--space-3);margin:0}
+  dl div{display:flex;justify-content:space-between;align-items:start;gap:var(--space-4);border-block-end:1px solid var(--color-border-subtle);padding-block-end:.55rem;min-inline-size:0}
+  dt{color:var(--text-muted);font-size:var(--font-size-xs);flex:0 1 45%}
+  dd{margin:0;text-align:end;font-size:.8rem;flex:1 1 55%;min-inline-size:0;overflow-wrap:anywhere}
+  .table-wrap{max-inline-size:100%;overflow-x:auto;border:1px solid var(--color-border-subtle);border-radius:var(--radius-md);margin-block:var(--space-3)}
+  table{width:100%;min-width:820px;border-collapse:collapse;background:var(--surface-panel)}
+  caption{text-align:start;padding:var(--space-4);color:var(--text-muted);font-size:var(--font-size-xs)}
+  th,td{padding:.7rem;text-align:start;vertical-align:top;border-top:1px solid var(--color-border-subtle);font-size:.78rem;overflow-wrap:anywhere}
+  th{font-weight:700}
+  .empty-state{padding:var(--space-4);border:1px dashed var(--color-border-subtle);border-radius:var(--radius-md)}
+  .empty-state p{margin:0 0 var(--space-2)}
+  .exceptions,.events{display:grid;gap:var(--space-2);padding-inline-start:1.2rem;font-size:.84rem}
+  .stack{display:grid;gap:var(--space-4);margin-block-start:var(--space-3)}
+  .grid{display:grid;gap:var(--space-4);grid-template-columns:repeat(auto-fit,minmax(220px,1fr))}
+  label{display:grid;gap:.4rem;color:var(--text-secondary);font-size:.85rem;min-inline-size:0}
+  .help{font-size:var(--font-size-xs);line-height:1.5}
+  input,select,textarea{width:100%;min-height:44px;padding:.6rem;background:var(--surface-raised);border:1px solid var(--border-default);border-radius:var(--radius-sm);color:inherit;font:inherit}
+  textarea{resize:vertical}
+  .form-actions{display:flex;gap:var(--space-3);flex-wrap:wrap}
+  button{min-height:44px;padding:.6rem 1.1rem;border:1px solid var(--color-accent-primary);border-radius:var(--radius-sm);background:var(--color-accent-primary);color:var(--text-on-accent);font:inherit;font-weight:700}
+  button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,summary:focus-visible,.back-link:focus-visible{outline:2px solid var(--color-focus);outline-offset:2px}
+  .decision-form,.incident-form{border-block-start:1px solid var(--color-border-subtle);padding-block-start:var(--space-4)}
+  .decision-form p{margin:0}
+  .closure h3{margin-block:var(--space-4) var(--space-3);font-size:.95rem}
+  details{border:1px solid var(--color-border-subtle);border-radius:var(--radius-md);padding:var(--space-3);margin-block-end:var(--space-2);background:var(--surface-raised)}
+  summary{cursor:pointer;min-block-size:44px;display:flex;align-items:center;font-weight:700}
+  ol{margin:0;padding-inline-start:1.2rem;display:grid;gap:var(--space-2);font-size:.86rem}
+  @media(max-width:700px){dl div{display:grid;gap:.2rem}dd{text-align:start}}
+</style>

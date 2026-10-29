@@ -1698,6 +1698,103 @@ export interface RecoveryEvidenceTable {
   created_at: Generated<Date>;
 }
 
+export interface RecoveryPolicyVersionsTable {
+  id: Generated<string>;
+  policy_key: Generated<string>;
+  revision: number;
+  status: Generated<string>;
+  rpo_seconds: bigint | null;
+  rto_seconds: bigint | null;
+  retention_days: number | null;
+  immutable_backup_copies: number | null;
+  responsible_person: string | null;
+  policy_source_kind: string | null;
+  policy_reference: string | null;
+  policy_revision: string | null;
+  policy_source_sha256: string | null;
+  effective_from: Date | null;
+  effective_to: Date | null;
+  approval_reference: string | null;
+  approval_authority: string | null;
+  approved_by: string | null;
+  approved_at: Date | null;
+  supersedes_id: string | null;
+  created_by: string;
+  created_at: Generated<Date>;
+  version: Generated<bigint>;
+  request_id: string;
+}
+
+export interface RecoveryPolicyEventsTable {
+  id: Generated<string>;
+  policy_version_id: string;
+  action: string;
+  actor_id: string;
+  actor_login_identity: string | null;
+  occurred_at: Generated<Date>;
+  reason: string;
+  approval_reference: string | null;
+  snapshot: unknown;
+  snapshot_sha256: string;
+  request_id: string;
+}
+
+export interface RecoveryStorageBoundariesTable {
+  id: Generated<string>;
+  environment: string;
+  boundary_label: string;
+  artifact_store_kind: string;
+  isolation_state: string;
+  cross_environment_read_allowed: Generated<boolean>;
+  cross_environment_write_allowed: Generated<boolean>;
+  source_reference: string | null;
+  verified_by: string | null;
+  verified_at: Date | null;
+  recorded_by: string;
+  created_at: Generated<Date>;
+  request_id: string;
+}
+
+export interface RecoveryIncidentsTable {
+  id: Generated<string>;
+  incident_reference: string;
+  kind: string;
+  environment: string;
+  detected_at: Date;
+  summary: string;
+  state: Generated<string>;
+  resolved_at: Date | null;
+  resolution_summary: string | null;
+  resolves_incident_id: string | null;
+  recovered_data_as_of: Date | null;
+  recovery_started_at: Date | null;
+  recovery_validated_at: Date | null;
+  observed_rpo_seconds: bigint | null;
+  observed_rto_seconds: bigint | null;
+  policy_version_id: string | null;
+  storage_boundary_id: string | null;
+  recorded_by: string;
+  created_at: Generated<Date>;
+  request_id: string;
+}
+
+export interface RecoveryProcedureAuthorizationsTable {
+  id: Generated<string>;
+  environment: string;
+  procedure_reference: string;
+  procedure_revision: string;
+  procedure_source_sha256: string;
+  status: Generated<string>;
+  approval_reference: string | null;
+  approval_authority: string | null;
+  approved_by: string | null;
+  approved_at: Date | null;
+  effective_from: Date | null;
+  effective_to: Date | null;
+  created_at: Generated<Date>;
+  request_id: string;
+}
+
 export interface RestoreRunsTable {
   id: Generated<string>;
   backup_run_id: string;
@@ -2097,6 +2194,11 @@ export interface DatabaseSchema {
   backup_runs: BackupRunsTable;
   restore_runs: RestoreRunsTable;
   recovery_evidence: RecoveryEvidenceTable;
+  recovery_policy_versions: RecoveryPolicyVersionsTable;
+  recovery_policy_events: RecoveryPolicyEventsTable;
+  recovery_storage_boundaries: RecoveryStorageBoundariesTable;
+  recovery_incidents: RecoveryIncidentsTable;
+  recovery_procedure_authorizations: RecoveryProcedureAuthorizationsTable;
   rate_limit_windows: RateLimitWindowsTable;
   release_candidates: ReleaseCandidatesTable;
   release_approvals: ReleaseApprovalsTable;
