@@ -1041,13 +1041,21 @@ const policies: readonly AuthorizationPolicy[] = [
     permission: 'PERM-RREJ-EDIT',
     action: 'RECORD_FOCUS_ENTRY',
     entityType: 'FOCUS_COMPLIANCE_ENTRY',
-    states: ['PENDING_FOCUS_ENTRY'],
+    states: ['PENDING_ENTRY'],
   },
   {
     permission: 'PERM-RREJ-CONFIRM-APPROVAL',
     action: 'VERIFY_FOCUS_ENTRY',
     entityType: 'FOCUS_COMPLIANCE_ENTRY',
-    states: ['ENTERED_IN_FOCUS'],
+    states: ['ENTERED_UNVERIFIED', 'CORRECTED'],
+  },
+  {
+    permission: 'PERM-RREJ-EDIT', action: 'RECONCILE_FOCUS_ENTRY', entityType: 'FOCUS_COMPLIANCE_ENTRY',
+    states: ['ENTERED_UNVERIFIED', 'VERIFIED', 'FAILED_OR_REQUIRES_REVIEW', 'CORRECTED'],
+  },
+  {
+    permission: 'PERM-RREJ-ADMIN-CORRECT', action: 'CORRECT_FOCUS_ENTRY', entityType: 'FOCUS_COMPLIANCE_ENTRY',
+    states: ['FAILED_OR_REQUIRES_REVIEW'],
   },
   {
     permission: 'PERM-RREJ-ADMIN-CORRECT',

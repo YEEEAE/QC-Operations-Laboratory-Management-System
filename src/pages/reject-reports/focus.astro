@@ -1,0 +1,89 @@
+---
+import AppLayout from '../../ui/layouts/AppLayout.astro';
+import PageHeader from '../../ui/components/PageHeader.astro';
+import ErrorState from '../../ui/components/feedback/ErrorState.astro';
+import { rejectReportActionDependencies, rejectReportReadDependencies } from '../../modules/reject-reports/application/dependencies.js';
+
+const actor = Astro.locals.actor;
+if (!actor) return Astro.redirect('/login?returnTo=%2Freject-reports%2Ffocus');
+const canAccessQueue = actor.roles.includes('QC_COMPLIANCE')
+  && actor.permissions.some((grant) => grant.code === 'PERM-RREJ-VIEW' && grant.active !== false);
+const availability = canAccessQueue
+  ? await rejectReportReadDependencies().availability.execute({ actor })
+  : { available: false as const, reason: 'AUTHZ_DENIED' as const };
+if (!availability.available) Astro.response.status = 503;
+if (!canAccessQueue) Astro.response.status = 403;
+const dateFilter = (value: string | null) => {
+  if (!value || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return undefined;
+  const parsed = new Date(`${value}T00:00:00Z`);
+  return Number.isNaN(parsed.getTime()) || parsed.toISOString().slice(0, 10) !== value ? undefined : value;
+};
+const from = dateFilter(Astro.url.searchParams.get('from'));
+const to = dateFilter(Astro.url.searchParams.get('to'));
+const department = Astro.url.searchParams.get('department')?.trim().slice(0, 200) || undefined;
+const shift = Astro.url.searchParams.get('shift')?.trim().slice(0, 50) || undefined;
+const rows = canAccessQueue && availability.available
+  ? await rejectReportActionDependencies().focusCompliance.listQueue({ actor, from, to, department, shift })
+  : [];
+const today = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Riyadh', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date());
+const entryHref = (row: (typeof rows)[number]) => row.report_type === 'ISSUE_SLIP'
+  ? `/reject-reports/issue-slips/${row.report_id}`
+  : `/reject-reports/daily/${row.report_id}`;
+---
+<AppLayout title="Focus transfer queue" locale="en" direction="ltr">
+  {!canAccessQueue ? (
+    <ErrorState title="Access denied" description="The manual Focus queue is limited to authorized QC Compliance users." retryHref="/reject-reports" />
+  ) : !availability.available ? (
+    <ErrorState title="Manual Focus queue is unavailable" description="The system could not confirm Reject Reports readiness. No records were changed." retryHref="/reject-reports" />
+  ) : (
+    <>
+      <PageHeader title="Focus transfer queue" purpose="QC Compliance records and reconciles manual Focus entries. This queue does not connect to Focus." />
+      <p class="notice">Manual tracking only. No Focus login, API, import, or automatic transfer is configured.</p>
+      <form method="get" class="filters" role="search" aria-label="Filter Focus queue">
+        <label>Date from <input type="date" name="from" value={from ?? ''} /></label>
+        <label>Date to <input type="date" name="to" value={to ?? ''} /></label>
+        <label>Department <input name="department" maxlength="200" value={department ?? ''} /></label>
+        <label>Shift <input name="shift" maxlength="50" value={shift ?? ''} /></label>
+        <button type="submit">Apply filters</button>
+        <a href="/reject-reports/focus">Clear</a>
+      </form>
+      <p class="count">{rows.length} transfer record{rows.length === 1 ? '' : 's'} shown (up to 2,000).</p>
+      <div class="table-scroll" role="region" aria-label="Focus transfer work queue" tabindex="0">
+        <table>
+          <caption>Manual Focus entry queue by report date, shift, and department</caption>
+          <thead><tr><th>Report</th><th>Report date</th><th>Department / shift</th><th>QC approval state</th><th>Focus entry status</th><th>Entry timeliness</th><th>Focus details</th></tr></thead>
+          <tbody>
+            {rows.map((row) => {
+              const overdue = row.focus_status === 'PENDING_ENTRY' && row.report_date < today;
+              const approvalPending = (row.report_type === 'DAILY_REJECT' && row.report_status !== 'SUPERVISOR_APPROVED')
+                || row.report_status === 'APPROVAL_TRACKING';
+              return <tr>
+                <th scope="row"><a href={entryHref(row)}>{row.report_no}</a><span class="sub">{row.report_type.replaceAll('_', ' ')}{row.report_revision ? `, revision ${row.report_revision}` : ''}</span></th>
+                <td>{row.report_date}</td><td>{row.department}<span class="sub">{row.shift ?? 'Shift not recorded'}</span></td>
+                <td>{row.report_status.replaceAll('_', ' ')}</td>
+                <td>{row.focus_status?.replaceAll('_', ' ') ?? ((row.report_type === 'DAILY_REJECT' && row.report_status === 'SUPERVISOR_APPROVED') || (row.report_type === 'ISSUE_SLIP' && ['ISSUED', 'APPROVAL_TRACKING', 'COMPLETED'].includes(row.report_status)) ? 'Tracking record unavailable — review needed' : 'Not eligible — awaiting QC approval')}</td>
+                <td>{approvalPending ? 'Approval delay — Focus entry not yet eligible'
+                  : row.focus_status === 'FAILED_OR_REQUIRES_REVIEW' ? 'Requires review — transfer not verified'
+                  : row.focus_status === 'CORRECTED' ? 'Correction recorded — verification pending'
+                  : row.focus_status === 'ENTERED_UNVERIFIED' ? 'Awaiting independent verification'
+                  : row.focus_status === 'VERIFIED' ? 'Verification recorded'
+                  : !row.focus_status && ((row.report_type === 'DAILY_REJECT' && row.report_status === 'SUPERVISOR_APPROVED') || (row.report_type === 'ISSUE_SLIP' && ['ISSUED', 'APPROVAL_TRACKING', 'COMPLETED'].includes(row.report_status))) ? 'Tracking record missing — entry cannot be recorded'
+                  : overdue ? 'Past report date — due rule not configured'
+                  : row.focus_status === 'PENDING_ENTRY' ? 'Pending entry — due rule not configured'
+                  : 'Not eligible for entry'}</td>
+                <td>{row.focus_entry_at ? new Intl.DateTimeFormat('en-GB', { dateStyle: 'medium', timeStyle: 'short', timeZone: 'Asia/Riyadh' }).format(row.focus_entry_at) : 'No Focus time recorded'}{row.external_reference ? <span class="sub">Reference: {row.external_reference}</span> : null}</td>
+              </tr>;
+            })}
+            {!rows.length && <tr><td colspan="7">No eligible manual transfer records match these filters.</td></tr>}
+          </tbody>
+        </table>
+      </div>
+      <p class="hint">A report waiting for QC approval is not an overdue Focus entry. No approved Focus entry deadline was found, so dates are shown without asserting an overdue state.</p>
+    </>
+  )}
+</AppLayout>
+<style>
+  .notice,.hint{color:var(--text-secondary);margin-block:var(--space-4)}.filters{display:flex;gap:var(--space-3);align-items:end;flex-wrap:wrap;padding:var(--space-4);background:var(--surface-panel);border:1px solid var(--color-border-subtle);border-radius:var(--radius-md)}
+  label{display:grid;gap:.35rem}input,button,.filters a{min-block-size:44px;padding:.5rem .7rem;border:1px solid var(--color-border-subtle);border-radius:var(--radius-sm);background:var(--surface-page);color:var(--text-primary)}button{background:var(--color-accent-primary);color:var(--text-on-accent);font-weight:700}.count{font-weight:700;margin-block:var(--space-4)}
+  .table-scroll{overflow:auto;border:1px solid var(--color-border-subtle);border-radius:var(--radius-md)}table{border-collapse:collapse;width:100%;min-width:60rem}caption{text-align:start;padding:var(--space-3);font-weight:700}th,td{text-align:start;vertical-align:top;padding:var(--space-3);border-block-start:1px solid var(--color-border-subtle);overflow-wrap:anywhere}tbody th{min-width:10rem}.sub{display:block;color:var(--text-muted);font-weight:400;font-size:.85rem;margin-block-start:.25rem}a{color:var(--color-accent-primary-hover)}
+</style>

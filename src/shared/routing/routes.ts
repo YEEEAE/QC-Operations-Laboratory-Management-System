@@ -477,6 +477,13 @@ const routeTuples = [
     'authenticated',
     'required',
   ],
+  [
+    'RT-REJ-005',
+    '/reject-reports/focus',
+    'src/pages/reject-reports/focus.astro',
+    'permission-bound',
+    'required',
+  ],
   ['RT-AI-001', '/ai-advisory', 'src/pages/ai-advisory.astro', 'permission-bound', 'required'],
   ['RT-SHARED-001', '/search', 'src/pages/search.astro', 'permission-bound', 'required'],
   ['RT-SHARED-002', '/notifications', 'src/pages/notifications.astro', 'authenticated', 'required'],

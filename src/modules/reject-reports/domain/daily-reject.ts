@@ -1,5 +1,6 @@
 import { AppError } from '../../../shared/errors/app-error.js';
 import type { DailyRejectStatus } from './reject-report.js';
+import type { FocusComplianceEntry } from './focus-compliance.js';
 import {
   assertNonBlank,
   assertNonNegativeNumberString,
@@ -65,6 +66,7 @@ export interface DailyReject {
   shift?: string;
   status: DailyRejectStatus;
   reviewEvents?: readonly DailyRejectReviewEvent[];
+  focusCompliance?: FocusComplianceEntry;
   entries: readonly DailyRejectEntry[];
   finalizedAt?: Date;
   voidedAt?: Date;

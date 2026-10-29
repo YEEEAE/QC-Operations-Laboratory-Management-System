@@ -1,3 +1,8 @@
+- **2026-10-29 — REJ-03 / Manual Focus entry and reconciliation**
+  - Changed: Added QC Compliance manual-entry queue, report-version-bound entry/verification records, append-only reconciliation events, and a forward-only migration that backfills only eligible reports with traceable source events. No Focus provider path is active.
+  - Evidence: Source review only; no tests, builds, lint, scripts, migrations, SQL, database operations, or deployment. Graphify CLI unavailable.
+  - State: PARTIAL — SYS-09/capabilities, Reject Reports permission/scope grants, approved entry deadline, and a file upload route remain unresolved; legacy claims without trustworthy revision remain blocked for review.
+  - Key files: `db/migrations/0076_manual_focus_daily_reconciliation.sql`, `src/modules/reject-reports/application/focus-compliance.ts`, `src/pages/reject-reports/focus.astro`.
 - **2026-10-29 — REJ-02 / Controlled reject thresholds and escalation**
   - Changed: Added source-digest-bound 2025 threshold drafts, named-owner review/activation, exact formula/unit matching, finalization snapshots, owner-assigned approval cases/outbox requests, and audited cancellation for pending escalations on report void.
   - Evidence: Source review only; no tests, builds, lint, scripts, migration execution, SQL, database access, or deployment.
@@ -512,6 +517,7 @@
 
 ### Reporting copies
 - Reject Reports preserve the legacy paper-form metric `Reject / Good * 100` in `reject_pct`. New daily entries may record total-produced/rework/hold quantities with one explicit shared quantity unit; `Reject / Total Produced * 100` is stored separately with formula ID/version and user-recorded provenance. Historical total-produced values are not backfilled. Production balance rules and approved threshold values remain unavailable; profile drafts are source-digest bound and inactive until named-owner review/activation. Missing, conflicting, or unmatched thresholds remain `REVIEW_REQUIRED`/`CONFLICT`; entered legacy limits remain reference-only. Threshold escalations do not imply NCR, disposition, or release.
+- REJ-03 adds a manual QC Compliance Focus queue and version-linked entry/reconciliation evidence. Internal records never attest to Focus API/import delivery. No approved Focus deadline exists; past report dates are not labeled overdue. Existing claims without a trustworthy revision remain review-blocked. Migration `0076` is source only; SYS-09, role/scope grants, and file-upload capability remain unresolved.
 - `/reports/[reportCode]` binds CSV/XLSX downloads to the displayed dataset digest; a changed dataset returns stale conflict and requires refresh. This is request-local, not a durable snapshot. Print output and Reject Reports print views are labeled unapproved/informational; laboratory template print remains transcription-only.
 - No report-run/artifact retention behavior is inferred. `REQ-RPT-005` persistence semantics and retention remain Reporting/QMS-owner decisions; current candidate evidence is `audit/2026-09-30/handoff-QC-ADP26-30.md`.
 

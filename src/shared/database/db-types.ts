@@ -108,7 +108,16 @@ export interface FocusComplianceEntriesTable {
   id: Generated<string>;
   source_event_id: string;
   report_id: string;
-  status: 'PENDING_FOCUS_ENTRY' | 'ENTERED_IN_FOCUS' | 'VERIFIED';
+  status: 'PENDING_ENTRY' | 'ENTERED_UNVERIFIED' | 'VERIFIED' | 'FAILED_OR_REQUIRES_REVIEW' | 'CORRECTED';
+  report_revision: bigint | null;
+  focus_entry_date: Date | null;
+  focus_entry_at: Date | null;
+  external_reference: string | null;
+  reconciliation_state: 'NOT_RECONCILED' | 'MATCHED' | 'MISMATCH_REQUIRES_REVIEW' | 'CORRECTED';
+  reported_qty: string | null;
+  reported_lot: string | null;
+  reported_report_number: string | null;
+  reconciliation_note: string | null;
   entry_evidence_note: string | null;
   entry_evidence_file_id: string | null;
   entered_by: string | null;
@@ -118,6 +127,25 @@ export interface FocusComplianceEntriesTable {
   verified_by: string | null;
   verified_at: Date | null;
   version: Generated<bigint>;
+}
+
+export interface FocusReconciliationEventsTable {
+  id: Generated<string>;
+  entry_id: string;
+  report_id: string;
+  report_revision: bigint;
+  action: 'MISMATCH_RECORDED' | 'MATCH_CONFIRMED' | 'CORRECTION_RECORDED';
+  expected_qty: string | null;
+  reported_qty: string | null;
+  expected_lot: string | null;
+  reported_lot: string | null;
+  expected_report_number: string;
+  reported_report_number: string | null;
+  evidence_note: string;
+  evidence_file_id: string | null;
+  actor_id: string;
+  request_id: string;
+  occurred_at: Generated<Date>;
 }
 
 export interface IdempotencyRecordsTable {
@@ -1803,6 +1831,7 @@ export interface DatabaseSchema {
   outbox_events: OutboxEventsTable;
   event_delivery_statuses: EventDeliveryStatusesTable;
   focus_compliance_entries: FocusComplianceEntriesTable;
+  focus_reconciliation_events: FocusReconciliationEventsTable;
   idempotency_records: IdempotencyRecordsTable;
   files: FilesTable;
   evidence_links: EvidenceLinksTable;

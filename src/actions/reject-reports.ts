@@ -198,6 +198,8 @@ const recordFocusEntry = defineAction({
     expectedVersion: z.coerce.bigint(),
     evidenceNote: z.string().max(2000).optional(),
     evidenceFileId: z.string().uuid().optional(),
+    focusEntryAt: z.coerce.date(),
+    externalReference: z.string().max(200).optional(),
   }),
   handler: (input, context) =>
     run(
@@ -227,6 +229,19 @@ const verifyFocusEntry = defineAction({
       }),
       context,
     ),
+});
+
+const reconcileFocusEntry = defineAction({
+  accept: 'json',
+  input: z.object({
+    reportId: z.string().uuid(), expectedVersion: z.coerce.bigint(),
+    reportedQty: decimalString, reportedLot: z.string().max(100).optional(),
+    reportedReportNumber: z.string().min(1).max(100),
+    evidenceNote: z.string().max(2000).default(''), evidenceFileId: z.string().uuid().optional(),
+  }),
+  handler: (input, context) => run(() => repo().focusCompliance.reconcile({
+    ...input, actor: actor(context), requestId: requestId(context),
+  }), context),
 });
 
 const createDailyReject = defineAction({
@@ -331,6 +346,7 @@ export const rejectReports = {
   reverseApproval,
   recordFocusEntry,
   verifyFocusEntry,
+  reconcileFocusEntry,
   createDailyReject,
   appendDailyRejectEntry,
   transitionDailyRejectReview,

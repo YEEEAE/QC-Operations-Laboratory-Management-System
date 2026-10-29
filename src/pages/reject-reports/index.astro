@@ -191,9 +191,9 @@ const filterNotice = invalidDateRange
 ---
 
 <AppLayout title="Reject reports · QC Operations" locale="en" direction="ltr">
-  <PageHeader purpose="Issue slips record approval confirmations. Daily rejects need no approval.">
+  <PageHeader purpose="Issue Slip confirmations are separate from internal approval. Daily Reject Reports require QC review and Supervisor approval.">
     <Fragment slot="heading"><h1>Reject reports</h1></Fragment>
-    <Fragment slot="actions">{isNamedSystemOwner(actor) && <a class="button secondary" href="/reject-reports/thresholds">Reject limit profiles</a>}{availability.available && canCreate && <a class="button" href="/reject-reports/new">Create report</a>}</Fragment>
+    <Fragment slot="actions"><a class="button secondary" href="/reject-reports/focus">Focus transfer queue</a>{isNamedSystemOwner(actor) && <a class="button secondary" href="/reject-reports/thresholds">Reject limit profiles</a>}{availability.available && canCreate && <a class="button" href="/reject-reports/new">Create report</a>}</Fragment>
   </PageHeader>
   {
     !availability.available ? (

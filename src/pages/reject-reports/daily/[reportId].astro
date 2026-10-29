@@ -8,6 +8,7 @@ import { stateLabel } from '../../../shared/copy/ux-vocabulary.js';
 import { actions } from 'astro:actions';
 import { field, parseExpectedVersionField } from '../../../ui/forms/mutation-post.js';
 import { randomUUID } from 'node:crypto';
+import { parseFactoryDateTime } from '../../../shared/copy/format.js';
 
 const actor = Astro.locals.actor;
 if (!actor)
@@ -55,6 +56,9 @@ const canVoid =
   record.status !== 'COMPLETED' &&
   isCreator &&
   hasPermission('PERM-RREJ-VOID');
+const canFocusEntry = actor.roles.includes('QC_COMPLIANCE') && hasPermission('PERM-RREJ-EDIT');
+const canFocusVerify = actor.roles.includes('QC_COMPLIANCE') && hasPermission('PERM-RREJ-CONFIRM-APPROVAL');
+const canFocusReconcile = actor.roles.includes('QC_COMPLIANCE') && (canFocusEntry || hasPermission('PERM-RREJ-ADMIN-CORRECT'));
 let postError = '';
 let postedValues: Record<string, string> = {};
 if (Astro.request.method === 'POST' && record && !printMode) {
@@ -90,6 +94,24 @@ if (Astro.request.method === 'POST' && record && !printMode) {
       });
     } else if (intent === 'void' && canVoid) {
       result = await Astro.callAction(actions.rejectReports.voidReport, { reportId, expectedVersion, reason: field(form, 'reason') });
+    } else if (intent === 'focus-entered' && canFocusEntry && record.focusCompliance?.reportRevision) {
+      result = await Astro.callAction(actions.rejectReports.recordFocusEntry, {
+        reportId, expectedVersion: parseExpectedVersionField(field(form, 'focusVersion')),
+        focusEntryAt: parseFactoryDateTime(field(form, 'focusEntryAt'))!, externalReference: field(form, 'externalReference') || undefined,
+        evidenceNote: field(form, 'evidenceNote'), evidenceFileId: field(form, 'evidenceFileId') || undefined,
+      });
+    } else if (intent === 'focus-verified' && canFocusVerify && record.focusCompliance?.reportRevision) {
+      result = await Astro.callAction(actions.rejectReports.verifyFocusEntry, {
+        reportId, expectedVersion: parseExpectedVersionField(field(form, 'focusVersion')),
+        evidenceNote: field(form, 'evidenceNote'), evidenceFileId: field(form, 'evidenceFileId') || undefined,
+      });
+    } else if (intent === 'focus-reconcile' && canFocusReconcile) {
+      result = await Astro.callAction(actions.rejectReports.reconcileFocusEntry, {
+        reportId, expectedVersion: parseExpectedVersionField(field(form, 'focusVersion')),
+        reportedQty: field(form, 'reportedQty'), reportedLot: field(form, 'reportedLot') || undefined,
+        reportedReportNumber: field(form, 'reportedReportNumber'), evidenceNote: field(form, 'evidenceNote'),
+        evidenceFileId: field(form, 'evidenceFileId') || undefined,
+      });
     } else {
       postError = 'This action is not available. Refresh the record and review its current state.';
     }
@@ -259,6 +281,62 @@ const fmtDateTime = (d?: Date) =>
         {record.voidedAt && <><dt>Void reason</dt><dd class="long-value">{record.voidReason ?? '—'}</dd></>}
       </dl>
       {record.reviewEvents?.map((event) => <div class="review-event"><strong>{stateLabel(event.toState)}</strong><span>{event.action.replaceAll('_', ' ')}</span><span>{fmtDateTime(event.occurredAt)}</span><span>{event.actorId === actor.id ? 'You' : 'Another authorized user'}</span>{event.reason && <p>{event.reason}</p>}</div>)}
+    </section>
+
+    <section class="panel" aria-labelledby="focus-title">
+      <h2 id="focus-title">QC Compliance — manual Focus entry</h2>
+      <p class="hint">Manual tracking only; no Focus login, API, or import is active. Focus entry status is independent of QC approval.</p>
+      {record.focusCompliance ? <dl>
+        <dt>Status</dt><dd>{record.focusCompliance.status.replaceAll('_', ' ')}</dd>
+        <dt>Reject Report revision</dt><dd>{record.focusCompliance.reportRevision?.toString() ?? 'NOT CAPTURED — requires review'}</dd>
+        <dt>Focus entry date and time</dt><dd>{record.focusCompliance.focusEntryAt ? fmtDateTime(record.focusCompliance.focusEntryAt) : 'Not recorded'}</dd>
+        <dt>Entry actor</dt><dd>{record.focusCompliance.enteredBy === actor.id ? 'You' : record.focusCompliance.enteredBy ? 'Another authorized user' : 'Not recorded'}</dd>
+        <dt>Verification actor</dt><dd>{record.focusCompliance.verifiedBy === actor.id ? 'You' : record.focusCompliance.verifiedBy ? 'Another authorized user' : 'Not verified'}</dd>
+        <dt>Reconciliation</dt><dd>{record.focusCompliance.reconciliationState.replaceAll('_', ' ')}</dd>
+        {record.focusCompliance.reportedReportNumber && <><dt>Reported Focus report number</dt><dd>{record.focusCompliance.reportedReportNumber}</dd></>}
+        {record.focusCompliance.reportedQty && <><dt>Reported Focus quantity</dt><dd>{record.focusCompliance.reportedQty}</dd></>}
+        {record.focusCompliance.reportedLot && <><dt>Reported Focus lot</dt><dd>{record.focusCompliance.reportedLot}</dd></>}
+        {record.focusCompliance.reconciliationEvents?.length ? <><dt>Reconciliation history</dt><dd><ol>
+          {record.focusCompliance.reconciliationEvents.map((event) => <li>
+            {event.action.replaceAll('_', ' ')} · revision {event.reportRevision.toString()} · {fmtDateTime(event.occurredAt)} · {event.actorId === actor.id ? 'You' : 'Another authorized user'}
+            <p>Expected: {event.expectedReportNumber}, {event.expectedQty ?? 'quantity unavailable'}, lot {event.expectedLot ?? 'not comparable'}; reported: {event.reportedReportNumber}, {event.reportedQty}, lot {event.reportedLot ?? 'not recorded'}.</p>
+            <p>{event.evidenceNote}{event.evidenceFileId ? ` · file ${event.evidenceFileId}` : ''}</p>
+          </li>)}
+        </ol></dd></> : null}
+        {record.focusCompliance.entryEvidenceNote && <><dt>Entry evidence</dt><dd>{record.focusCompliance.entryEvidenceNote}</dd></>}
+        {record.focusCompliance.entryEvidenceFileId && <><dt>Receipt file ID</dt><dd>{record.focusCompliance.entryEvidenceFileId}</dd></>}
+        {record.focusCompliance.verificationEvidenceNote && <><dt>Verification record</dt><dd>{record.focusCompliance.verificationEvidenceNote}</dd></>}
+        {record.focusCompliance.verificationEvidenceFileId && <><dt>Verification file ID</dt><dd>{record.focusCompliance.verificationEvidenceFileId}</dd></>}
+        {record.focusCompliance.externalReference && <><dt>External reference</dt><dd>{record.focusCompliance.externalReference}</dd></>}
+      </dl> : <p>Manual entry tracking becomes available after Supervisor approval.</p>}
+      <a href="/reject-reports/focus">Open Focus transfer queue</a>
+      {!printMode && record.focusCompliance?.reportRevision && record.focusCompliance.status === 'PENDING_ENTRY' && canFocusEntry && <form method="post" class="focus-form">
+        <input type="hidden" name="intent" value="focus-entered"/><input type="hidden" name="expectedVersion" value={record.version.toString()}/><input type="hidden" name="focusVersion" value={record.focusCompliance.version.toString()}/>
+        <label for="focus-entry-at">Focus entry date and time</label><input id="focus-entry-at" name="focusEntryAt" type="datetime-local" required/>
+        <label for="focus-reference">External reference (optional)</label><input id="focus-reference" name="externalReference" maxlength="200"/>
+        <label for="focus-evidence">Entry evidence or note</label><textarea id="focus-evidence" name="evidenceNote" maxlength="2000"></textarea><p class="hint">Enter a note or provide an active file ID. At least one is required.</p>
+        <label for="focus-file">Receipt file ID (optional)</label><input id="focus-file" name="evidenceFileId" inputmode="text"/>
+        <button type="submit">Record reported entry</button>
+      </form>}
+      {!printMode && record.focusCompliance?.reportRevision && record.focusCompliance.status === 'ENTERED_UNVERIFIED' && canFocusVerify && record.focusCompliance.enteredBy !== actor.id && <form method="post" class="focus-form">
+        <input type="hidden" name="intent" value="focus-verified"/><input type="hidden" name="expectedVersion" value={record.version.toString()}/><input type="hidden" name="focusVersion" value={record.focusCompliance.version.toString()}/>
+        <label for="focus-verify-evidence">Verification record</label><textarea id="focus-verify-evidence" name="evidenceNote" maxlength="2000"></textarea>
+        <p class="hint">Enter a verification note or provide an active file ID. At least one is required.</p>
+        <label for="focus-verify-file">Verification file ID (optional)</label><input id="focus-verify-file" name="evidenceFileId" inputmode="text"/>
+        <button type="submit">Record verification</button>
+      </form>}
+      {record.focusCompliance && !record.focusCompliance.reportRevision && <p class="hint">This historical Focus record has no source report revision. Entry, verification, and reconciliation are blocked until an authoritative record establishes the revision.</p>}
+      {!printMode && record.focusCompliance?.reportRevision && canFocusReconcile && record.focusCompliance.status !== 'PENDING_ENTRY' && <form method="post" class="focus-form">
+        <h3>Reconcile reported values</h3><p class="hint">A mismatch is held for review. A matching comparison still requires independent verification.</p>
+        <input type="hidden" name="intent" value="focus-reconcile"/><input type="hidden" name="expectedVersion" value={record.version.toString()}/><input type="hidden" name="focusVersion" value={record.focusCompliance.version.toString()}/>
+        <label for="focus-report-number">Focus report number</label><input id="focus-report-number" name="reportedReportNumber" required maxlength="100"/>
+        <label for="focus-reported-qty">Focus rejected quantity</label><input id="focus-reported-qty" name="reportedQty" required inputmode="decimal" pattern="[0-9]+(\.[0-9]+)?"/>
+        <label for="focus-reported-lot">Focus lot (optional)</label><input id="focus-reported-lot" name="reportedLot" maxlength="100"/>
+        <label for="focus-reconcile-evidence">Comparison evidence or discrepancy</label><textarea id="focus-reconcile-evidence" name="evidenceNote" maxlength="2000"></textarea>
+        <p class="hint">Enter comparison evidence or provide an active file ID. At least one is required.</p>
+        <label for="focus-reconcile-file">Supporting file ID (optional)</label><input id="focus-reconcile-file" name="evidenceFileId" inputmode="text"/>
+        <button type="submit">Record reconciliation</button>
+      </form>}
     </section>
 
     <section class="panel" aria-labelledby="relationships-title">

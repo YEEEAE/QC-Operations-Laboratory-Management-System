@@ -33,7 +33,7 @@ import type {
   IssueSlipApprovalRole,
   IssueSlipFields,
 } from '../domain/issue-slip.js';
-import type { EventDeliveryStatus, FocusComplianceEntry } from '../domain/focus-compliance.js';
+import type { EventDeliveryStatus, FocusComplianceEntry, FocusReconciliationEvent } from '../domain/focus-compliance.js';
 import type {
   PagedResult,
   RejectReportAnalytics,
@@ -238,7 +238,7 @@ function mapEntry(row: EntryRow): DailyRejectEntry {
   };
 }
 
-function mapDaily(report: ReportRow, entries: readonly EntryRow[], reviewEvents: DailyReject['reviewEvents'] = []): DailyReject {
+function mapDaily(report: ReportRow, entries: readonly EntryRow[], reviewEvents: DailyReject['reviewEvents'] = [], focusCompliance?: FocusComplianceEntry): DailyReject {
   return {
     id: report.id,
     reportNo: report.report_no,
@@ -247,6 +247,7 @@ function mapDaily(report: ReportRow, entries: readonly EntryRow[], reviewEvents:
     shift: report.shift ?? undefined,
     status: report.status as DailyReject['status'],
     reviewEvents,
+    ...(focusCompliance ? { focusCompliance } : {}),
     entries: entries.map(mapEntry),
     finalizedAt: report.finalized_at ?? undefined,
     voidedAt: report.voided_at ?? undefined,
@@ -389,7 +390,14 @@ export class PostgresRejectReportRepository implements RejectReportRepository {
             ('daily_reject_review_events', 'action'), ('daily_reject_review_events', 'actor_id'),
             ('daily_reject_review_events', 'permission_code'), ('daily_reject_review_events', 'report_version'),
             ('daily_reject_review_events', 'idempotency_key'), ('daily_reject_review_events', 'approved_snapshot'),
-            ('daily_reject_review_events', 'snapshot_sha256')
+            ('daily_reject_review_events', 'snapshot_sha256'),
+            ('focus_compliance_entries', 'report_revision'), ('focus_compliance_entries', 'focus_entry_date'),
+            ('focus_compliance_entries', 'focus_entry_at'), ('focus_compliance_entries', 'external_reference'),
+            ('focus_compliance_entries', 'reconciliation_state'), ('focus_compliance_entries', 'reported_qty'),
+            ('focus_compliance_entries', 'reported_lot'), ('focus_compliance_entries', 'reported_report_number'),
+            ('focus_compliance_entries', 'reconciliation_note'),
+            ('focus_reconciliation_events', 'entry_id'), ('focus_reconciliation_events', 'report_revision'),
+            ('focus_reconciliation_events', 'action'), ('focus_reconciliation_events', 'request_id')
         ), expected_constraints (table_name, constraint_name) AS (
           VALUES
             ('reject_reports', 'uq_reject_reports__report_no'),
@@ -426,7 +434,7 @@ export class PostgresRejectReportRepository implements RejectReportRepository {
           VALUES
             ('reject_reports'), ('reject_issue_slips'),
             ('issue_slip_approval_confirmations'), ('daily_reject_entries'),
-            ('event_delivery_statuses'), ('focus_compliance_entries')
+            ('event_delivery_statuses'), ('focus_compliance_entries'), ('focus_reconciliation_events')
         )
         SELECT (
           EXISTS (
@@ -440,6 +448,14 @@ export class PostgresRejectReportRepository implements RejectReportRepository {
           AND EXISTS (
             SELECT 1 FROM qc.schema_migrations
             WHERE version = '0071' AND name = '0071_reject_percentage_denominators'
+          )
+          AND EXISTS (
+            SELECT 1 FROM qc.schema_migrations
+            WHERE version = '0074' AND name = '0074_daily_reject_three_stage_review'
+          )
+          AND EXISTS (
+            SELECT 1 FROM qc.schema_migrations
+            WHERE version = '0076' AND name = '0076_manual_focus_daily_reconciliation'
           )
           AND NOT EXISTS (
             SELECT 1 FROM expected_tables t
@@ -550,6 +566,7 @@ export class PostgresRejectReportRepository implements RejectReportRepository {
         .selectFrom('focus_compliance_entries')
         .selectAll()
         .where('report_id', '=', id)
+        .orderBy('report_revision', 'desc')
         .executeTakeFirst(),
     ]);
     const focusCompliance: FocusComplianceEntry | undefined = focusRow
@@ -567,8 +584,28 @@ export class PostgresRejectReportRepository implements RejectReportRepository {
           verifiedBy: focusRow.verified_by ?? undefined,
           verifiedAt: focusRow.verified_at ?? undefined,
           version: BigInt(focusRow.version),
+          reportRevision: focusRow.report_revision === null ? undefined : BigInt(focusRow.report_revision),
+          focusEntryAt: focusRow.focus_entry_at ?? undefined,
+          focusEntryDate: focusRow.focus_entry_date ?? undefined,
+          externalReference: focusRow.external_reference ?? undefined,
+          reconciliationState: focusRow.reconciliation_state,
+          reportedQty: focusRow.reported_qty ?? undefined,
+          reportedLot: focusRow.reported_lot ?? undefined,
+          reportedReportNumber: focusRow.reported_report_number ?? undefined,
         }
       : undefined;
+    if (focusCompliance && focusRow) {
+      const events = await executor.selectFrom('focus_reconciliation_events').selectAll()
+        .where('entry_id', '=', focusRow.id).orderBy('occurred_at').orderBy('id').execute();
+      focusCompliance.reconciliationEvents = events.map((event): FocusReconciliationEvent => ({
+        id: event.id, reportRevision: BigInt(event.report_revision), action: event.action,
+        expectedQty: event.expected_qty ?? undefined, reportedQty: event.reported_qty ?? '',
+        expectedLot: event.expected_lot ?? undefined, reportedLot: event.reported_lot ?? undefined,
+        expectedReportNumber: event.expected_report_number, reportedReportNumber: event.reported_report_number ?? '',
+        evidenceNote: event.evidence_note, evidenceFileId: event.evidence_file_id ?? undefined,
+        actorId: event.actor_id, occurredAt: event.occurred_at,
+      }));
+    }
     const deliveryRows = focusRow
       ? await executor
           .selectFrom('event_delivery_statuses')
@@ -610,13 +647,39 @@ export class PostgresRejectReportRepository implements RejectReportRepository {
       .execute();
     const reviewEvents = await executor.selectFrom('daily_reject_review_events').selectAll()
       .where('report_id', '=', id).orderBy('report_version').execute();
+    const focusRow = await executor.selectFrom('focus_compliance_entries').selectAll()
+      .where('report_id', '=', id).orderBy('report_revision', 'desc').executeTakeFirst();
+    const focusCompliance: FocusComplianceEntry | undefined = focusRow ? {
+      id: focusRow.id, sourceEventId: focusRow.source_event_id, reportId: focusRow.report_id,
+      status: focusRow.status, entryEvidenceNote: focusRow.entry_evidence_note ?? undefined,
+      entryEvidenceFileId: focusRow.entry_evidence_file_id ?? undefined, enteredBy: focusRow.entered_by ?? undefined,
+      enteredAt: focusRow.entered_at ?? undefined, verificationEvidenceNote: focusRow.verification_evidence_note ?? undefined,
+      verificationEvidenceFileId: focusRow.verification_evidence_file_id ?? undefined, verifiedBy: focusRow.verified_by ?? undefined,
+      verifiedAt: focusRow.verified_at ?? undefined, version: BigInt(focusRow.version), reportRevision: focusRow.report_revision === null ? undefined : BigInt(focusRow.report_revision),
+      focusEntryAt: focusRow.focus_entry_at ?? undefined, focusEntryDate: focusRow.focus_entry_date ?? undefined,
+      externalReference: focusRow.external_reference ?? undefined, reconciliationState: focusRow.reconciliation_state,
+      reportedQty: focusRow.reported_qty ?? undefined, reportedLot: focusRow.reported_lot ?? undefined,
+      reportedReportNumber: focusRow.reported_report_number ?? undefined,
+    } : undefined;
+    if (focusCompliance && focusRow) {
+      const events = await executor.selectFrom('focus_reconciliation_events').selectAll()
+        .where('entry_id', '=', focusRow.id).orderBy('occurred_at').orderBy('id').execute();
+      focusCompliance.reconciliationEvents = events.map((event): FocusReconciliationEvent => ({
+        id: event.id, reportRevision: BigInt(event.report_revision), action: event.action,
+        expectedQty: event.expected_qty ?? undefined, reportedQty: event.reported_qty ?? '',
+        expectedLot: event.expected_lot ?? undefined, reportedLot: event.reported_lot ?? undefined,
+        expectedReportNumber: event.expected_report_number, reportedReportNumber: event.reported_report_number ?? '',
+        evidenceNote: event.evidence_note, evidenceFileId: event.evidence_file_id ?? undefined,
+        actorId: event.actor_id, occurredAt: event.occurred_at,
+      }));
+    }
     return mapDaily(report, entries, reviewEvents.map((event) => ({
       id: event.id, reportId: event.report_id, action: event.action as NonNullable<DailyReject['reviewEvents']>[number]['action'],
       fromState: event.from_state as DailyReject['status'], toState: event.to_state as DailyReject['status'],
       actorId: event.actor_id, permissionCode: event.permission_code, reason: event.reason ?? undefined,
       occurredAt: event.occurred_at, reportVersion: BigInt(event.report_version),
       snapshot: event.approved_snapshot ?? undefined, snapshotHash: event.snapshot_sha256 ?? undefined,
-    })));
+    })), focusCompliance);
   }
 
   private async bumpReport(
@@ -855,7 +918,16 @@ export class PostgresRejectReportRepository implements RejectReportRepository {
             .values({
               source_event_id: sourceEvent.id,
               report_id: input.id,
-              status: 'PENDING_FOCUS_ENTRY',
+              status: 'PENDING_ENTRY',
+              report_revision: input.expectedVersion + 1n,
+              focus_entry_date: null,
+              focus_entry_at: null,
+              external_reference: null,
+              reconciliation_state: 'NOT_RECONCILED',
+              reported_qty: null,
+              reported_lot: null,
+              reported_report_number: null,
+              reconciliation_note: null,
               entry_evidence_note: null,
               entry_evidence_file_id: null,
               entered_by: null,
@@ -1210,6 +1282,26 @@ export class PostgresRejectReportRepository implements RejectReportRepository {
         eventType: 'DAILY_REJECT_SUPERVISOR_APPROVED', aggregateType: 'REJECT_REPORT', aggregateId: input.id,
         payload: { reportNo: updated.report_no, snapshotHash, snapshot }, dedupeKey: `daily-reject-approved:${input.id}:${input.expectedVersion + 1n}`,
       });
+      if (input.action === 'SUPERVISOR_APPROVE') {
+        const sourceEvent = await tx.selectFrom('outbox_events').select('id')
+          .where('dedupe_key', '=', `daily-reject-approved:${input.id}:${input.expectedVersion + 1n}`)
+          .executeTakeFirst();
+        if (sourceEvent) {
+          await tx.insertInto('focus_compliance_entries').values({
+            source_event_id: sourceEvent.id, report_id: input.id, status: 'PENDING_ENTRY',
+            report_revision: input.expectedVersion + 1n, focus_entry_date: null,
+            focus_entry_at: null, external_reference: null, reconciliation_state: 'NOT_RECONCILED',
+            reported_qty: null, reported_lot: null, reported_report_number: null, reconciliation_note: null,
+            entry_evidence_note: null, entry_evidence_file_id: null, entered_by: null, entered_at: null,
+            verification_evidence_note: null, verification_evidence_file_id: null, verified_by: null, verified_at: null,
+          }).onConflict((conflict) => conflict.column('source_event_id').doNothing()).execute();
+          await tx.insertInto('event_delivery_statuses').values({
+            source_event_id: sourceEvent.id, delivery_target: 'FOCUS_MANUAL', status: 'PENDING',
+            source_event_reference: sourceEvent.id, evidence_note: null, evidence_file_id: null,
+            recorded_by: input.actor.id,
+          }).onConflict((conflict) => conflict.columns(['source_event_id', 'delivery_target', 'status']).doNothing()).execute();
+        }
+      }
       if (input.action === 'SUPERVISOR_APPROVE') {
         const configuredOwnerId = process.env.QC_SYSTEM_OWNER_USER_ID?.trim();
         const configuredOwner = configuredOwnerId ? await tx.selectFrom('users')
