@@ -10,7 +10,7 @@ import type { ReauthenticationVerifier } from '../../../e-signatures/ports/repos
 import type { ActorContext } from '../../../../shared/authorization/types.js';
 import { CAPA_CLOSE_ELIGIBLE_STATES, transitionCapa } from '../domain/capa.js';
 import type { CapaRepository } from '../ports/repository.js';
-import { decideApprovalPath } from '../../approvals/application/owner-approval-policy.js';
+import { decideApprovalPath } from '../../../approvals/application/owner-approval-policy.js';
 import { isNamedSystemOwner } from '../../../../shared/authorization/p05-authority.js';
 
 export interface CloseCapaSignatureService {

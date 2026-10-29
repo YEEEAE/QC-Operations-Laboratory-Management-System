@@ -1,3 +1,8 @@
+- **2026-10-30 — BUILD-20261030 / إصلاح أعطال Astro في بناء Render**
+  - Changed: أضيفت أسوار frontmatter الافتتاحية المفقودة لصفحتَي retest وعتبات Reject Reports، وصُحح مسار استيراد سياسة اعتماد CAPA، واستُبدل cast عام بصيغة مصفوفة تقبلها صفحة Astro.
+  - Evidence: `verification:begin` ثم `pnpm run build` على Node 24.20.0/pnpm 11.25.0؛ البناء وهوية artifact PASS. تحذيرات اعتماد Zod وتقسيم الحزم باقية. Graphify CLI غير متاح؛ لا نشر أو دفع.
+  - State: DONE.
+  - Key files: `src/pages/laboratory/retests/`, `src/pages/reject-reports/thresholds.astro`, `src/modules/quality/capa/application/close-capa.ts`, `src/pages/quarantine/admin/index.astro`.
 - **2026-10-30 — INP-02 / Barcode and QR workflow source slice**
   - Changed: Added keyboard-wedge GS1-128/DataMatrix/QR parsing on Receiving and In-Process forms with local parse status, in-draft duplicate history, explicit lot confirmation, and an In-Process create guard requiring matching SHIFT + DEPARTMENT assignments or GLOBAL scope.
   - Evidence: Source/diff review only. No tests, builds, lint, scripts, migrations, SQL, database, hardware, camera, network lookup, screenshots, production, or deployment operations.
