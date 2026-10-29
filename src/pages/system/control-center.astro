@@ -14,6 +14,10 @@ import { SCOPE_KINDS, scopeRequiresValue } from '../../shared/authorization/type
 import { hasAdminCapability } from '../../shared/authorization/admin-workspace.js';
 import { roleLabel, stateLabel, uxVocabulary } from '../../shared/copy/ux-vocabulary.js';
 import { pilotEnvironmentView } from '../../config/pilot.js';
+import {
+  RELEASE_MANIFEST_DIMENSIONS,
+  missingReleaseEvidence,
+} from '../../modules/release-governance/domain/release-manifest.js';
 
 const actor = Astro.locals.actor;
 if (!actor) return Astro.redirect(`/login?returnTo=${encodeURIComponent(Astro.url.pathname)}`);
@@ -151,6 +155,26 @@ const statusClass = (status: string) =>
         : 'bad';
 const generatedAt = overview ? formatDateTime(overview.generatedAt) : '—';
 const pilotEnvironment = pilotEnvironmentView();
+const releaseDimensionLabels: Record<(typeof RELEASE_MANIFEST_DIMENSIONS)[number], string> = {
+  gitSha: 'Git SHA',
+  buildIdentity: 'Build identity',
+  migrationHead: 'Migration head',
+  sourceRevisions: 'Approved source revisions',
+  releaseNotes: 'Source release notes',
+  effectiveMasterDataVersion: 'Effective master-data version',
+  backupEvidence: 'Backup evidence',
+  restoreEvidence: 'Restore evidence',
+  securityControls: 'Security controls',
+  deploymentDestination: 'Deployment destination',
+  ci: 'CI signoff',
+  uat: 'UAT signoff',
+  science: 'Scientific review',
+  data: 'Data signoff',
+  backup: 'Backup signoff',
+  it: 'IT signoff',
+  qcManager: 'QC Manager signoff',
+};
+const pendingReleaseEvidence = missingReleaseEvidence();
 // Shared formatter contract: en-GB + Asia/Riyadh everywhere (no ad-hoc locale).
 const formatDate = (value?: Date | string) => formatDateTime(value);
 const migrationBlocker = (migration: Overview['migration']) =>
@@ -201,6 +225,29 @@ const releaseBanner = {
     </dl>
     <p class="muted">Configured identity is not verified identity, and neither state is approval. Connection hosts, database names, and credentials are intentionally hidden. The branch value is a label, not provider attestation.</p>
     <p class="muted">Release simulations never update Receiving release state or issue ERP/warehouse commands. Scope-linked master data onboarding is not implemented; follow the controlled PILOT-STAGING-OPERATIONS runbook before requesting approval.</p>
+  </section>
+
+  <section class="panel" id="release-decision" aria-labelledby="release-decision-title">
+    <h2 id="release-decision-title">Release decision workspace</h2>
+    <p class="banner bad" role="status">Go/No-Go: NO-GO · no current candidate has a reconciled, approved production evidence register.</p>
+    <p class="muted">This workspace keeps source, build, database, controlled-data, recovery and approval evidence bound to one environment and release identity. Staging, pilot and simulated releases cannot be promoted through this production decision. A current main checkout or release note does not establish production readiness.</p>
+    <div class="table-wrap" role="region" aria-label="Release evidence dimensions" tabindex="0">
+      <table>
+        <caption>Required release evidence — no authoritative receipts are connected to this dashboard</caption>
+        <thead><tr><th scope="col">Evidence dimension</th><th scope="col">State</th><th scope="col">Advancement source</th></tr></thead>
+        <tbody>
+          {RELEASE_MANIFEST_DIMENSIONS.map((dimension) => (
+            <tr>
+              <th scope="row">{releaseDimensionLabels[dimension]}</th>
+              <td>{pendingReleaseEvidence.state}</td>
+              <td>Trusted immutable receipt or authorized decision required</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+    <p class="muted">Signed provider evidence intake and the release-candidate approval action remain separate server-side paths. The 19-gate production register is not reconciled; evidence cannot currently enable Go. No UAT, CI, scientific, data, backup, IT or QC Manager signoff is assumed.</p>
+    <p class="muted">Signed provider receipts use the existing <code>POST /api/release-evidence</code> intake route. Authorized business decisions are recorded on a release-candidate detail route; this dashboard does not create, approve or promote a candidate.</p>
   </section>
 
   <section class="panel" id="accounts" aria-labelledby="accounts-title">

@@ -1,0 +1,93 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:qc:release-manifest:v1",
+  "title": "QC Operations release readiness manifest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "environment", "releaseId", "gitSha", "buildId", "applicationVersion", "migrationHead", "uatCycleId", "sourceRevisions", "sourceReleaseNotes", "effectiveMasterDataVersion", "backupEvidencePointer", "restoreEvidencePointer", "securityControlReferences", "deploymentDestination", "evidence", "decision"],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "environment": { "enum": ["local", "test", "ci", "staging", "production"] },
+    "releaseId": { "type": "string", "minLength": 1 },
+    "gitSha": { "type": "string", "pattern": "^[0-9a-fA-F]{40}$" },
+    "buildId": { "type": "string", "minLength": 1 },
+    "applicationVersion": { "type": "string", "minLength": 1 },
+    "migrationHead": { "type": "string", "minLength": 1 },
+    "uatCycleId": { "type": "string", "minLength": 1 },
+    "sourceRevisions": { "type": "array", "items": { "$ref": "#/$defs/sourceRevision" } },
+    "sourceReleaseNotes": { "type": ["string", "null"] },
+    "effectiveMasterDataVersion": { "type": ["string", "null"] },
+    "backupEvidencePointer": { "type": ["string", "null"] },
+    "restoreEvidencePointer": { "type": ["string", "null"] },
+    "securityControlReferences": { "type": "array", "items": { "type": "string", "minLength": 1 } },
+    "deploymentDestination": { "type": ["string", "null"] },
+    "evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["gitSha", "buildIdentity", "migrationHead", "sourceRevisions", "releaseNotes", "effectiveMasterDataVersion", "backupEvidence", "restoreEvidence", "securityControls", "deploymentDestination", "ci", "uat", "science", "data", "backup", "it", "qcManager"],
+      "properties": {
+        "gitSha": { "$ref": "#/$defs/evidence" },
+        "buildIdentity": { "$ref": "#/$defs/evidence" },
+        "migrationHead": { "$ref": "#/$defs/evidence" },
+        "sourceRevisions": { "$ref": "#/$defs/evidence" },
+        "releaseNotes": { "$ref": "#/$defs/evidence" },
+        "effectiveMasterDataVersion": { "$ref": "#/$defs/evidence" },
+        "backupEvidence": { "$ref": "#/$defs/evidence" },
+        "restoreEvidence": { "$ref": "#/$defs/evidence" },
+        "securityControls": { "$ref": "#/$defs/evidence" },
+        "deploymentDestination": { "$ref": "#/$defs/evidence" },
+        "ci": { "$ref": "#/$defs/evidence" },
+        "uat": { "$ref": "#/$defs/evidence" },
+        "science": { "$ref": "#/$defs/evidence" },
+        "data": { "$ref": "#/$defs/evidence" },
+        "backup": { "$ref": "#/$defs/evidence" },
+        "it": { "$ref": "#/$defs/evidence" },
+        "qcManager": { "$ref": "#/$defs/evidence" }
+      }
+    },
+    "decision": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["state", "authority", "actorId", "recordedAt", "reference"],
+      "properties": {
+        "state": { "enum": ["NO_GO", "GO"] },
+        "authority": { "enum": ["MANAGER", "SYSTEM_OWNER", null] },
+        "actorId": { "type": ["string", "null"] },
+        "recordedAt": { "type": ["string", "null"], "format": "date-time" },
+        "reference": { "type": ["string", "null"] }
+      }
+    }
+  },
+  "$defs": {
+    "evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["state", "source", "immutableReference", "verifiedAt", "approvedBy", "approvedAt"],
+      "properties": {
+        "state": { "enum": ["MISSING", "PROVIDED", "VERIFIED", "APPROVED"] },
+        "source": { "type": ["string", "null"] },
+        "immutableReference": { "type": ["string", "null"] },
+        "verifiedAt": { "type": ["string", "null"], "format": "date-time" },
+        "approvedBy": { "type": ["string", "null"] },
+        "approvedAt": { "type": ["string", "null"], "format": "date-time" }
+      }
+    },
+    "sourceRevision": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["sourceId", "revision", "digest", "evidence"],
+      "properties": {
+        "sourceId": { "type": "string", "minLength": 1 },
+        "revision": { "type": "string", "minLength": 1 },
+        "digest": { "type": "string", "pattern": "^[0-9a-fA-F]{64}$" },
+        "evidence": { "$ref": "#/$defs/evidence" }
+      }
+    }
+  },
+  "x-governance": {
+    "statusSource": "An authenticated immutable receipt from the source named in evidence.source; file presence and caller claims cannot advance state.",
+    "verificationRule": "PROVIDED is not verified. VERIFIED requires source-specific receipt validation. APPROVED requires a separate authorized business decision.",
+    "neverAutoApprove": ["uat", "ci", "science", "data", "backup", "it", "qcManager"],
+    "productionRule": "GO is bound to the exact environment, Git SHA, build identity and migration head. Staging, pilot and simulated releases cannot satisfy a production decision."
+  }
+}
