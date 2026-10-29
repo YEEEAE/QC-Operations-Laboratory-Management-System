@@ -8,7 +8,9 @@ export class GetRejectDashboardUseCase {
     private readonly now = () => new Date(),
   ) {}
   async execute(input: { actor: ActorContext; filter?: RejectReportListFilter }) {
-    if (input.actor.accountState !== 'ACTIVE') throw new AppError('AUTHZ_DENIED');
+    if (input.actor.accountState !== 'ACTIVE' || !input.actor.permissions.some(
+      (grant) => grant.code === 'PERM-RREJ-VIEW' && grant.active !== false,
+    )) throw new AppError('AUTHZ_DENIED');
     const [summary, analytics, recent] = await Promise.all([
       this.repository.summary(this.now(), input.filter),
       this.repository.analytics({ filter: input.filter }),

@@ -11,6 +11,7 @@ import { stateLabel } from '../../shared/copy/ux-vocabulary.js';
 import type { RejectReportListFilter } from '../../modules/reject-reports/ports/repository.js';
 import { REJECT_REPORT_STATUSES } from '../../modules/reject-reports/application/view-model.js';
 import { isNamedSystemOwner } from '../../shared/authorization/p05-authority.js';
+import { PAPER_REJECT_PERCENTAGE_FORMULA } from '../../modules/reject-reports/domain/reject-percentage.js';
 
 const actor = Astro.locals.actor;
 if (!actor) return Astro.redirect('/login?returnTo=%2Freject-reports');
@@ -33,6 +34,8 @@ const filter: RejectReportListFilter = {
   itemName: params.get('itemName')?.slice(0, 200) || undefined,
   lot: params.get('lot')?.slice(0, 100) || undefined,
   department: params.get('department')?.slice(0, 200) || undefined,
+  shift: params.get('shift')?.slice(0, 80) || undefined,
+  reason: params.get('reason')?.slice(0, 200) || undefined,
   unit: params.get('unit')?.trim().slice(0, 40) || undefined,
   unitMissing: params.get('unitMissing') === 'on',
   type: tab === 'slips' || tab === 'awaiting' || tab === 'completed' ? 'ISSUE_SLIP' : tab === 'daily' ? 'DAILY_REJECT' : undefined,
@@ -107,6 +110,13 @@ const drilldownHref = (point: (typeof analytics.trendByDate)[number]) => {
   else next.set('unit', point.unit);
   return `/reject-reports?${next.toString()}`;
 };
+const reasonDrilldownHref = (row: (typeof analytics.byReason)[number]) => {
+  const next = new URLSearchParams(params);
+  next.delete('page');
+  next.set('tab', row.reportType === 'DAILY_REJECT' ? 'daily' : 'slips');
+  next.set('reason', row.reason);
+  return `/reject-reports?${next.toString()}`;
+};
 const tabHref = (value: (typeof allowedTabs)[number]) => {
   const next = new URLSearchParams(params);
   next.delete('page');
@@ -134,6 +144,8 @@ const hasFilters = Boolean(
     filter.itemName ||
     filter.lot ||
     filter.department ||
+    filter.shift ||
+    filter.reason ||
     filter.unit ||
     filter.unitMissing ||
     filter.status ||
@@ -159,6 +171,8 @@ const appliedFilters = [
     value: filter.department,
     href: chipHref('department'),
   },
+  filter.shift && { label: 'Shift', value: filter.shift, href: chipHref('shift') },
+  filter.reason && { label: 'Reject reason', value: filter.reason, href: chipHref('reason') },
   filter.unit && { label: 'Recorded unit', value: filter.unit, href: chipHref('unit') },
   filter.unitMissing && { label: 'Missing unit', value: 'Included', href: chipHref('unitMissing') },
   filter.status && { label: 'Status', value: stateLabel(filter.status), href: chipHref('status') },
@@ -229,6 +243,8 @@ const filterNotice = invalidDateRange
             <label for="itemName">Item name<input id="itemName" name="itemName" value={filter.itemName ?? ''} maxlength="200" /></label>
             <label for="lot">Lot<input id="lot" name="lot" value={filter.lot ?? ''} maxlength="100" /></label>
             <label for="department">Department<input id="department" name="department" value={filter.department ?? ''} maxlength="200" /></label>
+            <label for="shift">Shift<input id="shift" name="shift" value={filter.shift ?? ''} maxlength="80" /></label>
+            <label for="reason">Reject reason<input id="reason" name="reason" value={filter.reason ?? ''} maxlength="200" /></label>
             <label for="unit">Recorded unit<input id="unit" name="unit" value={filter.unit ?? ''} maxlength="40" /></label>
             <label class="check" for="unitMissing">Include missing unit<input id="unitMissing" name="unitMissing" type="checkbox" checked={filter.unitMissing} /></label>
             <label for="status">Status<select id="status" name="status"><option value="">Any status</option>{knownStatuses.map((status) => <option value={status} selected={filter.status === status}>{stateLabel(status)}</option>)}</select></label>
@@ -349,6 +365,7 @@ const filterNotice = invalidDateRange
 
         <details class="analytics-disclosure" open={hasAnalytics}>
           <summary>Reject analytics{!hasAnalytics && ' · No matching data'}</summary>
+          <p class="analytics-boundary" role="note">Analytics are limited to records visible under Reject Reports view permission and the filters above. Area, production line, and product family are not recorded on these source records, so they are unavailable here. No root cause is inferred.</p>
           <section class="panel quantities" aria-labelledby="qty-heading">
             <h2 id="qty-heading">Rejected quantity by report type and recorded unit</h2>
             <p>Units are shown as recorded. Values from different units or report types are not added together.</p>
@@ -384,14 +401,15 @@ const filterNotice = invalidDateRange
               ) : <p class="empty">No data.</p>}
             </div>
             <div class="panel">
-              <h2>Reject reasons</h2>
+              <h2>Reject reason Pareto (record count)</h2>
               {analytics.byReason.length ? (
                 <ol class="rank">
                   {analytics.byReason.slice(0, 8).map((row) => (
-                    <li><span>{row.reason}</span><strong>{row.count}</strong></li>
+                    <li><a href={reasonDrilldownHref(row)}>{row.reason} · open matching records</a><strong>{row.count} records</strong></li>
                   ))}
                 </ol>
               ) : <p class="empty">No data.</p>}
+              <p class="analytics-boundary">This ranking counts matching detail rows. A reason with one matching record has a low sample; no controlled cause or threshold is assigned.</p>
             </div>
             <div class="panel">
               <h2>By department</h2>
@@ -412,13 +430,17 @@ const filterNotice = invalidDateRange
               ) : <p class="empty">No data.</p>}
             </div>
             <div class="panel">
-              <h2>Paper-form Reject % trend (Reject / Good)</h2>
+              <h2>Paper-form Reject % trend</h2>
+              <p>Formula {PAPER_REJECT_PERCENTAGE_FORMULA.id}, revision {PAPER_REJECT_PERCENTAGE_FORMULA.version}: rejected quantity ÷ good quantity × 100. The numerator, denominator, unit, and covered date are shown for each point. Historical comparisons using a different or unknown method are not made.</p>
+              <p class="analytics-boundary">No effective threshold baseline is available for this view, so rates have no normal or abnormal status.</p>
               {analytics.rejectPctTrend.length ? (
-                <ol class="rank">
+                <div class="table-wrap" role="region" aria-label="Reject rate details" tabindex="0"><table>
+                  <caption>Daily reject totals by recorded unit; no unit conversion is applied.</caption>
+                  <thead><tr><th scope="col">Covered date</th><th scope="col">Recorded unit</th><th scope="col">Rejected numerator</th><th scope="col">Good denominator</th><th scope="col">Rate</th><th scope="col">Formula</th></tr></thead><tbody>
                   {analytics.rejectPctTrend.map((row) => (
-                    <li><span>{row.date} · {row.unit}</span><strong>{row.rejectPct === null ? '—' : `${row.rejectPct}%`}</strong></li>
+                    <tr><td>{row.date}</td><td>{row.unit}</td><td>{row.numerator}</td><td>{row.denominator}</td><td>{row.rejectPct === null ? 'Not available' : `${row.rejectPct}%`}</td><td>{PAPER_REJECT_PERCENTAGE_FORMULA.id} v{PAPER_REJECT_PERCENTAGE_FORMULA.version}</td></tr>
                   ))}
-                </ol>
+                  </tbody></table></div>
               ) : <p class="empty">No data.</p>}
             </div>
           </section>

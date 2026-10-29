@@ -14,6 +14,8 @@ export interface RejectReportListFilter {
   itemName?: string;
   lot?: string;
   department?: string;
+  shift?: string;
+  reason?: string;
   unit?: string;
   unitMissing?: boolean;
   createdBy?: string;
@@ -73,7 +75,10 @@ export interface RejectReportAnalytics {
     rejectedQty: string;
   }[];
   approvalStatus: readonly { pending: number; completed: number }[];
-  rejectPctTrend: readonly { date: string; unit: string; rejectPct: string | null }[];
+  rejectPctTrend: readonly {
+    date: string; unit: string; rejectPct: string | null;
+    numerator: string; denominator: string;
+  }[];
 }
 
 /**

@@ -61,6 +61,7 @@ function reportFilterSql(filter: RejectReportListFilter = {}) {
   if (filter.to)
     where = sql`${where} AND r.report_date <= ${filter.to.toISOString().slice(0, 10)}::date`;
   if (filter.department) where = sql`${where} AND r.department = ${filter.department}`;
+  if (filter.shift) where = sql`${where} AND r.shift = ${filter.shift}`;
   if (filter.createdBy && isUuid(filter.createdBy))
     where = sql`${where} AND r.created_by = ${filter.createdBy}`;
   if (filter.approvalState === 'AWAITING')
@@ -85,7 +86,7 @@ function reportFilterSql(filter: RejectReportListFilter = {}) {
       ))
     )`;
   }
-  if (filter.itemCode || filter.itemName || filter.lot || filter.search) {
+  if (filter.itemCode || filter.itemName || filter.lot || filter.search || filter.reason) {
     const predicates = (alias: 's' | 'e') => {
       const name = alias === 's' ? 'item_name' : 'item_description';
       const exact = sql`${filter.itemCode ? sql`AND ${sql.raw(alias)}.item_code ILIKE ${`%${filter.itemCode}%`}` : sql``}
@@ -99,8 +100,9 @@ function reportFilterSql(filter: RejectReportListFilter = {}) {
           ? sql`EXISTS (SELECT 1 FROM qc.reject_issue_slips s WHERE s.report_id = r.id AND ${detail})`
           : sql`EXISTS (SELECT 1 FROM qc.daily_reject_entries e WHERE e.report_id = r.id AND ${detail})`;
       const hasExact = Boolean(filter.itemCode || filter.itemName || filter.lot);
-      return hasExact
-        ? sql`(${exists(sql`TRUE ${exact}`)} AND (${filter.search ? sql`r.report_no ILIKE ${`%${filter.search}%`} OR ${exists(sql`${search}`)}` : sql`TRUE`}))`
+      const reason = filter.reason ? sql`AND ${sql.raw(alias)}.reject_reason = ${filter.reason}` : sql``;
+      return hasExact || filter.reason
+        ? sql`(${exists(sql`TRUE ${exact} ${reason}`)} AND (${filter.search ? sql`r.report_no ILIKE ${`%${filter.search}%`} OR ${exists(sql`${search}`)}` : sql`TRUE`}))`
         : sql`(${filter.search ? sql`r.report_no ILIKE ${`%${filter.search}%`} OR ${exists(sql`${search}`)}` : sql`FALSE`})`;
     };
     where = sql`${where} AND (
@@ -127,6 +129,7 @@ function detailRowFilterSql(filter: RejectReportListFilter, type: 'ISSUE_SLIP' |
   if (filter.search) {
     where = sql`${where} AND (r.report_no ILIKE ${`%${filter.search}%`} OR ${sql.raw(alias)}.item_code ILIKE ${`%${filter.search}%`} OR ${sql.raw(alias)}.${sql.raw(name)} ILIKE ${`%${filter.search}%`} OR ${sql.raw(alias)}.lot_no ILIKE ${`%${filter.search}%`} OR ${sql.raw(alias)}.reject_reason ILIKE ${`%${filter.search}%`})`;
   }
+  if (filter.reason) where = sql`${where} AND ${sql.raw(alias)}.reject_reason = ${filter.reason}`;
   return where;
 }
 
@@ -1672,10 +1675,12 @@ export class PostgresRejectReportRepository implements RejectReportRepository {
         FROM filtered_reports r
         JOIN qc.issue_slip_approval_confirmations a ON a.report_id = r.id
       `.execute(this.database),
-      sql<{ date: string; unit: string; reject_pct: string | null }>`
+      sql<{ date: string; unit: string; reject_pct: string | null; numerator: string; denominator: string }>`
         ${filtered}
         SELECT r.report_date::text AS date,
           COALESCE(NULLIF(BTRIM(e.rm_unit), ''), 'Unit not recorded') AS unit,
+          SUM(e.reject_qty)::text AS numerator,
+          SUM(e.good_qty)::text AS denominator,
           CASE WHEN SUM(e.good_qty) > 0
             THEN ROUND(SUM(e.reject_qty) / SUM(e.good_qty) * 100, 4)::text
             ELSE NULL::text END AS reject_pct
@@ -1721,6 +1726,8 @@ export class PostgresRejectReportRepository implements RejectReportRepository {
         date: row.date,
         unit: row.unit,
         rejectPct: row.reject_pct,
+        numerator: row.numerator,
+        denominator: row.denominator,
       })),
     };
   }
