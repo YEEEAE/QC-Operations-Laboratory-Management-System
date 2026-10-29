@@ -12,9 +12,14 @@ const input = z.object({
   to: z.string().optional(),
   lot: z.string().optional(),
   itemCode: z.string().optional(),
+  line: z.string().optional(),
+  shift: z.string().optional(),
+  status: z.string().optional(),
   workflowState: z.string().optional(),
   inspectionResult: z.string().optional(),
   releaseSystem: z.enum(['true', 'false']).optional(),
+  page: z.string().optional(),
+  pageSize: z.string().optional(),
   snapshot: z.string().regex(/^[a-f0-9]{64}$/),
 });
 const exportReport = defineAction({

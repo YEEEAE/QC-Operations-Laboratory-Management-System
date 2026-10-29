@@ -3,11 +3,10 @@ import PageHeader from "../../ui/components/PageHeader.astro";
 import Icon from '../../ui/components/Icon.astro';
 import AppLayout from '../../ui/layouts/AppLayout.astro';
 import { reportingDependencies } from '../../modules/reporting/application/dependencies.js';
-import { authorize } from '../../shared/authorization/authorize.js';
 const actor = Astro.locals.actor;
 if (!actor) return Astro.redirect('/login?returnTo=%2Freports');
 const registry = reportingDependencies().registry;
-const reports = registry.list().filter((report) => authorize({ actor, permission: report.viewPermission, action: 'VIEW', entity: { type: 'REPORT', id: report.code, state: 'ACTIVE', ownerId: actor.id, domain: 'REPORTING' }, scope: { domain: 'REPORTING' }, currentVersion: 1, expectedVersion: 1, businessCondition: true }).allowed);
+const reports = registry.list().filter((report) => registry.canView(actor, report));
 ---
 <AppLayout title="Reports · QC Operations" locale="en" direction="ltr">
   <PageHeader purpose="Select a report to review its authorized information."><Fragment slot="heading"><h1>Reports</h1></Fragment></PageHeader>

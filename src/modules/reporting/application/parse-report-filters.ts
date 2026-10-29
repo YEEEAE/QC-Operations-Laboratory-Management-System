@@ -10,9 +10,14 @@ const FILTERS = [
   'to',
   'lot',
   'itemCode',
+  'line',
+  'shift',
+  'status',
   'workflowState',
   'inspectionResult',
   'releaseSystem',
+  'page',
+  'pageSize',
 ] as const;
 
 function one(params: URLSearchParams, key: string): string | undefined {
@@ -51,6 +56,9 @@ export function parseReportFilters(params: URLSearchParams): ReportFilters {
   for (const key of ['lot', 'itemCode'] as const)
     if (values[key] && (values[key]!.length > 100 || values[key]!.includes('\0')))
       throw new AppError('VALIDATION_INVALID_QUERY', { userSafe: true });
+  for (const key of ['line', 'shift', 'status'] as const)
+    if (values[key] && (values[key]!.length > 100 || values[key]!.includes('\0')))
+      throw new AppError('VALIDATION_INVALID_QUERY', { userSafe: true });
   if (
     values.workflowState &&
     !(RECEIVING_WORKFLOW_STATES as readonly string[]).includes(values.workflowState)
@@ -63,15 +71,26 @@ export function parseReportFilters(params: URLSearchParams): ReportFilters {
     throw new AppError('VALIDATION_INVALID_QUERY', { userSafe: true });
   if (values.releaseSystem && !['true', 'false'].includes(values.releaseSystem))
     throw new AppError('VALIDATION_INVALID_QUERY', { userSafe: true });
+  const page = values.page === undefined ? undefined : Number(values.page);
+  const pageSize = values.pageSize === undefined ? undefined : Number(values.pageSize);
+  if (
+    (values.page !== undefined && (!/^\d+$/.test(values.page) || !Number.isSafeInteger(page) || page! < 1 || page! > 1_000)) ||
+    (values.pageSize !== undefined && (!/^\d+$/.test(values.pageSize) || !Number.isSafeInteger(pageSize) || pageSize! < 1 || pageSize! > 100))
+  ) throw new AppError('VALIDATION_INVALID_QUERY', { userSafe: true });
 
   return {
     from: values.from,
     to: values.to,
     lot: values.lot,
     itemCode: values.itemCode,
+    line: values.line,
+    shift: values.shift,
+    status: values.status,
     workflowState: values.workflowState,
     inspectionResult: values.inspectionResult,
     releaseSystem: values.releaseSystem === undefined ? undefined : values.releaseSystem === 'true',
+    page,
+    pageSize,
   };
 }
 

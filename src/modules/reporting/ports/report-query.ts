@@ -7,6 +7,11 @@ export interface ReportDataset {
   readonly rows: readonly ReportRow[];
   /** Internal row identities bind the copy without rendering or exporting identifiers. */
   readonly sourceRowIds?: readonly string[];
+  /** Request-local query time, bounded page, and continuation state. */
+  readonly asOf?: string;
+  readonly page?: number;
+  readonly pageSize?: number;
+  readonly hasMore?: boolean;
 }
 export interface ReportQuery {
   run(

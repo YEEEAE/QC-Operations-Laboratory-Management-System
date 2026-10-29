@@ -14,6 +14,9 @@ function validateFilters(filters: ReportFilters): ReportFilters {
   for (const value of [
     filters.lot,
     filters.itemCode,
+    filters.line,
+    filters.shift,
+    filters.status,
     filters.workflowState,
     filters.inspectionResult,
   ])
@@ -21,6 +24,10 @@ function validateFilters(filters: ReportFilters): ReportFilters {
       throw new AppError('VALIDATION_INVALID_QUERY', { userSafe: true });
   if (filters.releaseSystem !== undefined && typeof filters.releaseSystem !== 'boolean')
     throw new AppError('VALIDATION_INVALID_QUERY', { userSafe: true });
+  if (
+    (filters.page !== undefined && (!Number.isInteger(filters.page) || filters.page < 1 || filters.page > 1_000)) ||
+    (filters.pageSize !== undefined && (!Number.isInteger(filters.pageSize) || filters.pageSize < 1 || filters.pageSize > 100))
+  ) throw new AppError('VALIDATION_INVALID_QUERY', { userSafe: true });
   return { ...filters };
 }
 function requirePermission(
@@ -53,8 +60,12 @@ export class RunReportUseCase {
   ) {}
   async execute(actor: ActorContext, code: string, filters: ReportFilters): Promise<ReportDataset> {
     const definition = this.registry.get(code);
+    if (!this.registry.canView(actor, definition)) throw new AppError('AUTHZ_DENIED');
     requirePermission(actor, definition.viewPermission, 'VIEW');
     requirePermission(actor, definition.runPermission, 'RUN');
-    return this.query.run(definition, actor, validateFilters(filters));
+    const safeFilters = validateFilters(filters);
+    if (Object.keys(safeFilters).some((key) => !definition.filterKeys.includes(key as keyof ReportFilters) && key !== 'page' && key !== 'pageSize'))
+      throw new AppError('VALIDATION_INVALID_QUERY', { userSafe: true });
+    return this.query.run(definition, actor, safeFilters);
   }
 }

@@ -13,20 +13,27 @@ const code = Astro.params.reportCode ?? '';
 const { registry } = reportingDependencies();
 const fallbackDefinition = registry.list()[0]!;
 let definition = fallbackDefinition;
-let report: Awaited<ReturnType<RunReportUseCase['execute']>> = { definition, columns: [], rows: [] };
+let report: Awaited<ReturnType<RunReportUseCase['execute']>> = { definition, columns: [], rows: [], page: 1, pageSize: 50, hasMore: false };
 let filters: ReturnType<typeof parseReportFilters> = {};
 let accessDenied = false;
 let providerUnavailable = false;
 let invalidFilters = false;
 try { definition = registry.get(code); filters = parseReportFilters(Astro.url.searchParams); report = await reportingDependencies().run.execute(actor, code, filters); } catch (error) { if (error instanceof AppError && error.code === 'RESOURCE_NOT_FOUND') Astro.response.status = 404; else if (error instanceof AppError && error.code.startsWith('AUTHZ_')) { accessDenied = true; Astro.response.status = 403; } else if (error instanceof AppError && error.code.startsWith('VALIDATION_')) { invalidFilters = true; Astro.response.status = 400; } else { providerUnavailable = true; Astro.response.status = 503; } }
-const hasReportFilters = Object.values(filters).some((value) => value !== undefined);
+const canExportCsv = registry.canExport(actor, definition, 'CSV');
+const canExportXlsx = registry.canExport(actor, definition, 'XLSX');
+const hasReportFilters = Object.entries(filters).some(([key, value]) => value !== undefined && key !== 'page' && key !== 'pageSize');
 const snapshotRef = reportSnapshotRef(report, actor, filters);
-const provenance = createReportProvenance(definition, actor, filters, report.rows.length, new Date(), snapshotRef);
+const provenance = createReportProvenance(definition, actor, filters, report, new Date(), snapshotRef);
 const exportQuery = new URLSearchParams(
   Object.entries(filters).filter((entry): entry is [string, string | number | boolean] => entry[1] !== undefined)
     .map(([key, value]) => [key, String(value)]),
 ).toString();
 const pinnedExportQuery = [exportQuery, `snapshot=${snapshotRef}`].filter(Boolean).join('&');
+const pageHref = (page: number) => {
+  const params = new URLSearchParams(exportQuery);
+  params.set('page', String(page));
+  return `/reports/${definition.code}?${params.toString()}`;
+};
 ---
 <AppLayout title={`${definition?.title ?? 'Report'} · QC Operations`} locale="en" direction="ltr">
   {Astro.response.status === 404 ? <section class="empty"><h1>Report not found</h1><p>This report code is not registered.</p><a href="/reports">Back to reports</a></section> : accessDenied ? <section class="empty" role="alert"><h1>Not authorized</h1><p>Your account cannot view this report. No report rows or counts were returned.</p><a href="/reports">Back to reports</a></section> : invalidFilters ? <section class="empty" role="alert"><h1>Filters need attention</h1><p>One or more filter values are invalid. No report was generated.</p><a href={`/reports/${code}`}>Clear filters</a></section> : providerUnavailable ? <section class="empty" role="status"><h1>Report unavailable</h1><p>The report source did not confirm a result. No empty state or row count is shown.</p><a href={`/reports/${code}`}>Retry</a></section> : <>
@@ -37,6 +44,22 @@ const pinnedExportQuery = [exportQuery, `snapshot=${snapshotRef}`].filter(Boolea
       </Fragment>
       <Fragment slot="actions"><a href="/reports">All reports</a></Fragment>
     </PageHeader>
+
+    <form class="report-filters" method="get" role="search" aria-label={`Filter ${definition.title}`}>
+      <h2>Filters</h2>
+      {definition.filterKeys.includes('from') && <label>From <input type="date" name="from" value={filters.from} /></label>}
+      {definition.filterKeys.includes('to') && <label>To <input type="date" name="to" value={filters.to} /></label>}
+      {definition.filterKeys.includes('itemCode') && <label>Item or equipment code <input name="itemCode" maxlength="100" value={filters.itemCode} /></label>}
+      {definition.filterKeys.includes('lot') && <label>Lot <input name="lot" maxlength="100" value={filters.lot} /></label>}
+      {definition.filterKeys.includes('line') && <label>Production line <input name="line" maxlength="100" value={filters.line} /></label>}
+      {definition.filterKeys.includes('shift') && <label>Shift <input name="shift" maxlength="100" value={filters.shift} /></label>}
+      {definition.filterKeys.includes('status') && <label>State <input name="status" maxlength="100" value={filters.status} /></label>}
+      {definition.filterKeys.includes('workflowState') && <label>Receiving state <input name="workflowState" maxlength="100" value={filters.workflowState} /></label>}
+      {definition.filterKeys.includes('inspectionResult') && <label>Inspection result <input name="inspectionResult" maxlength="100" value={filters.inspectionResult} /></label>}
+      {definition.filterKeys.includes('releaseSystem') && <label>Release system state <select name="releaseSystem" value={filters.releaseSystem === undefined ? '' : String(filters.releaseSystem)}><option value="">Any</option><option value="true">Released</option><option value="false">Not released</option></select></label>}
+      {filters.pageSize !== undefined && <input type="hidden" name="pageSize" value={filters.pageSize} />}
+      <div class="filter-actions"><button type="submit">Apply filters</button><a href={`/reports/${definition.code}`}>Clear filters</a></div>
+    </form>
 
     <div class="report-detail">
       <section class="record-summary" aria-label="Report identity and state">
@@ -51,23 +74,30 @@ const pinnedExportQuery = [exportQuery, `snapshot=${snapshotRef}`].filter(Boolea
         <h2 id="report-facts-heading">Report facts</h2>
         <dl class="report-facts">
           <div><dt>Source</dt><dd>{provenance.source}</dd></div>
+          <div><dt>Source tables</dt><dd>{provenance.sourceTables}</dd></div>
+          <div><dt>Source record IDs on this page</dt><dd>{provenance.sourceRecordIds}</dd></div>
+          <div><dt>As of (UTC)</dt><dd><time datetime={provenance.asOf}>{provenance.asOf}</time></dd></div>
+          <div><dt>Method revisions</dt><dd>{provenance.methodRevisions}</dd></div>
+          <div><dt>Source limitation</dt><dd>{provenance.limitation}</dd></div>
           <div><dt>Prepared by</dt><dd>{provenance.generatedBy}</dd></div>
           <div><dt>Actor scope</dt><dd>{provenance.scope}</dd></div>
+          <div><dt>Permission rule</dt><dd>{provenance.accessRule}</dd></div>
           <div><dt>Period</dt><dd>{provenance.period}</dd></div>
           <div><dt>Filters</dt><dd>{provenance.filters}</dd></div>
           <div><dt>Sort</dt><dd>{provenance.sort}</dd></div>
           <div><dt>Generated at</dt><dd><time datetime={provenance.generatedAt}>{provenance.generatedAt}</time> (UTC)</dd></div>
-          <div><dt>Rows</dt><dd>{provenance.count} records</dd></div>
+          <div><dt>Rows on this page</dt><dd>{provenance.count} records</dd></div>
         </dl>
       </section>
 
       <section class="report-section" aria-labelledby="report-evidence-heading">
         <h2 id="report-evidence-heading">Report evidence</h2>
         <div class="report-result" role="status">
-          <strong>{report.rows.length} authorized records</strong>
-          <span>{report.rows.length === 0 ? hasReportFilters ? 'No records match the applied filters. Clear filters to broaden the view.' : 'No records are available in your permitted scope.' : 'Filters applied on the server.'}</span>
+          <strong>{report.rows.length} authorized records on this page</strong>
+          <span>{report.rows.length === 0 ? hasReportFilters ? 'No records match the applied filters. Clear filters to broaden the view.' : 'No records are available in your permitted scope.' : `Page ${report.page ?? 1}. ${report.hasMore ? 'More records are available.' : 'End of available records.'}`}</span>
         </div>
         <p class="print-copy-watermark">UNAPPROVED INFORMATIONAL COPY — NOT A CONTROLLED RECORD</p>
+        {definition.sourceLimitation && <p class="report-limitation" role="note">{definition.sourceLimitation}</p>}
         <div class="report-table-panel">
           <div class="table-controls">
             <label class="density-control">Row density<select aria-label="Row density" id="report-density"><option value="comfortable">Comfortable</option><option value="standard" selected>Standard</option><option value="compact">Compact</option></select></label>
@@ -81,6 +111,11 @@ const pinnedExportQuery = [exportQuery, `snapshot=${snapshotRef}`].filter(Boolea
             </table>
           </div>
         </div>
+        <nav class="report-pagination" aria-label="Report pages">
+          {report.page && report.page > 1 ? <a href={pageHref(report.page - 1)}>Previous page</a> : <span aria-disabled="true">Previous page</span>}
+          <span>Page {report.page ?? 1} · up to {report.pageSize ?? 50} rows</span>
+          {report.hasMore ? <a href={pageHref((report.page ?? 1) + 1)}>Next page</a> : <span aria-disabled="true">Next page</span>}
+        </nav>
       </section>
 
       <div class="detail-context">
@@ -97,8 +132,9 @@ const pinnedExportQuery = [exportQuery, `snapshot=${snapshotRef}`].filter(Boolea
       <section class="report-section report-actions" aria-labelledby="report-actions-heading">
         <h2 id="report-actions-heading">Available actions</h2>
         <div class="export-links">
-          <a href={`/reports/${definition.code}/export?format=csv&${pinnedExportQuery}`}>Export CSV</a>
-          <a href={`/reports/${definition.code}/export?format=xlsx&${pinnedExportQuery}`}>Export XLSX</a>
+          {canExportCsv && <a href={`/reports/${definition.code}/export?format=csv&${pinnedExportQuery}`}>Export CSV</a>}
+          {canExportXlsx && <a href={`/reports/${definition.code}/export?format=xlsx&${pinnedExportQuery}`}>Export XLSX</a>}
+          {!canExportCsv && !canExportXlsx && <p class="privacy-note">Your account does not have an export permission for this report.</p>}
         </div>
         <p class="privacy-note" role="note">Export files contain the report data shown here and download through your browser. Keep exported copies in an approved secure location; copies outside the app are not covered by its access or correction controls.</p>
       </section>
@@ -125,6 +161,14 @@ const pinnedExportQuery = [exportQuery, `snapshot=${snapshotRef}`].filter(Boolea
 <style>
 .record-code{margin:0 0 var(--space-2);color:var(--text-muted);font-size:var(--font-size-xs);font-weight:var(--font-weight-semibold);letter-spacing:.06em}
 .report-detail{display:grid;gap:var(--space-5)}
+.report-filters{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,14rem),1fr));gap:var(--space-3);margin-block-end:var(--space-5);padding:var(--space-5);border:1px solid var(--color-border-subtle);border-radius:var(--radius-lg);background:var(--surface-raised)}
+.report-filters h2{grid-column:1/-1;margin:0;font-size:var(--font-size-lg)}
+.report-filters label{display:grid;gap:var(--space-1);min-inline-size:0;color:var(--text-secondary);font-size:var(--font-size-sm)}
+.report-filters input,.report-filters select{min-inline-size:0;min-block-size:var(--control-height);max-inline-size:100%}
+.filter-actions{display:flex;flex-wrap:wrap;align-items:center;gap:var(--space-3);grid-column:1/-1}
+.filter-actions button,.filter-actions a{display:inline-flex;min-block-size:max(var(--control-height),44px);align-items:center;padding-inline:var(--space-3)}
+.filter-actions a,.report-pagination a{color:var(--color-accent-primary-hover);text-underline-offset:.2em}
+.filter-actions :focus-visible,.report-pagination a:focus-visible{outline:2px solid var(--focus-ring);outline-offset:3px}
 .record-summary,.report-section{min-inline-size:0;padding:var(--space-5);border:1px solid var(--color-border-subtle);border-radius:var(--radius-lg);background:var(--surface-panel)}
 .record-summary{background:var(--surface-raised)}
 .record-summary dl,.report-facts{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,15rem),1fr));gap:var(--space-4);margin:0}
@@ -137,6 +181,9 @@ const pinnedExportQuery = [exportQuery, `snapshot=${snapshotRef}`].filter(Boolea
 .report-result{display:flex;flex-wrap:wrap;align-items:baseline;gap:var(--space-2) var(--space-4);margin-block-end:var(--space-4);color:var(--text-secondary);font-size:var(--font-size-sm)}
 .report-result strong{color:var(--text-primary)}
 .report-result span{overflow-wrap:anywhere}
+.report-limitation{margin:0 0 var(--space-4);padding:var(--space-3) var(--space-4);border-inline-start:3px solid var(--status-warning);background:var(--surface-raised);color:var(--text-secondary);font-size:var(--font-size-sm);line-height:var(--line-height-normal)}
+.report-pagination{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:var(--space-3);padding-block-start:var(--space-4);color:var(--text-secondary);font-size:var(--font-size-sm)}
+.report-pagination a,.report-pagination span{display:inline-flex;min-block-size:44px;align-items:center}
 .detail-context{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--space-5)}
 .not-available{margin:0;color:var(--text-secondary);font-size:var(--font-size-sm);line-height:var(--line-height-normal)}
 .not-available strong{color:var(--text-primary)}
@@ -162,5 +209,5 @@ td{color:var(--text-secondary);overflow-wrap:anywhere}
 .print-copy-watermark{display:none}
 @media(max-width:760px){.detail-context{grid-template-columns:minmax(0,1fr)}}
 @media(max-width:600px){.table-controls{flex-direction:column;align-items:flex-start;flex-wrap:wrap;row-gap:var(--space-2)}}
-@media print{@page{size:A4 portrait;margin:12mm}.page-header-actions,.report-actions,.privacy-note,.density-control,.bulk-note{display:none!important}body{background:#fff}.print-copy-watermark{display:block;border-block:2px solid #111;padding:4px;text-align:center;font-size:9pt;font-weight:700;break-inside:avoid}.record-summary,.report-section{break-inside:avoid;color:#000;background:#fff;border:1px solid #777}.record-state,.record-summary dt,.report-facts dt{color:#000}.record-summary dd,.report-facts dd,.snapshot-note,.not-available{color:#000}.report-table-panel{border:0;overflow:visible}.table-scroll{border:0;overflow:visible}table{min-width:0;font-size:8pt;page-break-inside:auto}thead{display:table-header-group}tr{break-inside:avoid;page-break-inside:avoid}th,td{border:1px solid #999;padding:4px 6px;overflow-wrap:anywhere}th{background:#eee;color:#000}}
+@media print{@page{size:A4 portrait;margin:12mm}.page-header-actions,.report-actions,.report-filters,.report-pagination,.privacy-note,.density-control,.bulk-note{display:none!important}body{background:#fff}.print-copy-watermark{display:block;border-block:2px solid #111;padding:4px;text-align:center;font-size:9pt;font-weight:700;break-inside:avoid}.record-summary,.report-section{break-inside:avoid;color:#000;background:#fff;border:1px solid #777}.record-state,.record-summary dt,.report-facts dt{color:#000}.record-summary dd,.report-facts dd,.snapshot-note,.not-available{color:#000}.report-table-panel{border:0;overflow:visible}.table-scroll{border:0;overflow:visible}table{min-width:0;font-size:8pt;page-break-inside:auto}thead{display:table-header-group}tr{break-inside:avoid;page-break-inside:avoid}th,td{border:1px solid #999;padding:4px 6px;overflow-wrap:anywhere}th{background:#eee;color:#000}}
 </style>

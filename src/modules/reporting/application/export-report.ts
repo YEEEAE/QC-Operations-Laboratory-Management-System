@@ -64,7 +64,7 @@ export class ExportReportUseCase {
       definition,
       actor,
       filters,
-      dataset.rows.length,
+      dataset,
       this.now(),
       snapshot,
     );
@@ -73,7 +73,7 @@ export class ExportReportUseCase {
         ? csvBytes(dataset.rows, dataset.columns, metadata)
         : xlsxBytes(dataset.rows, dataset.columns, metadata);
     return {
-      filename: `${definition.code}.${format.toLowerCase()}`,
+      filename: `${definition.code.replace(/[^a-z0-9-]/gi, '-')}.${format.toLowerCase()}`,
       mimeType:
         format === 'CSV'
           ? 'text/csv; charset=utf-8'
