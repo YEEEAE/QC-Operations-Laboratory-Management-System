@@ -167,7 +167,7 @@ const correctionValues: Record<string, string> = {
 <AppLayout title={`${item.receivingNo} · Quarantine`} locale="en" direction="ltr">
   <p class="release-mode" role="status">{releaseProfile === 'pilot' ? 'PILOT · SIMULATED ONLY — no product release' : releaseProfile === 'production' ? 'PRODUCTION · approved authority and complete evidence required' : `${releaseProfile.toUpperCase()} · no physical product release is available`}</p>
   <div class="crumb"><a href="/quarantine">Quarantine</a><span aria-hidden="true">/</span><a href="/quarantine/receiving">Receiving items</a><span aria-hidden="true">/</span><span>{item.receivingNo}</span></div>
-  <section class="record-head" data-record-id={item.id} data-version={item.version.toString()} data-release-profile={releaseProfile}><div><p class="eyebrow">RECEIVING RECORD</p><h1>{item.receivingNo}</h1><p class="lede">{item.itemCode} · {item.description} · Lot {item.lot} · Supplier {item.supplier}</p></div><div class="version">Version <strong>{item.version.toString()}</strong></div></section>
+  <section class="record-head" data-record-id={item.id} data-version={item.version.toString()} data-release-profile={releaseProfile}><div><p class="eyebrow">RECEIVING RECORD</p><h1>{item.receivingNo}</h1><p class="lede">{item.itemCode} · {item.description} · Lot {item.lot} · Supplier {item.supplier}</p><a class="secondary" href={`/quarantine/traceability?itemCode=${encodeURIComponent(item.itemCode)}&lot=${encodeURIComponent(item.lot)}`}>Open lot traceability</a></div><div class="version">Version <strong>{item.version.toString()}</strong></div></section>
   <p role="status" data-result tabindex="-1" class="action-status"></p>
   {failure && (
     <FormErrorSummary

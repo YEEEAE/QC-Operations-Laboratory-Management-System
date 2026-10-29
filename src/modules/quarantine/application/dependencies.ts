@@ -43,6 +43,8 @@ import {
   ResolveInspectionTemplateUseCase,
 } from '../inspection/application/resolve-inspection-template.js';
 import { ManageItemTemplateMappingsUseCase } from '../inspection/application/manage-item-template-mappings.js';
+import { GetLotTraceabilityUseCase } from './lot-traceability.js';
+import { PostgresLotTraceabilityReader } from '../infrastructure/postgres-lot-traceability-reader.js';
 
 export function quarantineReadDependencies() {
   const database = getDatabase();
@@ -59,6 +61,9 @@ export function quarantineReadDependencies() {
 export function receivingReadDependencies() {
   const repository = new PostgresReceivingRepository(getDatabase());
   return { get: new GetReceivingUseCase(repository), list: new ListReceivingUseCase(repository) };
+}
+export function lotTraceabilityDependencies() {
+  return { get: new GetLotTraceabilityUseCase(new PostgresLotTraceabilityReader(getDatabase())) };
 }
 export function inspectionReadDependencies() {
   const repository = new PostgresInspectionRepository(getDatabase());

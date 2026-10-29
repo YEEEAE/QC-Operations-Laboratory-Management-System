@@ -1,0 +1,55 @@
+---
+import AppLayout from '../../../ui/layouts/AppLayout.astro';
+import { receivingReadDependencies } from '../../../modules/quarantine/application/dependencies.js';
+import { classifyReadFailure } from '../../../shared/errors/read-failure.js';
+const actor = Astro.locals.actor;
+if (!actor) return Astro.redirect(`/login?returnTo=${encodeURIComponent(Astro.url.pathname + Astro.url.search)}`);
+const itemCode = Astro.url.searchParams.get('itemCode')?.trim().slice(0, 120) ?? '';
+const lot = Astro.url.searchParams.get('lot')?.trim().slice(0, 120) ?? '';
+const site = Astro.url.searchParams.get('site')?.trim().slice(0, 120) ?? '';
+const workOrder = Astro.url.searchParams.get('workOrder')?.trim().slice(0, 120) ?? '';
+let records: Awaited<ReturnType<ReturnType<typeof receivingReadDependencies>['list']['execute']>> = [];
+let unavailable = false;
+let searched = false;
+if (itemCode && lot) {
+  searched = true;
+  try { records = await receivingReadDependencies().list.execute({ actor, itemCode, lot }); }
+  catch (error) {
+    if (classifyReadFailure(error) === 'UNAVAILABLE') unavailable = true;
+    else Astro.response.status = 404;
+  }
+}
+---
+<AppLayout title="Lot traceability · Quarantine" locale="en" direction="ltr">
+  <main class="traceability-search">
+    <header><p class="eyebrow">Quarantine · read only</p><h1>Lot traceability</h1><p>Find a receiving record by item code and lot. A receiving record is the anchor; similar lot text alone never joins records.</p></header>
+    <section class="panel" aria-labelledby="search-title">
+      <h2 id="search-title">Identify a lot</h2>
+      <form method="get" action="/quarantine/traceability" class="search-form">
+        <label>Item code <input name="itemCode" value={itemCode} required maxlength="120" autocomplete="off" /></label>
+        <label>Lot <input name="lot" value={lot} required maxlength="120" autocomplete="off" /></label>
+        <label>Site, if known <input name="site" value={site} maxlength="120" autocomplete="off" /></label>
+        <label>Work order, if known <input name="workOrder" value={workOrder} maxlength="120" autocomplete="off" /></label>
+        <button type="submit">Find receiving records</button>
+      </form>
+      {(site || workOrder) && <p class="note" role="status">Site and work order are retained as context. Receiving does not store a governed site or work-order link, so these values cannot disambiguate records.</p>}
+    </section>
+    {unavailable ? <section class="panel" role="status"><h2>Traceability search is unavailable</h2><p>The authorized receiving source could not be read. No records are shown.</p></section> : searched ? <section class="panel" aria-labelledby="matches-title">
+      <h2 id="matches-title">Authorized receiving matches</h2>
+      {records.length ? <ul class="matches">{records.map((record) => <li><a href={`/quarantine/traceability/${encodeURIComponent(record.id)}`}><strong>{record.receivingNo}</strong><span>{record.itemCode} · lot {record.lot}</span><span>{record.workflowState}</span></a></li>)}</ul> : <p role="status">No matching receiving record is available in your current scope.</p>}
+      {records.length > 1 && <p class="note">Several records match this exact item and lot. Open the intended receiving record; none is selected automatically.</p>}
+    </section> : null}
+  </main>
+</AppLayout>
+<style>
+  .traceability-search{max-width:76rem;margin:0 auto;padding:1.5rem;display:grid;gap:1.25rem;color:var(--text-primary)}
+  header h1{margin:.25rem 0}.eyebrow{color:var(--text-muted);text-transform:uppercase;letter-spacing:.08em;font-size:.75rem}
+  .panel{padding:1.25rem;border:1px solid var(--border-subtle);border-radius:var(--radius-lg);background:var(--surface-raised)}
+  .search-form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1rem;align-items:end}
+  label{display:grid;gap:.4rem;font-weight:600}input{min-width:0;min-height:2.75rem;padding:.55rem .7rem;border:1px solid var(--border-strong);border-radius:var(--radius-md);background:var(--surface-base);color:inherit}
+  button{min-height:2.75rem;padding:.55rem 1rem;border:0;border-radius:var(--radius-md);background:var(--action-primary);color:var(--text-on-action);font:inherit;font-weight:700;cursor:pointer}
+  .matches{list-style:none;padding:0;margin:0;display:grid;gap:.5rem}.matches a{display:grid;grid-template-columns:1fr 1.5fr 1fr;gap:.75rem;padding:.8rem;border:1px solid var(--border-subtle);border-radius:var(--radius-md);color:inherit;text-decoration:none}.matches a:hover{text-decoration:underline}
+  .note{padding:.75rem;border-inline-start:3px solid var(--border-strong);background:var(--surface-subtle)}
+  :focus-visible{outline:3px solid var(--focus-ring);outline-offset:2px}
+  @media(max-width:42rem){.traceability-search{padding:1rem}.search-form{grid-template-columns:1fr}.matches a{grid-template-columns:1fr}}
+</style>

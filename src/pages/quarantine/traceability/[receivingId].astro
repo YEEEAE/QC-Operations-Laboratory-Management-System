@@ -1,0 +1,71 @@
+---
+import AppLayout from '../../../ui/layouts/AppLayout.astro';
+import StatusBadge from '../../../ui/components/StatusBadge.astro';
+import { lotTraceabilityDependencies } from '../../../modules/quarantine/application/dependencies.js';
+import { classifyReadFailure } from '../../../shared/errors/read-failure.js';
+import { formatDateTime } from '../../../shared/copy/format.js';
+const actor = Astro.locals.actor;
+if (!actor) return Astro.redirect(`/login?returnTo=${encodeURIComponent(Astro.url.pathname + Astro.url.search)}`);
+const eventTypes = ['RECEIVING', 'INSPECTION', 'LABORATORY', 'DOCUMENT'] as const;
+const requestedType = Astro.url.searchParams.get('type') ?? '';
+const type = eventTypes.includes(requestedType as (typeof eventTypes)[number]) ? requestedType as (typeof eventTypes)[number] : undefined;
+const from = Astro.url.searchParams.get('from') ?? undefined;
+const to = Astro.url.searchParams.get('to') ?? undefined;
+const validDate = (value?: string) => {
+  if (!value) return true;
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
+  const parsed = new Date(`${value}T00:00:00.000Z`);
+  return !Number.isNaN(parsed.getTime()) && parsed.toISOString().slice(0, 10) === value;
+};
+const invalidDate = !validDate(from) || !validDate(to) || Boolean(from && to && from > to);
+const invalidType = Boolean(requestedType && !type);
+if (invalidDate || invalidType) Astro.response.status = 400;
+let result: Awaited<ReturnType<ReturnType<typeof lotTraceabilityDependencies>['get']['execute']>> | undefined;
+let unavailable = false;
+let notFound = false;
+if (!invalidDate && !invalidType) {
+  try {
+    result = await lotTraceabilityDependencies().get.execute({ actor, receivingId: Astro.params.receivingId ?? '', type, from, to });
+  } catch (error) {
+    if (classifyReadFailure(error) === 'UNAVAILABLE') unavailable = true;
+    else notFound = true;
+  }
+}
+if (unavailable) Astro.response.status = 503;
+if (notFound) Astro.response.status = 404;
+---
+<AppLayout title={`${result?.record.receivingNo ?? 'Lot traceability'} · Quarantine`} locale="en" direction="ltr">
+  <main class="traceability-detail">
+    <nav class="crumb" aria-label="Breadcrumb"><a href="/quarantine">Quarantine</a><span aria-hidden="true">/</span><a href="/quarantine/receiving">Receiving items</a><span aria-hidden="true">/</span><span>Lot traceability</span></nav>
+    {invalidDate || invalidType ? <section class="panel" role="alert"><h1>Invalid event filter</h1><p>Choose an available event type and valid calendar dates in YYYY-MM-DD format.</p><a href={`/quarantine/traceability/${encodeURIComponent(Astro.params.receivingId ?? '')}`}>Clear filters</a></section>
+      : unavailable ? <section class="panel" role="status"><h1>Traceability is unavailable</h1><p>An authorized source could not be read. No partial timeline is shown.</p><a href="/quarantine/traceability">Return to search</a></section>
+      : notFound || !result ? <section class="panel" role="status"><h1>Receiving record unavailable</h1><p>The record does not exist or is outside your current access scope.</p><a href="/quarantine/traceability">Return to search</a></section>
+      : <>
+        <header class="record-head"><div><p class="eyebrow">READ-ONLY LOT TRACEABILITY</p><h1>{result.record.receivingNo}</h1><p>{result.record.itemCode} · Lot {result.record.lot}</p></div><a href="/quarantine/traceability">Search another lot</a></header>
+        <section class="facts" aria-label="Source states"><div><span>Receiving workflow</span><strong>{result.record.workflowState}</strong></div><div><span>Inspection result</span><StatusBadge status={result.record.inspectionResult} /></div><div><span>Release system state</span><strong>{result.record.releaseState}</strong></div></section>
+        <p class="note">Inspection result and release system state are separate source facts. This timeline does not create or change workflow state.</p>
+        <section class="panel" aria-labelledby="filters-title"><h2 id="filters-title">Filter events</h2><form method="get" class="filters">
+          <label>Event type<select name="type"><option value="">All available types</option>{eventTypes.map((eventType) => <option value={eventType} selected={type === eventType}>{eventType}</option>)}</select></label>
+          <label>From date<input type="date" name="from" value={from ?? ''} /></label><label>To date<input type="date" name="to" value={to ?? ''} /></label>
+          <button type="submit">Apply filters</button><a href={`/quarantine/traceability/${encodeURIComponent(result.record.id)}`}>Clear</a>
+        </form></section>
+        <section class="panel" aria-labelledby="timeline-title"><div class="panel-heading"><h2 id="timeline-title">Recorded source events</h2><span>{result.events.length} shown</span></div>
+          {!result.auditEventsAvailable ? <p role="status">Event history is unavailable under the current audit permissions. No event details or counts are disclosed.</p>
+            : result.events.length ? <ol class="timeline">{result.events.map((event) => <li><time datetime={event.occurredAt.toISOString()}>{formatDateTime(event.occurredAt)}</time><div><p class="event-type">{event.type}</p><h3>{event.action}</h3>{event.state && <p>Recorded state: <strong>{event.state}</strong></p>}<p>Source revision: {event.sourceRevision}</p>{event.actorId && <p>Actor: {event.actorId}</p>}<a href={event.href}>Open source record</a></div></li>)}</ol>
+              : <p role="status">No authorized source events match these filters.</p>}
+        </section>
+        <section class="panel" aria-labelledby="unresolved-title"><h2 id="unresolved-title">Unresolved source links</h2><p>These source families are not joined to this receiving record unless a controlled foreign key or crosswalk is available.</p><ul>{result.unresolvedSources.map((source) => <li><strong>{source.label}:</strong> {source.reason}</li>)}</ul></section>
+      </>}
+  </main>
+</AppLayout>
+<style>
+  .traceability-detail{max-width:82rem;margin:0 auto;padding:1.5rem;display:grid;gap:1rem;color:var(--text-primary)}
+  .crumb{display:flex;gap:.5rem;align-items:center;color:var(--text-muted);font-size:.875rem}.crumb a{color:inherit}
+  .record-head,.panel-heading{display:flex;align-items:center;justify-content:space-between;gap:1rem}.record-head h1{margin:.2rem 0}.record-head> a{white-space:nowrap}.eyebrow,.event-type{font-size:.75rem;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)}
+  .facts{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:.75rem}.facts>div{display:grid;gap:.35rem;padding:1rem;border:1px solid var(--border-subtle);border-radius:var(--radius-md);background:var(--surface-raised)}.facts span{color:var(--text-muted);font-size:.875rem}
+  .panel{padding:1.2rem;border:1px solid var(--border-subtle);border-radius:var(--radius-lg);background:var(--surface-raised)}.note{padding:.75rem;border-inline-start:3px solid var(--border-strong);background:var(--surface-subtle)}
+  .filters{display:flex;flex-wrap:wrap;align-items:end;gap:.75rem}.filters label{display:grid;gap:.35rem}.filters input,.filters select{min-height:2.6rem;padding:.4rem .6rem;border:1px solid var(--border-strong);border-radius:var(--radius-md);background:var(--surface-base);color:inherit}.filters button{min-height:2.6rem;padding:.4rem .9rem;border:0;border-radius:var(--radius-md);background:var(--action-primary);color:var(--text-on-action);font:inherit;font-weight:700;cursor:pointer}
+  .timeline{list-style:none;padding:0;margin:1rem 0 0}.timeline li{position:relative;display:grid;grid-template-columns:minmax(10rem,15rem) 1fr;gap:1rem;padding:0 0 1.25rem 1.4rem;border-inline-start:2px solid var(--border-strong)}.timeline li:last-child{border-inline-start-color:transparent;padding-bottom:0}.timeline li::before{content:"";position:absolute;inset-inline-start:-.43rem;top:.15rem;width:.7rem;height:.7rem;border-radius:50%;background:var(--action-primary);border:2px solid var(--surface-raised)}.timeline time{font-variant-numeric:tabular-nums;color:var(--text-muted)}.timeline h3{margin:.25rem 0}.timeline p{margin:.25rem 0}.timeline a{display:inline-block;margin-top:.25rem}
+  :focus-visible{outline:3px solid var(--focus-ring);outline-offset:2px}
+  @media(max-width:48rem){.traceability-detail{padding:1rem}.facts{grid-template-columns:1fr}.timeline li{grid-template-columns:1fr;gap:.25rem}.record-head{align-items:start;flex-direction:column}}
+</style>
