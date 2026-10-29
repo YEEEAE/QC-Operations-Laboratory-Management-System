@@ -1,0 +1,352 @@
+---
+import AppLayout from '../../../ui/layouts/AppLayout.astro';
+import PageHeader from '../../../ui/components/PageHeader.astro';
+import ErrorState from '../../../ui/components/feedback/ErrorState.astro';
+import ProviderUnavailableState from '../../../ui/components/feedback/ProviderUnavailableState.astro';
+import { actions } from 'astro:actions';
+import { inProcessReadDependencies } from '../../../modules/in-process/application/dependencies.js';
+import { uuidv7 } from '../../../shared/id/uuid.js';
+import { formatDateTime } from '../../../shared/copy/format.js';
+import {
+  RUN_STATE_LABELS,
+  COMPARISON_LABELS,
+  DEVIATION_STATUS_LABELS,
+  SEVERITY_LABELS,
+  CATEGORY_LABELS,
+  DISPOSITION_LABELS,
+  describeInProcessError,
+} from '../../../ui/in-process/labels.js';
+import type { InProcessWorkspaceView } from '../../../modules/in-process/application/workspace-view.js';
+
+const actor = Astro.locals.actor;
+const runId = Astro.params.runId ?? '';
+if (!actor) return Astro.redirect(`/login?returnTo=${encodeURIComponent(Astro.url.pathname)}`);
+
+const dependencies = inProcessReadDependencies();
+let view: InProcessWorkspaceView | undefined;
+let unavailable: 'DENIED' | 'MISSING' | 'PROVIDER' | undefined;
+try {
+  view = await dependencies.workspace.execute({ actor, runId });
+} catch (error) {
+  const category = (error as { category?: string }).category;
+  const code = (error as { code?: string }).code;
+  unavailable = category === 'AUTHORIZATION' ? 'DENIED' : code === 'RESOURCE_NOT_FOUND' ? 'MISSING' : 'PROVIDER';
+}
+
+let feedback = Astro.url.searchParams.get('updated') ? 'The recorded change was accepted.' : '';
+let failed = false;
+let fieldMessages: readonly string[] = [];
+
+if (Astro.request.method === 'POST' && view) {
+  if (Astro.request.headers.get('origin') !== Astro.url.origin) {
+    Astro.response.status = 403;
+    feedback = 'This request must come from this application origin.';
+    failed = true;
+  } else {
+    const form = await Astro.request.formData();
+    const text = (name: string) => String(form.get(name) ?? '').trim();
+    const intent = text('intent');
+    const expectedVersion = BigInt(text('expectedVersion') || '0');
+    try {
+      const result = await (async () => {
+        switch (intent) {
+          case 'dispose':
+            return Astro.callAction(actions.inProcess.disposeDeviation, {
+              requestId: text('requestId'),
+              runId: view!.run.id,
+              expectedVersion,
+              deviationId: text('deviationId'),
+              severity: text('severity') as 'MINOR',
+              status: text('status') as 'ACCEPTED_FOR_CONTINUATION',
+              dispositionNote: text('dispositionNote'),
+            });
+          case 'return':
+            return Astro.callAction(actions.inProcess.reviewRun, {
+              requestId: text('requestId'),
+              runId: view!.run.id,
+              expectedVersion,
+              action: 'RETURN',
+              reason: text('reason'),
+            });
+          case 'qc-review':
+            return Astro.callAction(actions.inProcess.reviewRun, {
+              requestId: text('requestId'),
+              runId: view!.run.id,
+              expectedVersion,
+              action: 'QC_REVIEW',
+              reason: text('reason') || undefined,
+            });
+          case 'close':
+            return Astro.callAction(actions.inProcess.closeRun, {
+              requestId: text('requestId'),
+              runId: view!.run.id,
+              expectedVersion,
+              disposition: text('disposition') as 'ACCEPTED_FOR_CONTINUATION',
+              dispositionNote: text('dispositionNote'),
+            });
+          default:
+            throw new Error('Unknown request.');
+        }
+      })();
+      if (result?.error) {
+        const fields = (result.error as { fields?: Record<string, readonly string[]> }).fields ?? {};
+        fieldMessages = Object.values(fields).flat();
+        throw new Error(result.error.message);
+      }
+      return Astro.redirect(`/in-process/${view.run.id}/review?updated=${intent}`, 303);
+    } catch (error) {
+      failed = true;
+      feedback = describeInProcessError(
+        (error as { message?: string }).message,
+        'The request was not accepted. Re-check the review state, the recorded disposition, and the current record version.',
+      );
+    }
+  }
+}
+
+const outsideLimitReadings = view
+  ? view.checkpoints.flatMap((checkpoint) =>
+      checkpoint.readings
+        .filter(
+          (reading) =>
+            reading.entryState !== 'SUPERSEDED' &&
+            reading.comparisonState === 'OUTSIDE_TRANSCRIBED_LIMITS',
+        )
+        .map((reading) => ({ reading, checkpoint })),
+    )
+  : [];
+const verifiedCheckpoints = view
+  ? view.checkpoints.filter((checkpoint) => checkpoint.checkpoint.verificationState === 'QC_VERIFIED').length
+  : 0;
+---
+<AppLayout title={`QC review · ${view?.run.runNo ?? 'In-process'} · QC Operations`} locale="en" direction="ltr">
+  {unavailable ? (
+    unavailable === 'DENIED' ? (
+      <ErrorState
+        title="This QC review is not available to your account"
+        description="The server refused the read. No record detail is shown."
+        retryHref="/in-process"
+      />
+    ) : unavailable === 'MISSING' ? (
+      <ErrorState
+        title="In-process run not found"
+        description="No record matches this reference."
+        retryHref="/in-process"
+      />
+    ) : (
+      <ProviderUnavailableState
+        title="The in-process run could not be read"
+        description="No confirmed record was returned, so nothing is shown."
+        retryHref={`/in-process/${runId}/review`}
+      />
+    )
+  ) : view ? (
+    <>
+      <PageHeader title={`QC review · ${view.run.runNo}`} purpose={`${view.run.itemCode} · Lot ${view.run.lotNo} · ${RUN_STATE_LABELS[view.run.state] ?? view.run.state}`}>
+        <Fragment slot="actions"><a href={`/in-process/${view.run.id}`}>Back to the run</a></Fragment>
+      </PageHeader>
+
+      <div role={failed ? 'alert' : 'status'} aria-live={failed ? 'assertive' : 'polite'} class="feedback">
+        {feedback && <p>{feedback}</p>}
+        {fieldMessages.length > 0 && (
+          <ul>{fieldMessages.map((message) => <li>{message}</li>)}</ul>
+        )}
+      </div>
+
+      <section class="panel" aria-labelledby="evidence-title">
+        <h2 id="evidence-title">Recorded evidence</h2>
+        <dl class="facts">
+          <div><dt>Work instruction</dt><dd>{view.run.wi.documentNo} · Revision {view.run.wi.revision}</dd></div>
+          <div><dt>Checkpoints</dt><dd>{view.checkpoints.length} transcribed · {verifiedCheckpoints} QC verified</dd></div>
+          <div><dt>Recorded readings</dt><dd>{view.checkpoints.reduce((total, checkpoint) => total + checkpoint.recordedCount, 0)}</dd></div>
+          <div><dt>Draft entries</dt><dd>{view.checkpoints.reduce((total, checkpoint) => total + checkpoint.draftCount, 0)}</dd></div>
+          <div><dt>Deviations</dt><dd>{view.deviations.length}</dd></div>
+          <div><dt>Product release</dt><dd>{view.run.productReleaseState}</dd></div>
+        </dl>
+        {outsideLimitReadings.length > 0 ? (
+          <div class="table-wrap" role="region" aria-label="Readings outside the transcribed bounds" tabindex="0">
+            <table>
+              <caption>Readings outside the bounds transcribed from the work instruction</caption>
+              <thead>
+                <tr><th scope="col">Checkpoint</th><th scope="col">Value</th><th scope="col">Comparison</th><th scope="col">Observed</th><th scope="col">Recorded by</th></tr>
+              </thead>
+              <tbody>
+                {outsideLimitReadings.map(({ reading, checkpoint }) => (
+                  <tr>
+                    <td>{checkpoint.checkpoint.parameterName}</td>
+                    <td>{reading.valueText} {reading.unit ?? ''}</td>
+                    <td>{COMPARISON_LABELS[reading.comparisonState] ?? reading.comparisonState}</td>
+                    <td>{formatDateTime(reading.observedAt)}</td>
+                    <td>{reading.recordedLoginIdentity}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <p class="note">No recorded reading sits outside the transcribed bounds. This is a comparison fact, not a scientific PASS result.</p>
+        )}
+      </section>
+
+      <section class="panel" aria-labelledby="deviations-title">
+        <h2 id="deviations-title">Deviation dispositions</h2>
+        {view.deviations.length === 0 ? (
+          <p class="note">No deviation is recorded for this run.</p>
+        ) : (
+          <ul class="deviation-list">
+            {view.deviations.map((deviation) => (
+              <li>
+                <h3>{deviation.deviationNo} · {CATEGORY_LABELS[deviation.category] ?? deviation.category}</h3>
+                <p>{deviation.description}</p>
+                <p class="meta">
+                  {SEVERITY_LABELS[deviation.severity] ?? deviation.severity} · {DEVIATION_STATUS_LABELS[deviation.status] ?? deviation.status} ·
+                  Flagged by {deviation.flaggedLoginIdentity} · {formatDateTime(deviation.flaggedAt)} · Snapshot {deviation.snapshotSha256.slice(0, 16)}…
+                </p>
+                {deviation.dispositionNote && <p class="meta">Recorded disposition: {deviation.dispositionNote}</p>}
+                {view.capabilities.disposeDeviation && ['AWAITING_QC_REVIEW', 'QC_REVIEWED'].includes(view.run.state) && (
+                  <form method="post" class="inline-form">
+                    <input type="hidden" name="intent" value="dispose" />
+                    <input type="hidden" name="requestId" value={uuidv7()} />
+                    <input type="hidden" name="expectedVersion" value={String(view.run.version)} />
+                    <input type="hidden" name="deviationId" value={deviation.id} />
+                    <label>
+                      QC classification
+                      <select name="severity" required>
+                        <option value="MINOR">Minor</option>
+                        <option value="MAJOR">Major</option>
+                        <option value="CRITICAL">Critical</option>
+                      </select>
+                    </label>
+                    <label>
+                      Disposition
+                      <select name="status" required>
+                        <option value="ACCEPTED_FOR_CONTINUATION">Accept as recorded for continuation</option>
+                        <option value="ESCALATED">Escalate for a quality decision</option>
+                        <option value="CLOSED">Close the deviation record</option>
+                      </select>
+                    </label>
+                    <label class="wide">Disposition note <textarea name="dispositionNote" required maxlength="4000" rows="2"></textarea></label>
+                    <div class="actions"><button type="submit">Record deviation disposition</button></div>
+                  </form>
+                )}
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
+
+      <section class="panel" aria-labelledby="review-title">
+        <h2 id="review-title">QC review decision</h2>
+        <p class="note">
+          Review confirms the recorded evidence was checked by a second person. It does not convert the run into a
+          scientific PASS/FAIL result and does not release product.
+        </p>
+        {view.run.state !== 'AWAITING_QC_REVIEW' ? (
+          <p class="note">No review decision is available while the run is in {RUN_STATE_LABELS[view.run.state] ?? view.run.state}.</p>
+        ) : view.capabilities.reviewRun ? (
+          <div class="decision-grid">
+            <form method="post" class="inline-form single">
+              <input type="hidden" name="intent" value="return" />
+              <input type="hidden" name="requestId" value={uuidv7()} />
+              <input type="hidden" name="expectedVersion" value={String(view.run.version)} />
+              <label>Reason for returning <textarea name="reason" required maxlength="2000" rows="2"></textarea></label>
+              <div class="actions"><button type="submit" class="secondary">Return for correction</button></div>
+            </form>
+            <form method="post" class="inline-form single">
+              <input type="hidden" name="intent" value="qc-review" />
+              <input type="hidden" name="requestId" value={uuidv7()} />
+              <input type="hidden" name="expectedVersion" value={String(view.run.version)} />
+              <label>Review note (optional) <textarea name="reason" maxlength="2000" rows="2"></textarea></label>
+              <div class="actions"><button type="submit">Record QC review</button></div>
+            </form>
+          </div>
+        ) : (
+          <p class="note">Recording a QC review requires the PERM-INP-REVIEW permission, which is not granted to this account.</p>
+        )}
+      </section>
+
+      <section class="panel" aria-labelledby="close-title">
+        <h2 id="close-title">Close the run</h2>
+        {view.closeBlockers.length > 0 ? (
+          <ul class="blockers">
+            {view.closeBlockers.map((blocker) => <li>{blocker}</li>)}
+          </ul>
+        ) : (
+          <p class="note">Every deviation has a recorded human disposition and the run is QC reviewed.</p>
+        )}
+        {view.run.state === 'QC_REVIEWED' && view.capabilities.closeRun ? (
+          <form method="post" class="inline-form">
+            <input type="hidden" name="intent" value="close" />
+            <input type="hidden" name="requestId" value={uuidv7()} />
+            <input type="hidden" name="expectedVersion" value={String(view.run.version)} />
+            <label>
+              Recorded disposition
+              <select name="disposition" required>
+                {Object.entries(DISPOSITION_LABELS).map(([value, label]) => <option value={value}>{label}</option>)}
+              </select>
+            </label>
+            <label class="wide">Disposition note <textarea name="dispositionNote" required maxlength="4000" rows="2"></textarea></label>
+            <div class="actions"><button type="submit">Close run</button></div>
+          </form>
+        ) : null}
+        <p class="note">{view.productReleaseStatement}</p>
+      </section>
+
+      <section class="panel" aria-labelledby="history-title">
+        <h2 id="history-title">Revision history</h2>
+        <div class="table-wrap" role="region" aria-label="In-process revision history" tabindex="0">
+          <table>
+            <caption>Append-only events with the snapshot hash taken at that revision</caption>
+            <thead><tr><th scope="col">Revision</th><th scope="col">Event</th><th scope="col">Actor</th><th scope="col">At</th></tr></thead>
+            <tbody>
+              {view.events.map((event) => (
+                <tr>
+                  <td>{String(event.revisionNumber)}</td>
+                  <td>{event.eventType}{event.reason ? <small>{event.reason}</small> : null}</td>
+                  <td>{event.actorLoginIdentity}</td>
+                  <td>{formatDateTime(event.occurredAt)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </>
+  ) : null}
+</AppLayout>
+
+<style>
+  .feedback { margin: 0 0 var(--space-4); color: var(--text-secondary); font-size: var(--font-size-sm); }
+  .feedback p { margin: 0; }
+  .feedback ul { margin: var(--space-2) 0 0; padding-inline-start: var(--space-4); color: var(--status-warning); }
+  .panel { margin-block-end: var(--space-5); padding: var(--space-5); background: var(--surface-panel); border: 1px solid var(--color-border-subtle); border-radius: var(--radius-lg); }
+  .panel h2 { margin: 0 0 var(--space-3); font-size: var(--font-size-lg); }
+  .facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 14rem), 1fr)); gap: var(--space-3); margin: 0; }
+  .facts dt { color: var(--text-muted); font-size: var(--font-size-xs); }
+  .facts dd { margin: 2px 0 0; color: var(--text-primary); font-size: var(--font-size-sm); overflow-wrap: anywhere; }
+  .note { margin: var(--space-3) 0 0; max-inline-size: 78ch; color: var(--text-muted); font-size: var(--font-size-sm); line-height: 1.55; }
+  .table-wrap { margin-block-start: var(--space-3); overflow-x: auto; }
+  table { inline-size: 100%; min-inline-size: 40rem; border-collapse: collapse; font-size: var(--font-size-sm); }
+  caption { text-align: start; padding-block-end: var(--space-2); color: var(--text-muted); font-size: var(--font-size-xs); }
+  th, td { text-align: start; padding: var(--space-2) var(--space-3); border-block-start: 1px solid var(--color-border-subtle); vertical-align: top; overflow-wrap: anywhere; }
+  th { color: var(--text-muted); font-size: var(--font-size-xs); }
+  td small { display: block; color: var(--text-muted); font-size: var(--font-size-xs); }
+  .deviation-list { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--space-3); }
+  .deviation-list li { padding: var(--space-3); border: 1px solid var(--color-border-subtle); border-radius: var(--radius-md); }
+  .deviation-list h3 { margin: 0 0 var(--space-2); font-size: var(--font-size-sm); }
+  .deviation-list p { margin: 0 0 var(--space-1); font-size: var(--font-size-sm); color: var(--text-secondary); overflow-wrap: anywhere; }
+  .deviation-list .meta { color: var(--text-muted); font-size: var(--font-size-xs); }
+  .inline-form { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 13rem), 1fr)); gap: var(--space-3); margin-block-start: var(--space-3); }
+  .inline-form.single { grid-template-columns: 1fr; }
+  .inline-form label { display: grid; gap: var(--space-2); font-size: var(--font-size-sm); min-inline-size: 0; }
+  .inline-form .wide { grid-column: 1 / -1; }
+  .decision-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 18rem), 1fr)); gap: var(--space-4); }
+  input, select, textarea, button { min-block-size: 44px; inline-size: 100%; font: inherit; }
+  textarea { padding: var(--space-2); }
+  .actions { display: flex; flex-wrap: wrap; gap: var(--space-3); grid-column: 1 / -1; }
+  button { padding-inline: var(--space-4); inline-size: auto; border: 1px solid var(--color-accent-primary); border-radius: var(--radius-md); background: var(--color-accent-primary); color: var(--text-on-accent); font-weight: 600; cursor: pointer; }
+  button.secondary { background: transparent; color: var(--color-accent-primary-hover); }
+  .blockers { margin: 0; padding-inline-start: var(--space-4); color: var(--status-warning); font-size: var(--font-size-sm); }
+  a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
+  @media (max-width: 760px) { .panel { padding: var(--space-4); } }
+</style>

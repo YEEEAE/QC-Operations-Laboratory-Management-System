@@ -1422,6 +1422,171 @@ export interface DailyRejectThresholdDecisionsTable {
   formula_id: string | null; source_file_digest: string | null; approval_case_id: string | null;
   approval_state: string; version: Generated<bigint>; snapshot: unknown; snapshot_sha256: string; created_at: Generated<Date>;
 }
+export interface InProcessRunsTable {
+  id: Generated<string>;
+  run_no: string;
+  item_code: string;
+  item_name: string;
+  lot_no: string;
+  work_order_no: string | null;
+  batch_no: string | null;
+  production_line: string;
+  station: string | null;
+  machine: string | null;
+  shift_code: string;
+  state: string;
+  wi_document_id: string;
+  wi_document_version_id: string;
+  wi_document_no: string;
+  wi_revision: string;
+  wi_content_hash: string;
+  wi_effective_at: Date;
+  wi_source_file_digest: string;
+  wi_source_files_snapshot: unknown;
+  wi_applicability_asserted_by: string;
+  wi_applicability_verified_by: string | null;
+  wi_applicability_verified_at: Date | null;
+  form_document_id: string | null;
+  form_document_version_id: string | null;
+  form_document_no: string | null;
+  form_revision: string | null;
+  form_content_hash: string | null;
+  form_source_files_snapshot: unknown;
+  form_attachment_state: string;
+  operator_id: string;
+  operator_login_identity: string;
+  qc_observer_id: string | null;
+  qc_observer_login_identity: string | null;
+  qc_hold_state: Generated<string>;
+  product_release_state: Generated<string>;
+  disposition: string | null;
+  disposition_note: string | null;
+  started_at: Generated<Date>;
+  submitted_at: Date | null;
+  reviewed_at: Date | null;
+  closed_at: Date | null;
+  version: Generated<bigint>;
+  request_id: string;
+  created_at: Generated<Date>;
+  updated_at: Generated<Date>;
+}
+
+export interface InProcessCheckpointsTable {
+  id: Generated<string>;
+  run_id: string;
+  position: number;
+  step_reference: string;
+  parameter_name: string;
+  unit: string | null;
+  frequency_text: string;
+  sampling_text: string | null;
+  acceptance_criteria_text: string;
+  lower_limit_text: string | null;
+  upper_limit_text: string | null;
+  requirement_source: Generated<string>;
+  wi_revision: string;
+  verification_state: Generated<string>;
+  transcribed_by: string;
+  transcribed_login_identity: string;
+  transcribed_at: Generated<Date>;
+  verified_by: string | null;
+  verified_at: Date | null;
+  verified_against_revision: string | null;
+  version: Generated<bigint>;
+}
+
+export interface InProcessReadingsTable {
+  id: Generated<string>;
+  run_id: string;
+  checkpoint_id: string;
+  sample_reference: string | null;
+  entry_state: string;
+  value_text: string;
+  unit: string | null;
+  observed_at: Date;
+  comparison_state: string;
+  comparison_note: string | null;
+  recorded_by: string;
+  recorded_login_identity: string;
+  recorded_at: Generated<Date>;
+  superseded_by_reading_id: string | null;
+  superseded_at: Date | null;
+  superseded_reason: string | null;
+  request_id: string;
+}
+
+export interface InProcessDeviationsTable {
+  id: Generated<string>;
+  deviation_no: string;
+  run_id: string;
+  run_revision: bigint;
+  checkpoint_id: string | null;
+  reading_id: string | null;
+  category: string;
+  severity: Generated<string>;
+  description: string;
+  containment_state: string;
+  immediate_containment: string | null;
+  status: Generated<string>;
+  disposition_note: string | null;
+  classified_by: string | null;
+  classified_at: Date | null;
+  flagged_by: string;
+  flagged_login_identity: string;
+  flagged_at: Generated<Date>;
+  snapshot: unknown;
+  snapshot_sha256: string;
+  request_id: string;
+}
+
+export interface InProcessHoldRequestsTable {
+  id: Generated<string>;
+  run_id: string;
+  run_revision: bigint;
+  deviation_id: string | null;
+  reason: string;
+  status: Generated<string>;
+  decision_note: string | null;
+  requested_by: string;
+  requested_login_identity: string;
+  requested_at: Generated<Date>;
+  decided_by: string | null;
+  decided_at: Date | null;
+  request_id: string;
+}
+
+export interface InProcessHandoversTable {
+  id: Generated<string>;
+  run_id: string;
+  run_revision: bigint;
+  from_shift_code: string;
+  to_shift_code: string;
+  from_operator_id: string;
+  to_operator_id: string | null;
+  handover_note: string;
+  status: Generated<string>;
+  handed_over_by: string;
+  handed_over_login_identity: string;
+  handed_over_at: Generated<Date>;
+  accepted_by: string | null;
+  accepted_at: Date | null;
+  request_id: string;
+}
+
+export interface InProcessRunEventsTable {
+  id: Generated<string>;
+  run_id: string;
+  revision_number: bigint;
+  event_type: string;
+  actor_id: string;
+  actor_login_identity: string;
+  reason: string | null;
+  snapshot: unknown;
+  snapshot_sha256: string;
+  occurred_at: Generated<Date>;
+  request_id: string;
+}
+
 export interface ApprovalDecisionsTable {
   id: Generated<string>;
   approval_case_id: string;
@@ -1917,6 +2082,13 @@ export interface DatabaseSchema {
   approval_cases: ApprovalCasesTable;
   approval_work_items: ApprovalWorkItemsTable;
   reject_limit_profiles: RejectLimitProfilesTable;
+  in_process_runs: InProcessRunsTable;
+  in_process_checkpoints: InProcessCheckpointsTable;
+  in_process_readings: InProcessReadingsTable;
+  in_process_deviations: InProcessDeviationsTable;
+  in_process_hold_requests: InProcessHoldRequestsTable;
+  in_process_handovers: InProcessHandoversTable;
+  in_process_run_events: InProcessRunEventsTable;
   reject_limit_profile_events: RejectLimitProfileEventsTable;
   daily_reject_threshold_decisions: DailyRejectThresholdDecisionsTable;
   approval_decisions: ApprovalDecisionsTable;

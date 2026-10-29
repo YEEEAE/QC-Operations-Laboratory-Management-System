@@ -1,0 +1,205 @@
+---
+import AppLayout from '../../ui/layouts/AppLayout.astro';
+import PageHeader from '../../ui/components/PageHeader.astro';
+import ErrorState from '../../ui/components/feedback/ErrorState.astro';
+import { actions } from 'astro:actions';
+import { inProcessReadDependencies } from '../../modules/in-process/application/dependencies.js';
+import { uuidv7 } from '../../shared/id/uuid.js';
+import { describeInProcessError } from '../../ui/in-process/labels.js';
+import type { InProcessSourceCatalogue } from '../../modules/in-process/domain/read-model.js';
+
+const actor = Astro.locals.actor;
+if (!actor) return Astro.redirect(`/login?returnTo=${encodeURIComponent(Astro.url.pathname)}`);
+
+const canCreate = actor.permissions.some(
+  (grant) => grant.code === 'PERM-INP-CREATE' && grant.active !== false,
+);
+
+let catalogue: InProcessSourceCatalogue | undefined;
+let readFailed = false;
+try {
+  catalogue = await inProcessReadDependencies().sources.execute({ actor });
+} catch {
+  readFailed = true;
+}
+
+const requestId = uuidv7();
+let feedback = '';
+let fieldErrors: Readonly<Record<string, readonly string[]>> = {};
+
+if (Astro.request.method === 'POST' && canCreate) {
+  if (Astro.request.headers.get('origin') !== Astro.url.origin) {
+    Astro.response.status = 403;
+    feedback = 'This request must come from this application origin.';
+  } else {
+    const form = await Astro.request.formData();
+    const value = (name: string) => String(form.get(name) ?? '').trim();
+    try {
+      const result = await Astro.callAction(actions.inProcess.startRun, {
+        requestId: value('requestId') || requestId,
+        itemCode: value('itemCode'),
+        itemName: value('itemName'),
+        lotNo: value('lotNo'),
+        workOrderNo: value('workOrderNo') || undefined,
+        batchNo: value('batchNo') || undefined,
+        productionLine: value('productionLine'),
+        station: value('station') || undefined,
+        machine: value('machine') || undefined,
+        shiftCode: value('shiftCode'),
+        wiDocumentVersionId: value('wiDocumentVersionId'),
+        formDocumentVersionId: value('formDocumentVersionId') || undefined,
+      });
+      if (result.error) {
+        const fields = (result.error as { fields?: Record<string, readonly string[]> }).fields;
+        if (fields) fieldErrors = fields;
+        throw new Error(describeInProcessError(result.error.message, 'The run was not started.'));
+      }
+      const runId = (result.data as { runId?: string } | undefined)?.runId;
+      if (!runId) throw new Error('The run was recorded but its reference was not returned.');
+      return Astro.redirect(`/in-process/${runId}`, 303);
+    } catch (error) {
+      const provided = (error as { fieldErrors?: Record<string, readonly string[]> }).fieldErrors;
+      if (provided) fieldErrors = provided;
+      feedback = describeInProcessError(
+        (error as { message?: string }).message,
+        'The run was not started. Check the work instruction source and the required fields.',
+      );
+    }
+  }
+}
+
+const wiSourceRequired = catalogue?.state !== 'WI_SOURCE_AVAILABLE';
+---
+<AppLayout title="Start in-process run · QC Operations" locale="en" direction="ltr">
+  <PageHeader
+    title="Start an in-process run"
+    purpose="Bind one production lot to one effective work instruction before any check is recorded."
+  >
+    <Fragment slot="actions"><a href="/in-process">Back to in-process controls</a></Fragment>
+  </PageHeader>
+
+  {!canCreate ? (
+    <ErrorState
+      title="Start authority is not granted"
+      description="Starting an in-process run requires the PERM-INP-CREATE permission. No run is created and no work instruction is selected on your behalf."
+      retryHref="/in-process"
+    />
+  ) : readFailed ? (
+    <ErrorState
+      title="Source documents could not be read"
+      description="No effective work instruction could be confirmed, so the form is withheld rather than offered with an empty source list."
+      retryHref="/in-process/new"
+    />
+  ) : wiSourceRequired ? (
+    <section class="blocker" aria-labelledby="wi-source-title" role="status">
+      <h2 id="wi-source-title">WI_SOURCE_REQUIRED</h2>
+      <p>
+        There is no product-specific effective work instruction to bind this run to. This system does not supply a
+        default limit, frequency, sample size, or acceptance criterion.
+      </p>
+      <p>Next: approve and make effective a controlled work instruction in <a href="/documents">Controlled documents</a>.</p>
+    </section>
+  ) : (
+    <>
+      <p role={feedback ? 'alert' : 'status'} aria-live={feedback ? 'assertive' : 'polite'} class="feedback">{feedback}</p>
+      {Object.keys(fieldErrors).length > 0 && (
+        <section class="field-errors" role="alert" aria-labelledby="field-error-title">
+          <h2 id="field-error-title">The form was not accepted</h2>
+          <ul>
+            {Object.entries(fieldErrors).flatMap(([field, messages]) =>
+              messages.map((message) => (
+                <li><strong>{field}</strong> {message}</li>
+              )),
+            )}
+          </ul>
+        </section>
+      )}
+
+      <form method="post" class="run-form" aria-describedby="form-purpose">
+        <input type="hidden" name="requestId" value={requestId} />
+        <p id="form-purpose" class="purpose">
+          The work instruction you choose is frozen into the run with its revision, content hash and source file
+          digest. Applicability to this item is asserted by you and verified by the QC observer.
+        </p>
+
+        <fieldset>
+          <legend>Product and lot</legend>
+          <label>Item code <input name="itemCode" required maxlength="100" autocomplete="off" /></label>
+          <label>Item name <input name="itemName" required maxlength="500" autocomplete="off" /></label>
+          <label>Lot number <input name="lotNo" required maxlength="100" autocomplete="off" /></label>
+          <label>Work order <input name="workOrderNo" maxlength="100" autocomplete="off" /></label>
+          <label>Batch <input name="batchNo" maxlength="100" autocomplete="off" /></label>
+        </fieldset>
+
+        <fieldset>
+          <legend>Where the work is performed</legend>
+          <label>Production line <input name="productionLine" required maxlength="200" autocomplete="off" /></label>
+          <label>Station <input name="station" maxlength="200" autocomplete="off" /></label>
+          <label>Machine <input name="machine" maxlength="200" autocomplete="off" /></label>
+          <label>Shift <input name="shiftCode" required maxlength="50" autocomplete="off" /></label>
+        </fieldset>
+
+        <fieldset>
+          <legend>Controlled sources</legend>
+          <label class="wide">
+            Effective work instruction (required)
+            <select name="wiDocumentVersionId" required>
+              <option value="">Select the effective work instruction for this item</option>
+              {catalogue?.workInstructions.map((document) => (
+                <option value={document.documentVersionId}>
+                  {document.documentNo} · Rev {document.revision} · {document.title}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label class="wide">
+            Controlled F-823 form (optional)
+            <select name="formDocumentVersionId">
+              <option value="">No F-823 form attached</option>
+              {catalogue?.controlledForms.map((document) => (
+                <option value={document.documentVersionId}>
+                  {document.documentNo} · Rev {document.revision} · {document.title}
+                </option>
+              ))}
+            </select>
+            <small>
+              {catalogue?.controlledForms.length
+                ? 'The attached form snapshot is stored with the run.'
+                : 'No effective F-823 controlled form is available; the run records this explicitly instead of inventing a form.'}
+            </small>
+          </label>
+        </fieldset>
+
+        <div class="actions">
+          <a class="cancel" href="/in-process">Cancel</a>
+          <button type="submit">Start run</button>
+        </div>
+      </form>
+    </>
+  )}
+</AppLayout>
+
+<style>
+  .feedback { margin: 0 0 var(--space-3); color: var(--text-secondary); font-size: var(--font-size-sm); }
+  .feedback:empty { display: none; }
+  .field-errors { margin-block-end: var(--space-4); padding: var(--space-4); border: 1px solid var(--status-danger-bg); border-inline-start: 3px solid var(--status-danger); border-radius: var(--radius-lg); }
+  .field-errors h2 { margin: 0 0 var(--space-2); font-size: var(--font-size-md); }
+  .field-errors ul { margin: 0; padding-inline-start: var(--space-4); color: var(--text-secondary); font-size: var(--font-size-sm); }
+  .field-errors strong { color: var(--text-primary); }
+  .blocker { padding: var(--space-4); border-inline-start: 3px solid var(--status-warning); background: var(--status-warning-bg); }
+  .blocker h2 { margin: 0 0 var(--space-2); font-size: var(--font-size-lg); }
+  .blocker p { margin: 0 0 var(--space-2); max-inline-size: 78ch; color: var(--text-secondary); font-size: var(--font-size-sm); }
+  .run-form { display: grid; gap: var(--space-5); max-inline-size: 68rem; }
+  .purpose { margin: 0; max-inline-size: 78ch; color: var(--text-muted); font-size: var(--font-size-sm); line-height: 1.55; }
+  fieldset { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 16rem), 1fr)); gap: var(--space-4); margin: 0; padding: var(--space-4); border: 1px solid var(--color-border-subtle); border-radius: var(--radius-lg); }
+  legend { padding-inline: var(--space-2); font-size: var(--font-size-sm); font-weight: 600; }
+  label { display: grid; gap: var(--space-2); min-inline-size: 0; font-size: var(--font-size-sm); }
+  .wide { grid-column: 1 / -1; }
+  label small { color: var(--text-muted); font-size: var(--font-size-xs); line-height: 1.5; }
+  input, select, button { min-block-size: 44px; inline-size: 100%; }
+  .actions { display: flex; flex-wrap: wrap; gap: var(--space-3); align-items: center; }
+  .cancel { display: inline-flex; align-items: center; min-block-size: 44px; padding-inline: var(--space-4); border: 1px solid var(--color-border-default); border-radius: var(--radius-md); }
+  button { padding-inline: var(--space-5); inline-size: auto; border: 1px solid var(--color-accent-primary); border-radius: var(--radius-md); background: var(--color-accent-primary); color: var(--text-on-accent); font-weight: 600; }
+  a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
+  @media (max-width: 760px) { fieldset { grid-template-columns: 1fr; } }
+</style>

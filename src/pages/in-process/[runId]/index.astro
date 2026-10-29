@@ -1,0 +1,615 @@
+---
+import AppLayout from '../../../ui/layouts/AppLayout.astro';
+import PageHeader from '../../../ui/components/PageHeader.astro';
+import ErrorState from '../../../ui/components/feedback/ErrorState.astro';
+import ProviderUnavailableState from '../../../ui/components/feedback/ProviderUnavailableState.astro';
+import { actions } from 'astro:actions';
+import { inProcessReadDependencies } from '../../../modules/in-process/application/dependencies.js';
+import { uuidv7 } from '../../../shared/id/uuid.js';
+import { formatDateTime } from '../../../shared/copy/format.js';
+import {
+  RUN_STATE_LABELS,
+  HOLD_STATE_LABELS,
+  COMPARISON_LABELS,
+  ENTRY_STATE_LABELS,
+  DEVIATION_STATUS_LABELS,
+  SEVERITY_LABELS,
+  CATEGORY_LABELS,
+  HANDOVER_STATUS_LABELS,
+  describeInProcessError,
+} from '../../../ui/in-process/labels.js';
+import type { InProcessWorkspaceView } from '../../../modules/in-process/application/workspace-view.js';
+
+const actor = Astro.locals.actor;
+const runId = Astro.params.runId ?? '';
+if (!actor) return Astro.redirect(`/login?returnTo=${encodeURIComponent(Astro.url.pathname)}`);
+
+const dependencies = inProcessReadDependencies();
+let view: InProcessWorkspaceView | undefined;
+let unavailable: 'DENIED' | 'MISSING' | 'PROVIDER' | undefined;
+try {
+  view = await dependencies.workspace.execute({ actor, runId });
+} catch (error) {
+  const category = (error as { category?: string }).category;
+  const code = (error as { code?: string }).code;
+  unavailable = category === 'AUTHORIZATION' ? 'DENIED' : code === 'RESOURCE_NOT_FOUND' ? 'MISSING' : 'PROVIDER';
+}
+
+const updatedIntent = Astro.url.searchParams.get('updated') ?? '';
+let feedback = updatedIntent ? 'The recorded change was accepted.' : '';
+let failed = false;
+let fieldMessages: readonly string[] = [];
+
+if (Astro.request.method === 'POST' && view) {
+  if (Astro.request.headers.get('origin') !== Astro.url.origin) {
+    Astro.response.status = 403;
+    feedback = 'This request must come from this application origin.';
+    failed = true;
+  } else {
+    const form = await Astro.request.formData();
+    const text = (name: string) => String(form.get(name) ?? '').trim();
+    const optional = (name: string) => text(name) || undefined;
+    const intent = text('intent');
+    const expectedVersion = BigInt(text('expectedVersion') || '0');
+    try {
+      const result = await (async () => {
+        switch (intent) {
+          case 'transcribe':
+            return Astro.callAction(actions.inProcess.transcribeCheckpoint, {
+              requestId: text('requestId'),
+              runId: view!.run.id,
+              expectedVersion,
+              stepReference: text('stepReference'),
+              parameterName: text('parameterName'),
+              unit: optional('unit'),
+              frequencyText: text('frequencyText'),
+              samplingText: optional('samplingText'),
+              acceptanceCriteriaText: text('acceptanceCriteriaText'),
+              lowerLimitText: optional('lowerLimitText'),
+              upperLimitText: optional('upperLimitText'),
+            });
+          case 'verify':
+            return Astro.callAction(actions.inProcess.verifyCheckpoint, {
+              requestId: text('requestId'),
+              runId: view!.run.id,
+              expectedVersion,
+              checkpointId: text('checkpointId'),
+              checkpointVersion: BigInt(text('checkpointVersion') || '0'),
+            });
+          case 'reading':
+            return Astro.callAction(actions.inProcess.recordReading, {
+              requestId: text('requestId'),
+              runId: view!.run.id,
+              expectedVersion,
+              checkpointId: text('checkpointId'),
+              entryState: text('entryState') === 'DRAFT' ? 'DRAFT' : 'RECORDED',
+              valueText: text('valueText'),
+              unit: optional('unit'),
+              observedAt: text('observedAt'),
+              sampleReference: optional('sampleReference'),
+            });
+          case 'flag':
+            return Astro.callAction(actions.inProcess.flagDeviation, {
+              requestId: text('requestId'),
+              runId: view!.run.id,
+              expectedVersion,
+              category: text('category') as 'PROCESS_PARAMETER',
+              description: text('description'),
+              containmentState: text('containmentState') === 'DEFINED' ? 'DEFINED' : 'NOT_YET_DEFINED',
+              immediateContainment: optional('immediateContainment'),
+              readingId: optional('readingId'),
+            });
+          case 'hold-request':
+            return Astro.callAction(actions.inProcess.requestHold, {
+              requestId: text('requestId'),
+              runId: view!.run.id,
+              expectedVersion,
+              reason: text('reason'),
+              deviationId: optional('deviationId'),
+            });
+          case 'hold-decide':
+            return Astro.callAction(actions.inProcess.decideHold, {
+              requestId: text('requestId'),
+              runId: view!.run.id,
+              expectedVersion,
+              holdRequestId: text('holdRequestId'),
+              decision: text('decision') === 'DECLINED' ? 'DECLINED' : 'ACKNOWLEDGED',
+              decisionNote: text('decisionNote'),
+            });
+          case 'handover':
+            return Astro.callAction(actions.inProcess.recordHandover, {
+              requestId: text('requestId'),
+              runId: view!.run.id,
+              expectedVersion,
+              toShiftCode: text('toShiftCode'),
+              handoverNote: text('handoverNote'),
+            });
+          case 'handover-accept':
+            return Astro.callAction(actions.inProcess.acceptHandover, {
+              requestId: text('requestId'),
+              runId: view!.run.id,
+              expectedVersion,
+              handoverId: text('handoverId'),
+            });
+          case 'submit':
+            return Astro.callAction(actions.inProcess.submitRun, {
+              requestId: text('requestId'),
+              runId: view!.run.id,
+              expectedVersion,
+            });
+          default:
+            throw new Error('Unknown request.');
+        }
+      })();
+      if (result?.error) {
+        const fields = (result.error as { fields?: Record<string, readonly string[]> }).fields ?? {};
+        fieldMessages = Object.values(fields).flat();
+        throw new Error(result.error.message);
+      }
+      return Astro.redirect(`/in-process/${view.run.id}?updated=${intent}`, 303);
+    } catch (error) {
+      failed = true;
+      feedback = describeInProcessError(
+        (error as { message?: string }).message,
+        'The request was not accepted. Re-check the requirement, the current record version, and the recorded evidence.',
+      );
+    }
+  }
+}
+
+const editable = view ? ['IN_PROGRESS', 'RETURNED'].includes(view.run.state) : false;
+const recordedReadings = view
+  ? view.checkpoints.flatMap((checkpoint) =>
+      checkpoint.readings
+        .filter((reading) => reading.entryState !== 'SUPERSEDED')
+        .map((reading) => ({ reading, checkpoint })),
+    )
+  : [];
+---
+<AppLayout title={`In-process run · ${view?.run.runNo ?? 'In-process'} · QC Operations`} locale="en" direction="ltr">
+  {unavailable ? (
+    unavailable === 'DENIED' ? (
+      <ErrorState
+        title="This in-process run is not available to your account"
+        description="The server refused the read. No record detail or count is shown."
+        retryHref="/in-process"
+      />
+    ) : unavailable === 'MISSING' ? (
+      <ErrorState
+        title="In-process run not found"
+        description="No record matches this reference. Nothing is inferred from the missing record."
+        retryHref="/in-process"
+      />
+    ) : (
+      <ProviderUnavailableState
+        title="The in-process run could not be read"
+        description="No confirmed record was returned, so nothing is shown."
+        retryHref={`/in-process/${runId}`}
+      />
+    )
+  ) : view ? (
+    <>
+      <PageHeader
+        title={view.run.runNo}
+        purpose={`${view.run.itemCode} · ${view.run.itemName} · Lot ${view.run.lotNo}`}
+      >
+        <Fragment slot="actions">
+          <a href="/in-process">Back to register</a>
+          <a href={`/in-process/${view.run.id}/review`}>QC review and closure</a>
+        </Fragment>
+      </PageHeader>
+
+      <p class="state-line">
+        <span class="chip">{RUN_STATE_LABELS[view.run.state] ?? view.run.state}</span>
+        <span class="chip">{HOLD_STATE_LABELS[view.run.qcHoldState] ?? view.run.qcHoldState}</span>
+        <span class="chip">Record version {String(view.run.version)}</span>
+        <span class="chip">Product release: {view.run.productReleaseState}</span>
+      </p>
+
+      <div role={failed ? 'alert' : 'status'} aria-live={failed ? 'assertive' : 'polite'} class="feedback">
+        {feedback && <p>{feedback}</p>}
+        {fieldMessages.length > 0 && (
+          <ul>{fieldMessages.map((message) => <li>{message}</li>)}</ul>
+        )}
+      </div>
+
+      <section class="panel" aria-labelledby="source-title">
+        <h2 id="source-title">Controlled source bound to this run</h2>
+        <dl class="facts">
+          <div><dt>Work instruction</dt><dd>{view.run.wi.documentNo} · Revision {view.run.wi.revision}</dd></div>
+          <div><dt>Effective from</dt><dd>{formatDateTime(view.run.wi.effectiveAt)}</dd></div>
+          <div><dt>Content hash</dt><dd><code>{view.run.wi.contentHash}</code></dd></div>
+          <div><dt>Source file digest</dt><dd><code>{view.run.wi.sourceFileDigest}</code></dd></div>
+          <div>
+            <dt>Item applicability</dt>
+            <dd>
+              {view.run.wi.applicabilityVerifiedBy
+                ? `Verified by QC on ${formatDateTime(view.run.wi.applicabilityVerifiedAt)}`
+                : 'Asserted by the operator; not yet verified by QC'}
+            </dd>
+          </div>
+          <div>
+            <dt>F-823 controlled form</dt>
+            <dd>
+              {view.run.form.attachmentState === 'ATTACHED'
+                ? `${view.run.form.documentNo} · Revision ${view.run.form.revision} · ${view.run.form.contentHash}`
+                : 'Not attached — no effective F-823 controlled form was available at start'}
+            </dd>
+          </div>
+          <div><dt>Operator</dt><dd>{view.run.operatorLoginIdentity}</dd></div>
+          <div><dt>QC observer</dt><dd>{view.run.qcObserverLoginIdentity ?? 'Not yet recorded'}</dd></div>
+          <div><dt>Line / station / machine</dt><dd>{[view.run.productionLine, view.run.station, view.run.machine].filter(Boolean).join(' · ')}</dd></div>
+          <div><dt>Shift / started</dt><dd>{view.run.shiftCode} · {formatDateTime(view.run.startedAt)}</dd></div>
+          <div><dt>Work order / batch</dt><dd>{[view.run.workOrderNo, view.run.batchNo].filter(Boolean).join(' · ') || 'Not recorded'}</dd></div>
+        </dl>
+        <p class="note">
+          The work instruction snapshot above is fixed at run start. Readings are never compared with a later
+          revision, and this module never supplies limits of its own.
+        </p>
+      </section>
+
+      <section class="panel" aria-labelledby="checkpoints-title">
+        <h2 id="checkpoints-title">Checkpoints transcribed from the work instruction</h2>
+        {view.checkpoints.length === 0 ? (
+          <p class="note">
+            No checkpoint has been transcribed. Enter each parameter exactly as the pinned work instruction states it,
+            including its clause reference; a QC observer then verifies it against that revision.
+          </p>
+        ) : (
+          <ul class="checkpoints">
+            {view.checkpoints.map((entry) => (
+              <li class="checkpoint">
+                <div class="checkpoint-head">
+                  <h3>{entry.checkpoint.position}. {entry.checkpoint.parameterName}</h3>
+                  <span class="chip">
+                    {entry.checkpoint.verificationState === 'QC_VERIFIED'
+                      ? 'QC verified against the pinned revision'
+                      : 'Awaiting QC verification'}
+                  </span>
+                </div>
+                <dl class="facts compact">
+                  <div><dt>WI clause</dt><dd>{entry.checkpoint.stepReference}</dd></div>
+                  <div><dt>Unit</dt><dd>{entry.checkpoint.unit ?? 'Not stated'}</dd></div>
+                  <div><dt>Frequency</dt><dd>{entry.checkpoint.frequencyText}</dd></div>
+                  <div><dt>Sampling</dt><dd>{entry.checkpoint.samplingText ?? 'Not stated'}</dd></div>
+                  <div><dt>Acceptance text</dt><dd>{entry.checkpoint.acceptanceCriteriaText}</dd></div>
+                  <div>
+                    <dt>Transcribed bounds</dt>
+                    <dd>
+                      {entry.checkpoint.lowerLimitText && entry.checkpoint.upperLimitText
+                        ? `${entry.checkpoint.lowerLimitText} – ${entry.checkpoint.upperLimitText}`
+                        : 'Qualitative criterion; no numeric bounds'}
+                    </dd>
+                  </div>
+                  <div><dt>Transcribed by</dt><dd>{entry.checkpoint.transcribedLoginIdentity} · {formatDateTime(entry.checkpoint.transcribedAt)}</dd></div>
+                  <div><dt>Verified</dt><dd>{entry.checkpoint.verifiedAgainstRevision ? `Against revision ${entry.checkpoint.verifiedAgainstRevision} · ${formatDateTime(entry.checkpoint.verifiedAt)}` : 'Not verified'}</dd></div>
+                </dl>
+
+                {entry.readings.length > 0 && (
+                  <div class="table-wrap" role="region" aria-label={`Readings for ${entry.checkpoint.parameterName}`} tabindex="0">
+                    <table>
+                      <caption>Readings recorded for this checkpoint</caption>
+                      <thead>
+                        <tr>
+                          <th scope="col">Value</th>
+                          <th scope="col">Sample</th>
+                          <th scope="col">Observed</th>
+                          <th scope="col">Entry</th>
+                          <th scope="col">Comparison</th>
+                          <th scope="col">Recorded by</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {entry.readings.map((reading) => (
+                          <tr>
+                            <td>{reading.valueText} {reading.unit ?? ''}</td>
+                            <td>{reading.sampleReference ?? '—'}</td>
+                            <td>{formatDateTime(reading.observedAt)}</td>
+                            <td>{ENTRY_STATE_LABELS[reading.entryState] ?? reading.entryState}</td>
+                            <td>{COMPARISON_LABELS[reading.comparisonState] ?? reading.comparisonState}</td>
+                            <td>{reading.recordedLoginIdentity}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+
+                {editable && entry.checkpoint.verificationState === 'QC_VERIFIED' && (
+                  <form method="post" class="inline-form">
+                    <input type="hidden" name="intent" value="reading" />
+                    <input type="hidden" name="requestId" value={uuidv7()} />
+                    <input type="hidden" name="expectedVersion" value={String(view!.run.version)} />
+                    <input type="hidden" name="checkpointId" value={entry.checkpoint.id} />
+                    <label>Recorded value <input name="valueText" required maxlength="200" autocomplete="off" /></label>
+                    <label>Unit <input name="unit" value={entry.checkpoint.unit ?? ''} maxlength="50" /></label>
+                    <label>Sample reference <input name="sampleReference" maxlength="100" autocomplete="off" /></label>
+                    <label>Observed at <input type="datetime-local" name="observedAt" required /></label>
+                    <div class="actions">
+                      <button type="submit" name="entryState" value="RECORDED">Record check</button>
+                      <button type="submit" name="entryState" value="DRAFT" class="secondary">Save draft</button>
+                    </div>
+                  </form>
+                )}
+
+                {editable && entry.checkpoint.verificationState !== 'QC_VERIFIED' && view.capabilities.verifyCheckpoint && (
+                  <form method="post" class="inline-form single">
+                    <input type="hidden" name="intent" value="verify" />
+                    <input type="hidden" name="requestId" value={uuidv7()} />
+                    <input type="hidden" name="expectedVersion" value={String(view.run.version)} />
+                    <input type="hidden" name="checkpointId" value={entry.checkpoint.id} />
+                    <input type="hidden" name="checkpointVersion" value={String(entry.checkpoint.version)} />
+                    <p class="hint">
+                      Verifying confirms these transcribed values match revision {view.run.wi.revision} of the pinned
+                      work instruction. It approves no limit and releases no product.
+                    </p>
+                    <div class="actions"><button type="submit">Verify against the pinned revision</button></div>
+                  </form>
+                )}
+              </li>
+            ))}
+          </ul>
+        )}
+
+        {editable && view.capabilities.transcribeCheckpoint && (
+          <details class="add-checkpoint">
+            <summary>Transcribe another checkpoint</summary>
+            <form method="post" class="inline-form">
+              <input type="hidden" name="intent" value="transcribe" />
+              <input type="hidden" name="requestId" value={uuidv7()} />
+              <input type="hidden" name="expectedVersion" value={String(view.run.version)} />
+              <label>WI clause reference <input name="stepReference" required maxlength="200" autocomplete="off" /></label>
+              <label>Parameter <input name="parameterName" required maxlength="200" autocomplete="off" /></label>
+              <label>Unit <input name="unit" maxlength="50" autocomplete="off" /></label>
+              <label>Frequency <input name="frequencyText" required maxlength="500" autocomplete="off" /></label>
+              <label>Sampling <input name="samplingText" maxlength="500" autocomplete="off" /></label>
+              <label class="wide">Acceptance criterion (verbatim) <textarea name="acceptanceCriteriaText" required maxlength="2000" rows="2"></textarea></label>
+              <label>Lower bound (if numeric) <input name="lowerLimitText" maxlength="50" inputmode="decimal" /></label>
+              <label>Upper bound (if numeric) <input name="upperLimitText" maxlength="50" inputmode="decimal" /></label>
+              <div class="actions"><button type="submit">Save transcribed checkpoint</button></div>
+            </form>
+          </details>
+        )}
+      </section>
+
+      <section class="panel" aria-labelledby="deviations-title">
+        <h2 id="deviations-title">Flagged deviations</h2>
+        {view.deviations.length === 0 ? (
+          <p class="note">No deviation has been flagged. An empty list here does not assert that the process was in control.</p>
+        ) : (
+          <ul class="deviation-list">
+            {view.deviations.map((deviation) => (
+              <li>
+                <h3>{deviation.deviationNo} · {CATEGORY_LABELS[deviation.category] ?? deviation.category}</h3>
+                <p>{deviation.description}</p>
+                <p class="meta">
+                  {SEVERITY_LABELS[deviation.severity] ?? deviation.severity} · {DEVIATION_STATUS_LABELS[deviation.status] ?? deviation.status} ·
+                  Flagged by {deviation.flaggedLoginIdentity} at revision {String(deviation.runRevision)} · {formatDateTime(deviation.flaggedAt)}
+                </p>
+                <p class="meta">
+                  Containment: {deviation.containmentState === 'DEFINED' ? deviation.immediateContainment : 'Not yet defined'}
+                </p>
+                {deviation.dispositionNote && <p class="meta">Disposition: {deviation.dispositionNote}</p>}
+              </li>
+            ))}
+          </ul>
+        )}
+
+        {view.capabilities.flagDeviation && (
+          <details class="add-checkpoint">
+            <summary>Flag a deviation</summary>
+            <form method="post" class="inline-form">
+              <input type="hidden" name="intent" value="flag" />
+              <input type="hidden" name="requestId" value={uuidv7()} />
+              <input type="hidden" name="expectedVersion" value={String(view.run.version)} />
+              <label>
+                Category
+                <select name="category" required>
+                  {Object.entries(CATEGORY_LABELS).map(([value, label]) => <option value={value}>{label}</option>)}
+                </select>
+              </label>
+              <label>
+                Related reading (optional)
+                <select name="readingId">
+                  <option value="">Not tied to one reading</option>
+                  {recordedReadings.map(({ reading, checkpoint }) => (
+                    <option value={reading.id}>{checkpoint.checkpoint.parameterName} · {reading.valueText}</option>
+                  ))}
+                </select>
+              </label>
+              <label class="wide">Description <textarea name="description" required maxlength="4000" rows="2"></textarea></label>
+              <label>
+                Containment
+                <select name="containmentState" required>
+                  <option value="DEFINED">Immediate containment defined</option>
+                  <option value="NOT_YET_DEFINED">Not yet defined</option>
+                </select>
+              </label>
+              <label class="wide">Immediate containment <textarea name="immediateContainment" maxlength="4000" rows="2"></textarea></label>
+              <div class="actions"><button type="submit">Flag deviation</button></div>
+            </form>
+          </details>
+        )}
+      </section>
+
+      <section class="panel" aria-labelledby="hold-title">
+        <h2 id="hold-title">QC hold requests</h2>
+        <p class="note">
+          A hold request records that QC attention is needed. It does not place an inventory or quarantine hold,
+          because no approved mapping from this run to a held stock identity exists.
+        </p>
+        {view.holdRequests.length > 0 && (
+          <ul class="deviation-list">
+            {view.holdRequests.map((hold) => (
+              <li>
+                <h3>{hold.status} · requested by {hold.requestedLoginIdentity}</h3>
+                <p>{hold.reason}</p>
+                <p class="meta">{formatDateTime(hold.requestedAt)}{hold.decisionNote ? ` · Decision: ${hold.decisionNote}` : ''}</p>
+                {hold.status === 'REQUESTED' && view.capabilities.decideHold && (
+                  <form method="post" class="inline-form">
+                    <input type="hidden" name="intent" value="hold-decide" />
+                    <input type="hidden" name="requestId" value={uuidv7()} />
+                    <input type="hidden" name="expectedVersion" value={String(view.run.version)} />
+                    <input type="hidden" name="holdRequestId" value={hold.id} />
+                    <label>Decision note <input name="decisionNote" required maxlength="2000" /></label>
+                    <label>
+                      Decision
+                      <select name="decision" required>
+                        <option value="ACKNOWLEDGED">Acknowledge the request</option>
+                        <option value="DECLINED">Decline the request</option>
+                      </select>
+                    </label>
+                    <div class="actions"><button type="submit">Record hold decision</button></div>
+                  </form>
+                )}
+              </li>
+            ))}
+          </ul>
+        )}
+        {view.capabilities.requestHold && (
+          <form method="post" class="inline-form">
+            <input type="hidden" name="intent" value="hold-request" />
+            <input type="hidden" name="requestId" value={uuidv7()} />
+            <input type="hidden" name="expectedVersion" value={String(view.run.version)} />
+            <label class="wide">Reason for the hold request <input name="reason" required maxlength="2000" /></label>
+            <div class="actions"><button type="submit">Place QC hold request</button></div>
+          </form>
+        )}
+      </section>
+
+      <section class="panel" aria-labelledby="handover-title">
+        <h2 id="handover-title">Cross-shift continuation</h2>
+        {view.handovers.length > 0 ? (
+          <ul class="deviation-list">
+            {view.handovers.map((handover) => (
+              <li>
+                <h3>Shift {handover.fromShiftCode} → {handover.toShiftCode}</h3>
+                <p>{handover.handoverNote}</p>
+                <p class="meta">
+                  {HANDOVER_STATUS_LABELS[handover.status] ?? handover.status} · recorded by {handover.handedOverLoginIdentity} · {formatDateTime(handover.handedOverAt)}
+                  {handover.acceptedAt ? ` · accepted ${formatDateTime(handover.acceptedAt)}` : ''}
+                </p>
+                {handover.status === 'PENDING_ACCEPTANCE' && view.capabilities.acceptHandover && (
+                  <form method="post" class="inline-form single">
+                    <input type="hidden" name="intent" value="handover-accept" />
+                    <input type="hidden" name="requestId" value={uuidv7()} />
+                    <input type="hidden" name="expectedVersion" value={String(view.run.version)} />
+                    <input type="hidden" name="handoverId" value={handover.id} />
+                    <p class="hint">
+                      Accepting records you as the current operator and moves the run to shift {handover.toShiftCode}. It grants no approval.
+                    </p>
+                    <div class="actions"><button type="submit">Accept handover as incoming operator</button></div>
+                  </form>
+                )}
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p class="note">No handover has been recorded. Continuation notes appear here with the revision they were captured at.</p>
+        )}
+        {editable && view.capabilities.recordHandover && (
+          <form method="post" class="inline-form">
+            <input type="hidden" name="intent" value="handover" />
+            <input type="hidden" name="requestId" value={uuidv7()} />
+            <input type="hidden" name="expectedVersion" value={String(view.run.version)} />
+            <label>Incoming shift <input name="toShiftCode" required maxlength="50" autocomplete="off" /></label>
+            <label class="wide">Handover note <textarea name="handoverNote" required maxlength="2000" rows="2"></textarea></label>
+            <div class="actions"><button type="submit">Record handover</button></div>
+          </form>
+        )}
+      </section>
+
+      <section class="panel" aria-labelledby="submit-title">
+        <h2 id="submit-title">Submit for QC review</h2>
+        {view.submissionBlockers.length > 0 ? (
+          <ul class="blockers">
+            {view.submissionBlockers.map((blocker) => <li>{blocker}</li>)}
+          </ul>
+        ) : (
+          <p class="note">Every checkpoint is QC verified, no draft entries remain, and each out-of-bound reading has a flagged deviation.</p>
+        )}
+        {editable && view.capabilities.submitRun && (
+          <form method="post" class="inline-form single">
+            <input type="hidden" name="intent" value="submit" />
+            <input type="hidden" name="requestId" value={uuidv7()} />
+            <input type="hidden" name="expectedVersion" value={String(view.run.version)} />
+            <p class="hint">Submission hands the run to QC review. It does not evaluate the readings or record a result.</p>
+            <div class="actions"><button type="submit">Submit run</button></div>
+          </form>
+        )}
+      </section>
+
+      <section class="panel" aria-labelledby="events-title">
+        <h2 id="events-title">Immutable revision snapshots</h2>
+        <div class="table-wrap" role="region" aria-label="In-process revision snapshots" tabindex="0">
+          <table>
+            <caption>Append-only run events with a snapshot hash per revision</caption>
+            <thead>
+              <tr><th scope="col">Revision</th><th scope="col">Event</th><th scope="col">Actor</th><th scope="col">At</th><th scope="col">Snapshot SHA-256</th></tr>
+            </thead>
+            <tbody>
+              {view.events.map((event) => (
+                <tr>
+                  <td>{String(event.revisionNumber)}</td>
+                  <td>{event.eventType}{event.reason ? <small>{event.reason}</small> : null}</td>
+                  <td>{event.actorLoginIdentity}</td>
+                  <td>{formatDateTime(event.occurredAt)}</td>
+                  <td><code>{event.snapshotSha256}</code></td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        <p class="note">{view.productReleaseStatement}</p>
+      </section>
+    </>
+  ) : null}
+</AppLayout>
+
+<style>
+  .state-line { display: flex; flex-wrap: wrap; gap: var(--space-2); margin: 0 0 var(--space-4); }
+  .chip { display: inline-flex; align-items: center; min-block-size: 32px; padding-inline: var(--space-3); border: 1px solid var(--color-border-default); border-radius: 999px; color: var(--text-secondary); font-size: var(--font-size-xs); }
+  .feedback { margin: 0 0 var(--space-4); color: var(--text-secondary); font-size: var(--font-size-sm); }
+  .feedback p { margin: 0; }
+  .feedback ul { margin: var(--space-2) 0 0; padding-inline-start: var(--space-4); color: var(--status-warning); }
+  .panel { margin-block-end: var(--space-5); padding: var(--space-5); background: var(--surface-panel); border: 1px solid var(--color-border-subtle); border-radius: var(--radius-lg); }
+  .panel h2 { margin: 0 0 var(--space-3); font-size: var(--font-size-lg); }
+  .facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 15rem), 1fr)); gap: var(--space-3); margin: 0; }
+  .facts div { min-inline-size: 0; }
+  .facts dt { color: var(--text-muted); font-size: var(--font-size-xs); }
+  .facts dd { margin: 2px 0 0; color: var(--text-primary); font-size: var(--font-size-sm); overflow-wrap: anywhere; }
+  .facts code { font-size: var(--font-size-xs); overflow-wrap: anywhere; }
+  .compact { margin-block-start: var(--space-3); }
+  .note, .hint { margin: var(--space-3) 0 0; max-inline-size: 78ch; color: var(--text-muted); font-size: var(--font-size-sm); line-height: 1.55; }
+  .checkpoints { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--space-4); }
+  .checkpoint { padding: var(--space-4); border: 1px solid var(--color-border-subtle); border-radius: var(--radius-md); }
+  .checkpoint-head { display: flex; flex-wrap: wrap; justify-content: space-between; gap: var(--space-2); align-items: baseline; }
+  .checkpoint h3 { margin: 0; font-size: var(--font-size-md); }
+  .table-wrap { margin-block-start: var(--space-3); overflow-x: auto; }
+  table { inline-size: 100%; min-inline-size: 44rem; border-collapse: collapse; font-size: var(--font-size-sm); }
+  caption { text-align: start; padding-block-end: var(--space-2); color: var(--text-muted); font-size: var(--font-size-xs); }
+  th, td { text-align: start; padding: var(--space-2) var(--space-3); border-block-start: 1px solid var(--color-border-subtle); vertical-align: top; overflow-wrap: anywhere; }
+  th { color: var(--text-muted); font-size: var(--font-size-xs); }
+  td small { display: block; color: var(--text-muted); font-size: var(--font-size-xs); }
+  td code { font-size: var(--font-size-xs); overflow-wrap: anywhere; }
+  .inline-form { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 13rem), 1fr)); gap: var(--space-3); margin-block-start: var(--space-4); padding-block-start: var(--space-4); border-block-start: 1px solid var(--color-border-subtle); }
+  .inline-form.single { grid-template-columns: 1fr; }
+  .inline-form label { display: grid; gap: var(--space-2); font-size: var(--font-size-sm); min-inline-size: 0; }
+  .inline-form .wide { grid-column: 1 / -1; }
+  .inline-form .hint { margin: 0; }
+  input, select, textarea, button { min-block-size: 44px; inline-size: 100%; font: inherit; }
+  textarea { padding: var(--space-2); }
+  .actions { display: flex; flex-wrap: wrap; gap: var(--space-3); align-items: center; grid-column: 1 / -1; }
+  button { padding-inline: var(--space-4); inline-size: auto; border: 1px solid var(--color-accent-primary); border-radius: var(--radius-md); background: var(--color-accent-primary); color: var(--text-on-accent); font-weight: 600; cursor: pointer; }
+  button.secondary { background: transparent; color: var(--color-accent-primary-hover); }
+  .add-checkpoint { margin-block-start: var(--space-4); padding-block-start: var(--space-3); border-block-start: 1px solid var(--color-border-subtle); }
+  .add-checkpoint summary { display: flex; align-items: center; min-block-size: 44px; color: var(--color-accent-primary-hover); font-size: var(--font-size-sm); font-weight: 600; cursor: pointer; }
+  .deviation-list { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--space-3); }
+  .deviation-list li { padding: var(--space-3); border: 1px solid var(--color-border-subtle); border-radius: var(--radius-md); }
+  .deviation-list h3 { margin: 0 0 var(--space-2); font-size: var(--font-size-sm); }
+  .deviation-list p { margin: 0 0 var(--space-1); font-size: var(--font-size-sm); color: var(--text-secondary); overflow-wrap: anywhere; }
+  .deviation-list .meta { color: var(--text-muted); font-size: var(--font-size-xs); }
+  .blockers { margin: 0; padding-inline-start: var(--space-4); color: var(--status-warning); font-size: var(--font-size-sm); }
+  a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible, summary:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
+  @media (max-width: 760px) { .panel { padding: var(--space-4); } table { min-inline-size: 34rem; } }
+</style>

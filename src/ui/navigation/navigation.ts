@@ -322,6 +322,9 @@ export function visibleNavigationUtilities(actor: ActorContext | undefined) {
 export function routeBreadcrumbs(pathname: string): Array<{ label: string; href?: string }> {
   const sectionLabels: Record<string, { label: string; href?: string }> = {
     work: { label: 'Work', href: '/tasks' },
+    // INP-01: a separate workspace with no sidebar entry; the breadcrumb names
+    // it so a record opened from Work or Quality keeps its context.
+    'in-process': { label: 'In-process controls', href: '/in-process' },
     quality: { label: 'Quality', href: '/quality' },
     quarantine: { label: 'Quarantine', href: '/quarantine' },
     'reject-reports': { label: 'Reject Reports', href: '/reject-reports' },

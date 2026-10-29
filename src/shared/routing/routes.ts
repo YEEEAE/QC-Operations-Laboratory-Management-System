@@ -511,6 +511,25 @@ const routeTuples = [
     'permission-bound',
     'required',
   ],
+  // INP-01: in-process production control is its own workspace and its own
+  // record family. It is registered here but deliberately absent from the
+  // sidebar tree; Work and Quality expose contextual links to it instead.
+  ['RT-INP-001', '/in-process', 'src/pages/in-process/index.astro', 'authenticated', 'required'],
+  ['RT-INP-002', '/in-process/new', 'src/pages/in-process/new.astro', 'permission-bound', 'required'],
+  [
+    'RT-INP-003',
+    '/in-process/[runId]',
+    'src/pages/in-process/[runId]/index.astro',
+    'permission-bound',
+    'required',
+  ],
+  [
+    'RT-INP-004',
+    '/in-process/[runId]/review',
+    'src/pages/in-process/[runId]/review.astro',
+    'permission-bound',
+    'required',
+  ],
 ] as const satisfies readonly RouteTuple[];
 
 const DOMAIN_BY_PREFIX: Record<string, string> = {
@@ -537,6 +556,7 @@ const DOMAIN_BY_PREFIX: Record<string, string> = {
   account: 'identity',
   auth: 'identity',
   help: 'shared',
+  'in-process': 'in-process',
 };
 function titleFor(path: string): string {
   const leaf = path.split('/').filter(Boolean).at(-1) ?? 'Page';

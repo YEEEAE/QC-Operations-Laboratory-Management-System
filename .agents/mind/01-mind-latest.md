@@ -1,3 +1,8 @@
+- **2026-10-29 — INP-01 / Independent In-Process Controls workspace**
+  - Changed: Added a separate in-process record family (runs, checkpoints, readings, deviations, hold requests, cross-shift handovers, append-only revision snapshots) with Start Run → Record Check/Draft → Flag Deviation → QC Hold request → Submit → QC Review → Close, pinned to one EFFECTIVE WI and an optional effective F-823 form snapshot. No inspection report row is created or fed.
+  - Evidence: Source edits and textual review only; no tests, builds, lint, typecheck, scripts, SQL, migrations, database access, or deployment.
+  - State: PARTIAL — `WI_SOURCE_REQUIRED` is the fail-closed state when no effective WI exists; in-process write permissions are registered but deliberately ungranted (no approved permission-matrix entry), so every write is denied until an audited administration grant; `0077` is source only.
+  - Key files: `db/migrations/0077_in_process_controls.sql`, `src/modules/in-process/`, `src/actions/in-process.ts`, `src/pages/in-process/`.
 - **2026-10-29 — REJ-03 / Manual Focus entry and reconciliation**
   - Changed: Added QC Compliance manual-entry queue, report-version-bound entry/verification records, append-only reconciliation events, and a forward-only migration that backfills only eligible reports with traceable source events. No Focus provider path is active.
   - Evidence: Source review only; no tests, builds, lint, scripts, migrations, SQL, database operations, or deployment. Graphify CLI unavailable.
@@ -413,6 +418,7 @@
 - QC-CLOSURE-006 يثبت عقود receiving supplier وinspection assignment وsource/evidence linkage/count وreceiving history؛ Submit يرفض التفتيش بلا evidence نشط، وReject قرار workflow مستقل عن النتيجة العلمية FAIL. الإثبات الحي لقاعدة البيانات ما زال BLOCKED.
 
 ## 6) Inspection / Laboratory / Release invariants
+- **In-process source state (2026-10-29):** In-process control is its own record family and never an incoming/final inspection. Parameter name, unit, frequency, sampling and acceptance text are transcribed only from one pinned EFFECTIVE WI revision (plus an optional effective F-823 form snapshot); no limit, tolerance, AQL or sample size is supplied by the system. Readings compare only with QC-verified transcribed bounds and that comparison is not a scientific result; close records a human disposition and `product_release_state` stays `NOT_RELEASED` by constraint.
 - **Laboratory report entry (2026-09-24):** مسودتا Subatmospheric Pressure Air Leakage وPressure Decay متاحتان من صفحة المختبر، و12 عينة لكل منهما، وتُحفظان منفصلتين عن `lab_tests`. الحقول نصّية transcription-only لغياب نموذج مصدر معتمد/رقم مراجعة؛ لا وحدات أو حدود أو تقييم علمي مستنتج، والطباعة ليست تقريرًا معتمدًا. `0039_laboratory_report_drafts` رأس المصدر المحلي؛ repository/integration PostgreSQL runtime NOT VERIFIED لغياب container runtime، دون تغيير قاعدة الإنتاج.
 - `Inspection Result` و`Release System State` حالتان منفصلتان؛ `PASS ≠ RELEASED`.
 - Laboratory state machine is fully implemented for Create/Save/Submit/Review/Return/Resume/Approve/**Reject**; `VOID` (TR-LAB-008) remains unimplemented and policy-denied.

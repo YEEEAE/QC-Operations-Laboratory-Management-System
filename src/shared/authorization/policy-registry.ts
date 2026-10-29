@@ -1063,6 +1063,99 @@ const policies: readonly AuthorizationPolicy[] = [
     entityType: 'ISSUE_SLIP_APPROVAL',
     states: ['CONFIRMED'],
   },
+  // INP-01: independent in-process control run. These policies exist so the
+  // module can be authorized once an approved permission-matrix entry defines
+  // in-process authority; no role grant is created by the module itself.
+  {
+    permission: 'PERM-INP-VIEW',
+    action: 'VIEW',
+    entityType: 'IN_PROCESS_RUN',
+    states: ['IN_PROGRESS', 'AWAITING_QC_REVIEW', 'RETURNED', 'QC_REVIEWED', 'CLOSED'],
+  },
+  {
+    permission: 'PERM-INP-CREATE',
+    action: 'CREATE',
+    entityType: 'IN_PROCESS_RUN',
+    states: ['IN_PROGRESS'],
+  },
+  {
+    permission: 'PERM-INP-RECORD',
+    action: 'TRANSCRIBE_CHECKPOINT',
+    entityType: 'IN_PROCESS_RUN',
+    states: ['IN_PROGRESS', 'RETURNED'],
+  },
+  {
+    permission: 'PERM-INP-RECORD',
+    action: 'RECORD_READING',
+    entityType: 'IN_PROCESS_RUN',
+    states: ['IN_PROGRESS', 'RETURNED'],
+  },
+  {
+    permission: 'PERM-INP-VERIFY',
+    action: 'VERIFY_CHECKPOINT',
+    entityType: 'IN_PROCESS_RUN',
+    states: ['IN_PROGRESS', 'RETURNED'],
+  },
+  {
+    permission: 'PERM-INP-DEVIATION',
+    action: 'FLAG_DEVIATION',
+    entityType: 'IN_PROCESS_RUN',
+    states: ['IN_PROGRESS', 'RETURNED', 'AWAITING_QC_REVIEW'],
+  },
+  {
+    permission: 'PERM-INP-HOLD',
+    action: 'REQUEST_HOLD',
+    entityType: 'IN_PROCESS_RUN',
+    states: ['IN_PROGRESS', 'RETURNED', 'AWAITING_QC_REVIEW'],
+  },
+  {
+    permission: 'PERM-INP-HANDOVER',
+    action: 'RECORD_HANDOVER',
+    entityType: 'IN_PROCESS_RUN',
+    states: ['IN_PROGRESS', 'RETURNED'],
+  },
+  {
+    permission: 'PERM-INP-HANDOVER',
+    action: 'ACCEPT_HANDOVER',
+    entityType: 'IN_PROCESS_RUN',
+    states: ['IN_PROGRESS', 'RETURNED'],
+  },
+  {
+    permission: 'PERM-INP-SUBMIT',
+    action: 'SUBMIT',
+    entityType: 'IN_PROCESS_RUN',
+    states: ['IN_PROGRESS', 'RETURNED'],
+  },
+  {
+    permission: 'PERM-INP-REVIEW',
+    action: 'RETURN',
+    entityType: 'IN_PROCESS_RUN',
+    states: ['AWAITING_QC_REVIEW'],
+  },
+  {
+    permission: 'PERM-INP-REVIEW',
+    action: 'QC_REVIEW',
+    entityType: 'IN_PROCESS_RUN',
+    states: ['AWAITING_QC_REVIEW'],
+  },
+  {
+    permission: 'PERM-INP-REVIEW',
+    action: 'DISPOSE_DEVIATION',
+    entityType: 'IN_PROCESS_RUN',
+    states: ['AWAITING_QC_REVIEW', 'QC_REVIEWED'],
+  },
+  {
+    permission: 'PERM-INP-REVIEW',
+    action: 'DECIDE_HOLD',
+    entityType: 'IN_PROCESS_RUN',
+    states: ['IN_PROGRESS', 'RETURNED', 'AWAITING_QC_REVIEW', 'QC_REVIEWED'],
+  },
+  {
+    permission: 'PERM-INP-CLOSE',
+    action: 'CLOSE',
+    entityType: 'IN_PROCESS_RUN',
+    states: ['QC_REVIEWED'],
+  },
   ...(
     [
       { permission: 'PERM-AI-USE', action: 'USE' },

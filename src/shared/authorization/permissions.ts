@@ -211,6 +211,19 @@ export const PERMISSION_CODES = [
   'PERM-RREJ-APPROVE',
   'PERM-RREJ-REJECT',
   'PERM-RREJ-RETURN',
+  // INP-01: independent in-process production control. Read-only baseline is
+  // granted; write authority has no approved permission-matrix entry yet, so
+  // these codes stay ungranted and every in-process mutation fails closed.
+  'PERM-INP-VIEW',
+  'PERM-INP-CREATE',
+  'PERM-INP-RECORD',
+  'PERM-INP-VERIFY',
+  'PERM-INP-DEVIATION',
+  'PERM-INP-HOLD',
+  'PERM-INP-HANDOVER',
+  'PERM-INP-SUBMIT',
+  'PERM-INP-REVIEW',
+  'PERM-INP-CLOSE',
 ] as const;
 
 export type PermissionCode = (typeof PERMISSION_CODES)[number];

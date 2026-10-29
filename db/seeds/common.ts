@@ -212,6 +212,18 @@ export const APPROVED_PERMISSION_CODES = [
   'PERM-RREJ-FINALIZE',
   'PERM-RREJ-VOID',
   'PERM-RREJ-ADMIN-CORRECT',
+  // INP-01: the catalogue entry is required so the permission can be granted
+  // at all; only the read permission has an approved baseline grant below.
+  'PERM-INP-VIEW',
+  'PERM-INP-CREATE',
+  'PERM-INP-RECORD',
+  'PERM-INP-VERIFY',
+  'PERM-INP-DEVIATION',
+  'PERM-INP-HOLD',
+  'PERM-INP-HANDOVER',
+  'PERM-INP-SUBMIT',
+  'PERM-INP-REVIEW',
+  'PERM-INP-CLOSE',
 ] as const;
 export type ApprovedPermissionCode = (typeof APPROVED_PERMISSION_CODES)[number];
 
@@ -303,6 +315,7 @@ export const FOUNDATION_ROLE_PERMISSIONS: Record<
     'PERM-RREJ-VIEW',
     'PERM-RREJ-CREATE',
     'PERM-RREJ-EDIT',
+    'PERM-INP-VIEW',
   ],
   SUPERVISOR: [
     'PERM-IDN-VIEW-SELF',
@@ -398,6 +411,7 @@ export const FOUNDATION_ROLE_PERMISSIONS: Record<
     'PERM-RREJ-CONFIRM-APPROVAL',
     'PERM-RREJ-FINALIZE',
     'PERM-RREJ-VOID',
+    'PERM-INP-VIEW',
   ],
   MANAGER: [
     'PERM-IDN-VIEW-SELF',
@@ -465,6 +479,7 @@ export const FOUNDATION_ROLE_PERMISSIONS: Record<
     'PERM-RREJ-CONFIRM-APPROVAL',
     'PERM-RREJ-FINALIZE',
     'PERM-RREJ-VOID',
+    'PERM-INP-VIEW',
   ],
   ADMIN: [
     'PERM-IDN-VIEW-SELF',
@@ -519,6 +534,7 @@ export const FOUNDATION_ROLE_PERMISSIONS: Record<
     'PERM-RREJ-FINALIZE',
     'PERM-RREJ-VOID',
     'PERM-RREJ-ADMIN-CORRECT',
+    'PERM-INP-VIEW',
   ],
 };
 

@@ -18,6 +18,7 @@ import { system } from './system.js';
 import { aiAdvisory } from './ai-advisory.js';
 import { releaseGovernance } from './release-governance.js';
 import { rejectReports } from './reject-reports.js';
+import { inProcess } from './in-process.js';
 import { uatEvidence } from './uat-evidence.js';
 import { notifications } from './notifications.js';
 
@@ -52,6 +53,7 @@ export const server = {
   aiAdvisory,
   releaseGovernance,
   rejectReports,
+  inProcess,
   uatEvidence,
   notifications,
 };

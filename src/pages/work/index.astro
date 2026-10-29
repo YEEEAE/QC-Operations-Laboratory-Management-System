@@ -121,6 +121,15 @@ const unresolved = queue?.unresolvedSources ?? [];
       </section>
 
       <section class="panel note"><strong>PASS and RELEASED are separate</strong><p>A scientific PASS is an inspection result, not a release decision. A receiving item on HOLD cannot be released by any of these links.</p></section>
+
+      <!-- INP-01: contextual entry only. In-process controls are a separate
+           workspace with their own register; no sidebar group is added and no
+           queue assignment is claimed here. -->
+      <section class="panel in-process" aria-labelledby="in-process-link-title">
+        <h2 id="in-process-link-title">In-process controls</h2>
+        <p class="membership">Production checks recorded against a pinned effective work instruction. These are not inspection reports and never release product.</p>
+        <a class="in-process-link" href="/in-process">Open in-process controls</a>
+      </section>
       </div>
     </>
   )}
@@ -171,6 +180,8 @@ const unresolved = queue?.unresolvedSources ?? [];
   .unresolved li small{color:var(--text-muted);font-size:var(--font-size-xs)}
   .unresolved-note{margin:var(--space-3) 0 0}
   .note{grid-column:1 / -1;border-color:var(--status-warning);background:var(--status-warning-bg)}
+  .in-process{grid-column:1 / -1}
+  .in-process-link{display:inline-flex;align-items:center;min-block-size:44px;margin-block-start:var(--space-2);font-weight:600;overflow-wrap:anywhere}
   .note p{margin:.35rem 0 0;color:var(--text-secondary);font-size:var(--font-size-sm);line-height:1.5}
   .feedback-denied{padding:var(--space-5);background:var(--status-warning-bg);border:1px solid var(--status-warning);border-radius:var(--radius-lg)}
   .feedback-denied h2{margin:0;font-size:var(--font-size-md)}

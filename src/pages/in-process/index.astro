@@ -1,0 +1,184 @@
+---
+import AppLayout from '../../ui/layouts/AppLayout.astro';
+import PageHeader from '../../ui/components/PageHeader.astro';
+import EmptyState from '../../ui/components/feedback/EmptyState.astro';
+import ProviderUnavailableState from '../../ui/components/feedback/ProviderUnavailableState.astro';
+import { inProcessReadDependencies } from '../../modules/in-process/application/dependencies.js';
+import { missingWritePermissions } from '../../modules/in-process/application/workspace-view.js';
+import { formatDateTime } from '../../shared/copy/format.js';
+import { RUN_STATE_LABELS, HOLD_STATE_LABELS } from '../../ui/in-process/labels.js';
+import type { InProcessRunSummary, InProcessSourceCatalogue } from '../../modules/in-process/domain/read-model.js';
+
+const actor = Astro.locals.actor;
+if (!actor) return Astro.redirect(`/login?returnTo=${encodeURIComponent(Astro.url.pathname)}`);
+
+const dependencies = inProcessReadDependencies();
+let runs: readonly InProcessRunSummary[] | undefined;
+let catalogue: InProcessSourceCatalogue | undefined;
+let readFailed = false;
+try {
+  runs = await dependencies.listRuns.execute({ actor });
+  catalogue = await dependencies.sources.execute({ actor });
+} catch {
+  // A failed read withholds every row instead of drawing an "all clear".
+  readFailed = true;
+}
+
+const missing = missingWritePermissions(actor);
+const canStart = actor.permissions.some(
+  (grant) => grant.code === 'PERM-INP-CREATE' && grant.active !== false,
+);
+const wiSourceRequired = catalogue?.state !== 'WI_SOURCE_AVAILABLE';
+---
+<AppLayout title="In-process controls · QC Operations" locale="en" direction="ltr">
+  <PageHeader
+    title="In-process controls"
+    purpose="Production in-process checks recorded against a pinned effective work instruction. Separate from incoming and final inspection."
+  >
+    <Fragment slot="actions">
+      <a href="/quality">Quality</a>
+      {canStart && !wiSourceRequired && <a href="/in-process/new">Start run</a>}
+    </Fragment>
+  </PageHeader>
+
+  <section class="statements" aria-label="What this workspace does and does not decide">
+    <p>
+      <strong>Not an inspection report.</strong> These records are in-process production controls. They never
+      create, replace, or feed an incoming or final inspection report.
+    </p>
+    <p>
+      <strong>No product release.</strong> Closing a run records a human in-process disposition. It is not a
+      scientific PASS/FAIL result, not an approval, and not a release of product.
+    </p>
+  </section>
+
+  {readFailed ? (
+    <ProviderUnavailableState
+      title="The in-process register is temporarily unavailable"
+      description="No run, count, or source state could be confirmed, so nothing is shown."
+      retryHref="/in-process"
+    />
+  ) : wiSourceRequired ? (
+    <section class="blocker" aria-labelledby="wi-source-title" role="status">
+      <h2 id="wi-source-title">WI_SOURCE_REQUIRED</h2>
+      <p>
+        No product-specific <strong>effective</strong> work instruction is available. An in-process run cannot
+        be started, and no parameter, frequency, sampling or acceptance value is supplied by this system.
+      </p>
+      <p class="blocker-next">
+        Next: a controlled work instruction (type WI) must be approved and effective in
+        <a href="/documents">Controlled documents</a>.
+      </p>
+    </section>
+  ) : null}
+
+  {missing.length > 0 && (
+    <section class="authority" aria-labelledby="authority-title">
+      <h2 id="authority-title">Write authority has not been granted</h2>
+      <p>
+        This account can read in-process records. The in-process write permissions below are not granted, so every
+        write is refused by the server until an authorized administrator grants them.
+      </p>
+      <ul>
+        {missing.map((code) => (
+          <li><code>{code}</code></li>
+        ))}
+      </ul>
+      <p class="authority-note">
+        Grants are an audited administration decision; this workspace cannot grant them itself.
+      </p>
+    </section>
+  )}
+
+  {!readFailed && !wiSourceRequired && (
+    <section class="register" aria-labelledby="register-title">
+      <div class="register-head">
+        <h2 id="register-title">Recorded in-process runs</h2>
+        <p class="count">
+          {runs && runs.length === 1 ? '1 run' : `${runs?.length ?? 0} runs`} in the latest 100 records
+        </p>
+      </div>
+      {runs && runs.length > 0 ? (
+        <div class="table-wrap" role="region" aria-label="In-process runs" tabindex="0">
+          <table>
+            <caption>In-process runs, most recently started first</caption>
+            <thead>
+              <tr>
+                <th scope="col">Run</th>
+                <th scope="col">Item / lot</th>
+                <th scope="col">Line / shift</th>
+                <th scope="col">Work instruction</th>
+                <th scope="col">Form</th>
+                <th scope="col">State</th>
+                <th scope="col">QC hold</th>
+                <th scope="col">Operator</th>
+              </tr>
+            </thead>
+            <tbody>
+              {runs.map((entry) => (
+                <tr>
+                  <td>
+                    <a class="row-link" href={`/in-process/${entry.id}`}>{entry.runNo}</a>
+                    <small>{formatDateTime(entry.startedAt)}</small>
+                  </td>
+                  <td>
+                    <span>{entry.itemCode}</span>
+                    <small>{entry.itemName}</small>
+                    <small>Lot {entry.lotNo}</small>
+                  </td>
+                  <td>
+                    <span>{entry.productionLine}</span>
+                    <small>Shift {entry.shiftCode}</small>
+                  </td>
+                  <td>
+                    <span>{entry.wiDocumentNo}</span>
+                    <small>Revision {entry.wiRevision}</small>
+                  </td>
+                  <td>
+                    {entry.formAttachmentState === 'ATTACHED'
+                      ? 'F-823 attached'
+                      : 'Not attached'}
+                  </td>
+                  <td>{RUN_STATE_LABELS[entry.state] ?? entry.state}</td>
+                  <td>{HOLD_STATE_LABELS[entry.qcHoldState] ?? entry.qcHoldState}</td>
+                  <td>{entry.operatorLoginIdentity}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      ) : (
+        <EmptyState
+          title="No in-process run has been recorded"
+          description="Nothing is inferred from the empty register. Start a run only when an effective work instruction covers the item and process."
+          actionLabel={canStart ? 'Start run' : undefined}
+          actionHref={canStart ? '/in-process/new' : undefined}
+        />
+      )}
+    </section>
+  )}
+</AppLayout>
+
+<style>
+  .statements { display: grid; gap: var(--space-2); margin-block-end: var(--space-5); }
+  .statements p { margin: 0; padding: var(--space-3) var(--space-4); background: var(--surface-inset); border-inline-start: 3px solid var(--color-border-strong); font-size: var(--font-size-sm); color: var(--text-secondary); }
+  .statements strong { color: var(--text-primary); }
+  .blocker, .authority { margin-block-end: var(--space-5); padding: var(--space-4); border-inline-start: 3px solid var(--status-warning); background: var(--status-warning-bg); }
+  .blocker h2, .authority h2 { margin: 0 0 var(--space-2); font-size: var(--font-size-lg); }
+  .blocker p, .authority p { margin: 0; max-inline-size: 78ch; color: var(--text-secondary); font-size: var(--font-size-sm); line-height: 1.55; }
+  .blocker-next, .authority-note { margin-block-start: var(--space-2) !important; }
+  .authority ul { display: flex; flex-wrap: wrap; gap: var(--space-2); margin: var(--space-3) 0 0; padding: 0; list-style: none; }
+  .authority code { padding: 2px 6px; background: var(--surface-panel); border: 1px solid var(--color-border-subtle); border-radius: var(--radius-sm); font-size: var(--font-size-xs); overflow-wrap: anywhere; }
+  .register-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: var(--space-3); margin-block-end: var(--space-3); }
+  .register-head h2 { margin: 0; font-size: var(--font-size-lg); }
+  .count { margin: 0; color: var(--text-muted); font-size: var(--font-size-xs); }
+  .table-wrap { overflow-x: auto; border: 1px solid var(--color-border-subtle); border-radius: var(--radius-lg); }
+  table { inline-size: 100%; min-inline-size: 62rem; border-collapse: collapse; font-size: var(--font-size-sm); }
+  caption { text-align: start; padding: var(--space-3) var(--space-4); color: var(--text-muted); font-size: var(--font-size-xs); }
+  th, td { text-align: start; padding: var(--space-3) var(--space-4); border-block-start: 1px solid var(--color-border-subtle); vertical-align: top; overflow-wrap: anywhere; }
+  th { color: var(--text-muted); font-size: var(--font-size-xs); font-weight: 600; }
+  td small { display: block; margin-block-start: 4px; color: var(--text-muted); font-size: var(--font-size-xs); }
+  .row-link { display: inline-flex; align-items: center; min-block-size: 44px; font-weight: 600; }
+  a:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; border-radius: var(--radius-sm); }
+  @media (max-width: 760px) { table { min-inline-size: 48rem; } }
+</style>
