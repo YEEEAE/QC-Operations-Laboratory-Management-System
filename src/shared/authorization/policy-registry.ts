@@ -27,6 +27,12 @@ const LABORATORY_TEST_STATES = [
 ] as const;
 
 const policies: readonly AuthorizationPolicy[] = [
+  { permission: 'PERM-TASK-HANDOVER-PREPARE', action: 'PREPARE', entityType: 'SHIFT_HANDOVER', states: ['DRAFT'] },
+  { permission: 'PERM-TASK-HANDOVER-REVIEW', action: 'REVIEW', entityType: 'SHIFT_HANDOVER', states: ['PREPARED'] },
+  { permission: 'PERM-TASK-HANDOVER-ACCEPT', action: 'ACCEPT', entityType: 'SHIFT_HANDOVER', states: ['IN_REVIEW'] },
+  { permission: 'PERM-TASK-HANDOVER-RETURN', action: 'RETURN', entityType: 'SHIFT_HANDOVER', states: ['PREPARED', 'IN_REVIEW'] },
+  { permission: 'PERM-TASK-HANDOVER-ACK', action: 'ACKNOWLEDGE', entityType: 'SHIFT_HANDOVER', states: ['ACCEPTED'] },
+  { permission: 'PERM-TASK-HANDOVER-REASSIGN', action: 'REASSIGN', entityType: 'TASK', states: ['OPEN', 'IN_PROGRESS', 'ON_HOLD'] },
   {
     permission: 'PERM-LAB-VIEW',
     action: 'VIEW',

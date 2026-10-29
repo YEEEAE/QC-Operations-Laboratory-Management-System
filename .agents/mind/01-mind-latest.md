@@ -1,3 +1,8 @@
+- **2026-10-30 — OPS-03 / Shift handover source contract**
+  - Changed: Added forward-only schema and domain/repository foundations for handover records, task area/shift metadata, linked record references, immutable snapshots/events, and explicit prepare/review/accept/return/ack/reassign permissions. No role grants or notifications were added.
+  - Evidence: Source inspection only. No tests, builds, lint, scripts, SQL, migration execution, database access, or deployment.
+  - State: PARTIAL — application actions/routes and trusted live-record snapshot resolution are not wired; approved area/shift directories and permission grants remain absent. Migration `0079` is source only.
+  - Key files: `db/migrations/0079_shift_handovers.sql`, `src/modules/tasks/domain/shift-handover.ts`, `src/modules/tasks/application/shift-handover.ts`.
 - **2026-10-29 — OPS-01 / Governed RPO, RTO, retention and recovery**
   - Changed: Added source-linked recovery policy versions (default `PENDING_APPROVAL`, no value supplied), append-only policy events/incidents, per-environment non-secret storage boundaries, a separate recovery procedure authorization, and a fail-closed controlled runner. Readiness derives `NOT_CONFIGURED` / `POLICY_EXPIRED` / `BACKUP_VERIFIED` / `RESTORE_NOT_VERIFIED` from catalog and recovery evidence and is surfaced on `/system/backups`, the new `/system/backups/policy`, and `/system/health`.
   - Evidence: Source edits and textual review only; no tests, builds, lint, typecheck, scripts, SQL, migrations, database access, or deployment.

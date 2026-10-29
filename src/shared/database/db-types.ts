@@ -385,6 +385,20 @@ export interface TasksTable {
   recurrence_rule_id: string | null;
   occurrence_key: string | null;
   occurrence_fingerprint: string | null;
+  area_code: string | null;
+  shift_code: string | null;
+}
+export interface ShiftHandoversTable {
+  id: Generated<string>; handover_no: string; from_shift_code: string; to_shift_code: string;
+  area_code: string; line_code: string; initiated_by: string; accepted_by: string | null;
+  initiated_at: Generated<Date>; accepted_at: Date | null; state: Generated<string>;
+  linked_items: unknown; snapshot: unknown; snapshot_sha256: string; return_reason: string | null;
+  version: Generated<bigint>; request_id: string; created_at: Generated<Date>; updated_at: Generated<Date>;
+}
+export interface ShiftHandoverEventsTable {
+  id: Generated<string>; handover_id: string; revision: bigint; event_type: string;
+  actor_id: string; occurred_at: Generated<Date>; reason: string | null; snapshot: unknown;
+  snapshot_sha256: string; request_id: string;
 }
 export interface FindingsTable {
   id: Generated<string>;
@@ -2113,6 +2127,8 @@ export interface DatabaseSchema {
   user_roles: UserRolesTable;
   user_scopes: UserScopesTable;
   tasks: TasksTable;
+  shift_handovers: ShiftHandoversTable;
+  shift_handover_events: ShiftHandoverEventsTable;
   task_assignments: TaskAssignmentsTable;
   task_checklist_items: TaskChecklistItemsTable;
   task_comments: TaskCommentsTable;
