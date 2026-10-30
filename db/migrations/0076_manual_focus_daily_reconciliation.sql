@@ -16,7 +16,7 @@ ALTER TABLE qc.focus_compliance_entries
   ADD COLUMN reconciliation_note TEXT;
 
 UPDATE qc.focus_compliance_entries
-SET status = CASE status
+SET status = CASE focus_compliance_entries.status
       WHEN 'PENDING_FOCUS_ENTRY' THEN CASE
         WHEN (r.report_type = 'ISSUE_SLIP' AND r.status IN ('ISSUED', 'APPROVAL_TRACKING', 'COMPLETED'))
           OR (r.report_type = 'DAILY_REJECT' AND r.status = 'SUPERVISOR_APPROVED')
@@ -24,14 +24,14 @@ SET status = CASE status
         ELSE 'FAILED_OR_REQUIRES_REVIEW' END
       WHEN 'ENTERED_IN_FOCUS' THEN 'FAILED_OR_REQUIRES_REVIEW'
       WHEN 'VERIFIED' THEN 'FAILED_OR_REQUIRES_REVIEW'
-      ELSE status END,
+      ELSE focus_compliance_entries.status END,
     report_revision = CASE
-      WHEN status = 'PENDING_FOCUS_ENTRY'
+      WHEN focus_compliance_entries.status = 'PENDING_FOCUS_ENTRY'
         AND ((r.report_type = 'ISSUE_SLIP' AND r.status IN ('ISSUED', 'APPROVAL_TRACKING', 'COMPLETED'))
           OR (r.report_type = 'DAILY_REJECT' AND r.status = 'SUPERVISOR_APPROVED'))
         THEN r.version
       ELSE NULL END,
-    reconciliation_state = CASE WHEN status = 'PENDING_FOCUS_ENTRY'
+    reconciliation_state = CASE WHEN focus_compliance_entries.status = 'PENDING_FOCUS_ENTRY'
       AND ((r.report_type = 'ISSUE_SLIP' AND r.status IN ('ISSUED', 'APPROVAL_TRACKING', 'COMPLETED'))
         OR (r.report_type = 'DAILY_REJECT' AND r.status = 'SUPERVISOR_APPROVED')) THEN 'NOT_RECONCILED'
       ELSE 'MISMATCH_REQUIRES_REVIEW' END

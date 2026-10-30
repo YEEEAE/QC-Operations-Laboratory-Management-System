@@ -1,3 +1,8 @@
+- **2026-10-30 — QC360-DB-005 / Staging migrations through 0080**
+  - Changed: Applied 0060–0080 to provider-confirmed staging; renamed the existing reject-status constraint before 0074 and corrected the unapplied 0076 source with explicit user authorization.
+  - Evidence: Read-only staging ledger comparison: 80/80 current local source names and checksums match, head 0080. User waived pre-change recovery evidence; no current restore rehearsal or full schema parity was established.
+  - State: PARTIAL — 0074 source still requires a compatible strategy on other databases; corrected 0076 exists in the local working tree and must accompany future deployments. Production remains unverified.
+  - Key files: `db/migrations/0076_manual_focus_daily_reconciliation.sql`, `audit/QC360-DB-005/migration-parity-and-backfill-runbook.md`.
 - **2026-10-30 — QC360-DB-005 / Migration ledger parity and protected-data plan**
   - Changed: System-health and owner control-center source surfaces migration source/applied heads, pending versions, sequence/duplicate risks, name/checksum drift, known legacy checksums, and a configured branch label with provider attestation explicitly unavailable; the non-controlled staging-first data-protection plan is current to this checkout.
   - Evidence: Local `main` `0f6c88517a465ddf402d540f79643d609b00cfee` has 80 source migrations through `0080`. Read the `.env`-configured Staging ledger in a PostgreSQL `READ ONLY` transaction: 59 rows through `0059`; zero duplicate, sequence, name, or unknown-checksum mismatches; `0060`–`0080` pending. Database `neondb`, PostgreSQL `18.6 (4e5fd08)`. No migration execution or schema introspection.
