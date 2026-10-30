@@ -1,13 +1,14 @@
 # QC360-DB-005 — Migration parity and protected change plan
 
-**State: PARTIAL / NOT VERIFIED.** This is a local implementation note, not a controlled procedure, approval, migration authorization, or database observation.
+**State: PARTIAL.** This is a local implementation note and read-only staging observation, not a controlled procedure, approval, migration authorization, or production database observation.
 
 ## Source and ledger boundary
 
-- The local checkout is `main` at `ffea4b12ff23cb4488fc5acf32c37f2e50169de7`; the audit SHA `80e5947f22bc4ccce1a71c911c7c9d0cae99f2d9` is reference evidence only.
+- The local checkout is `main` at `0f6c88517a465ddf402d540f79643d609b00cfee`; the audit SHA `80e5947f22bc4ccce1a71c911c7c9d0cae99f2d9` is reference evidence only.
 - The local source inventory has 80 numbered migration files, `0001`–`0080`. This establishes only the source head (`0080`), not an applied head.
 - The application projections compare the shipped migration inventory to `qc.schema_migrations`. They now report source/applied heads, pending versions, source/ledger sequence risks, name/checksum mismatches, retained known-legacy checksums, and the configured branch label. The branch label is not Neon provider attestation; provider project/branch identity remains `NOT VERIFIED`.
-- No live ledger, schema, branch, or checksum read was made for this task. The historical staging evidence ending at `0059` is not current evidence for this checkout. Production, staging, and pilot applied heads remain `NOT VERIFIED` here.
+- On 2026-10-30, the `.env`-configured `staging` profile/branch label was used with its direct endpoint. Within a PostgreSQL `READ ONLY` transaction, `qc.schema_migrations` returned 59 rows through `0059` on database `neondb`, PostgreSQL `18.6 (4e5fd08)`. This is a configured-target observation; Neon provider project/branch attestation was unavailable, so the actual provider branch identity is `NOT VERIFIED`.
+- Compared with this checkout's 80 source migrations through `0080`, the 59 applied rows have no duplicate versions, sequence gaps, name mismatches, or unknown checksum mismatches; no applied row used a retained legacy checksum. Versions `0060`–`0080` are pending on this configured staging target. This ledger read does not inspect the full live schema or establish production/pilot state.
 - No source migration was added for this projection: source and applied ledger facts are combined at read time, without a new database object or data write.
 
 ## Historical-data protections
@@ -53,7 +54,7 @@ Neither command was run. Do not execute the apply command from production or inf
 
 ## Remaining blockers
 
-- Independently authorized, read-only provider access to identify the intended Neon project/branch/database and capture current applied signatures/schema.
+- Neon provider-side attestation of the configured staging project/branch identity, plus separately authorized read-only schema inspection if full schema parity is required.
 - Owner-approved staging change and recovery/restore evidence, including a disposition path for any `0053`/`0055` historical conflicts and reviewed impact for the state updates in `0072`/`0076`.
 - Company legal/license decision for any controlled source-file retention or import. Until then, source-library ingestion remains blocked.
 - Separate approvals for role grants, data correction/backfill, operational policy values, and any later production migration.

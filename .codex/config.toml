@@ -59,4 +59,4 @@ tool_timeout_sec = 60
 
 [mcp_servers.Neon]
 type = "http"
-url = "https://mcp.neon.tech/mcp?projectId=wispy-hat-00021838"
+url = "https://mcp.neon.tech/mcp?projectId=super-dream-61259417"
