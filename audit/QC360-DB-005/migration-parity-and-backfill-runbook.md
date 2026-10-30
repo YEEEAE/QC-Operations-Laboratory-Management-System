@@ -50,7 +50,13 @@ After reviewed recovery/change controls and explicit approval for an isolated st
 pnpm db:migrate -- --direct
 ```
 
-Neither command was run. Do not execute the apply command from production or infer that `--check` was run from this note. No production apply command is authorized or generated here.
+The check command was not run. The apply command was subsequently run on the provider-confirmed staging target as described below. No production apply command is authorized here.
+
+## Staging execution, 2026-10-30
+
+The user authorized staging execution and explicitly waived the recovery-point and restore-evidence prerequisites. Neon provider metadata confirmed project `super-dream-61259417`, branch `br-divine-hill-b4klt2mo` (`staging`), and the configured endpoint. The only provider snapshot listed predates initial bootstrap; no current recovery point or restore rehearsal was established.
+
+Before execution, read-only counts of issue-slip confirmations, Focus entries and reject reports were zero; the ledger contained 59 migrations. The runner committed `0060`–`0073`, then reported `0074` rolled back and did not attempt later migrations. A read-only ledger query confirmed entries through `0073`. The live constraint inventory does not contain `reject_reports_status_check`, which `0074` attempts to drop; the runner redacted the underlying error, so this is a source-backed likely cause, not a captured database error. Investigate the actual constraint definition and a compatible migration strategy before retrying. Preserve already-applied migration signatures and historical records. `0074`–`0080` remain unapplied; no release or schema parity is asserted.
 
 ## Remaining blockers
 
