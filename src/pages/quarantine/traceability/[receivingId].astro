@@ -4,6 +4,7 @@ import StatusBadge from '../../../ui/components/StatusBadge.astro';
 import { lotTraceabilityDependencies } from '../../../modules/quarantine/application/dependencies.js';
 import { classifyReadFailure } from '../../../shared/errors/read-failure.js';
 import { formatDateTime } from '../../../shared/copy/format.js';
+import LotStory from '../../../ui/components/dashboard/LotStory.astro';
 const actor = Astro.locals.actor;
 if (!actor) return Astro.redirect(`/login?returnTo=${encodeURIComponent(Astro.url.pathname + Astro.url.search)}`);
 const eventTypes = ['RECEIVING', 'INSPECTION', 'LABORATORY', 'DOCUMENT'] as const;
@@ -42,8 +43,9 @@ if (notFound) Astro.response.status = 404;
       : notFound || !result ? <section class="panel" role="status"><h1>Receiving record unavailable</h1><p>The record does not exist or is outside your current access scope.</p><a href="/quarantine/traceability">Return to search</a></section>
       : <>
         <header class="record-head"><div><p class="eyebrow">READ-ONLY LOT TRACEABILITY</p><h1>{result.record.receivingNo}</h1><p>{result.record.itemCode} · Lot {result.record.lot}</p></div><a href="/quarantine/traceability">Search another lot</a></header>
-        <section class="facts" aria-label="Source states"><div><span>Receiving workflow</span><strong>{result.record.workflowState}</strong></div><div><span>Inspection result</span><StatusBadge status={result.record.inspectionResult} /></div><div><span>Release system state</span><strong>{result.record.releaseState}</strong></div></section>
+        <section class="facts" aria-label="Source states"><div><span>Receiving workflow</span><strong>{result.record.workflowState}</strong></div><div><span>Inspection result</span>{result.record.inspectionResult === 'PASS' || result.record.inspectionResult === 'FAIL' || result.record.inspectionResult === 'HOLD' ? <StatusBadge status={result.record.inspectionResult} /> : <strong>{result.record.inspectionResult}</strong>}</div><div><span>Release system state</span><strong>{result.record.releaseState}</strong></div></section>
         <p class="note">Inspection result and release system state are separate source facts. This timeline does not create or change workflow state.</p>
+        {result.auditEventsAvailable && result.events.length > 0 && <LotStory events={result.events} />}
         <section class="panel" aria-labelledby="filters-title"><h2 id="filters-title">Filter events</h2><form method="get" class="filters">
           <label>Event type<select name="type"><option value="">All available types</option>{eventTypes.map((eventType) => <option value={eventType} selected={type === eventType}>{eventType}</option>)}</select></label>
           <label>From date<input type="date" name="from" value={from ?? ''} /></label><label>To date<input type="date" name="to" value={to ?? ''} /></label>

@@ -1,0 +1,41 @@
+---
+import type { TraceabilityEvent } from '../../../modules/quarantine/application/lot-traceability.js';
+import { formatDateTime } from '../../../shared/copy/format.js';
+
+interface Props { events: readonly TraceabilityEvent[] }
+const { events } = Astro.props;
+---
+<details class="lot-story">
+  <summary>Open Story Experience</summary>
+  <div class="story-body">
+    <header><p class="eyebrow">Read-only · source events</p><h2>Lot event journey</h2><p>Each card represents a recorded event, not an inferred process step. Select an event or use the timeline to explore its source.</p></header>
+    <ol class="event-map" aria-label="Recorded events in chronological order">
+      {events.map((event, index) => <li><a href={`#story-event-${index}`}><span>{index + 1} · {event.type}</span><strong>{event.action}</strong><time datetime={event.occurredAt.toISOString()}>{formatDateTime(event.occurredAt)}</time></a></li>)}
+    </ol>
+    <div class="scrubber" hidden><label for="story-scrubber">Explore event by time</label><input id="story-scrubber" type="range" min="0" max={events.length - 1} value="0" step="1" /><output for="story-scrubber" aria-live="polite"></output></div>
+    <div class="event-panels">{events.map((event, index) => <article id={`story-event-${index}`} class="event-panel" tabindex="-1"><p>{event.type} · <time datetime={event.occurredAt.toISOString()}>{formatDateTime(event.occurredAt)}</time></p><h3>{event.action}</h3>{event.state && <p>Recorded state: {event.state}</p>}<p>Source revision: {event.sourceRevision}</p>{event.actorId && <p>Actor: {event.actorId}</p>}<a href={event.href}>Open source record</a></article>)}</div>
+  </div>
+</details>
+<script>
+  document.querySelectorAll<HTMLElement>('.lot-story').forEach((story) => {
+    const scrubber = story.querySelector<HTMLInputElement>('#story-scrubber');
+    const container = story.querySelector<HTMLElement>('.scrubber');
+    const output = story.querySelector<HTMLOutputElement>('output');
+    const panels = Array.from(story.querySelectorAll<HTMLElement>('.event-panel'));
+    if (!scrubber || !container || !output || !panels.length) return;
+    const update = () => {
+      const selected = Number(scrubber.value);
+      panels.forEach((panel, index) => { panel.hidden = index !== selected; });
+      output.textContent = `Event ${selected + 1} of ${panels.length}: ${panels[selected].querySelector('h3')?.textContent ?? ''}`;
+    };
+    story.querySelectorAll<HTMLAnchorElement>('.event-map a').forEach((link, index) => {
+      link.addEventListener('click', () => { scrubber.value = String(index); update(); });
+    });
+    scrubber.addEventListener('input', update);
+    update();
+    container.hidden = false;
+  });
+</script>
+<style>
+  .lot-story{border:1px solid var(--border-subtle);border-radius:var(--radius-lg);background:var(--surface-raised)}summary{padding:1rem;cursor:pointer;font-weight:700}.story-body{display:grid;gap:1rem;padding:1rem}.story-body h2,.story-body h3,.story-body p{margin:.25rem 0}.eyebrow{font-size:.75rem;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)}.event-map{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,13rem),1fr));gap:.75rem;list-style:none;margin:0;padding:0}.event-map a{display:grid;gap:.5rem;min-height:8rem;padding:1rem;border:1px solid var(--border-subtle);border-radius:var(--radius-md);background:var(--surface-inset);color:inherit;text-decoration:none;box-shadow:0 4px 0 var(--border-subtle)}.event-map span,.event-map time{font-size:.8rem;color:var(--text-muted)}.event-panel{padding:1rem;border:1px solid var(--border-subtle);border-radius:var(--radius-md)}.scrubber:not([hidden]){display:grid;gap:.5rem}.scrubber input{width:100%}a:focus-visible,summary:focus-visible,input:focus-visible{outline:3px solid currentColor;outline-offset:3px}@media(max-width:520px){.event-map{grid-template-columns:1fr}.event-map a{min-height:0}}@media(forced-colors:active){.event-map a,.event-panel,.lot-story{border-color:CanvasText;box-shadow:none}}
+</style>

@@ -1,3 +1,8 @@
+- **2026-10-30 — UX-01 / Optional story source slice**
+  - Changed: Added an opt-in dashboard story and a read-only lot-event explorer using existing authorized sources; operational navigation remains unchanged.
+  - Evidence: Source edits only; no tests, builds, lint, scripts, database, browser, or deployment operations.
+  - State: PARTIAL — traceability crosswalks and approved analytics sources remain limited; runtime and visual behavior are not verified.
+  - Key files: `src/pages/dashboard/index.astro`, `src/ui/components/dashboard/LotStory.astro`.
 - **2026-10-30 — RENDER-DEPLOY-20261030 / نشر إصلاح Astro على Production**
   - Changed: لا تعديل مصدر إضافي؛ نُشر `main` الحالي بعد إصلاح أخطاء بناء Astro.
   - Evidence: Render deploy `dep-dbht167avr4c73d3s0e0` صار `live` على SHA `852c8c1b027e85d9d0b1a3a4b15849b5251eb107`. `/api/health/ready` أعاد `200 healthy`، وسجل الطلب يطابق instance `srv-dadqj67qj5pc7395rv2g-rd7pz`؛ مسح error/warning بعد النشر فارغ. لا migrations أو تغييرات إعدادات.
