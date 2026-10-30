@@ -1,3 +1,7 @@
+- **2026-10-30 — INTEGRATION / Decision source reconciliation**
+  - Changed: The implementation playbook records SYS-01–SYS-08 and states Q32–Q38 were owner-approved, without their individual wording; the brief and pilot guidance now distinguish these facts.
+  - Evidence: Static inspection only; no execution or production-readiness claim.
+  - State: PARTIAL — original Q32–Q38 details and policy-dependent source authorities remain outstanding.
 - **2026-10-30 — UX-01 / Optional story source slice**
   - Changed: Added an opt-in dashboard story and a read-only lot-event explorer using existing authorized sources; operational navigation remains unchanged.
   - Evidence: Source edits only; no tests, builds, lint, scripts, database, browser, or deployment operations.
@@ -620,3 +624,8 @@
   - Evidence: Source edits only; verification and execution prohibited by task instruction.
   - State: PARTIAL — approved curricula, training acknowledgment authority and feedback intake/evidence policy remain unresolved; no privilege gate or acknowledgment is asserted.
   - Key files: `src/pages/help/index.astro`, `src/pages/work/index.astro`, `src/pages/account.astro`.
+- **2026-10-30 — INTEGRATION / Source-only partial integration**
+  - Changed: Shift-handover authorization now receives the caller's expected revision; pilot and migration source documentation clarify governance boundaries.
+  - Evidence: Static source and diff inspection only; execution and graph regeneration prohibited by request.
+  - State: HISTORICAL — full cross-module integration was not established; subsequent reconciliation located the playbook's SYS-01–SYS-08 summary, but not individual Q32–Q38 wording. SYS-09–SYS-14 remain unapproved; production readiness is NOT VERIFIED.
+  - Key files: `src/modules/tasks/application/shift-handover.ts`, `README-system-detailed/brief.md`, `Documents/PILOT-STAGING-OPERATIONS.md`.

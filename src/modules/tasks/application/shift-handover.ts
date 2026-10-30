@@ -18,12 +18,12 @@ export interface ShiftHandoverRepository {
   transition(input: { actor: ActorContext; requestId: string; id: string; expectedVersion: bigint; action: HandoverAction; reason?: string }): Promise<ShiftHandover>;
 }
 
-function authorizeHandover(actorContext: ActorContext, item: ShiftHandover, step: HandoverAction) {
+function authorizeHandover(actorContext: ActorContext, item: ShiftHandover, step: HandoverAction, expectedVersion: bigint) {
   authorize({
     actor: actorContext, permission: permission[step], action: action[step],
     entity: { type: 'SHIFT_HANDOVER', id: item.id, state: item.state, ownerId: item.initiatedBy, areaId: item.areaCode, shiftId: step === 'ACCEPT' || step === 'ACKNOWLEDGE' ? item.toShift : item.fromShift },
     scope: { ownerId: item.initiatedBy, areaId: item.areaCode, shiftId: step === 'ACCEPT' || step === 'ACKNOWLEDGE' ? item.toShift : item.fromShift },
-    currentVersion: item.version, expectedVersion: item.version, businessCondition: true,
+    currentVersion: item.version, expectedVersion, businessCondition: true,
   }, { throwOnDeny: true });
 }
 
@@ -46,7 +46,7 @@ export class ShiftHandoverUseCases {
     if (!item) throw new AppError('RESOURCE_NOT_FOUND', { userSafe: true });
     if ((input.action === 'ACCEPT' || input.action === 'ACKNOWLEDGE') && item.initiatedBy === input.actor.id)
       throw new AppError('AUTHZ_SOD_VIOLATION', { userSafe: true });
-    authorizeHandover(input.actor, item, input.action);
+    authorizeHandover(input.actor, item, input.action, input.expectedVersion);
     transitionHandover(item.state, input.action, input.reason);
     return this.repository.transition(input);
   }

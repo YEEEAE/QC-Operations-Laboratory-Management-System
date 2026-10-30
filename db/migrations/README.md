@@ -4,6 +4,8 @@
 
 This directory contains the authoritative PostgreSQL migrations for the QC system.
 
+**Source inventory correction (2026-10-30):** The checkout contains ordered migration source files through `0080_ai_advisory_policy.sql`. This is a source inventory only, not evidence that any target database has applied them. Earlier inventory counts below are historical; reconcile the target ledger and recovery authorization separately before any future migration operation.
+
 **Current source correction (2026-10-29):** The checkout now contains 76 contiguous migration files through `0076_manual_focus_daily_reconciliation.sql`; the following 68-file inventory paragraph is a historical snapshot. Migrations `0060`–`0076` are source only and are not asserted to be applied. Migration `0075` adds fail-closed, source-digest-bound 2025 reject limit profiles, owner review/activation events, finalization-time threshold snapshots, approval escalation requests, and pending-escalation cancellation on report void. Migration `0076` adds revision-bound manual Focus entry and reconciliation states, append-only mismatch evidence, and backfills only eligible reports with traceable source events. SYS-09 remains unapproved; no Focus provider, login, API, or import is enabled.
 
 **Current source correction (2026-10-30):** Migration `0079_shift_handovers.sql` adds the cross-shift handover record/event schema, task area/shift attributes, snapshot digests, and immutable event/snapshot guards. Its new permissions are intentionally not granted to roles; approved shift/area directories and role authority are still required. Migration `0079` is source only and is not asserted to be applied.

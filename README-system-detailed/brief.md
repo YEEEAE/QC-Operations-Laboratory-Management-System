@@ -8,6 +8,21 @@
 > **Repository:** [YEEEAE/QC-Operations-Laboratory-Management-System](https://github.com/YEEEAE/QC-Operations-Laboratory-Management-System)  
 > **Scope:** Requirements and design brief only. **No GitHub modifications authorized.**
 
+> **Source reconciliation, 2026-10-30:** This brief records Q01–Q31 individually. The [implementation playbook](../audit/QC_Universe_Company_Implementation_Prompts_ONE_CLICK_COPY_NEON_2026-10-28.html) states that Q32–Q38 were approved in the owner discussion and summarizes the overall direction, but does not identify their individual wording. Do not assign details to those seven decisions without their original record. The same playbook records SYS-01–SYS-08 below. SYS-09–SYS-14 are **not approved**. The 2026 owner approval is scoped internal approval, not a formal electronic signature; e-signatures remain deferred. In-Process is separate from Incoming and Final Inspection unless the applicable controlled WI requires otherwise.
+
+### System decisions recorded in the implementation playbook
+
+- **SYS-01 B:** Suggest Finding-to-NCR escalation only under approved conditions.
+- **SYS-02 A:** An inspection FAIL blocks release; disposition is controlled and manual, without automatic NCR creation.
+- **SYS-03 D:** Simplified NCR closure is controlled and limited to formally eligible simple cases.
+- **SYS-04 D:** Action completion, CAPA closure and effectiveness are separate; a documented exception is not proof of effectiveness.
+- **SYS-05 D:** Retesting is evidence-based. SYS-05.1 C assigns authorization to the Laboratory Supervisor or System Owner; SYS-05.2 A permits one ordinary retest, with further attempts requiring a new investigation and approved exception; SYS-05.3 D requires evidence-based final disposition while preserving original results.
+- **SYS-06 D:** Controlled effectivity supports immediate, scheduled or later activation, subject to established authority.
+- **SYS-07 D:** Reconcile sources against evidence and block conflicts.
+- **SYS-08 C:** Authorized staff set up manual controlled mappings; System Owner approval is required.
+
+These decisions do not supply missing controlled criteria, source revisions, permissions or scientific acceptance limits. Implementation remains fail-closed where those are absent.
+
 ## 1. Executive Summary | الملخص التنفيذي
 
 **QC Universe** is a premium, enterprise-grade redesign direction for the existing **QC Operations & Laboratory Management System**, accompanied by a **separately isolated, publicly accessible interactive demo**. The production system must remain a reliable QC/QMS operations platform; the public experience tells a memorable, interactive story suitable for an **Awwwards-level design aspiration**, without disclosing real QC data.
