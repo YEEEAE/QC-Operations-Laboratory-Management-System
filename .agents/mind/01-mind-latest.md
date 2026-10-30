@@ -1,3 +1,8 @@
+- **2026-10-30 — QC360-DB-005 / Production migration preparation**
+  - Changed: Prepared a checksum-pinned, transaction-bound 0074 constraint compatibility path and production migration plan; no production migration executed.
+  - Evidence: Authorized production ledger read 45/45 source signatures match through 0045; 0046–0080 pending. Staging and local 0076 signatures match. Aggregate 0053/0055 conflicts zero at observation. No production snapshot listed; restore and full schema parity unverified.
+  - State: PARTIAL — runner change untested; production recovery, controlled authority for changed role grants and mapping continuity, rehearsal and independently authorized change remain outstanding. The automatic reviewer initially rejected broader production counts; after separately granted read authorization, aggregate counts were obtained without identifying records.
+  - Key files: `scripts/db/migrate.ts`, `audit/QC360-DB-005/production-migration-preparation.md`.
 - **2026-10-30 — RENDER-SESSION-CONFIG / Production deploy schema blocker**
   - Changed: With explicit user authorization, triggered Render deploy `dep-dbi2k08m7kps73bn2je0` for `0ca71840347be1f4a5fb98c33b1757cce7095998` using saved session settings.
   - Evidence: New instance returned 5xx from readiness after passing environment validation. User-authorized read-only production inspection confirmed 45 ledger rows through `0045` and absence of sampled required Reject Reports columns and tables introduced later; Render database endpoint matched Neon production branch metadata.

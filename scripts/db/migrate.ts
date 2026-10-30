@@ -45,6 +45,31 @@ export class MigrationExecutionError extends Error {
 const migrationsDirectory = resolve(dirname(fileURLToPath(import.meta.url)), '../../db/migrations');
 const lockKey = 'qc-operations-schema-migrations-v1';
 
+// PostgreSQL named the original multi-column status check differently on
+// existing databases. Preserve migration 0074's shipped bytes and ledger
+// checksum, and adapt only the exact known predecessor inside its transaction.
+async function prepareMigration0074(client: PoolClient, migration: MigrationFile): Promise<void> {
+  if (migration.version !== '0074') return;
+  if (migration.name !== '0074_daily_reject_three_stage_review' ||
+      migration.checksum !== 'b2390b46d275f61c4490e4f70753d51ffae97279fb74bd52841ec58739f01982') {
+    throw new MigrationIntegrityError('Migration 0074 source is not the reviewed version.');
+  }
+  await client.query('LOCK TABLE qc.reject_reports IN ACCESS EXCLUSIVE MODE');
+  const result = await client.query<{ name: string; definition: string }>(`
+    SELECT conname AS name, pg_get_constraintdef(oid) AS definition
+    FROM pg_constraint
+    WHERE conrelid = 'qc.reject_reports'::regclass AND contype = 'c'
+      AND conname IN ('reject_reports_check', 'reject_reports_status_check')
+  `);
+  const expected = "CHECK ((((report_type = 'ISSUE_SLIP'::text) AND (status = ANY (ARRAY['DRAFT'::text, 'ISSUED'::text, 'APPROVAL_TRACKING'::text, 'COMPLETED'::text, 'VOID'::text]))) OR ((report_type = 'DAILY_REJECT'::text) AND (status = ANY (ARRAY['DRAFT'::text, 'FINALIZED'::text, 'VOID'::text])))))";
+  if (result.rows.length !== 1 || result.rows[0]?.definition !== expected) {
+    throw new MigrationIntegrityError('Migration 0074 predecessor constraint is not the reviewed definition.');
+  }
+  if (result.rows[0].name === 'reject_reports_check') {
+    await client.query('ALTER TABLE qc.reject_reports RENAME CONSTRAINT reject_reports_check TO reject_reports_status_check');
+  }
+}
+
 // These are the checksums of migrations from the pre-Render-compatible role
 // model. They are accepted only so an existing ledger remains auditable; fresh
 // databases always record the checksum of the current migration file.
@@ -248,6 +273,7 @@ export async function migrate(
       let commitStarted = false;
       await client.query('BEGIN');
       try {
+        await prepareMigration0074(client, migration);
         await client.query(migration.sql);
         await client.query(
           `INSERT INTO qc.schema_migrations (version, name, checksum, execution_ms, runner_version)
