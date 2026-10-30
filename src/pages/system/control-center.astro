@@ -180,13 +180,15 @@ const formatDate = (value?: Date | string) => formatDateTime(value);
 const migrationBlocker = (migration: Overview['migration']) =>
   !migration.sourceAvailable
     ? 'the shipped migration source could not be verified.'
-    : migration.integrityMismatches.length > 0
-      ? `ledger name/checksum mismatch at ${migration.integrityMismatches.join(', ')}.`
-      : migration.pendingCount > 0
-        ? `the database is at ${migration.appliedHead} while this build ships ${migration.buildHead}; pending migrations are not applied automatically.`
-        : migration.drift
-          ? `the database is at ${migration.appliedHead} while this release expects ${migration.expectedHead}.`
-          : 'none modeled in this view.';
+    : migration.integrityIssues.length > 0
+      ? `ledger/source parity issues: ${migration.integrityIssues.join(', ')}.`
+      : migration.integrityMismatches.length > 0
+        ? `ledger name/checksum mismatch at ${migration.integrityMismatches.join(', ')}.`
+        : migration.pendingCount !== null && migration.pendingCount > 0
+          ? `the database is at ${migration.appliedHead} while this build ships ${migration.buildHead}; pending migrations are not applied automatically.`
+          : migration.drift
+            ? `the database is at ${migration.appliedHead} while this release expects ${migration.expectedHead}.`
+            : 'none modeled in this view.';
 // UX-001: the console's most prominent indicator is release readiness, never a
 // connectivity probe. The old connectivity badge at the top read as overall
 // approval while QC acceptance stayed NOT VERIFIED and the release decision
@@ -423,9 +425,16 @@ const releaseBanner = {
               <div><dt>Applied head — database ledger</dt><dd>{overview.migration.appliedHead}</dd></div>
               <div><dt>Shipped head — build files</dt><dd>{overview.migration.buildHead}</dd></div>
               <div><dt>Expected head — release identity or build</dt><dd>{overview.migration.expectedHead}</dd></div>
-              <div><dt>Pending migrations</dt><dd>{overview.migration.pendingCount}</dd></div>
+              <div><dt>Pending migrations</dt><dd>{overview.migration.pendingCount ?? 'NOT VERIFIED'}</dd></div>
+              <div><dt>Pending versions</dt><dd>{overview.migration.pendingCount === null ? 'NOT VERIFIED' : overview.migration.pendingVersions.length ? overview.migration.pendingVersions.join(', ') : 'None reported'}</dd></div>
+              <div><dt>Ledger/source issues</dt><dd>{overview.migration.integrityIssues.length ? overview.migration.integrityIssues.join(', ') : overview.migration.sourceAvailable ? 'None reported' : 'NOT VERIFIED'}</dd></div>
+              <div><dt>Checksum mismatches</dt><dd>{overview.migration.checksumMismatches.length ? overview.migration.checksumMismatches.join(', ') : overview.migration.sourceAvailable ? 'None reported' : 'NOT VERIFIED'}</dd></div>
+              <div><dt>Known legacy checksum versions</dt><dd>{!overview.migration.sourceAvailable ? 'NOT VERIFIED' : overview.migration.knownLegacyChecksums.length ? overview.migration.knownLegacyChecksums.join(', ') : 'None reported'}</dd></div>
+              <div><dt>Environment profile</dt><dd>{overview.migration.branchIdentity.profile}</dd></div>
+              <div><dt>Configured Neon branch label</dt><dd>{overview.migration.branchIdentity.configuredLabel}</dd></div>
+              <div><dt>Neon provider attestation</dt><dd>{overview.migration.branchIdentity.providerAttestation}</dd></div>
             </dl>
-            <p class="muted">Open blockers: {migrationBlocker(overview.migration)} Core connectivity is not release approval; release gates and recovery evidence remain separate. Dependency and backup detail: <a href="/system/health">System health</a> · <a href="/system/backups">Backups</a></p>
+            <p class="muted">The Neon branch label is configuration only; this process has no provider-verified project/branch identity. {overview.migration.pendingCount === null ? 'Pending-version status is NOT VERIFIED.' : overview.migration.pendingVersions.length ? `Pending source versions: ${overview.migration.pendingVersions.join(', ')}.` : ''} Open blockers: {migrationBlocker(overview.migration)} The view reads the applied ledger and shipped SQL-file identities only; it never executes migration SQL. Core connectivity is not release approval; release gates and recovery evidence remain separate. Dependency and backup detail: <a href="/system/health">System health</a> · <a href="/system/backups">Backups</a></p>
           </section>
         </>
       )

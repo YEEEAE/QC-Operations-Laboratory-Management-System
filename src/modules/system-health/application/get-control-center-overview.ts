@@ -22,8 +22,17 @@ export interface ControlCenterMigrationStatus {
    * to UNKNOWN — never to the applied head — when neither is available.
    */
   expectedHead: string;
-  pendingCount: number;
+  pendingCount: number | null;
+  pendingVersions: readonly string[];
   integrityMismatches: readonly string[];
+  checksumMismatches: readonly string[];
+  knownLegacyChecksums: readonly string[];
+  integrityIssues: readonly string[];
+  branchIdentity: {
+    profile: string;
+    configuredLabel: string;
+    providerAttestation: 'NOT_AVAILABLE';
+  };
   sourceAvailable: boolean;
   drift: boolean;
 }
@@ -63,8 +72,12 @@ export interface ControlCenterOverviewDependencies {
     buildHead: string;
     pending: readonly string[];
     integrityMismatches?: readonly string[];
+    checksumMismatches?: readonly string[];
+    knownLegacyChecksums?: readonly string[];
+    issues?: readonly string[];
     sourceAvailable?: boolean;
   }>;
+  environment?: { profile: string; neonBranchLabel?: string };
   release: ConfiguredReleaseIdentity;
   now?: () => Date;
 }
@@ -116,10 +129,20 @@ export class GetControlCenterOverviewUseCase {
     const release = this.dependencies.release;
     const appliedHead = migrationResult.ok ? migrationResult.result.appliedHead : 'UNKNOWN';
     const buildHead = migrationResult.ok ? migrationResult.result.buildHead : 'UNKNOWN';
-    const pendingCount = migrationResult.ok ? migrationResult.result.pending.length : 0;
+    const pendingCount =
+      migrationResult.ok && migrationResult.result.sourceAvailable !== false
+        ? migrationResult.result.pending.length
+        : null;
     const integrityMismatches = migrationResult.ok
       ? (migrationResult.result.integrityMismatches ?? [])
       : [];
+    const checksumMismatches = migrationResult.ok
+      ? (migrationResult.result.checksumMismatches ?? [])
+      : [];
+    const knownLegacyChecksums = migrationResult.ok
+      ? (migrationResult.result.knownLegacyChecksums ?? [])
+      : [];
+    const integrityIssues = migrationResult.ok ? (migrationResult.result.issues ?? []) : [];
     const sourceAvailable = migrationResult.ok && migrationResult.result.sourceAvailable !== false;
     // The ledger stores the bare version ("0025"); the release identity carries
     // the full name ("0025_qc_closure_006_workflow"). Compare on the version.
@@ -132,7 +155,8 @@ export class GetControlCenterOverviewUseCase {
     const drift =
       !sourceAvailable ||
       integrityMismatches.length > 0 ||
-      (appliedHead !== 'UNKNOWN' && (appliedHead !== expectedVersion || pendingCount > 0));
+      integrityIssues.length > 0 ||
+      (appliedHead !== 'UNKNOWN' && (appliedHead !== expectedVersion || pendingCount !== 0));
 
     return {
       coreStatus:
@@ -145,7 +169,16 @@ export class GetControlCenterOverviewUseCase {
         buildHead,
         expectedHead,
         pendingCount,
+        pendingVersions: migrationResult.ok ? migrationResult.result.pending : [],
         integrityMismatches,
+        checksumMismatches,
+        knownLegacyChecksums,
+        integrityIssues,
+        branchIdentity: {
+          profile: this.dependencies.environment?.profile ?? 'UNKNOWN',
+          configuredLabel: this.dependencies.environment?.neonBranchLabel ?? 'NOT CONFIGURED',
+          providerAttestation: 'NOT_AVAILABLE',
+        },
         sourceAvailable,
         drift,
       },

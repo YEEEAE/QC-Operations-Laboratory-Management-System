@@ -9,6 +9,32 @@ GitHub Actions in this repository currently contains verification CI only; there
 is no Pages/Jekyll workflow or static-site artifact. A Pages/Jekyll failure is
 therefore not an Astro SSR runtime result.
 
+An external GitHub Pages run observed on 2026-10-30 (run `40994437252`, commit
+`80e5947f22bc4ccce1a71c911c7c9d0cae99f2d9`) invoked the generated `pages build
+and deployment` workflow and failed in `Build with Jekyll` on invalid YAML front
+matter in `src/pages/reject-reports/focus.astro`; the log also reports other
+`.astro` files being parsed as YAML. This confirms that Pages processed the
+repository source as Jekyll input. It does not establish a failure in Render's
+Astro SSR service or in the current local checkout. The Pages settings were not
+readable through the available repository inspection endpoint, so whether a
+publishing source remains configured is `NOT VERIFIED`.
+
+Do not publish the repository root as a static Pages site or add `.nojekyll` as
+an SSR remedy: skipping Jekyll would neither produce the standalone Node server
+nor make raw application and document sources an appropriate static artifact.
+Keep the Astro Node SSR deployment on Render. If Pages is still enabled, the
+repository administrator action documented immediately below is required;
+there is no local source change that can clear that external setting.
+
+Read-only GitHub repository metadata reported the repository as public during
+this review. That does not establish which files are approved for public access.
+If company-controlled or confidential material is not authorized for public
+distribution, the repository owner must change visibility under **Settings →
+General → Danger Zone → Change repository visibility**, then separately assess
+published Git history, forks, caches, and exposed credentials. A visibility
+change alone does not retract copies already made; history remediation and
+credential rotation require owner-led action where applicable.
+
 The current Render Blueprint defines separate production, staging, and pilot
 web services. Staging and pilot have automatic deploy disabled and dedicated
 database/storage variable names; the Blueprint does not provision their

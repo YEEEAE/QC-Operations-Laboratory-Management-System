@@ -27,6 +27,9 @@ export interface SystemHealthReadinessDependencies {
     buildHead: string;
     pending: readonly string[];
     integrityMismatches?: readonly string[];
+    checksumMismatches?: readonly string[];
+    knownLegacyChecksums?: readonly string[];
+    issues?: readonly string[];
     sourceAvailable?: boolean;
   }>;
   rejectReportsAvailability: () => Promise<RejectReportAvailability>;
@@ -68,7 +71,16 @@ export interface SystemHealthMigrationPosture {
   /** Shipped source head for comparison; UNKNOWN when source is unavailable. */
   buildHead: string;
   pendingCount: number | null;
+  pendingVersions: readonly string[];
   status: HealthStatus;
+  integrityIssues: readonly string[];
+  integrityMismatches: readonly string[];
+  checksumMismatches: readonly string[];
+  knownLegacyChecksums: readonly string[];
+  branchIdentity: {
+    configuredLabel: string;
+    providerAttestation: 'NOT_AVAILABLE';
+  };
 }
 
 export interface SystemHealthEnvironment {
@@ -212,6 +224,7 @@ export class GetSystemHealthUseCase {
             status:
               migrationData.pending.length === 0 &&
               (migrationData.integrityMismatches?.length ?? 0) === 0 &&
+              (migrationData.issues?.length ?? 0) === 0 &&
               migrationData.appliedHead === migrationData.buildHead
                 ? ('HEALTHY' as const)
                 : ('DEGRADED' as const),
@@ -227,8 +240,17 @@ export class GetSystemHealthUseCase {
       expectedHead: expectedMigrationHead,
       appliedHead: migrationData?.appliedHead ?? 'UNKNOWN',
       buildHead: migrationData?.buildHead ?? 'UNKNOWN',
-      pendingCount: migrationData ? migrationData.pending.length : null,
+      pendingCount: migrationData?.sourceAvailable === true ? migrationData.pending.length : null,
+      pendingVersions: migrationData?.pending ?? [],
       status: migrationStatus.status,
+      integrityIssues: migrationData?.issues ?? [],
+      integrityMismatches: migrationData?.integrityMismatches ?? [],
+      checksumMismatches: migrationData?.checksumMismatches ?? [],
+      knownLegacyChecksums: migrationData?.knownLegacyChecksums ?? [],
+      branchIdentity: {
+        configuredLabel: this.environment.neonBranchLabel ?? 'NOT CONFIGURED',
+        providerAttestation: 'NOT_AVAILABLE',
+      },
     };
 
     const rejectReportsReadiness: WorkflowReadiness =

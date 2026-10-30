@@ -2,7 +2,7 @@ import { Client } from 'pg';
 import { fileURLToPath } from 'node:url';
 
 import { loadMigrations } from './migrate.js';
-import { getMigrationChecksumDisposition } from '../../src/shared/database/migration-checksum-policy.js';
+import { reconcileMigrationParity } from '../../src/shared/database/migration-parity.js';
 import {
   DatabaseConfigurationError,
   getDatabaseConnectionConfig,
@@ -25,10 +25,22 @@ export interface DatabasePreflightReport {
   schemaMigrationsExists: boolean;
   migrationCountApplied: number;
   migrationCountPending: number;
+  migrationSourceHead: string;
+  migrationAppliedHead: string;
+  migrationPendingVersions: readonly string[];
+  migrationChecksumMismatches: readonly string[];
+  migrationKnownLegacyChecksums: readonly string[];
+  branchIdentity: {
+    profile: string;
+    configuredBranchLabel: string;
+    providerAttestation: 'NOT_AVAILABLE';
+  };
   migrationLedgerState: 'UNINITIALIZED' | 'CURRENT' | 'PENDING' | 'DRIFT';
   migrationLedgerIssues: Array<
     | 'MIGRATION_LEDGER_MISSING'
     | 'DUPLICATE_APPLIED_VERSION'
+    | 'DUPLICATE_SOURCE_VERSION'
+    | 'SOURCE_SEQUENCE_GAP'
     | 'OUT_OF_ORDER_OR_GAP'
     | 'MIGRATION_NAME_MISMATCH'
     | 'UNKNOWN_CHECKSUM'
@@ -112,30 +124,31 @@ export async function runDatabasePreflight(
       );
       appliedRows = result.rows;
     }
+    const parity = reconcileMigrationParity(appliedRows, migrations);
     const migrationLedgerIssues = new Set<DatabasePreflightReport['migrationLedgerIssues'][number]>();
     if (!row.migrations_exists) migrationLedgerIssues.add('MIGRATION_LEDGER_MISSING');
-    const seenAppliedVersions = new Set<string>();
-    for (const [index, applied] of appliedRows.entries()) {
-      if (seenAppliedVersions.has(applied.version)) {
-        migrationLedgerIssues.add('DUPLICATE_APPLIED_VERSION');
+    for (const issue of parity.issues) {
+      switch (issue) {
+        case 'SOURCE_DUPLICATE_VERSION':
+          migrationLedgerIssues.add('DUPLICATE_SOURCE_VERSION');
+          break;
+        case 'SOURCE_SEQUENCE_GAP':
+          migrationLedgerIssues.add('SOURCE_SEQUENCE_GAP');
+          break;
+        case 'APPLIED_DUPLICATE_VERSION':
+          migrationLedgerIssues.add('DUPLICATE_APPLIED_VERSION');
+          break;
+        case 'APPLIED_SEQUENCE_MISMATCH':
+        case 'APPLIED_VERSION_UNKNOWN':
+          migrationLedgerIssues.add('OUT_OF_ORDER_OR_GAP');
+          break;
+        case 'MIGRATION_NAME_MISMATCH':
+          migrationLedgerIssues.add('MIGRATION_NAME_MISMATCH');
+          break;
+        case 'CHECKSUM_MISMATCH':
+          migrationLedgerIssues.add('UNKNOWN_CHECKSUM');
+          break;
       }
-      seenAppliedVersions.add(applied.version);
-      const source = migrations[index];
-      if (!source || applied.version !== source.version) {
-        migrationLedgerIssues.add('OUT_OF_ORDER_OR_GAP');
-      }
-      if (source && applied.name !== source.name) {
-        migrationLedgerIssues.add('MIGRATION_NAME_MISMATCH');
-      }
-      if (
-        source &&
-        getMigrationChecksumDisposition(applied.version, source.checksum, applied.checksum) === 'UNKNOWN'
-      ) {
-        migrationLedgerIssues.add('UNKNOWN_CHECKSUM');
-      }
-    }
-    if (appliedRows.length > migrations.length) {
-      migrationLedgerIssues.add('OUT_OF_ORDER_OR_GAP');
     }
     const hasLedgerDrift = [...migrationLedgerIssues].some((issue) =>
       issue !== 'MIGRATION_LEDGER_MISSING',
@@ -144,7 +157,7 @@ export async function runDatabasePreflight(
       ? 'UNINITIALIZED'
       : hasLedgerDrift
         ? 'DRIFT'
-        : appliedRows.length === migrations.length
+        : parity.pending.length === 0 && parity.issues.length === 0
           ? 'CURRENT'
           : 'PENDING';
     await client.query('ROLLBACK');
@@ -160,7 +173,17 @@ export async function runDatabasePreflight(
       qcUsersExists: row.users_exists,
       schemaMigrationsExists: row.migrations_exists,
       migrationCountApplied: appliedRows.length,
-      migrationCountPending: Math.max(0, migrations.length - appliedRows.length),
+      migrationCountPending: parity.pending.length,
+      migrationSourceHead: parity.sourceHead,
+      migrationAppliedHead: parity.appliedHead,
+      migrationPendingVersions: parity.pending,
+      migrationChecksumMismatches: parity.checksumMismatches,
+      migrationKnownLegacyChecksums: parity.knownLegacyChecksums,
+      branchIdentity: {
+        profile: process.env.APP_ENVIRONMENT_PROFILE ?? 'NOT CONFIGURED',
+        configuredBranchLabel: process.env.NEON_BRANCH?.trim() || 'NOT CONFIGURED',
+        providerAttestation: 'NOT_AVAILABLE',
+      },
       migrationLedgerState,
       migrationLedgerIssues: [...migrationLedgerIssues],
       capabilities: {

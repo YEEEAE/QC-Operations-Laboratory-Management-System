@@ -2,30 +2,22 @@ import { createHash } from 'node:crypto';
 import { readdir, readFile } from 'node:fs/promises';
 import type { Kysely } from 'kysely';
 import type { DatabaseSchema } from '../../../shared/database/db-types.js';
-import { isSupportedMigrationChecksum } from '../../../shared/database/migration-checksum-policy.js';
+import {
+  reconcileMigrationParity,
+  type MigrationIdentity,
+} from '../../../shared/database/migration-parity.js';
 import type { HealthStatus } from '../ports/health-probes.js';
 
 const MIGRATION_FILE = /^(\d{4})_([a-z0-9_]+)\.sql$/;
-
-interface MigrationIdentity {
-  version: string;
-  name: string;
-  checksum: string;
-}
 
 interface AppliedMigration extends Omit<MigrationIdentity, 'name'> {
   name: string | null;
 }
 
-export interface ReconciledMigrationStatus {
-  appliedHead: string;
+export type ReconciledMigrationStatus = ReturnType<typeof reconcileMigrationParity> & {
+  /** Alias retained for callers that use build terminology. */
   buildHead: string;
-  pending: readonly string[];
-  /** Applied source versions whose name or supported checksum did not match. */
-  integrityMismatches: readonly string[];
-  /** True only when this process could read its shipped migration files. */
-  sourceAvailable: boolean;
-}
+};
 
 /**
  * Compares the complete applied ledger to the migrations shipped with this
@@ -36,35 +28,10 @@ export function reconcileMigrationStatus(
   applied: readonly AppliedMigration[],
   shipped: readonly MigrationIdentity[] | undefined,
 ): ReconciledMigrationStatus {
-  const orderedApplied = [...applied].sort((left, right) =>
-    left.version.localeCompare(right.version),
-  );
-  const appliedByVersion = new Map(
-    orderedApplied.map((migration) => [migration.version, migration]),
-  );
-  const shippedByVersion = new Map(
-    (shipped ?? []).map((migration) => [migration.version, migration]),
-  );
-  const integrityMismatches = orderedApplied
-    .filter((entry) => {
-      const source = shippedByVersion.get(entry.version);
-      return (
-        !source ||
-        source.name !== entry.name ||
-        !isSupportedMigrationChecksum(entry.version, source.checksum, entry.checksum)
-      );
-    })
-    .map((entry) => entry.version);
-  const source = shipped ?? [];
-
+  const parity = reconcileMigrationParity(applied, shipped);
   return {
-    appliedHead: orderedApplied.at(-1)?.version ?? 'NONE',
-    buildHead: shipped?.at(-1)?.version ?? 'UNKNOWN',
-    pending: source
-      .filter((entry) => !appliedByVersion.has(entry.version))
-      .map((entry) => entry.version),
-    integrityMismatches,
-    sourceAvailable: shipped !== undefined,
+    ...parity,
+    buildHead: parity.sourceHead,
   };
 }
 

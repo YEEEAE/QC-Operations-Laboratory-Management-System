@@ -38,12 +38,14 @@ export function systemHealthReadDependencies() {
  */
 export function controlCenterReadDependencies() {
   const database = getDatabase();
+  const runtime = getRuntimeConfig();
   return {
     overview: new GetControlCenterOverviewUseCase({
       probes: new PostgresSystemHealthProbes(database),
       auditReadiness: createPostgresAuditReadiness(database),
       migrationStatus: createPostgresMigrationStatus(database),
-      release: getRuntimeConfig().release,
+      release: runtime.release,
+      environment: { profile: runtime.profile, neonBranchLabel: runtime.neonBranchLabel },
     }),
   };
 }

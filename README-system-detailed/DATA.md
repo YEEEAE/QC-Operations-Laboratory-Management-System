@@ -9,6 +9,8 @@
 > **Status:** Read-only source review — **not** a database certification or production-readiness approval.  
 > **Paths:** All paths below are relative to the repository root. The names describe files and code verified at the reviewed commit; they do not establish deployed behavior.
 
+**Local source correction (2026-10-30):** The current workspace is `main` at `ffea4b12ff23cb4488fc5acf32c37f2e50169de7` and contains 80 migration files through `0080_ai_advisory_policy.sql`. This supersedes the 48-file inventory below only as a local source inventory; no current Neon applied head or schema parity was read. The authenticated projections are `src/modules/system-health/infrastructure/postgres-migration-status.ts`, `/system/health`, and `/system/control-center`; configured branch labels are not provider identity. Protected change planning is in `audit/QC360-DB-005/migration-parity-and-backfill-runbook.md`.
+
 ## 1. Executive summary
 
 QC Universe uses **Astro SSR + Node + PostgreSQL**, with data access and business rules located in a modular application rather than in its pages. PostgreSQL objects are organized under the `qc` schema. The reviewed repository contains **48 numbered, forward-only migrations**, ending at `0048_inspection_template_authoring.sql`.
