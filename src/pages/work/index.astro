@@ -45,6 +45,12 @@ const unresolved = queue?.unresolvedSources ?? [];
     <p><span>Scope</span> <strong>{queue?.scopeLabel ?? 'Not confirmed'}</strong></p>
   </section>
 
+  <section class="panel" aria-labelledby="work-help-heading">
+    <h2 id="work-help-heading">Quick help</h2>
+    <p>Find role guidance and workflow walkthroughs before starting unfamiliar work.</p>
+    <a href="/help">Open operating guides</a>
+  </section>
+
   {providerUnavailable ? (
     <ProviderUnavailableState title="Your work queue is temporarily unavailable" description="A register did not return a confirmed read, so every group and count is withheld." retryHref="/work" />
   ) : authorizationUnavailable ? (

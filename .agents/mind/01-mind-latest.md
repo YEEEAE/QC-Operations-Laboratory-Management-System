@@ -615,3 +615,8 @@
   - Evidence: NOT RUN by instruction; source and textual `git diff` review only. Graphify CLI unavailable; literal reference match not confirmed.
   - State: DONE — code edit only; untested.
   - Key files: `src/pages/system/backups/[backupId]/index.astro`.
+- **2026-10-30 — USR-01 / Staff guidance source slice**
+  - Changed: Added workflow navigation summaries and links from Work and Account; summaries are explicitly not controlled instructions or training evidence.
+  - Evidence: Source edits only; verification and execution prohibited by task instruction.
+  - State: PARTIAL — approved curricula, training acknowledgment authority and feedback intake/evidence policy remain unresolved; no privilege gate or acknowledgment is asserted.
+  - Key files: `src/pages/help/index.astro`, `src/pages/work/index.astro`, `src/pages/account.astro`.

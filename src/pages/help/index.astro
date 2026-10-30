@@ -58,6 +58,17 @@ const activeQuery = query.trim().length > 0;
 const matchLabel = (count: number) => `${count} matching section${count === 1 ? '' : 's'}`;
 const guidanceColumns = HELP_SECTIONS['guidance-matrix'].columns;
 const troubleshootingColumns = HELP_SECTIONS.troubleshooting.columns;
+const walkthroughs = [
+  { id: 'receiving', title: 'Receiving', routeId: 'RT-REC-001', text: 'Find the receiving record, review its source and evidence, and follow the applicable controlled instruction before taking an available action.' },
+  { id: 'hold', title: 'HOLD', routeId: 'RT-REC-001', text: 'Review the recorded HOLD and its evidence. Escalate an unresolved decision; do not infer a physical disposition or release.' },
+  { id: 'lab', title: 'Laboratory', routeId: 'RT-LAB-002', text: 'Open the relevant test and review its samples, results and recorded review state. A scientific FAIL is not a product release decision.' },
+  { id: 'in-process', title: 'In-Process', routeId: 'RT-INP-001', text: 'Use the applicable controlled work instruction and authorized production scope. In-Process is not Incoming or Final Inspection unless that instruction requires it.' },
+  { id: 'reject', title: 'Reject', routeId: 'RT-REJ-001', text: 'Review the reject record and its evidence, then use the available review steps. Do not assume an unrecorded disposition.' },
+  { id: 'focus', title: 'Focus', routeId: 'RT-REJ-005', text: 'Review the recorded focus information and its source before following up; escalate missing or disputed information.' },
+  { id: 'ncr-capa', title: 'NCR and CAPA', routeId: 'RT-NCR-001', text: 'Review the nonconformance, related actions and their recorded status. Follow the controlled approval and effectiveness process.' },
+  { id: 'documents', title: 'Documents', routeId: 'RT-DOC-001', text: 'Find the applicable effective controlled document and version before performing work. Ask the document owner if applicability is unclear.' },
+  { id: 'backup', title: 'Backup and recovery', routeId: 'RT-BACKUP-001', text: 'Review the authorized backup and recovery information. A backup record alone does not establish a successful restore.' },
+].filter((item) => canVisitRoute(item.routeId));
 ---
 
 <AppLayout title="Operating guides · QC Operations" locale="en" direction="ltr">
@@ -69,6 +80,18 @@ const troubleshootingColumns = HELP_SECTIONS.troubleshooting.columns;
     </div>
     <button type="button" class="print-button" data-print-guide aria-label="Print this guide" title="Print this guide"><Icon name="reports" /></button>
   </header>
+
+  <section class="panel" aria-labelledby="walkthroughs-heading">
+    <h2 id="walkthroughs-heading">Workflow walkthroughs</h2>
+    <p>These summaries are navigation aids, not controlled instructions or evidence of training. Use the applicable effective document and ask your supervisor or QC Compliance when requirements are unclear.</p>
+    {walkthroughs.map((item) => (
+      <article id={`walkthrough-${item.id}`}>
+        <h3>{item.title}</h3>
+        <p>{item.text}</p>
+        <a href={routeHref(item.routeId)}>Open {item.title}</a>
+      </article>
+    ))}
+  </section>
 
   <section class="guide-filters" aria-label="Guide search">
     <form class="filter-form" method="get" action="/help" role="search">
