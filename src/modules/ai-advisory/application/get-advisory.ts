@@ -171,6 +171,13 @@ export class GetAdvisoryUseCase {
     authorizeAdvisory(input.actor, input.mode);
     validateInput(input.question, input.context);
     refuseSecretLikeMaterial(input.question, input.context);
+    if (this.provider.requiresExternalConsent?.()) {
+      return {
+        status: 'UNAVAILABLE',
+        message: 'External processing is disabled pending an approved persisted policy and clearance. No request content was sent.',
+        advisoryNotice: ADVISORY_NOTICE,
+      };
+    }
     if (requiresFailSafeRefusal(input.question, input.context)) {
       return {
         status: 'REFUSED',
@@ -244,7 +251,7 @@ export class GetAdvisoryUseCase {
       advisoryNotice: ADVISORY_NOTICE,
       advisory: {
         mode: input.mode,
-        text: parsedAdvisory.text,
+        text: `NOT VERIFIED — Source identity, citation confidence, and official WI/SOP limits require independent verification.\n\n${parsedAdvisory.text}`,
         ...(parsedAdvisory.sourceReferences
           ? { sourceReferences: parsedAdvisory.sourceReferences }
           : {}),

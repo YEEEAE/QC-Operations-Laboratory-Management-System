@@ -16,7 +16,7 @@ const canDraft = actor.permissions.some((grant) => grant.code === 'PERM-AI-DRAFT
 const aiAvailability = aiAdvisoryPageAvailability();
 const configuredProviders = aiAvailability.configuredProviders;
 const processingPolicy = aiAvailability.processingPolicy;
-const canSendExternally = Boolean(configuredProviders && processingPolicy && aiAvailability.externalProcessingApproved);
+const canSendExternally = false;
 ---
 <AppLayout title="AI Advisory · QC Operations" locale="en" direction="ltr">
   <PageHeader><Fragment slot="heading"><h1>AI advisory</h1></Fragment><p class="lede">Suggestions and analysis only — not an approval authority.</p></PageHeader>
@@ -26,6 +26,7 @@ const canSendExternally = Boolean(configuredProviders && processingPolicy && aiA
       <section class="notice" role="note" aria-label="Human review path"><strong>Human review path</strong><span>AI output is not entered into a QC record. Verify every statement against the cited controlled source, then take uncertainty, missing sources, or suspected incorrect citations to your Supervisor or QCM (Manager) through the normal authorized review workflow.</span></section>
       <section class="notice privacy-notice" role="note" aria-label="AI data use">
         <strong>About your request</strong>
+        <span>External processing is disabled. Environment settings and credentials cannot authorize sending. A named owner, approved versioned policy, provider destination, permitted data classes, consent scope, retention and legal/IT clearance must be established before any future enablement. AI use and each mode require their respective server-side permissions. Official WI/SOP limits and citations are NOT VERIFIED by this page.</span>
         <dl>
           <dt>Provider selection defaults</dt><dd>{aiAvailability.primaryProvider} primary / {aiAvailability.fallbackProvider} fallback. These are routing preferences only.</dd>
           <dt>Credential presence</dt><dd>{aiAvailability.credentialProviders || 'No complete provider credentials/model settings detected'}{aiAvailability.missingCredentials.length > 0 && `; missing: ${aiAvailability.missingCredentials.join(', ')}`}</dd>
@@ -44,7 +45,7 @@ const canSendExternally = Boolean(configuredProviders && processingPolicy && aiA
           <span>Provider credentials or model configuration are missing for this policy: {aiAvailability.missingCredentials.join(', ')}. Provider selection defaults do not count as credentials. No request content will be sent. Contact the service owner to configure approved settings.</span>
         ) : configuredProviders && processingPolicy ? (
           <>
-            <span>Provider: {configuredProviders}. Processing location: {processingPolicy.processingLocation}. Retention limit in the approved policy: {processingPolicy.retentionDays} days. Deletion terms: {processingPolicy.deletionTerms}. Policy: {processingPolicy.policyId} v{processingPolicy.version} ({processingPolicy.sourceReference}). Provider training is prohibited by the configured policy.</span>
+            <span>Unverified environment configuration: {configuredProviders}; location {processingPolicy.processingLocation}; stated retention {processingPolicy.retentionDays} days. This configuration is not an approved persisted policy and does not enable sending.</span>
             {aiAvailability.missingCredentials.length > 0 && <span>Optional policy-listed provider settings are incomplete: {aiAvailability.missingCredentials.join(', ')}. Configured provider(s) available: {configuredProviders}.</span>}
             <span>Permitted content classes: {processingPolicy.permittedDataClasses.join(', ')}. Never submit personal data, credentials, confidential QC information, actual controlled QC records, or content you are not authorized to share. The system checks common sensitive patterns but cannot classify every excerpt.</span>
           </>
