@@ -49,6 +49,12 @@ services:
         sync: false
       - key: SESSION_SECRET
         sync: false
+      - key: SESSION_IDLE_TIMEOUT_SECONDS
+        sync: false
+      - key: SESSION_ABSOLUTE_TIMEOUT_SECONDS
+        sync: false
+      - key: SESSION_SIGN_OUT_SCOPE
+        sync: false
       - key: RATE_LIMIT_LOGIN_MAX
         sync: false
       - key: RATE_LIMIT_LOGIN_WINDOW_SECONDS

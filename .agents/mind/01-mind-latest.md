@@ -1,3 +1,13 @@
+- **2026-10-30 — RENDER-SESSION-CONFIG / Production deploy schema blocker**
+  - Changed: With explicit user authorization, triggered Render deploy `dep-dbi2k08m7kps73bn2je0` for `0ca71840347be1f4a5fb98c33b1757cce7095998` using saved session settings.
+  - Evidence: New instance returned 5xx from readiness after passing environment validation. User-authorized read-only production inspection confirmed 45 ledger rows through `0045` and absence of sampled required Reject Reports columns and tables introduced later; Render database endpoint matched Neon production branch metadata.
+  - State: PARTIAL — production migration and recovery/change approval are separate outstanding work; do not bypass readiness. Deploy outcome pending when observed.
+  - Key files: `render.yaml`, `src/shared/health/health-dependencies.ts`.
+- **2026-10-30 — RENDER-SESSION-CONFIG / Production deploy investigation**
+  - Changed: With user approval, saved Production session idle/absolute timeouts and sign-out scope on Render; local Blueprint declares the three keys without default values.
+  - Evidence: Render API read-back matched approved values; earlier deploys timed out after repeated invalid-environment readiness warnings. A queued candidate created before the configuration update also logged invalid environment. No new manual deployment triggered.
+  - State: PARTIAL — new configuration is saved but its runtime effect and current production schema compatibility remain unverified.
+  - Key files: `render.yaml`.
 - **2026-10-30 — QC360-DB-005 / Staging migrations through 0080**
   - Changed: Applied 0060–0080 to provider-confirmed staging; renamed the existing reject-status constraint before 0074 and corrected the unapplied 0076 source with explicit user authorization.
   - Evidence: Read-only staging ledger comparison: 80/80 current local source names and checksums match, head 0080. User waived pre-change recovery evidence; no current restore rehearsal or full schema parity was established.
